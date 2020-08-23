@@ -152,7 +152,6 @@ pub fn init_board(device_peripherals: hal::raw::Peripherals, core_peripherals: r
     Option<types::Iso14443>,
 
     types::PerfTimer,
-    board::led::RgbLed,
     Option<clock_controller::DynamicClockController>,
     types::HwScheduler,
 ) {
@@ -263,13 +262,14 @@ pub fn init_board(device_peripherals: hal::raw::Peripherals, core_peripherals: r
         // to trash existing data, set to true
         true,
     ).unwrap();
+
     // return to slow freq
     if is_passive_mode {
         clocks = unsafe { hal::ClockRequirements::default()
             .system_frequency(12.mhz())
             .reconfigure(clocks, &mut pmc, &mut syscon) };
-        // Give some feedback to user that token is in field
-        rgb.red(30);
+        // // Give some feedback to user that token is in field
+        // rgb.red(30);
     }
 
     let (fido_trussed_requester, fido_trussed_responder) = trussed::pipe::TrussedInterchange::claim(0)
@@ -357,7 +357,7 @@ pub fn init_board(device_peripherals: hal::raw::Peripherals, core_peripherals: r
         (None, Some(three_buttons))
     };
 
-    let board = Board::new(rng, store, three_buttons);
+    let board = Board::new(rgb, rng, store, three_buttons);
     let mut trussed = trussed::service::Service::new(board);
 
     assert!(trussed.add_endpoint(fido_trussed_responder, fido_client_id).is_ok());
@@ -436,7 +436,7 @@ pub fn init_board(device_peripherals: hal::raw::Peripherals, core_peripherals: r
         None
     };
 
-    rgb.turn_off();
+    // rgb.turn_off();
     delay_timer.cancel().ok();
     logger::info!("init took {} ms",perf_timer.lap().0/1000).ok();
 
@@ -453,7 +453,6 @@ pub fn init_board(device_peripherals: hal::raw::Peripherals, core_peripherals: r
         iso14443,
 
         perf_timer,
-        rgb,
         clock_controller,
         delay_timer,
     )

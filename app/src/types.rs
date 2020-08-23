@@ -66,6 +66,7 @@ store!(Store,
 );
 
 board!(Board,
+    L: crate::board::led::RgbLed, 
     R: hal::peripherals::rng::Rng<hal::Enabled>,
     S: Store,
     T: crate::board::button::ThreeButtons,
