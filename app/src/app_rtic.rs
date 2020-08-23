@@ -37,7 +37,6 @@ const APP: () = {
 
         perf_timer: app::types::PerfTimer,
         rgb: board::led::RgbLed,
-        three_buttons: Option<board::button::ThreeButtons>,
 
         clock_ctrl: Option<app::types::DynamicClockController>,
         hw_scheduler: app::types::HwScheduler,
@@ -60,7 +59,6 @@ const APP: () = {
 
             perf_timer,
             rgb,
-            three_buttons,
             clock_ctrl,
             hw_scheduler,
         ) = app::init_board(c.device, c.core);
@@ -84,7 +82,6 @@ const APP: () = {
 
             perf_timer,
             rgb,
-            three_buttons,
 
             clock_ctrl,
             hw_scheduler,

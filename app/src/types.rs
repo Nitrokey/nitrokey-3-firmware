@@ -6,7 +6,7 @@ use littlefs2::{
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{board, store};
 use ctap_types::consts;
-use fido_authenticator::SilentAuthenticator;
+use fido_authenticator::NonSilentAuthenticator;
 use fm11nc08::FM11NC08;
 use hal::{
     typestates::{
@@ -27,7 +27,7 @@ use hal::{
 
 pub type FlashStorage = hal::drivers::FlashGordon;
 
-pub type Authenticator = fido_authenticator::Authenticator<SilentAuthenticator>;
+pub type Authenticator = fido_authenticator::Authenticator<NonSilentAuthenticator>;
 
 pub type Piv = piv_card::App;
 
@@ -68,6 +68,7 @@ store!(Store,
 board!(Board,
     R: hal::peripherals::rng::Rng<hal::Enabled>,
     S: Store,
+    T: crate::board::button::ThreeButtons,
 );
 
 pub type CryptoService = trussed::Service<Board>;

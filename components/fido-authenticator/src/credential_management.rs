@@ -88,7 +88,7 @@ where
             Some(guesstimate);
 
         let dir = PathBuf::from(b"rk");
-        let maybe_first_rp = syscall!(self.crypto.read_dir_first(
+        let maybe_first_rp = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal, dir.clone(), None)).entry;
 
         let first_rp = match maybe_first_rp{
@@ -100,7 +100,7 @@ where
         let mut last_rp = PathBuf::from(first_rp.file_name());
 
         loop {
-            let maybe_next_rp = syscall!(self.crypto.read_dir_first(
+            let maybe_next_rp = syscall!(self.trussed.read_dir_first(
                 StorageLocation::Internal,
                 dir.clone(),
                 Some(last_rp),
@@ -140,7 +140,7 @@ where
 
         let dir = PathBuf::from(b"rk");
 
-        let maybe_first_rp = syscall!(self.crypto.read_dir_first(
+        let maybe_first_rp = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal, dir, None)).entry;
 
         response.total_rps = Some(match maybe_first_rp {
@@ -148,7 +148,7 @@ where
             _ => {
                 let mut num_rps = 1;
                 loop {
-                    let maybe_next_rp = syscall!(self.crypto.read_dir_next())
+                    let maybe_next_rp = syscall!(self.trussed.read_dir_next())
                         .entry;
                     match maybe_next_rp {
                         None => break,
@@ -162,7 +162,7 @@ where
         if let Some(rp) = maybe_first_rp {
 
             // load credential and extract rp and rpIdHash
-            let maybe_first_credential = syscall!(self.crypto.read_dir_first(
+            let maybe_first_credential = syscall!(self.trussed.read_dir_first(
                 StorageLocation::Internal,
                 PathBuf::from(rp.path()),
                 None
@@ -171,7 +171,7 @@ where
             match maybe_first_credential {
                 None => panic!("chaos! disorder!"),
                 Some(rk_entry) => {
-                    let serialized = syscall!(self.crypto.read_file(
+                    let serialized = syscall!(self.trussed.read_file(
                         StorageLocation::Internal,
                         rk_entry.path().into(),
                     )).data;
@@ -217,7 +217,7 @@ where
         super::format_hex(&last_rp_id_hash[..8], &mut hex);
         let filename = PathBuf::from(&hex);
 
-        let maybe_next_rp = syscall!(self.crypto.read_dir_first(
+        let maybe_next_rp = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal,
             dir,
             Some(filename),
@@ -227,7 +227,7 @@ where
 
         if let Some(rp) = maybe_next_rp {
             // load credential and extract rp and rpIdHash
-            let maybe_first_credential = syscall!(self.crypto.read_dir_first(
+            let maybe_first_credential = syscall!(self.trussed.read_dir_first(
                 StorageLocation::Internal,
                 PathBuf::from(rp.path()),
                 None
@@ -236,7 +236,7 @@ where
             match maybe_first_credential {
                 None => panic!("chaos! disorder!"),
                 Some(rk_entry) => {
-                    let serialized = syscall!(self.crypto.read_file(
+                    let serialized = syscall!(self.trussed.read_file(
                         StorageLocation::Internal,
                         rk_entry.path().into(),
                     )).data;
@@ -269,7 +269,7 @@ where
     }
 
     fn count_rp_rks(&mut self, rp_dir: PathBuf) -> Result<(u32, DirEntry)> {
-        let maybe_first_rk = syscall!(self.crypto.read_dir_first(
+        let maybe_first_rk = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal,
             rp_dir,
             None
@@ -279,7 +279,7 @@ where
 
         // count the rest of them
         let mut num_rks = 1;
-        while syscall!(self.crypto.read_dir_next()).entry.is_some() {
+        while syscall!(self.trussed.read_dir_next()).entry.is_some() {
             num_rks += 1;
         }
         Ok((num_rks, first_rk))
@@ -335,7 +335,7 @@ where
         // super::format_hex(&rp_id_hash[..8], &mut hex);
         // let rp_dir = PathBuf::from(b"rk").join(&PathBuf::from(&hex));
 
-        let maybe_next_rk = syscall!(self.crypto.read_dir_first(
+        let maybe_next_rk = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal,
             rp_dir,
             Some(prev_filename)
@@ -373,7 +373,7 @@ where
         // totalCredentials (0x09): total number of credentials for this RP
         // credProtect (0x0A): credential protection policy
 
-        let serialized = syscall!(self.crypto.read_file(
+        let serialized = syscall!(self.trussed.read_file(
             StorageLocation::Internal,
             rk_path.into(),
         )).data;
@@ -390,9 +390,9 @@ where
 
         // why these contortions to get kek. sheesh
         let authnr = &mut self.authnr;
-        let kek = authnr.state.persistent.key_encryption_key(&mut authnr.crypto)?;
+        let kek = authnr.state.persistent.key_encryption_key(&mut authnr.trussed)?;
 
-        let credential_id =  credential.id(&mut self.crypto, &kek)?;
+        let credential_id =  credential.id(&mut self.trussed, &kek)?;
         response.credential_id = Some(credential_id.into());
 
         use crate::credential::Key;
@@ -407,23 +407,23 @@ where
         let algorithm = SupportedAlgorithm::try_from(credential.algorithm)?;
         let cose_public_key =  match algorithm {
             SupportedAlgorithm::P256 => {
-                let public_key = syscall!(self.crypto.derive_p256_public_key(&private_key, StorageLocation::Volatile)).key;
-                let cose_public_key = syscall!(self.crypto.serialize_key(
+                let public_key = syscall!(self.trussed.derive_p256_public_key(&private_key, StorageLocation::Volatile)).key;
+                let cose_public_key = syscall!(self.trussed.serialize_key(
                     Mechanism::P256, public_key.clone(),
                     // KeySerialization::EcdhEsHkdf256
                     KeySerialization::Cose,
                 )).serialized_key;
-                syscall!(self.crypto.delete(public_key));
+                syscall!(self.trussed.delete(public_key));
                 PublicKey::P256Key(
                     ctap_types::serde::cbor_deserialize(&cose_public_key)
                     .unwrap())
             }
             SupportedAlgorithm::Ed25519 => {
-                let public_key = syscall!(self.crypto.derive_ed25519_public_key(&private_key, StorageLocation::Volatile)).key;
-                let cose_public_key = syscall!(self.crypto.serialize_key(
+                let public_key = syscall!(self.trussed.derive_ed25519_public_key(&private_key, StorageLocation::Volatile)).key;
+                let cose_public_key = syscall!(self.trussed.serialize_key(
                     Mechanism::Ed25519, public_key.clone(), KeySerialization::Cose
                 )).serialized_key;
-                syscall!(self.crypto.delete(public_key));
+                syscall!(self.trussed.delete(public_key));
                 PublicKey::Ed25519Key(
                     ctap_types::serde::cbor_deserialize(&cose_public_key)
                     .unwrap())
@@ -450,7 +450,7 @@ where
         let dir = PathBuf::from(b"rk");
         let filename = PathBuf::from(&hex);
 
-        let rk_path = syscall!(self.crypto.locate_file(
+        let rk_path = syscall!(self.trussed.locate_file(
             StorageLocation::Internal,
             Some(dir.clone()),
             filename,
@@ -465,7 +465,7 @@ where
             // by construction, RK has a parent, its RP
             .unwrap();
 
-        let maybe_first_remaining_rk = syscall!(self.crypto.read_dir_first(
+        let maybe_first_remaining_rk = syscall!(self.trussed.read_dir_first(
             StorageLocation::Internal,
             rp_path.clone(),
             None,
@@ -474,7 +474,7 @@ where
         if maybe_first_remaining_rk.is_none() {
             blocking::info!("deleting parent {:?} as this was its last RK",
                       &rp_path).ok();
-            syscall!(self.crypto.remove_dir(
+            syscall!(self.trussed.remove_dir(
                 StorageLocation::Internal,
                 rp_path,
             ));
@@ -526,7 +526,7 @@ where
 
 //     let dir = PathBuf::from(b"rk");
 
-//     let maybe_first_rp = syscall!(self.crypto.read_dir_first(
+//     let maybe_first_rp = syscall!(self.trussed.read_dir_first(
 //         StorageLocation::Internal,
 //         dir,
 //         None,
@@ -539,7 +539,7 @@ where
 //         _ => {
 //             let mut num_rps = 1;
 //             loop {
-//                 let maybe_next_rp = syscall!(self.crypto.read_dir_next())
+//                 let maybe_next_rp = syscall!(self.trussed.read_dir_next())
 //                     .entry;
 //                 match maybe_next_rp {
 //                     None => break,
@@ -553,7 +553,7 @@ where
 //     if let Some(rp) = maybe_first_rp {
 
 //         // load credential and extract rp and rpIdHash
-//         let maybe_first_credential = syscall!(self.crypto.read_dir_first(
+//         let maybe_first_credential = syscall!(self.trussed.read_dir_first(
 //             StorageLocation::Internal,
 //             PathBuf::from(rp.path()),
 //             None
@@ -562,7 +562,7 @@ where
 //         match maybe_first_credential {
 //             None => panic!("chaos! disorder!"),
 //             Some(rk_entry) => {
-//                 let serialized = syscall!(self.crypto.read_file(
+//                 let serialized = syscall!(self.trussed.read_file(
 //                     StorageLocation::Internal,
 //                     rk_entry.path().into(),
 //                 )).data;
@@ -613,7 +613,7 @@ where
 //     super::format_hex(&last_rp_id_hash[..8], &mut hex);
 //     let filename = PathBuf::from(&hex);
 
-//     let maybe_next_rp = syscall!(self.crypto.read_dir_first(
+//     let maybe_next_rp = syscall!(self.trussed.read_dir_first(
 //         StorageLocation::Internal,
 //         dir,
 //         Some(filename),
@@ -623,7 +623,7 @@ where
 
 //     if let Some(rp) = maybe_next_rp {
 //         // load credential and extract rp and rpIdHash
-//         let maybe_first_credential = syscall!(self.crypto.read_dir_first(
+//         let maybe_first_credential = syscall!(self.trussed.read_dir_first(
 //             StorageLocation::Internal,
 //             PathBuf::from(rp.path()),
 //             None
@@ -632,7 +632,7 @@ where
 //         match maybe_first_credential {
 //             None => panic!("chaos! disorder!"),
 //             Some(rk_entry) => {
-//                 let serialized = syscall!(self.crypto.read_file(
+//                 let serialized = syscall!(self.trussed.read_file(
 //                     StorageLocation::Internal,
 //                     rk_entry.path().into(),
 //                 )).data;
@@ -680,7 +680,7 @@ where
 //     let dir = PathBuf::from(b"rk");
 //     let filename = PathBuf::from(&hex);
 
-//     let rk_path = syscall!(self.crypto.locate_file(
+//     let rk_path = syscall!(self.trussed.locate_file(
 //         StorageLocation::Internal,
 //         Some(dir.clone()),
 //         filename,
@@ -695,7 +695,7 @@ where
 //         // by construction, RK has a parent, its RP
 //         .unwrap();
 
-//     let maybe_first_remaining_rk = syscall!(self.crypto.read_dir_first(
+//     let maybe_first_remaining_rk = syscall!(self.trussed.read_dir_first(
 //         StorageLocation::Internal,
 //         rp_path.clone(),
 //         None,
@@ -704,7 +704,7 @@ where
 //     if maybe_first_remaining_rk.is_none() {
 //         // blocking::info!("deleting parent {:?} as this was its last RK",
 //         //           &rp_path).ok();
-//         syscall!(self.crypto.remove_dir(
+//         syscall!(self.trussed.remove_dir(
 //             StorageLocation::Internal,
 //             rp_path,
 //         ));
