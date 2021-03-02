@@ -28,6 +28,7 @@ rand_core = { version = "0.5.1", features = ["getrandom"] }
 [features]
 default = []
 applet = ["apdu-dispatch"]
+strict-pin = []
 
 log-all = []
 log-none = []
