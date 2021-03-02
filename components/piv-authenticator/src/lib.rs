@@ -8,6 +8,7 @@ generate_macros!();
 extern crate hex_literal;
 
 pub mod commands;
+pub use commands::Command;
 pub mod constants;
 pub mod state;
 pub mod derp;
@@ -17,7 +18,7 @@ use core::convert::{TryFrom, TryInto};
 
 use flexiber::EncodableHeapless;
 use iso7816::{
-    Command, Instruction, Status,
+    Command as IsoCommand, Instruction, Status,
     response::{
         Result as ResponseResult,
         Data as ResponseData,
@@ -29,6 +30,22 @@ use trussed::client;
 use trussed::{syscall, try_syscall};
 
 use constants::*;
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum Interface {
+    Contact,
+    Contactless,
+}
+
+#[cfg(feature = "applet")]
+impl From<applet::InterfaceType> for Interface {
+    fn from(interface: _) -> Self {
+        match interface {
+            applet::InterfaceType::Contact => Self::Contact,
+            applet::InterfaceType::Contactless => Self::Contactless,
+        }
+    }
+}
 
 pub struct Authenticator<T>
 {
@@ -61,7 +78,7 @@ where
     pub fn deselect(&mut self) {
     }
 
-    pub fn select(&mut self, _apdu: &Command) -> ResponseResult {
+    pub fn select(&mut self, _apdu: &IsoCommand) -> ResponseResult {
         use piv_types::Algorithms::*;
 
         let application_property_template = piv_types::ApplicationPropertyTemplate::default()
@@ -80,7 +97,99 @@ where
         return Ok(ResponseData::from(response_data));
     }
 
-    pub fn respond(&mut self, command: &Command) -> ResponseResult {
+    pub fn respond(&mut self, interface: Interface, command: &IsoCommand) -> ResponseResult {
+        let last_or_only = command.class().chain().last_or_only();
+
+        // TODO: avoid owned copy?
+        let entire_command = match self.state.runtime.chained_command.as_mut() {
+            Some(command_so_far) => {
+                // TODO: make sure the header matches, e.g. '00 DB 3F FF'
+                command_so_far.data_mut().extend_from_slice(command.data()).unwrap();
+
+                if last_or_only {
+                    let entire_command = command_so_far.clone();
+                    self.state.runtime.chained_command = None;
+                    entire_command
+                } else {
+                    return Ok(Default::default());
+                }
+            }
+
+            None => {
+                if last_or_only {
+                    // IsoCommand
+                    command.clone()
+                } else {
+                    self.state.runtime.chained_command = Some(command.clone());
+                    return Ok(Default::default());
+                }
+            }
+        };
+
+        // parse Iso7816Command as PivCommand
+        let command: Command = (&entire_command).try_into()?;
+
+        match command {
+            Command::Verify(verify) => self.verify(verify),
+            _ => todo!(),
+        }
+    }
+
+    // maybe reserve this for the case VerifyLogin::PivPin?
+    pub fn login(&mut self, login: commands::VerifyLogin) -> ResponseResult {
+        if let commands::VerifyLogin::PivPin(padded_pin) = login {
+            // TODO: improve this type
+            let sent_pin = state::Pin::try_new(&padded_pin)
+                .map_err(|_| Status::IncorrectDataParameter)?;
+
+            // the actual PIN verification
+            let persistent_state = self.state.persistent(&mut self.trussed);
+
+            if persistent_state.remaining_pin_retries() == 0 {
+                return Err(Status::OperationBlocked);
+            }
+
+            if persistent_state.verify_pin(&sent_pin) {
+                persistent_state.reset_consecutive_pin_mismatches(&mut self.trussed);
+                self.state.runtime.app_security_status.pin_verified = true;
+                Ok(Default::default())
+
+            } else {
+                let remaining = persistent_state.increment_consecutive_pin_mismatches(&mut self.trussed);
+                // should we logout here?
+                self.state.runtime.app_security_status.pin_verified = false;
+                Err(Status::RemainingRetries(remaining))
+            }
+        } else {
+            Err(Status::FunctionNotSupported)
+        }
+    }
+
+    pub fn verify(&mut self, command: commands::Verify) -> ResponseResult {
+        use commands::Verify;
+        match command {
+            Verify::Login(login) => self.login(login),
+
+            Verify::Logout(_) => {
+                self.state.runtime.app_security_status.pin_verified = false;
+                Ok(Default::default())
+            }
+
+            Verify::Status(key_reference) => {
+                if key_reference != commands::VerifyKeyReference::PivPin {
+                    return Err(Status::FunctionNotSupported);
+                }
+                if self.state.runtime.app_security_status.pin_verified {
+                    return Ok(Default::default());
+                } else {
+                    let retries = self.state.persistent(&mut self.trussed).remaining_pin_retries();
+                    return Err(Status::RemainingRetries(retries));
+                }
+            }
+        }
+    }
+
+    pub fn old_respond(&mut self, command: &IsoCommand) -> ResponseResult {
 
         // TEMP
         // blocking::dbg!(self.state.persistent(&mut self.trussed).timestamp(&mut self.trussed));
@@ -110,7 +219,7 @@ where
 
             None => {
                 if last_or_only {
-                    // Command
+                    // IsoCommand
                     command.clone()
                 } else {
                     self.state.runtime.chained_command = Some(command.clone());
@@ -142,7 +251,7 @@ where
         match command.instruction() {
             Instruction::GetData => self.get_data(command),
             Instruction::PutData => self.put_data(command),
-            Instruction::Verify => self.verify(command),
+            Instruction::Verify => self.old_verify(command),
             Instruction::ChangeReferenceData => self.change_reference_data(command),
             Instruction::GeneralAuthenticate => self.general_authenticate(command),
             Instruction::GenerateAsymmetricKeyPair => self.generate_asymmetric_keypair(command),
@@ -189,7 +298,7 @@ where
     // - 9000, 61XX for success
     // - 6982 security status
     // - 6A80, 6A86 for data, P1/P2 issue
-    fn general_authenticate(&mut self, command: &Command) -> ResponseResult {
+    fn general_authenticate(&mut self, command: &IsoCommand) -> ResponseResult {
 
         // For "SSH", we need implement A.4.2 in SP-800-73-4 Part 2, ECDSA signatures
         //
@@ -299,7 +408,7 @@ where
         return Ok(ResponseData::from(response_data));
     }
 
-    fn request_for_challenge(&mut self, command: &Command, remaining_data: &[u8]) -> ResponseResult {
+    fn request_for_challenge(&mut self, command: &IsoCommand, remaining_data: &[u8]) -> ResponseResult {
         // - data is of the form
         //     00 87 03 9B 16 7C 14 80 08 99 6D 71 40 E7 05 DF 7F 81 08 6E EF 9C 02 00 69 73 E8
         // - remaining data contains <decrypted challenge> 81 08 <encrypted counter challenge>
@@ -350,7 +459,7 @@ where
         return Ok(ResponseData::from(response_data));
     }
 
-    fn request_for_witness(&mut self, command: &Command, remaining_data: &[u8]) -> ResponseResult {
+    fn request_for_witness(&mut self, command: &IsoCommand, remaining_data: &[u8]) -> ResponseResult {
         // invariants: parsed data was '7C L1 80 00' + remaining_data
 
         if command.p1 != 0x03 || command.p2 != 0x9b {
@@ -377,7 +486,7 @@ where
 
     }
 
-    fn change_reference_data(&mut self, command: &Command) -> ResponseResult {
+    fn change_reference_data(&mut self, command: &IsoCommand) -> ResponseResult {
         // The way `piv-go` blocks PUK (which it needs to do because Yubikeys only
         // allow their Reset if PIN+PUK are blocked) is that it sends "change PUK"
         // with random (i.e. incorrect) PUK listed as both old and new PUK.
@@ -464,7 +573,7 @@ where
         Err(Status::KeyReferenceNotFound)
     }
 
-    fn verify(&mut self, command: &Command) -> ResponseResult {
+    fn old_verify(&mut self, command: &IsoCommand) -> ResponseResult {
         // we only implement our own PIN, not global Pin, not OCC data, not pairing code
         if command.p2 != 0x80 {
             return Err(Status::KeyReferenceNotFound);
@@ -525,7 +634,7 @@ where
         }
     }
 
-    fn generate_asymmetric_keypair(&mut self, command: &Command) -> ResponseResult {
+    fn generate_asymmetric_keypair(&mut self, command: &IsoCommand) -> ResponseResult {
         if !self.state.runtime.app_security_status.management_verified {
             return Err(Status::SecurityStatusNotSatisfied);
         }
@@ -648,7 +757,7 @@ where
         Ok(data)
     }
 
-    fn put_data(&mut self, command: &Command) -> ResponseResult {
+    fn put_data(&mut self, command: &IsoCommand) -> ResponseResult {
         info_now!("PutData");
         if command.p1 != 0x3f || command.p2 != 0xff {
             return Err(Status::IncorrectP1OrP2Parameter);
@@ -733,7 +842,7 @@ where
         Err(Status::IncorrectDataParameter)
     }
 
-    fn get_data(&mut self, command: &Command) -> ResponseResult {
+    fn get_data(&mut self, command: &IsoCommand) -> ResponseResult {
         if command.p1 != 0x3f || command.p2 != 0xff {
             return Err(Status::IncorrectP1OrP2Parameter);
         }
@@ -824,7 +933,7 @@ where
         }
     }
 
-    fn yubico_piv_extension(&mut self, command: &Command, instruction: YubicoPivExtension) -> ResponseResult {
+    fn yubico_piv_extension(&mut self, command: &IsoCommand, instruction: YubicoPivExtension) -> ResponseResult {
         info_now!("yubico extension: {:?}", &instruction);
         match instruction {
             YubicoPivExtension::GetSerial => {
@@ -938,14 +1047,14 @@ impl<T> applet::Applet for Authenticator<T>
 where
     T: client::Client + client::Ed255 + client::Tdes
 {
-    fn select(&mut self, apdu: &Command) -> applet::Result {
+    fn select(&mut self, apdu: &IsoCommand) -> applet::Result {
         Ok(applet::Response::Respond(self.select(apdu).unwrap()))
     }
 
     fn deselect(&mut self) { self.deselect() }
 
-    fn call(&mut self, _type: applet::InterfaceType, apdu: &Command) -> applet::Result {
-        match self.respond(apdu) {
+    fn call(&mut self, _type: applet::InterfaceType, apdu: &IsoCommand) -> applet::Result {
+        match self.respond(interface: Interface, apdu) {
             Ok(data) => {
                 Ok(applet::Response::Respond(data))
             }
