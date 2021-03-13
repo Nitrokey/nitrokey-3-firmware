@@ -437,8 +437,7 @@ where
         self.set_management_key(YUBICO_DEFAULT_MANAGEMENT_KEY);
     }
 
-    pub fn set_management_key(&mut self, management_key: &[u8; 24]) {
-        let new_management_key = syscall!(self.trussed.unsafe_inject_tdes_key(
+    pub fn set_management_key(&mut self, trussed: &'t mut T, management_key: &[u8; 24]) {
         let new_management_key = syscall!(trussed.unsafe_inject_shared_key(
             management_key,
             trussed::types::Location::Internal,
@@ -449,6 +448,7 @@ where
         syscall!(self.trussed.delete(old_management_key));
     }
 
+    pub fn initialize(trussed: &'t mut T) -> Self {
         let management_key = syscall!(trussed.unsafe_inject_shared_key(
             YUBICO_DEFAULT_MANAGEMENT_KEY,
             trussed::types::Location::Internal,

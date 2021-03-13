@@ -1096,8 +1096,8 @@ where
 
     fn deselect(&mut self) { self.deselect() }
 
-    fn call(&mut self, _type: applet::InterfaceType, apdu: &IsoCommand) -> applet::Result {
-        match self.respond(interface: Interface, apdu) {
+    fn call(&mut self, interface: applet::InterfaceType, apdu: &IsoCommand) -> applet::Result {
+        match self.respond(interface, apdu) {
             Ok(data) => {
                 Ok(applet::Response::Respond(data))
             }
