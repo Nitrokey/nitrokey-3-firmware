@@ -1,15 +1,35 @@
-BOARD := board-lpcxpresso55
-DEVELOP := --features $(BOARD),develop
-PROVISIONER := --features $(BOARD),develop-provisioner
+BOARD ?= nk3xn
 
-build-dev:
-	cargo build --release $(DEVELOP)
+FEATURES := board-${BOARD}
 
-run-dev:
-	cargo run --release $(DEVELOP)
+ifeq "${DEVELOP}" "1"
+FEATURES := ${FEATURES},develop
+endif
 
-run-pro:
-	cargo run --release $(PROVISIONER)
+ifeq "${PROVISIONER}" "1"
+FEATURES := ${FEATURES},develop-provisioner
+endif
+
+.PHONY: build
+build:
+	cargo build --release --features $(FEATURES)
+
+.PHONY: run
+run:
+	cargo run --release --features $(FEATURES)
+
+.PHONY: objcopy
+objcopy:
+	cargo objcopy --release --features $(FEATURES) -- -O binary "firmware-${BOARD}.bin"
+
+.PHONY: flash
+flash: objcopy
+	mboot erase --mass
+	mboot write "firmware-${BOARD}.bin"
+
+.PHONY: size
+size:
+	cargo size --release --features $(FEATURES)
 
 bacon:
 	bacon

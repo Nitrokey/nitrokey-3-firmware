@@ -1,3 +1,4 @@
 target
 *.elf
 lpc55s69.pack
+*.bin
