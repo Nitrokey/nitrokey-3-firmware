@@ -61,8 +61,8 @@ cargo objcopy --release --features board-nk3xn,develop -- -O binary firmware-nk3
 Select the features according to the device you use and the settings you want to activate:
 
 * board selection
-  * `board-nk3xn` for NK3AN and NK3CN
-  * `board-nk3am` for NK3AM
+  * `board-nk3xn` for NK3AN and NK3CN (Nitrokey 3 NFC USB A/C)
+  * `board-nk3am` for NK3AM (Nitrokey 3 Mini)
 * settings
   * `no-buttons`: disable the touch button and always confirm actions
   * `no-encrypted-storage`: don’t encrypt the flash chip (currently required)
@@ -112,6 +112,9 @@ The Nitrokey 3 board can be debugged using SWD. The SWD interface is exposed ove
   * Cable 3 (GND): GND
   * Cable 4 (SWDCLK): CLK
 * Connect the cable to the J7 socket on the debugger.
+
+Alternatively use the breakout connector:
+- https://www.adafruit.com/product/2743
 
 ### J-LINK
 
