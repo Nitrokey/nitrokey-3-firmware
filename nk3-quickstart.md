@@ -36,6 +36,11 @@ $ cargo install cargo-binutils
 $ rustup component add llvm-tools-preview
 ```
 
+In case you had these dependencies installed make sure they are up to date with:
+```
+rustup update
+```
+
 And install [mboot](https://github.com/molejar/pyMBoot) for flashing the firmware (if you don’t use a debugger):
 
 ```
