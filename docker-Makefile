@@ -1,23 +1,42 @@
 RUNNER := /app/runners/lpc55
 BOARD := nk3xn
 CMD := clean
+# keep cache locally
+CARGO_DIR := $(shell readlink -f docker/cargo)
+CARGO_DIR_GIT := $(shell readlink -f docker/cargo-git)
+# keep cache in a shared volume (faster CI builds?)
+# CARGO_DIR := docker-cargo
+# CARGO_DIR_GIT := docker-cargo-git
+VOL := -v $(CARGO_DIR):/usr/local/cargo/registry -v $(CARGO_DIR_GIT):/usr/local/cargo/git
+DOCKER_PARAMS := run -it --rm -v $${PWD}:/app $(VOL) nitrokey3
 
-.PHONY: docker-custom docker-build docker-objcopy docker-size build-docker-toolchain docker-shell
+.PHONY: docker-custom docker-build docker-objcopy docker-size build-docker-toolchain docker-shell init
+
+$(CARGO_DIR):
+	mkdir -p $@
+
+$(CARGO_DIR_GIT):
+	mkdir -p $@
+
+clean: $(CARGO_DIR_GIT) $(CARGO_DIR)
+	ls $^
+
+init: $(CARGO_DIR_GIT) $(CARGO_DIR)
 
 build-docker-toolchain:
 	docker build . -t nitrokey3
 
-docker-custom:
-	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) $(CMD) BOARD=$(BOARD)
+docker-custom: init
+	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) $(CMD) BOARD=$(BOARD)
 
-docker-shell:
-	docker run -it --rm -v $${PWD}:/app nitrokey3 bash
+docker-shell: init
+	docker $(DOCKER_PARAMS) bash -c "cd /app && ls && exec bash"
 
-docker-build:
-	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) build BOARD=$(BOARD)
+docker-build: init
+	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) build BOARD=$(BOARD)
 
-docker-objcopy:
-	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) objcopy BOARD=$(BOARD)
+docker-objcopy: init
+	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) objcopy BOARD=$(BOARD)
 
-docker-size:
-	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) size BOARD=$(BOARD)
+docker-size: init
+	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) size BOARD=$(BOARD)
