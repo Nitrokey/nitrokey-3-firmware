@@ -20,7 +20,7 @@ $ cd solo2
 
 ## Install Dependencies
 
-Note: Currently build does not work on Fedora 32,34
+Note: Currently build does not work on Rust v1.53, it does so though on v1.52.1.
 
 Install the dependencies as described in the [readme](./README.md) and in the
 [Solo 2 Getting Started guide](https://solo2.dev), for example:
