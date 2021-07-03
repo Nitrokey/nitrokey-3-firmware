@@ -4,3 +4,4 @@ RUN apt-get update && \
 RUN cargo install flip-link cargo-binutils
 RUN rustup target add thumbv8m.main-none-eabi
 RUN rustup component add llvm-tools-preview
+RUN apt-get install -y wget make
