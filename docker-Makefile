@@ -1,13 +1,23 @@
-RUNNER := runners/lpc55
+RUNNER := /app/runners/lpc55
+BOARD := nk3xn
+CMD := clean
+
+.PHONY: docker-custom docker-build docker-objcopy docker-size build-docker-toolchain docker-shell
 
 build-docker-toolchain:
 	docker build . -t nitrokey3
 
+docker-custom:
+	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) $(CMD) BOARD=$(BOARD)
+
+docker-shell:
+	docker run -it --rm -v $${PWD}:/app nitrokey3 bash
+
 docker-build:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) build BOARD=$(BOARD)
+	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) build BOARD=$(BOARD)
 
 docker-objcopy:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) objcopy BOARD=$(BOARD)
+	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) objcopy BOARD=$(BOARD)
 
 docker-size:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) size BOARD=$(BOARD)
+	docker run -i --rm -v $${PWD}:/app nitrokey3 make -C $(RUNNER) size BOARD=$(BOARD)
