@@ -3,6 +3,9 @@ RUNNER := runners/lpc55
 build:
 	make -C $(RUNNER) build
 
+build-dev:
+	make -C $(RUNNER) build DEVELOP=1
+
 bacon:
 	make -C $(RUNNER) bacon
 
@@ -18,3 +21,7 @@ mount-fs:
 
 umount-fs:
 	scripts/defuse-bee
+
+.PHONY: clean
+clean:
+	make -C $(RUNNER) clean
