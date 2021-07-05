@@ -25,3 +25,5 @@ umount-fs:
 .PHONY: clean
 clean:
 	make -C $(RUNNER) clean
+
+include ./docker-Makefile

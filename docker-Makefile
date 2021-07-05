@@ -18,8 +18,8 @@ $(CARGO_DIR):
 $(CARGO_DIR_GIT):
 	mkdir -p $@
 
-clean: $(CARGO_DIR_GIT) $(CARGO_DIR)
-	ls $^
+#clean: $(CARGO_DIR_GIT) $(CARGO_DIR)
+#	ls $^
 
 init: $(CARGO_DIR_GIT) $(CARGO_DIR)
 
@@ -30,7 +30,7 @@ docker-custom: init
 	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) $(CMD) BOARD=$(BOARD)
 
 docker-shell: init
-	docker $(DOCKER_PARAMS) bash -c "cd /app && ls && exec bash"
+	@docker $(DOCKER_PARAMS) bash -c "cd $(RUNNER) && pwd && ls && exec bash"
 
 docker-build: init
 	docker $(DOCKER_PARAMS) $(MAKE) -C $(RUNNER) build BOARD=$(BOARD)

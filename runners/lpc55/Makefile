@@ -1,35 +1,48 @@
 BOARD ?= nk3xn
 
 FEATURES := board-${BOARD}
+DEVELOP := 1
+
+FLAGS=
 
 ifeq "${DEVELOP}" "1"
 FEATURES := ${FEATURES},develop
+FLAGS=
+else
+FLAGS := --release
 endif
 
 ifeq "${PROVISIONER}" "1"
 FEATURES := ${FEATURES},develop-provisioner
 endif
 
+all: $(BINARY)
+
 .PHONY: build
 build:
-	cargo build --release --features $(FEATURES)
+	cargo build $(FLAGS) --features $(FEATURES) --verbose
 
 .PHONY: run
 run:
-	cargo run --release --features $(FEATURES)
+	cargo run $(FLAGS) --features $(FEATURES)
+
+.PHONY: $(BINARY)
+BINARY=firmware-${BOARD}.bin
+$(BINARY):
+	cargo objcopy $(FLAGS) --features $(FEATURES) -- -O binary $@
 
 .PHONY: objcopy
 objcopy:
-	cargo objcopy --release --features $(FEATURES) -- -O binary "firmware-${BOARD}.bin"
+	cargo objcopy --features $(FEATURES) --verbose -- -O binary $(BINARY) --verbose
 
 .PHONY: flash
-flash: objcopy
+flash: $(BINARY)
 	mboot erase --mass
-	mboot write "firmware-${BOARD}.bin"
+	mboot write $<
 
 .PHONY: size
 size:
-	cargo size --release --features $(FEATURES)
+	cargo size $(FLAGS) --features $(FEATURES)
 
 .PHONY: bacon
 bacon:
@@ -37,7 +50,7 @@ bacon:
 
 .PHONY: jlink
 jlink:
-	../../scripts/bump-jlink
+	-../../scripts/bump-jlink
 	JLinkGDBServer -strict -device LPC55S69 -if SWD -vd
 
 
