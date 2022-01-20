@@ -510,6 +510,7 @@ impl Initializer {
             //
             // NB: Card issuer's data can be at most 13 bytes (otherwise the constructor panics).
             // So for instance "Hacker Solo 2" would work, but "Solo 2 (custom)" would not.
+            #[cfg(feature = "enable-ccid")]
             let ccid = usbd_ccid::Ccid::new(usb_bus, contact_requester, Some(b"Nitrokey 3"));
             let current_time = basic_stage.perf_timer.elapsed().0/1000;
             let ctaphid = usbd_ctaphid::CtapHid::new(usb_bus, ctaphid_requester, current_time)
@@ -538,7 +539,12 @@ impl Initializer {
                 .composite_with_iads()
                 .build();
 
+            #[cfg(feature = "enable-ccid")]{
             usb_classes = Some(types::UsbClasses::new(usbd, ccid, ctaphid, /*keyboard,*/ serial));
+            }
+            #[cfg(not(feature = "enable-ccid"))]{
+            usb_classes = Some(types::UsbClasses::new(usbd, /*ccid,*/ ctaphid, /*keyboard,*/ serial));
+            }
 
         }
 

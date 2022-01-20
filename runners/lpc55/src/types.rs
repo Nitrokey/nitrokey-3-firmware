@@ -25,7 +25,10 @@ pub type FlashStorage = PlainFilesystem;
 pub type FlashStorage = PrinceFilesystem;
 
 pub mod usb;
-pub use usb::{UsbClasses, EnabledUsbPeripheral, SerialClass, CcidClass, CtapHidClass};
+pub use usb::{UsbClasses, EnabledUsbPeripheral, SerialClass, CtapHidClass};
+
+#[cfg(feature = "enable-ccid")]
+pub use usb::CcidClass;
 
 // 8KB of RAM
 const_ram_storage!(

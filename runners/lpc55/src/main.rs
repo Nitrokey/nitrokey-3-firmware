@@ -168,6 +168,7 @@ const APP: () = {
                     usb_classes.ctaphid.check_timeout(time/1000);
                     usb_classes.poll();
 
+                    #[cfg(feature = "enable-ccid")]
                     match usb_classes.ccid.did_start_processing() {
                         usbd_ccid::types::Status::ReceivedData(milliseconds) => {
                             schedule.ccid_wait_extension(
@@ -207,6 +208,7 @@ const APP: () = {
         //////////////
         usb_classes.poll();
 
+        #[cfg(feature = "enable-ccid")]
         match usb_classes.ccid.did_start_processing() {
             usbd_ccid::types::Status::ReceivedData(milliseconds) => {
                 c.schedule.ccid_wait_extension(
@@ -254,6 +256,7 @@ const APP: () = {
     /// Whenever we start waiting for an application to reply to CCID, this must be scheduled.
     /// In case the application takes too long, this will periodically send wait extensions
     /// until the application replied.
+    #[cfg(feature = "enable-ccid")]
     #[task(resources = [usb_classes], schedule = [ccid_wait_extension], priority = 6)]
     fn ccid_wait_extension(c: ccid_wait_extension::Context) {
         debug!("CCID WAIT EXTENSION");
