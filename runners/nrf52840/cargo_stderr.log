@@ -1,16 +1,3 @@
-[0m[0m[1m[32m   Compiling[0m lpc55-pac v0.4.1
-[0m[0m[1m[32m   Compiling[0m salty v0.2.0 (https://github.com/ycrypto/salty?branch=main#a9f17911)
-[0m[0m[1m[32m   Compiling[0m lpc55-hal v0.3.0
-[0m[0m[1m[32m   Compiling[0m lpc55-rtic v0.5.7
-[0m[0m[1m[32m   Compiling[0m micro-ecc-sys v0.3.2
-[0m[0m[1m[32m   Compiling[0m der_derive v0.2.2
-[0m[0m[1m[32m   Compiling[0m heapless-bytes v0.2.0
-[0m[0m[1m[32m   Compiling[0m lpc55-rtic-macros v0.5.3
-[0m[0m[1m[32m   Compiling[0m apdu-dispatch v0.0.1 (https://github.com/solokeys/apdu-dispatch?branch=main#f01d4ba9)
-[0m[0m[1m[32m   Compiling[0m trussed v0.1.0 (https://github.com/trussed-dev/trussed?branch=main#c52e9c7a)
-[0m[0m[1m[32m   Compiling[0m cosey v0.2.0
-[0m[0m[1m[32m   Compiling[0m der v0.2.10
-[0m[0m[1m[32m   Compiling[0m nisty v0.1.0-alpha.6
 [0m[0m[1m[32m   Compiling[0m provisioner-app v0.1.0 (/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app)
 [0m[0m[1m[32m   Compiling[0m runner v0.0.1 (/home/dariball/dev/nitrokey-3-firmware/runners/nrf52840)
 [0m[1m[33mwarning[0m[0m[1m: unused import: `twim::Twim`[0m
@@ -21,114 +8,57 @@
 [0m   [0m[0m[1m[38;5;12m|[0m
 [0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_imports)]` on by default[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `StickStore: trussed::store::Store` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:589:2[0m
+[0m[1m[33mwarning[0m[0m[1m: use of deprecated associated function `cortex_m::peripheral::dwt::<impl nrf52840_pac::DWT>::get_cycle_count`: Use `cycle_count` which follows the C-GETTER convention[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/ui.rs:287:44[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m589[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m/[0m[0m [0m[0m    (dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticator, TrussedNRFClient>,[0m
-[0m[1m[38;5;12m590[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    admin_app::App<TrussedNRFClient, NRFReboot>,[0m
-[0m[1m[38;5;12m591[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    piv_authenticator::Authenticator<TrussedNRFClient, {apdu_dispatch::command::SIZE}>,[0m
-[0m[1m[38;5;12m592[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>) {[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|____________________________________________________________________________________^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::store::Store` is not implemented for `StickStore`[0m
+[0m[1m[38;5;12m287[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        let _cyccnt = cortex_m::peripheral::DWT::get_cycle_count();[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m                                                 [0m[0m[1m[33m^^^^^^^^^^^^^^^[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:127:10[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m127[0m[0m [0m[0m[1m[38;5;12m| [0m[0mwhere S: Store,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m         [0m[0m[1m[38;5;10m^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(deprecated)]` on by default[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::Client` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:589:2[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m589[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m/[0m[0m [0m[0m    (dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticator, TrussedNRFClient>,[0m
-[0m[1m[38;5;12m590[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    admin_app::App<TrussedNRFClient, NRFReboot>,[0m
-[0m[1m[38;5;12m591[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    piv_authenticator::Authenticator<TrussedNRFClient, {apdu_dispatch::command::SIZE}>,[0m
-[0m[1m[38;5;12m592[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>) {[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|____________________________________________________________________________________^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::Client` is not implemented for `ClientImplementation<NRFSyscall>`[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:10[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m         [0m[0m[1m[38;5;10m^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `off`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/extflash.rs:57:22[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m57[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    fn write(&mut self, off: usize, buf: &[u8]) -> Result<usize, littlefs2::io::Error> {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                        [0m[0m[1m[33m^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_off`[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_variables)]` on by default[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::mechanisms::X255` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:589:2[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m589[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m/[0m[0m [0m[0m    (dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticator, TrussedNRFClient>,[0m
-[0m[1m[38;5;12m590[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    admin_app::App<TrussedNRFClient, NRFReboot>,[0m
-[0m[1m[38;5;12m591[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    piv_authenticator::Authenticator<TrussedNRFClient, {apdu_dispatch::command::SIZE}>,[0m
-[0m[1m[38;5;12m592[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>) {[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|____________________________________________________________________________________^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::mechanisms::X255` is not implemented for `ClientImplementation<NRFSyscall>`[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:26[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                         [0m[0m[1m[38;5;10m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `buf`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/extflash.rs:57:34[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m57[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    fn write(&mut self, off: usize, buf: &[u8]) -> Result<usize, littlefs2::io::Error> {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                                    [0m[0m[1m[33m^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_buf`[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::mechanisms::HmacSha256` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:589:2[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m589[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m/[0m[0m [0m[0m    (dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticator, TrussedNRFClient>,[0m
-[0m[1m[38;5;12m590[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    admin_app::App<TrussedNRFClient, NRFReboot>,[0m
-[0m[1m[38;5;12m591[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    piv_authenticator::Authenticator<TrussedNRFClient, {apdu_dispatch::command::SIZE}>,[0m
-[0m[1m[38;5;12m592[0m[0m [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|[0m[0m [0m[0m    provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>) {[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;9m|____________________________________________________________________________________^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::mechanisms::HmacSha256` is not implemented for `ClientImplementation<NRFSyscall>`[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:41[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                                        [0m[0m[1m[38;5;10m^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `off`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/extflash.rs:62:22[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m62[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                        [0m[0m[1m[33m^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_off`[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `StickStore: trussed::store::Store` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:117:13[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m117[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        prov_app: provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                  [0m[0m[1m[38;5;9m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::store::Store` is not implemented for `StickStore`[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:127:10[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m127[0m[0m [0m[0m[1m[38;5;12m| [0m[0mwhere S: Store,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m         [0m[0m[1m[38;5;10m^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `len`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/extflash.rs:62:34[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m62[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                                    [0m[0m[1m[33m^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_len`[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::Client` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:117:13[0m
+[0m[1m[33mwarning[0m[0m[1m: variable does not need to be mutable[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:605:6[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m117[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        prov_app: provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                  [0m[0m[1m[38;5;9m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::Client` is not implemented for `ClientImplementation<NRFSyscall>`[0m
+[0m[1m[38;5;12m605[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    let mut admin_cid = trussed::types::ClientId::new();[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m        [0m[0m[1m[38;5;12m----[0m[0m[1m[33m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m        [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m        [0m[0m[1m[38;5;12mhelp: remove this `mut`[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:10[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m         [0m[0m[1m[38;5;10m^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_mut)]` on by default[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::mechanisms::X255` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:117:13[0m
+[0m[1m[33mwarning[0m[0m[1m: field is never read: `buttons`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/ui.rs:100:2[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m117[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        prov_app: provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                  [0m[0m[1m[38;5;9m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::mechanisms::X255` is not implemented for `ClientImplementation<NRFSyscall>`[0m
+[0m[1m[38;5;12m100[0m[0m [0m[0m[1m[38;5;12m| [0m[0m    buttons: [Option<InPin>; 8],[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m    [0m[0m[1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
 [0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:26[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                         [0m[0m[1m[38;5;10m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(dead_code)]` on by default[0m
 
-[0m[1m[38;5;9merror[E0277][0m[0m[1m: the trait bound `ClientImplementation<NRFSyscall>: trussed::client::mechanisms::HmacSha256` is not satisfied[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/main.rs:117:13[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m117[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        prov_app: provisioner_app::Provisioner<StickStore, flash::FlashStorage, TrussedNRFClient>,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                  [0m[0m[1m[38;5;9m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mthe trait `trussed::client::mechanisms::HmacSha256` is not implemented for `ClientImplementation<NRFSyscall>`[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;10mnote[0m[0m: required by a bound in `Provisioner`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0m/home/dariball/dev/nitrokey-3-firmware/components/provisioner-app/src/lib.rs:129:41[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m129[0m[0m [0m[0m[1m[38;5;12m| [0m[0m      T: TrussedClient + client::X255 + client::HmacSha256,[0m
-[0m    [0m[0m[1m[38;5;12m| [0m[0m                                        [0m[0m[1m[38;5;10m^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;10mrequired by this bound in `Provisioner`[0m
-
-[0m[1mFor more information about this error, try `rustc --explain E0277`.[0m
-[0m[0m[1m[33mwarning[0m[1m:[0m `runner` (bin "runner") generated 1 warning
-[0m[0m[1m[31merror[0m[1m:[0m could not compile `runner` due to 8 previous errors; 1 warning emitted
+[0m[0m[1m[33mwarning[0m[1m:[0m `runner` (bin "runner") generated 8 warnings
+[0m[0m[1m[32m    Finished[0m release [optimized + debuginfo] target(s) in 14.45s
