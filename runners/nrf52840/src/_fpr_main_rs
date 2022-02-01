@@ -1,0 +1,651 @@
+use serialport::SerialPort;
+pub(crate) use std::{io, time::Duration};
+
+#[derive(Debug)]
+pub enum FPRError {
+    InitFailed,
+    ReadError,
+    WriteError,
+    BufferOverrun,
+    HeaderError,
+    ChecksumError,
+    PacketParseError,
+    UnknownError,
+}
+
+#[derive(Copy, Clone)]
+enum PacketType {
+    Command = 0x01,          //Command from Host to module
+    DataIntermediate = 0x02, //Data packet, more packets following
+    Response = 0x07,         //Acknowledgement
+    DataLast = 0x08,         //Last data packet, no more following
+}
+
+#[repr(u8)]
+enum ResponseCode {
+    RET_OK = 0x00,                //success
+    RET_InvalidPacket = 0x01,     //Invalid Packet
+    RET_NoFinger = 0x02,          //Sensor did not detect finger
+    RET_StoreImageFail = 0x03,    //Failed to save image in Image Buffer
+    RET_TooLowQuality = 0x06,     //Image quality is too poor to extract features
+    RET_TooFewPoint = 0x07,       //Too few feature points to extract features
+    RET_NotMatched = 0x08,        //Inconsistent fingerprint template matching
+    RET_NotIdentified = 0x09,     //No matching fingerprints
+    RET_MergeFail = 0x0A,         //Merge feature failure
+    RET_InvalidTempID = 0x0B,     //Invalid template ID
+    RET_ReadTempFail = 0x0C,      //Failed to read template from database
+    RET_UpTempFail = 0x0D,        //Failed to upload template
+    RET_ModBusyErr = 0x0E,        //The module is busy to receive the data packet now
+    RET_UpImgFail = 0x0F,         //Failure to upload image
+    RET_RemoveTempFail = 0x10,    //Failed to delete template from database
+    RET_RemoveAllFail = 0x11,     //Failed to delete all templates from the database
+    RET_InvalidPwd = 0x13,        //Invalid password
+    RET_InvalidImg = 0x15,        //There is no valid image data in Image Buffer
+    RET_LatentFP = 0x17,          //Latent Fingerprint
+    RET_DBFull = 0x1F,            //Database full
+    RET_InvalidMAddr = 0x20,      //Illegal module address
+    RET_NeedVfyPwd = 0x21,        //The password needs to be verified
+    RET_IDDuplicate = 0x22,       //There are duplicate IDs
+    RET_TemplateEmpty = 0x23,     //Template is empty
+    RET_DBBitEmpty = 0x24,        //Database Bit is empty
+    RET_InvalidFeatureNum = 0x25, //Invalid number of features
+    RET_Timeout = 0x26,           //Timeout
+    RET_FPDuplicate = 0x27,       //There are duplicate Fingerprints in DB
+    RET_Busy = 0x37,              //Busy
+}
+
+enum CommandCode {
+    GetImg = 0x01,        //Getting fingerprint images for verification
+    Img2Tz = 0x02,        //Feature extraction from fingerprint image
+    Match = 0x03,         //Comparing two fingerprint features
+    Search = 0x04, //Fingerprint identification and comparison within all or specified partially registered fingerprint feature libraries
+    RegModel = 0x05, //Combining 2-3 fingerprint features into a fingerprint registration template
+    StoreModel = 0x06, //Store registration template in FLASH
+    LoadChar = 0x07, //Read a template from FLASH into the cache
+    UpChar = 0x08, //Upload the feature template of the buffer to the host computer
+    DownChar = 0x09, //Download a feature template from the host computer to the buffer
+    UpImage = 0x0A, //Upload the fingerprint image of the buffer to the host computer
+    DeleteChar = 0x0C, //Delete a feature from FLASH
+    Empty = 0x0D,  //Clear FLASH Fingerprint Database
+    SetSysPara = 0x0E, //Set Module Parameters
+    ReadSysPara = 0x0F, //Read Module Parameters
+    SetPwd = 0x12, //Set Module Password
+    VfyPwd = 0x13, //Verify Module Password
+    SetAddr = 0x15, //Set Module Address
+    ReadINFPage = 0x16, //Read information page content
+    WriteNotePad = 0x18, //Write a 32-byte Notepad
+    ReadNotePad = 0x19, //Read a 32-byte Notepad
+    HISearch = 0x1b, //Search and identify quickly
+    TemplateNum = 0x1D, //Read the number of templates in the database
+    ReadConList = 0x1F, //Read available tags of templates in the database
+    Cancel = 0x30, //Cancel instruction
+    AutoEnroll = 0x31, //Automatic fingerprint Enrollment
+    AutoIdentify = 0x32, //Automatic fingerprint Indentification
+    GetMinEmptyID = 0xA0, //Get the minimum empty ID
+}
+
+enum Baudrate {
+    //Multiple of 9600
+    b9600 = 1,
+    b19200 = 2,
+    b28800 = 3,
+    b38400 = 4,
+    b48000 = 5,
+    b57600 = 6,
+    b67200 = 7,
+    b76800 = 8,
+    b86400 = 9,
+    b96000 = 10,
+    b105600 = 11,
+    b115200 = 12,
+}
+
+#[derive(Copy, Clone)]
+enum PacketSize {
+    //32Byte * 2^s
+    s32 = 0,
+    s64 = 1,
+    s128 = 2,
+    s256 = 3,
+}
+
+enum SecurityLevel {
+    lowest = 1,
+    low = 2,
+    med = 3,
+    high = 4,
+    highest = 5,
+}
+
+pub struct Fingerprint {
+    uart: Box<dyn SerialPort>,
+    baudrate: u16,
+    address: u32,
+    packet_size: PacketSize,
+}
+
+impl Fingerprint {
+    pub fn open_serial_port(portname: String, baudrate: u32) -> Box<dyn serialport::SerialPort> {
+        let port = serialport::new(portname, baudrate)
+            .stop_bits(serialport::StopBits::Two)
+            .parity(serialport::Parity::None)
+            .data_bits(serialport::DataBits::Eight)
+            .timeout(Duration::from_millis(10))
+            .open()
+            .expect("No Port found");
+        return port;
+    }
+
+    fn send_packet(&mut self, packet_type: PacketType, content: &[u8]) -> Result<(), FPRError> {
+        let data_len = content.len();
+        if data_len > 32 * (1 << (self.packet_size as u8)) {
+            return Err(FPRError::BufferOverrun);
+        }
+        let mut pck: [u8; 267] = [0; 267]; //max. 256 Byte data + 9 Byte of header + 2 Byte of Checksum = 267 Byte
+        pck[0] = 0xEF; //Magic Number               1Byte
+        pck[1] = 0x01; //Magic Number               1Byte
+        pck[2] = (self.address >> 24) as u8; //Device address             4Byte
+        pck[3] = (self.address >> 16) as u8;
+        pck[4] = (self.address >> 8) as u8;
+        pck[5] = (self.address >> 0) as u8;
+        pck[6] = packet_type as u8; //Packet Type                1Byte
+        pck[7] = ((data_len + 2) >> 8) as u8; //Packet Length				 2 Byte
+        pck[8] = ((data_len + 2) >> 0) as u8;
+        for i in 0..data_len {
+            pck[9 + i] = content[i]; //Content					 NByte (up to 256)
+        }
+        let mut checksum: u16 = 0;
+        for i in 6..(9 + data_len)
+        //Calculate checksum (from PacketType to Content)
+        {
+            checksum = checksum + (pck[i] as u16) //Unsigned overflow allowed in rust
+        }
+        pck[9 + data_len] = (checksum >> 8) as u8; //Checksum high byte
+        pck[10 + data_len] = (checksum >> 0) as u8; //Checksum low byte
+        self.uart
+            .write(&pck[0..(9 + data_len + 2)])
+            .map_err(|_| FPRError::WriteError)?;
+        println!(" Send packet {:?}", &pck[0..(9 + data_len + 2)]);
+        Ok(())
+    }
+
+    fn match_packet_type(&self, value: u8) -> Result<PacketType, FPRError> {
+        let retval: PacketType;
+        match value {
+            0x01 => retval = PacketType::Command,
+            0x02 => retval = PacketType::DataIntermediate,
+            0x07 => retval = PacketType::Response,
+            0x08 => retval = PacketType::DataLast,
+            _ => {
+                return Err(FPRError::PacketParseError);
+            }
+        }
+        return Ok(retval);
+    }
+
+    fn ReceivePacket(&mut self, retbuf: &mut [u8; 256]) -> Result<(PacketType, u16), FPRError> {
+        let mut pck_header: [u8; 9] = [0; 9]; //Packet header
+        let mut pck_checksum: [u8; 2] = [0; 2]; //Packet data (256 Byte max.) + 2 Byte checksum
+        self.uart
+            .read_exact(&mut pck_header)
+            .map_err(|_| FPRError::ReadError)?; //Read the header only
+        println!(" Receive Header {:?}", &pck_header);
+        if pck_header[0] != 0xEF
+            || pck_header[1] != 0x01
+            || pck_header[2] != ((self.address >> 24) as u8)
+            || pck_header[3] != ((self.address >> 16) as u8)
+            || pck_header[4] != ((self.address >> 8) as u8)
+            || pck_header[5] != ((self.address >> 0) as u8)
+        {
+            return Err(FPRError::HeaderError);
+        }
+        let packet_type: PacketType = self.match_packet_type(pck_header[6])?; //Packet type
+        let payload_length: u16 = ((pck_header[7] as u16) << 8) + (pck_header[8] as u16); //Payload and checksum
+        self.uart
+            .read(&mut retbuf[0..(payload_length as usize - 2)])
+            .map_err(|_| FPRError::ReadError)?; //Read the data
+        println!(
+            " Receive Data {:?}",
+            &retbuf[0..(payload_length as usize - 2)]
+        );
+        self.uart
+            .read(&mut pck_checksum)
+            .map_err(|_| FPRError::ReadError)?;
+        println!(" Receive Checksum {:?}", &pck_checksum);
+        let mut checksum: u16 = (packet_type as u8) as u16;
+        checksum = checksum + payload_length;
+        for i in 0..((payload_length as usize) - 2)
+        //Calculate checksum (from PacketType to Content)
+        {
+            checksum = checksum + (retbuf[i] as u16); //Unsigned overflow allowed in rust
+        }
+        let checksum_received: u16 = ((pck_checksum[0] as u16) << 8) + (pck_checksum[1] as u16);
+        if checksum_received != checksum {
+            return Err(FPRError::ChecksumError);
+        }
+        return Ok((packet_type, payload_length - 2));
+    }
+
+    fn SendCommand(&mut self, command: CommandCode, content: &[u8]) -> Result<(), FPRError> {
+        let content_length = content.len();
+        let mut pck_data: [u8; 256] = [0; 256]; //Packet data (256 Byte max., no header)
+        pck_data[0] = command as u8;
+        if content_length > 0 {
+            for i in 0..content_length {
+                pck_data[i + 1] = content[i];
+            }
+        }
+        self.send_packet(
+            PacketType::Command,
+            &pck_data[0..((content_length as usize) + 1)],
+        )?;
+        return Ok(());
+    }
+
+    fn GetAcknowledgement(&mut self) -> Result<u8, FPRError> {
+        let mut retbuf: [u8; 256] = [0; 256];
+        let _ack = self.ReceivePacket(&mut retbuf)?;
+        let responsecode = retbuf[0];
+        return Ok(responsecode);
+    }
+
+    fn ReceiveData(&mut self, pck_data: &mut [u8; 1024]) -> Result<usize, FPRError> {
+        let mut pck_data_used = 0;
+        let mut pck_temp: [u8; 256] = [0; 256];
+        loop {
+            let ack = self.ReceivePacket(&mut pck_temp)?;
+            let content_length = ack.1;
+            for i in 0..content_length as usize {
+                pck_data[i + pck_data_used] = pck_temp[i];
+            }
+            pck_data_used += content_length as usize;
+            if ((ack.0 as u8) == (PacketType::DataLast as u8)) || (pck_data_used > (1024 - 256)) {
+                break;
+            }
+        }
+        return Ok(pck_data_used);
+    }
+
+    fn SendData(&mut self, content: &[u8]) -> Result<(), FPRError> {
+        let packetsize_bytes: u16 = 32 * (1 << (self.packet_size as u8)); //size of content
+        let number_of_packets: u16 =
+            ((content.len() as u16) + packetsize_bytes - 1) / packetsize_bytes; //
+        for i in 0..((number_of_packets - 1) as usize) {
+            let lower_index = i * (packetsize_bytes as usize);
+            let upper_index = (i + 1) * (packetsize_bytes as usize);
+            self.send_packet(
+                PacketType::DataIntermediate,
+                &content[lower_index..upper_index],
+            )?;
+        }
+        let lower_index = ((number_of_packets - 1) * packetsize_bytes) as usize;
+        let upper_index = content.len() as usize;
+        self.send_packet(PacketType::DataLast, &content[lower_index..upper_index])?;
+        return Ok(());
+    }
+
+    fn SetAddress(&mut self, newAddress: u32) -> Result<u8, FPRError> {
+        let mut addr: [u8; 4] = [0; 4];
+        addr[0] = (newAddress >> 24) as u8;
+        addr[1] = (newAddress >> 16) as u8;
+        addr[2] = (newAddress >> 8) as u8;
+        addr[3] = (newAddress >> 0) as u8;
+        self.SendCommand(CommandCode::SetAddr, &addr)?;
+        self.address = newAddress;
+        return self.GetAcknowledgement();
+    }
+
+    fn SetBaudRate(&mut self, baudrate: Baudrate) -> Result<u8, FPRError> {
+        let mut data: [u8; 2] = [0; 2];
+        let BaudRateRegister: u8 = 4;
+        data[0] = BaudRateRegister;
+        data[1] = baudrate as u8;
+        self.SendCommand(CommandCode::SetSysPara, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn SetSecurityLevel(&mut self, SecLevel: SecurityLevel) -> Result<u8, FPRError> {
+        let mut data: [u8; 2] = [0; 2];
+        let SecLevelRegister: u8 = 5;
+        data[0] = SecLevelRegister;
+        data[1] = SecLevel as u8;
+        self.SendCommand(CommandCode::SetSysPara, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn SetPacketSize(&mut self, packetsize: PacketSize) -> Result<u8, FPRError> {
+        let mut data: [u8; 2] = [0; 2];
+        let PacketSizeRegister: u8 = 6;
+        data[0] = PacketSizeRegister;
+        data[1] = packetsize as u8;
+        self.SendCommand(CommandCode::SetSysPara, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn GetImage(&mut self) -> Result<u8, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        self.SendCommand(CommandCode::GetImg, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn ExtractFeatures(&mut self, feature_buffer: u8) -> Result<u8, FPRError> {
+        let mut data: [u8; 1] = [0; 1];
+        data[0] = feature_buffer;
+        self.SendCommand(CommandCode::Img2Tz, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn MatchFeatureBuffers(&mut self) -> Result<u16, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        let mut retbuf: [u8; 256] = [0; 256];
+        self.SendCommand(CommandCode::Match, &data)?;
+        let ret = self.ReceivePacket(&mut retbuf)?;
+        let mut score: u16 = 0;
+        if retbuf[0] == (ResponseCode::RET_OK as u8) {
+            score = (retbuf[1] as u16) << 8;
+            score = score + (retbuf[2] as u16);
+        }
+        return Ok(score);
+    }
+
+    fn GenerateModel(&mut self) -> Result<u8, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        self.SendCommand(CommandCode::RegModel, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn GetFreeID(&mut self) -> Result<u16, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        let mut retbuf: [u8; 256] = [0; 256];
+        self.SendCommand(CommandCode::GetMinEmptyID, &data)?;
+        let ret = self.ReceivePacket(&mut retbuf)?;
+        let mut id: u16 = 0;
+        if retbuf[0] == (ResponseCode::RET_OK as u8) {
+            id = (retbuf[1] as u16) << 8;
+            id = id + (retbuf[2] as u16);
+            return Ok(id);
+        } else {
+            return Err(FPRError::UnknownError);
+        }
+    }
+
+    fn StoreModel(&mut self, ID: u16) -> Result<u8, FPRError> {
+        let bufferID: u8 = 1;
+        let mut data: [u8; 3] = [0; 3];
+        data[0] = bufferID;
+        data[1] = (ID >> 8) as u8;
+        data[2] = (ID >> 0) as u8;
+        self.SendCommand(CommandCode::StoreModel, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn LoadModel(&mut self, ModelID: u16, bufferID: u8) -> Result<u8, FPRError> {
+        let mut data: [u8; 3] = [0; 3];
+        data[0] = bufferID;
+        data[1] = (ModelID >> 8) as u8;
+        data[2] = (ModelID >> 0) as u8;
+        self.SendCommand(CommandCode::LoadChar, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn GetNumOfModels(&mut self) -> Result<u16, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        let mut retbuf: [u8; 256] = [0; 256];
+        self.SendCommand(CommandCode::TemplateNum, &data)?;
+        let ret = self.ReceivePacket(&mut retbuf)?;
+        let mut numofmodels: u16 = 0;
+        if retbuf[0] == (ResponseCode::RET_OK as u8) {
+            numofmodels = (retbuf[1] as u16) << 8;
+            numofmodels = numofmodels + (retbuf[2] as u16);
+            return Ok(numofmodels);
+        } else {
+            return Err(FPRError::UnknownError);
+        }
+    }
+
+    fn Search_helper(
+        &mut self,
+        bufferID: u8,
+        StartIndex: u16,
+        NumOfDBEntriesToSearch: u16,
+        fastsearch: bool,
+    ) -> Result<(u16, u16), FPRError> {
+        let mut data: [u8; 5] = [0; 5];
+        let mut retbuf: [u8; 256] = [0; 256];
+        data[0] = bufferID;
+        data[1] = (StartIndex >> 8) as u8;
+        data[2] = (StartIndex >> 0) as u8;
+        data[3] = (NumOfDBEntriesToSearch >> 8) as u8;
+        data[4] = (NumOfDBEntriesToSearch >> 0) as u8;
+        let mut cmd = CommandCode::Search;
+        if fastsearch {
+            cmd = CommandCode::HISearch;
+        }
+        self.SendCommand(cmd, &data)?;
+        let ret = self.ReceivePacket(&mut retbuf)?;
+        let mut EntryID: u16 = 0;
+        let mut Score: u16 = 0;
+        if retbuf[0] == (ResponseCode::RET_OK as u8) {
+            EntryID = (retbuf[1] as u16) << 8;
+            EntryID = EntryID + (retbuf[2] as u16);
+            Score = (retbuf[3] as u16) << 8;
+            Score = Score + (retbuf[4] as u16);
+            return Ok((EntryID, Score));
+        } else {
+            return Err(FPRError::UnknownError);
+        }
+    }
+
+    fn Search(
+        &mut self,
+        StartIndex: u16,
+        NumOfDBEntriesToSearch: u16,
+        fastsearch: bool,
+    ) -> Result<(u16, u16), FPRError> {
+        let mut ret: u8 = self.GetImage()?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        ret = self.ExtractFeatures(1)?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        return self.Search_helper(1, StartIndex, NumOfDBEntriesToSearch, fastsearch);
+    }
+
+    fn DeleteModels(&mut self, ModelIDStart: u16, NumOfModels: u16) -> Result<u8, FPRError> {
+        let mut data: [u8; 4] = [0; 4];
+        data[0] = (ModelIDStart >> 8) as u8;
+        data[1] = (ModelIDStart >> 0) as u8;
+        data[2] = (NumOfModels >> 8) as u8;
+        data[3] = (NumOfModels >> 0) as u8;
+        self.SendCommand(CommandCode::DeleteChar, &data);
+        return self.GetAcknowledgement();
+    }
+
+    fn DeleteAllModels(&mut self) -> Result<u8, FPRError> {
+        let data: [u8; 0] = [0; 0];
+        self.SendCommand(CommandCode::Empty, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn SetPassword(&mut self, password: u32) -> Result<u8, FPRError> {
+        let mut data: [u8; 4] = [0; 4];
+        data[0] = (password >> 24) as u8;
+        data[1] = (password >> 16) as u8;
+        data[2] = (password >> 8) as u8;
+        data[3] = (password >> 0) as u8;
+        self.SendCommand(CommandCode::SetPwd, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn VerifyPassword(&mut self, password: u32) -> Result<u8, FPRError> {
+        let mut data: [u8; 4] = [0; 4];
+        data[0] = (password >> 24) as u8;
+        data[1] = (password >> 16) as u8;
+        data[2] = (password >> 8) as u8;
+        data[3] = (password >> 0) as u8;
+        self.SendCommand(CommandCode::VfyPwd, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn CancelOperation(&mut self) -> Result<u8, FPRError> {
+        let mut data: [u8; 0] = [0; 0];
+        self.SendCommand(CommandCode::Cancel, &data)?;
+        return self.GetAcknowledgement();
+    }
+
+    fn ReadInput(&mut self) -> Result<u8, FPRError> {
+        let mut stdin = io::stdin();
+        let mut buf = String::new();
+        stdin.read_line(&mut buf);
+        return Ok(0);
+    }
+
+    fn PrintToScreen(&mut self, msg: String) -> Result<u8, FPRError> {
+        println!("{}", msg);
+        return Ok(0);
+    }
+
+    fn ManualEnroll(&mut self) -> Result<u16, FPRError> //TODO Replace input by corresponding display / input routine<
+    {
+        self.PrintToScreen("Put your finger on the sensor and press enter".to_string())?;
+        self.ReadInput()?;
+        let mut ret: u8 = self.GetImage()?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        ret = self.ExtractFeatures(1)?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        self.PrintToScreen("Take off finger, put it back and press enter".to_string())?;
+        self.ReadInput()?;
+        ret = self.GetImage()?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        ret = self.ExtractFeatures(2)?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        ret = self.GenerateModel()?;
+        if ret != (ResponseCode::RET_OK as u8) {
+            return Err(FPRError::UnknownError);
+        }
+        let ID = self.GetFreeID()?;
+        self.StoreModel(ID)?;
+        return Ok(ID);
+    }
+
+    fn AutoEnroll(
+        &mut self,
+        FingerprintID: u16,
+        ClosePretreatment: bool,
+        AcknowledgeEachStep: bool,
+        OverwriteExistingID: bool,
+        AlreadyRegisteredError: bool,
+        MoveAwayRequired: bool,
+    ) -> Result<u16, FPRError> {
+        let NumOfFeatures: u8 = 2;
+        let mut ControlCode: u16 = 0;
+        let mut data: [u8; 5] = [0; 5];
+        let mut retbuf: [u8; 256] = [0; 256];
+        if ClosePretreatment {
+            ControlCode += 2;
+        }
+        if AcknowledgeEachStep {
+            ControlCode += 4;
+        }
+        if OverwriteExistingID {
+            ControlCode += 8;
+        }
+        if AlreadyRegisteredError {
+            ControlCode += 16;
+        }
+        if MoveAwayRequired {
+            ControlCode += 32;
+        }
+        data[0] = (FingerprintID >> 8) as u8;
+        data[1] = (FingerprintID >> 0) as u8;
+        data[2] = NumOfFeatures;
+        data[3] = (ControlCode >> 8) as u8;
+        data[4] = (ControlCode >> 0) as u8;
+        self.SendCommand(CommandCode::AutoEnroll, &data)?;
+        let mut current_step: u8 = 0;
+        loop {
+            let ret = self.ReceivePacket(&mut retbuf)?;
+            if retbuf[0] != (ResponseCode::RET_OK as u8) {
+                return Err(FPRError::UnknownError);
+            }
+            current_step = retbuf[1];
+            if current_step == 6 {
+                return Ok(FingerprintID);
+            }
+        }
+    }
+
+    fn AutoIdentify(
+        &mut self,
+        IDToCompare: u16,
+        securitylevel: SecurityLevel,
+        ClosePretreatment: bool,
+        AcknowledgeEachStep: bool,
+    ) -> Result<(u16, u16), FPRError> {
+        let mut ControlCode: u16 = 0;
+        let mut id: u16 = 0;
+        let mut score: u16 = 0;
+        let mut data: [u8; 5] = [0; 5];
+        let mut retbuf: [u8; 256] = [0; 256];
+        if ClosePretreatment {
+            ControlCode += 2;
+        }
+        if AcknowledgeEachStep {
+            ControlCode += 4;
+        }
+        data[0] = securitylevel as u8;
+        data[1] = (IDToCompare >> 8) as u8;
+        data[2] = (IDToCompare >> 0) as u8;
+        data[3] = (ControlCode >> 8) as u8;
+        data[4] = (ControlCode >> 0) as u8;
+        self.SendCommand(CommandCode::AutoIdentify, &data)?;
+        let mut current_step: u8 = 0;
+        loop {
+            let ret = self.ReceivePacket(&mut retbuf)?;
+            if retbuf[0] != (ResponseCode::RET_OK as u8) {
+                return Err(FPRError::UnknownError);
+            }
+            current_step = retbuf[1];
+            if current_step == 0 {
+                id = (retbuf[2] as u16) * 256 + (retbuf[3] as u16);
+                score = (retbuf[4] as u16) * 256 + (retbuf[5] as u16);
+                return Ok((id, score));
+            }
+        }
+    }
+}
+
+fn main() {
+    let portname = "/dev/ttyUSB1";
+    let baudrate = 57600;
+    let address = 0x00000001;
+    let packet_size = PacketSize::s32;
+    let mut serial = Fingerprint::open_serial_port(portname.to_string(), baudrate);
+    serial.set_timeout(Duration::new(5, 0));
+    let mut fp: Fingerprint = Fingerprint {
+        uart: serial,
+        baudrate: baudrate as u16,
+        address: address,
+        packet_size: packet_size,
+    };
+    //let res =fp.GetImage();
+    //let res =fp.ManualEnroll();
+    let res = fp.Search(0, 10, true);
+    if (res.is_err()) {
+        println!("error");
+
+        println!("{:?}", res.unwrap_err() as u8);
+    } else {
+        println!("ok : {:?}", res);
+    }
+}

@@ -1,0 +1,40 @@
+Prototype
+---------
+
+ExtFlash JEDEC c8 40 15		=> GigaDevice Semiconductor GD25Q16C
+	korr.: 7f 7f 7f 7f 7f 7f c8 40 15
+SFDP HEADER 50444653 ff010100
+SFDP [008]: 09010000 ff000030
+ par[030] : fff120e5 00ffffff	-> 16 Mbit
+ par[038] : 6b08eb44 bb423b08
+ par[040] : ffffffee ff00ffff
+ par[048] : ff00ffff 520f200c
+ par[050] : ff00d810 ffffffff
+ par[058] : ffffffff ffffffff
+ par[060] : 27003600 64ff799e
+ par[068] : ffffebfc ffffffff
+ par[070] : ffffffff ffffffff
+SFDP [010]: 030100c8 ff000060
+ par[060] : 27003600 64ff799e
+ par[068] : ffffebfc ffffffff
+ par[070] : ffffffff ffffffff
+
+DevKit
+------
+
+ExtFlash JEDEC c2 28 17		=> Macronix MX25R6435F
+SFDP HEADER 50444653 ff020106
+SFDP [008]: 10010600 ff000030
+ par[030] : fff120e5 03ffffff	-> 64 Mbit
+ par[038] : 6b08eb44 bb043b08
+ par[040] : ffffffee ff00ffff
+ par[048] : ff00ffff 520f200c
+ par[050] : ff00d810 00f57223
+ par[058] : cc04ed82 44488344
+ par[060] : b030b030 5cd5c4f7
+ par[068] : ff29be00 ffffd0f0
+SFDP [010]: 040100c2 ff000110
+ par[110] : 16503600 64c0f99d
+ par[118] : ffffcffe ffffffff
+SFDP [018]: 02010084 ff0000c0
+ par[0c0] : fff00000 ffffffff

@@ -1,0 +1,8 @@
+/symbols*.txt
+data/*.bmp
+data/*.raw
+deployment/fs.*
+deployment/list_fs
+deployment/gen_init_fs
+/flashdump*.raw
+/deny.log

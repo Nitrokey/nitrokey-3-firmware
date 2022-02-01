@@ -18,6 +18,8 @@ use core::convert::TryFrom;
 
 use trussed::types::LfsStorage;
 
+pub const FILESYSTEM_BOUNDARY: usize = 0x8_0000;
+
 use littlefs2::path::{PathBuf};
 use trussed::store::{self, Store};
 use trussed::{
@@ -31,7 +33,9 @@ use apdu_dispatch::iso7816::{Status, Instruction};
 use apdu_dispatch::app::Result as ResponseResult;
 use apdu_dispatch::{Command, response, command::SIZE as CommandSize, response::SIZE as ResponseSize};
 
-use lpc55_hal as hal;
+#[cfg_attr(feature = "lpc55", path = "board_lpc55.rs")]
+#[cfg_attr(feature = "nrf52", path = "board_nrf52.rs")]
+mod board;
 
 //
 const SOLO_PROVISIONER_AID: [u8; 9] = [ 0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
@@ -99,7 +103,6 @@ enum TestAttestationP1 {
     Ed255Cert= 3,
     X255Agree = 4,
     X255Cert = 5,
-    T1Key = 6,
 }
 
 
@@ -364,12 +367,12 @@ where S: Store,
                         SaveT1IntermediatePublicKey => {
                             info!("saving T1 INTERMEDIATE PUBLIC KEY, {} bytes", command.data().len());
                             let public_key = &command.data();
-                            if public_key.len() != 64 {
+                            if public_key.len() != 32 {
                                 Err(Status::IncorrectDataParameter)
                             } else {
                                 let serialized_key = Key {
                                     flags: Default::default(),
-                                    kind: KeyKind::P256,
+                                    kind: KeyKind::Ed255,
                                     material: Vec::from_slice(&public_key).unwrap(),
                                 };
 
@@ -498,16 +501,6 @@ where S: Store,
                                     reply.extend_from_slice(&cert).unwrap();
                                     Ok(())
                                 }
-                                _x if p1 == TestAttestationP1::T1Key as u8 => {
-                                    let key: Message = store::read(self.store,
-                                        trussed::types::Location::Internal,
-                                        &PathBuf::from(FILENAME_T1_PUBLIC),
-                                    ).map_err(|_| Status::NotFound)?;
-                                     let key = Key::try_deserialize(&key[..])
-                                         .map_err(|_| Status::WrongLength)?;
-                                    reply.extend_from_slice(&key.material).unwrap();
-                                    Ok(())
-                                }
                                 _ => Err(Status::FunctionNotSupported)
 
                             }
@@ -516,17 +509,12 @@ where S: Store,
 
                         GetUuid => {
                             // Get UUID
-                            reply.extend_from_slice(&hal::uuid()).unwrap();
+                            reply.extend_from_slice(&board::uuid()).unwrap();
                             Ok(())
                         },
                         BootToBootrom => {
-                            // Boot to bootrom via flash 0 page erase
-                            use hal::traits::flash::WriteErase;
-                            let flash = unsafe { hal::peripherals::flash::Flash::steal() }.enabled(
-                                &mut unsafe { hal::peripherals::syscon::Syscon::steal()}
-                            );
-                            hal::drivers::flash::FlashGordon::new(flash).erase_page(0).ok();
-                            hal::raw::SCB::sys_reset()
+                            board::boot_to_bootrom();
+                            Ok(())
                         },
 
                     }
@@ -577,7 +565,7 @@ where S: Store,
         self.buffer_file_contents.clear();
         self.buffer_filename.clear();
         // For manufacture speed, return uuid on select
-        reply.extend_from_slice(&hal::uuid()).unwrap();
+        reply.extend_from_slice(&board::uuid()).unwrap();
         Ok(())
     }
 
