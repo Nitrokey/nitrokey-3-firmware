@@ -87,16 +87,18 @@ impl SpriteMap {
 macro_rules! draw_sprite {
 ($dsp:expr, $map:ident, $idx:expr, $px:expr, $py:expr) => {
 	$map.draw($idx, $dsp.buf, 0).ok();
-	$dsp.dsp.blit_at(&$dsp.buf[0..($map.width*$map.height*2) as usize], $px, $py, $map.width, $map.height);
+	$dsp.dsp.as_ref().unwrap().blit_at(&$dsp.buf[0..($map.width*$map.height*2) as usize], $px, $py, $map.width, $map.height);
 }}
 
 //////////////////////////////////////////////////////////////////////////////
 // UI
 //////////////////////////////////////////////////////////////////////////////
 
+
+
 pub struct StickUI {
 	buf: &'static mut [u8; 2048],
-	dsp: Display,
+	dsp: Option<Display>,
 	buttons: [Option<InPin>; 8],
 	leds: [Option<OutPin>; 4],
 	state: StickUIState,
@@ -105,9 +107,15 @@ pub struct StickUI {
 }
 
 impl StickUI {
-	pub fn new(mut dsp: Display, buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4]) -> Self {
+	pub fn new(mut dsp: Option<Display>, buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4]) -> Self {
 		let xbuf = unsafe { &mut DISPLAY_BUF };
-		dsp.power_on();
+		match dsp {
+			Some(ref mut p) => p.power_on(),
+			None => {
+				debug!("no display provided");
+			}
+		}
+		
 		Self {
 			buf: xbuf, dsp, buttons, leds,
 			state: StickUIState::PreInitGarbled,
@@ -116,11 +124,21 @@ impl StickUI {
 	}
 
 	pub fn power_on(&mut self) {
-		self.dsp.power_on();
+		match self.dsp {
+			Some(ref mut p) => p.power_on(),
+			None => {
+				debug!("no display");
+			}
+		}
 	}
 
 	pub fn power_off(&mut self) {
-		self.dsp.power_off();
+		match self.dsp {
+			Some(ref mut p) => p.power_off(),
+			None => {
+				debug!("no display");
+			}
+		}
 		self.state = StickUIState::PoweredDown;
 	}
 
@@ -177,9 +195,18 @@ impl StickUI {
 			StickBatteryState::Charging(x) => { charge_ani_frame(t, x) },
 			StickBatteryState::Discharging(x) => { charge_ani_frame(0, x) }
 			};
-			draw_sprite!(self, BATTERY_MAP, battsprite, 240-26, 2);
-			BATTERY_MAP.draw(battsprite, self.buf, 0).ok();
-			self.dsp.blit_at(&self.buf[0..25*10*2], 240-26, 2, 25, 10);
+			
+			
+			match self.dsp {
+				Some(ref mut p) => {
+					//draw_sprite!(&self, BATTERY_MAP, battsprite, 240-26, 2);
+					BATTERY_MAP.draw(battsprite, self.buf, 0).ok();
+					p.blit_at(&self.buf[0..25*10*2], 240-26, 2, 25, 10);
+				},
+				None => {
+					debug!("no display");
+				}
+			}
 			self.update_due = t + 8;
 			}
 		StickUIState::PoweredDown => {}
@@ -208,7 +235,13 @@ impl StickUI {
 		while cx_ < 26 && txtoff < txtlen {
 			let chklen = min(min(26 - cx_, txtlen - txtoff), 6);
 			self.prepare_text(&txt[txtoff as usize..(txtoff+chklen) as usize]);
-			self.dsp.blit_at(&self.buf[0..(chklen*9*18*2) as usize], (cx_*9)+1, (cy*19)+1, chklen*9, 18);
+			
+			match self.dsp {
+				Some(ref mut p) => p.blit_at(&self.buf[0..(chklen*9*18*2) as usize], (cx_*9)+1, (cy*19)+1, chklen*9, 18),
+				None => {
+					debug!("no display");
+				}
+			}
 			cx_ += chklen;
 			txtoff += chklen;
 		}
@@ -245,7 +278,13 @@ impl StickUI {
 	fn tile_bg(&mut self) {
 		for x in 0..4 {
 			for y in 0..9 {
-				self.dsp.blit_at(&self.buf[0..60*15*2], x*60, y*15, 60, 15);
+				//self.dsp.blit_at(&self.buf[0..60*15*2], x*60, y*15, 60, 15);
+				match self.dsp {
+					Some(ref mut p) => p.blit_at(&self.buf[0..60*15*2], x*60, y*15, 60, 15),
+					None => {
+						debug!("no display");
+					}
+				}
 			}
 		}
 	}

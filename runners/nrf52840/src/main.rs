@@ -28,11 +28,12 @@ use trussed::{
 extern crate delog;
 delog::generate_macros!();
 
-#[cfg(not(any(feature = "board-nrfdk", feature = "board-proto1")))]
+#[cfg(not(any(feature = "board-nrfdk", feature = "board-proto1", feature = "board-nk3mini")))]
 compile_error!{"No board target chosen! Set your board using --feature; see Cargo.toml."}
 
 #[cfg_attr(feature = "board-nrfdk", path = "board_nrfdk.rs")]
 #[cfg_attr(feature = "board-proto1", path = "board_proto1.rs")]
+#[cfg_attr(feature = "board-nk3mini", path = "board_nk3mini.rs")]
 mod board;
 
 mod extflash;
@@ -163,13 +164,13 @@ const APP: () = {
 		let mut board_gpio = board::init_gpio(&gpiote, p0, p1);
 		gpiote.reset_events();
 
-		debug!("UART");
+		/*debug!("UART");
 
 		let uart = Uarte::new(ctx.device.UARTE0, board_gpio.uart_pins.take().unwrap(),
 				Parity::EXCLUDED, Baudrate::BAUD57600
-		);
+		);*/
 
-		debug!("Display");
+		/*debug!("Display");
 
 		if board_gpio.display_power.is_some() {
 			board_gpio.display_power.as_mut().unwrap().set_low().ok();
@@ -181,29 +182,32 @@ const APP: () = {
 		);
 		let di_spi = display_interface_spi::SPIInterfaceNoCS::new(spi, board_gpio.display_dc.take().unwrap());
 		let dsp_st7789 = picolcd114::ST7789::new(di_spi, board_gpio.display_reset.take().unwrap(), 240, 135, 40, 53);
-
+		
 		// dsp_st7789.init(&mut delay_provider).unwrap();
 
 		let disp = ui::Display::new(dsp_st7789,
 				board_gpio.display_backlight.take().unwrap(),
 				board_gpio.display_power.take());
-		let ui = ui::StickUI::new(disp, board_gpio.buttons, board_gpio.leds);
-
+		*/
+		let ui = ui::StickUI::new(None, board_gpio.buttons, board_gpio.leds);
+		
 		debug!("Internal Flash");
 
 		let stickflash = flash::FlashStorage::new(ctx.device.NVMC, 0x000E_0000 as *mut u32, flash::FLASH_SIZE as usize);
 
 		debug!("External Flash");
 
-		let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flashnfc_spi.take().unwrap(),
+		/*let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flashnfc_spi.take().unwrap(),
 			nrf52840_hal::spim::Frequency::M2,
 			nrf52840_hal::spim::MODE_0,
 			0x00u8,
 		);
+
 		let mut stickextflash = extflash::ExtFlashStorage::new(&mut spim3,
 					board_gpio.flash_cs.take().unwrap(),
 					board_gpio.flash_power);
 		stickextflash.init(&mut spim3);
+		*/
 
 		debug!("Trussed Store");
 
@@ -269,7 +273,7 @@ const APP: () = {
 
 		let usb_preinit = usb::preinit(ctx.device.USBD, clocks);
 
-		let fprx = {
+		/*let fprx = {
 		if board_gpio.fpr_power.is_some() {
 			debug!("Fingerprint Reader");
 			let fprx_ = fpr::FingerprintReader::new(uart, 0xffff_ffffu32,
@@ -278,7 +282,7 @@ const APP: () = {
 			Some(fprx_)
 		} else {
 			None
-		}};
+		}};*/
 
 		debug!("Finalizing");
 
@@ -293,9 +297,9 @@ const APP: () = {
 			gpiote,
 			ui,
 			trussed_service: srv,
-			finger: fprx,
+			finger: None,
 			pre_usb: Some(usb_preinit),
-			extflash: Some(stickextflash),
+			extflash: None,
 			power,
 			rtc,
 			fido_app,

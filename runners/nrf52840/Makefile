@@ -1,11 +1,11 @@
 SERIAL_NRFDK := 683471542
 SERIAL_PROTO1 := 801035168
 
-DEVICE_IDS_PRESENT := $(shell nrfjprog -i)
-DEVICES_PRESENT := $(if $(findstring $(SERIAL_NRFDK),$(DEVICE_IDS_PRESENT)),nrfdk,)
-DEVICES_PRESENT += $(if $(findstring $(SERIAL_PROTO1),$(DEVICE_IDS_PRESENT)),proto1,)
+#DEVICE_IDS_PRESENT := $(shell nrfjprog -i)
+#DEVICES_PRESENT := $(if $(findstring $(SERIAL_NRFDK),$(DEVICE_IDS_PRESENT)),nrfdk,)
+#DEVICES_PRESENT += $(if $(findstring $(SERIAL_PROTO1),$(DEVICE_IDS_PRESENT)),proto1,)
 #DEVICES_PRESENT += nrfdk
-
+DEVICES_PRESENT := nk3mini
 
 $(info Connected devices: $(DEVICES_PRESENT))
 
@@ -49,6 +49,8 @@ $(eval $(call build-template,proto1,debug))
 $(eval $(call build-template,proto1,release))
 $(eval $(call build-template,nrfdk,debug))
 $(eval $(call build-template,nrfdk,release))
+$(eval $(call build-template,nk3mini,debug))
+$(eval $(call build-template,nk3mini,release))
 
 clean:
 	rm -rf target
@@ -74,6 +76,11 @@ reset-proto1:
 
 reset-nrfdk:
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --chiperase --program $(OUTDIR2)/release/runner-nrfdk.ihex
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program fidokeys_lfs_e0000+20000.ihex
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
+
+reset-nk3mini:
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --chiperase --program $(OUTDIR2)/release/runner-nk3mini.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program fidokeys_lfs_e0000+20000.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
 

@@ -113,6 +113,7 @@ log-warnP = [ "log-warn", "log-error" ]
 ### new features for our own NRF52 port
 board-nrfdk = []
 board-proto1 = []
+board-nk3mini = []
 reformat-flash = []
 
 [profile.release]
