@@ -87,7 +87,7 @@ impl SpriteMap {
 macro_rules! draw_sprite {
 ($dsp:expr, $map:ident, $idx:expr, $px:expr, $py:expr) => {
 	$map.draw($idx, $dsp.buf, 0).ok();
-	$dsp.dsp.as_ref().unwrap().blit_at(&$dsp.buf[0..($map.width*$map.height*2) as usize], $px, $py, $map.width, $map.height);
+	$dsp.dsp.as_mut().unwrap().blit_at(&$dsp.buf[0..($map.width*$map.height*2) as usize], $px, $py, $map.width, $map.height);
 }}
 
 //////////////////////////////////////////////////////////////////////////////
@@ -196,17 +196,15 @@ impl StickUI {
 			StickBatteryState::Discharging(x) => { charge_ani_frame(0, x) }
 			};
 			
-			
-			match self.dsp {
-				Some(ref mut p) => {
-					//draw_sprite!(&self, BATTERY_MAP, battsprite, 240-26, 2);
-					BATTERY_MAP.draw(battsprite, self.buf, 0).ok();
-					p.blit_at(&self.buf[0..25*10*2], 240-26, 2, 25, 10);
-				},
-				None => {
-					debug!("no display");
-				}
+			if self.dsp.is_some() {
+				draw_sprite!(self, BATTERY_MAP, battsprite, 240-26, 2);
+				BATTERY_MAP.draw(battsprite, self.buf, 0).ok();
+				self.dsp.as_mut().unwrap().blit_at(&self.buf[0..25*10*2], 240-26, 2, 25, 10);
+			} else {
+				debug!("no display");
 			}
+			
+
 			self.update_due = t + 8;
 			}
 		StickUIState::PoweredDown => {}
