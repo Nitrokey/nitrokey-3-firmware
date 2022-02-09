@@ -197,7 +197,7 @@ const APP: () = {
 
 		debug!("External Flash");
 
-		/*let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flashnfc_spi.take().unwrap(),
+		let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flashnfc_spi.take().unwrap(),
 			nrf52840_hal::spim::Frequency::M2,
 			nrf52840_hal::spim::MODE_0,
 			0x00u8,
@@ -207,7 +207,7 @@ const APP: () = {
 					board_gpio.flash_cs.take().unwrap(),
 					board_gpio.flash_power);
 		stickextflash.init(&mut spim3);
-		*/
+		
 
 		debug!("Trussed Store");
 
