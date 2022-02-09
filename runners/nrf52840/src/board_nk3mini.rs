@@ -94,7 +94,7 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		display_power: None,
 		se_pins: None,
 		se_power: None,
-		flashnfc_spi: None,
+		flashnfc_spi: Some(flashnfc_spi),
 		flash_cs: Some(flash_spi_cs),
 		flash_power: None,
 		nfc_cs: None,
