@@ -15,11 +15,11 @@ pub fn init_early(_device: &Peripherals, _core: &CorePeripherals) -> () {
 
 pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
 	
-   
-    let t_sense = gpio_p0.p0_04.into_pullup_input().degrade();
-	let t_rst = gpio_p0.p0_06.into_pullup_input().degrade();
+    /* touch sensor */
+    let touch = gpio_p0.p0_04.into_push_pull_output(Level::High).degrade();
+	// not used, just ensure output + low
+	gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
 	
-
     /* Button 1-4: on DK */
 	// let btn3 = gpio_p0.p0_24.into_pullup_input().degrade();
 	// let btn4 = gpio_p0.p0_25.into_pullup_input().degrade();
@@ -30,8 +30,10 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	// let btn7 = gpio_p1.p1_06.into_pullup_input().degrade();
 	// let btn8 = gpio_p1.p1_05.into_pullup_input().degrade();
 
-	gpiote.port().input_pin(&t_sense).low();
-	gpiote.port().input_pin(&t_rst).low();
+	/////////////////////
+	//gpiote.port().input_pin(&t_sense).low();
+	//gpiote.port().input_pin(&t_rst).low();
+
 	// gpiote.port().input_pin(&btn3).low();
 	// gpiote.port().input_pin(&btn4).low();
 	// gpiote.port().input_pin(&btn5).low();
@@ -85,8 +87,9 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	};
 
 	BoardGPIO { buttons: [
-			Some(t_sense), Some(t_rst), None, None, None, None, None, None ],
+			None, None, None, None, None, None, None, None ],
 		leds: [ Some(led_r), Some(led_g), Some(led_b), None ],
+		touch: Some(touch),
 		uart_pins: None,
 		fpr_detect: None,
 		fpr_power: None,

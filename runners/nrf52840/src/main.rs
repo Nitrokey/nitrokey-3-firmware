@@ -189,7 +189,7 @@ const APP: () = {
 				board_gpio.display_backlight.take().unwrap(),
 				board_gpio.display_power.take());
 		*/
-		let ui = ui::StickUI::new(None, board_gpio.buttons, board_gpio.leds);
+		let ui = ui::StickUI::new(None, board_gpio.buttons, board_gpio.leds, board_gpio.touch);
 		
 		debug!("Internal Flash");
 
@@ -341,6 +341,25 @@ const APP: () = {
 		}
 	}
 
+	#[task(priority = 1, resources = [ui], capacity = 4)]
+	#[inline(never)]
+	fn playground(ctx: playground::Context, rtc_count: u32) {
+		if rtc_count % 10 != 0 {
+			return
+		}
+		let playground::Resources { ui } = ctx.resources;
+		debug!("hello from playground...");
+		
+		if ui.is_user_present() {
+			debug!("user present!");
+		}
+		//debug!("no display - idle");
+		//debug!("step");
+
+		
+	}
+
+
 	#[task(priority = 1, resources = [usb_dispatcher, fido_app, admin_app, piv_app, prov_app])]
 	#[inline(never)]
 	fn userspace_apps(ctx: userspace_apps::Context) {
@@ -459,7 +478,7 @@ const APP: () = {
 		}
 	}
 
-	#[task(priority = 4, binds = RTC0, resources = [rtc], spawn = [frontend, userspace_apps, comm_keepalives, try_system_off])]
+	#[task(priority = 4, binds = RTC0, resources = [rtc], spawn = [playground, frontend, userspace_apps, comm_keepalives, try_system_off])]
 	fn rtc_handler(ctx: rtc_handler::Context) {
 		let rtc_count = ctx.resources.rtc.get_counter();
 		debug!("irq RTC {:x}", rtc_count);
@@ -470,6 +489,7 @@ const APP: () = {
 		}
 		ctx.spawn.frontend(FrontendOp::RefreshUI(rtc_count)).ok();
 		ctx.spawn.userspace_apps().ok();
+		ctx.spawn.playground(rtc_count).ok();
 
 		if (rtc_count >= 600*8) && (rtc_count % (10*8) == 0) {
 			/* SYSTEM OFF experiments start at sysboot+60s */

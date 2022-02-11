@@ -4,17 +4,20 @@ use embedded_graphics::{
 	pixelcolor::{RgbColor, Rgb565, raw::RawU16, raw::RawData},
 };
 use nrf52840_hal::{
-	gpio::{Pin, Input, Output, PullUp, PushPull},
+	gpio::{Pin, Input, Output, PullUp, PushPull, Floating, Level},
 	pac::SPIM0,
-	prelude::OutputPin,
+	prelude::{OutputPin, InputPin},
 	spim::Spim,
 };
 use trussed::{
 	platform::{consent, reboot, ui},
 };
 
+
 type OutPin = Pin<Output<PushPull>>;
 type InPin = Pin<Input<PullUp>>;
+type FloatingPin = Pin<Input<Floating>>;
+
 type LLDisplay = picolcd114::ST7789<display_interface_spi::SPIInterfaceNoCS<Spim<SPIM0>, OutPin>, OutPin>;
 
 enum StickUIState {
@@ -101,13 +104,14 @@ pub struct StickUI {
 	dsp: Option<Display>,
 	buttons: [Option<InPin>; 8],
 	leds: [Option<OutPin>; 4],
+	touch: Option<OutPin>,
 	state: StickUIState,
 	update_due: u32,
 	battery_state: StickBatteryState,
 }
 
 impl StickUI {
-	pub fn new(mut dsp: Option<Display>, buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4]) -> Self {
+	pub fn new(mut dsp: Option<Display>, buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4], touch: Option<OutPin>) -> Self {
 		let xbuf = unsafe { &mut DISPLAY_BUF };
 		match dsp {
 			Some(ref mut p) => p.power_on(),
@@ -117,10 +121,11 @@ impl StickUI {
 		}
 		
 		Self {
-			buf: xbuf, dsp, buttons, leds,
+			buf: xbuf, dsp, buttons, leds, touch,
 			state: StickUIState::PreInitGarbled,
 			battery_state: StickBatteryState::Unknown,
-			update_due: 0 }
+			update_due: 0,
+		}
 	}
 
 	pub fn power_on(&mut self) {
@@ -200,11 +205,8 @@ impl StickUI {
 				draw_sprite!(self, BATTERY_MAP, battsprite, 240-26, 2);
 				BATTERY_MAP.draw(battsprite, self.buf, 0).ok();
 				self.dsp.as_mut().unwrap().blit_at(&self.buf[0..25*10*2], 240-26, 2, 25, 10);
-			} else {
-				debug!("no display");
-			}
+			} 
 			
-
 			self.update_due = t + 8;
 			}
 		StickUIState::PoweredDown => {}
@@ -285,6 +287,30 @@ impl StickUI {
 				}
 			}
 		}
+	}
+
+	pub fn is_user_present(&mut self) -> bool {
+		let mut ticks = 0;
+		
+		if let Some(touch) = self.touch.take() {
+			let floating: FloatingPin = touch.into_floating_input();
+
+			for idx in 0..10_000 {
+				match floating.is_low() {
+					Err(e) => { debug!("err!"); },
+					Ok(v) => match v {
+						true => { 
+							ticks = idx; 
+							break; 
+						},
+						false => { }
+					},
+				}
+			}
+			self.touch = Some(floating.into_push_pull_output(Level::High));
+		}
+		/* @todo: define proper value! */
+		ticks > 50
 	}
 }
 

@@ -1,14 +1,16 @@
 use nrf52840_hal::{
-	gpio::{Pin, Input, Output, PushPull, PullDown, PullUp},
+	gpio::{Pin, Input, Output, PushPull, PullDown, PullUp, Floating},
 	spim,
 	twim,
 	uarte,
 };
 
+
 pub struct BoardGPIO {
 	/* interactive elements */
 	pub buttons: [Option<Pin<Input<PullUp>>>; 8],
 	pub leds: [Option<Pin<Output<PushPull>>>; 4],
+	pub touch: Option<Pin<Output<PushPull>>>,
 
 	/* UARTE0 */
 	pub uart_pins: Option<uarte::Pins>,
