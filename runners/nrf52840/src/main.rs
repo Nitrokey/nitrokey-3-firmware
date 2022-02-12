@@ -15,6 +15,7 @@ use nrf52840_hal::{
 	spim::Spim,
 	twim::Twim,
 	uarte::{Baudrate, Parity, Uarte},
+	gpio::Level,
 };
 use rand_core::SeedableRng;
 use rtic::cyccnt::Instant;
@@ -352,11 +353,16 @@ const APP: () = {
 		
 		if ui.is_user_present() {
 			debug!("user present!");
+			ui.set_led(0, Level::High);
+			ui.set_led(1, Level::High);
+			ui.set_led(2, Level::Low);
+		} else {
+			ui.set_led(0, Level::Low);
+			ui.set_led(1, Level::Low);
+			ui.set_led(2, Level::Low);
 		}
 		//debug!("no display - idle");
 		//debug!("step");
-
-		
 	}
 
 

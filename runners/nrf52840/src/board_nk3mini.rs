@@ -42,9 +42,9 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	// gpiote.port().input_pin(&btn8).low();
 
 	/* LEDs */
-	let led_r = gpio_p0.p0_13.into_push_pull_output(Level::High).degrade();
-	let led_g = gpio_p0.p0_14.into_push_pull_output(Level::High).degrade();
-	let led_b = gpio_p0.p0_15.into_push_pull_output(Level::High).degrade();
+	let led_r = gpio_p0.p0_09.into_push_pull_output(Level::High).degrade();
+	let led_g = gpio_p0.p0_10.into_push_pull_output(Level::High).degrade();
+	let led_b = gpio_p1.p1_02.into_push_pull_output(Level::High).degrade();
 	//let led4 = gpio_p0.p0_16.into_push_pull_output(Level::High).degrade();
 
 	/* UART */

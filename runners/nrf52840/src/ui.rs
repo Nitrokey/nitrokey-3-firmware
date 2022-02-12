@@ -312,6 +312,17 @@ impl StickUI {
 		/* @todo: define proper value! */
 		ticks > 50
 	}
+
+	pub fn set_led(&mut self, idx: usize, lvl: Level) {
+		if let Some(led) = &mut self.leds[idx] {
+			match lvl {
+				Level::High => { led.set_high().ok(); }
+				Level::Low => { led.set_low().ok(); }
+			}
+			//debug!("setting led {}", idx);
+		}
+	}
+
 }
 
 fn charge_ani_frame(t: u32, perc: u32) -> u16 {
