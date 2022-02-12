@@ -7,8 +7,8 @@ use crate::hal::{
     peripherals::rtc::Rtc,
     typestates::init_state,
 };
-use crate::traits::buttons::{Press, Edge};
-use crate::traits::rgb_led::RgbLed;
+use crate::soc::traits::buttons::{Press, Edge};
+use crate::soc::traits::rgb_led::RgbLed;
 use trussed::platform::{
     ui,
     reboot,

@@ -6,7 +6,7 @@ include!(concat!(env!("OUT_DIR"), "/build_constants.rs"));
 use panic_halt as _;
 
 use usb_device::device::UsbVidPid;
-use board::clock_controller;
+use board::soc::clock_controller;
 pub use board::hal; // re-export for convenience
 
 #[allow(unused_imports)]

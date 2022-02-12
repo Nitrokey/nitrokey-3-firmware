@@ -56,13 +56,13 @@ store!(Store,
     Volatile: VolatileStorage
 );
 
-pub type ThreeButtons = board::ThreeButtons;
-pub type RgbLed = board::RgbLed;
+pub type ThreeButtons = board::soc::ThreeButtons;
+pub type RgbLed = board::soc::RgbLed;
 
 platform!(Board,
     R: hal::peripherals::rng::Rng<hal::Enabled>,
     S: Store,
-    UI: board::trussed::UserInterface<ThreeButtons, RgbLed>,
+    UI: board::soc::trussed::UserInterface<ThreeButtons, RgbLed>,
 );
 
 #[derive(Default)]
@@ -78,7 +78,7 @@ impl trussed::client::Syscall for Syscall {
 pub type Trussed = trussed::Service<Board>;
 pub type TrussedClient = trussed::ClientImplementation<Syscall>;
 
-pub type Iso14443 = nfc_device::Iso14443<board::nfc::NfcChip>;
+pub type Iso14443 = nfc_device::Iso14443<board::soc::nfc::NfcChip>;
 
 pub type ExternalInterrupt = hal::Pint<hal::typestates::init_state::Enabled>;
 
@@ -121,7 +121,7 @@ pub type ProvisionerApp = provisioner_app::Provisioner<Store, FlashStorage, Trus
 use apdu_dispatch::{App as ApduApp, command::SIZE as CommandSize, response::SIZE as ResponseSize};
 use ctaphid_dispatch::app::{App as CtaphidApp};
 
-pub type DynamicClockController = board::clock_controller::DynamicClockController;
+pub type DynamicClockController = board::soc::clock_controller::DynamicClockController;
 pub type NfcWaitExtender = timer::Timer<ctimer::Ctimer0<hal::typestates::init_state::Enabled>>;
 pub type PerformanceTimer = timer::Timer<ctimer::Ctimer4<hal::typestates::init_state::Enabled>>;
 

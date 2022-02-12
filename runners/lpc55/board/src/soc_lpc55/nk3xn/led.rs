@@ -14,7 +14,7 @@ use crate::hal::{
     Iocon,
 };
 
-use crate::traits::rgb_led;
+use crate::soc::traits::rgb_led;
 
 
 pub enum Color {

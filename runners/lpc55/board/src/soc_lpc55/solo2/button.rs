@@ -15,7 +15,7 @@ use crate::hal::{
     },
 };
 
-use crate::traits::buttons::{
+use crate::soc::traits::buttons::{
     self,
     Button,
 };

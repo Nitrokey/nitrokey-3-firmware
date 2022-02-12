@@ -273,7 +273,7 @@ const APP: () = {
     fn ctaphid_keepalive(c: ctaphid_keepalive::Context) {
         debug!("keepalive");
         let status = c.resources.usb_classes.as_mut().unwrap().ctaphid.send_keepalive(
-            board::trussed::UserPresenceStatus::waiting()
+            board::soc::trussed::UserPresenceStatus::waiting()
         );
         match status {
             usbd_ctaphid::types::Status::ReceivedData(milliseconds) => {

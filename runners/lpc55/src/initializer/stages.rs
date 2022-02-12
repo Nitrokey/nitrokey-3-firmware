@@ -25,7 +25,7 @@ use crate::types;
 /// Initialized clocks, Nfc interrupt pin, Iocon, Gpio.
 pub struct Clock {
     pub clocks: Clocks,
-    pub nfc_irq: Option<hal::Pin<board::nfc::NfcIrqPin, Gpio<direction::Input>>>,
+    pub nfc_irq: Option<hal::Pin<board::soc::nfc::NfcIrqPin, Gpio<direction::Input>>>,
     pub iocon: hal::Iocon<hal::Enabled>,
     pub gpio: hal::Gpio<hal::Enabled>,
 
@@ -40,13 +40,13 @@ pub struct Basic {
     pub pfr: Pfr<hal::Enabled>,
 
     pub adc: Option<hal::Adc<hal::Enabled>>,
-    pub three_buttons: Option<board::ThreeButtons>,
-    pub rgb: Option<board::RgbLed>,
+    pub three_buttons: Option<board::soc::ThreeButtons>,
+    pub rgb: Option<board::soc::RgbLed>,
 }
 
 /// Initialized NFC Iso14443 transport
 pub struct Nfc {
-    pub iso14443: Option<nfc_device::Iso14443<board::nfc::NfcChip>>,
+    pub iso14443: Option<nfc_device::Iso14443<board::soc::nfc::NfcChip>>,
 
     pub contactless_responder: Option<interchange::Responder<apdu_dispatch::interchanges::Contactless>>,
 }

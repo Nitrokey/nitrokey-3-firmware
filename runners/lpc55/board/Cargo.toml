@@ -6,17 +6,25 @@ edition = "2018"
 
 [dependencies]
 delog = "0.1.0"
-fm11nc08 = {path = "../../../components/fm11nc08"}
-lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"] }
+fm11nc08 = { path = "../../../components/fm11nc08", optional = true }
+lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], optional = true }
+nrf52840-hal = { git = "https://github.com/Nitrokey/nrf-hal", rev = "ba2ed35", optional = true }
 nb = "1"
 trussed = { git = "https://github.com/trussed-dev/trussed" }
 
 [features]
-board-lpcxpresso55 = []
-board-okdoe1 = ["board-lpcxpresso55"]
-board-solo2 = []
-board-nk3xn = []
-board-nk3am = ["board-solo2"]
+soc-lpc55 = [ "lpc55-hal", "fm11nc08" ]
+soc-nrf52 = [ "nrf52840-hal" ]
+
+board-lpcxpresso55 = ["soc-lpc55"]
+board-okdoe1 = ["board-lpcxpresso55", "soc-lpc55"]
+board-solo2 = ["soc-lpc55"]
+board-nk3xn = ["soc-lpc55"]
+board-nk3am = ["board-solo2", "soc-lpc55"]
+
+board-nrfdk = ["soc-nrf52"]
+board-ptbproto1 = ["soc-nrf52"]
+board-nk3amnrf = ["soc-nrf52"]
 
 no-buttons = []
 no-clock-controller = []

@@ -60,6 +60,11 @@ jlink:
 	-../../scripts/bump-jlink
 	JLinkGDBServer -strict -device LPC55S69 -if SWD -vd
 
+.PHONY: gottabuildemall
+gottabuildemall:
+	for B in nk3xn nk3am solo2 lpcxpresso55 okdoe1; do \
+		$(MAKE) build BOARD=$$B; \
+	done
 
 PACK_VERSION := $(shell wget -O - -qq https://mcuxpresso.nxp.com/cmsis_pack/repo/NXP.pidx|grep LPC55S69|python -c'import sys; print(sys.stdin.read().rsplit("version=\"", 1)[1].split("\"", 1)[0])')
 PACK := NXP.LPC55S69_DFP.$(PACK_VERSION).pack

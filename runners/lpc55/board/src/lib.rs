@@ -1,39 +1,23 @@
 #![no_std]
 
-pub use lpc55_hal as hal;
-
-pub mod traits;
-
-// board support package
-#[cfg(not(any(feature = "board-lpcxpresso55", feature = "board-solo2", feature = "board-nk3xn")))]
-compile_error!("Please select one of the board features.");
-
-#[cfg(feature = "board-lpcxpresso55")]
-pub mod lpcxpresso55;
-#[cfg(feature = "board-lpcxpresso55")]
-pub use lpcxpresso55 as specifics;
+#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
+compile_error!{"No SoC selected! Did you choose a board feature?"}
 
 #[macro_use]
 extern crate delog;
 generate_macros!();
 
-#[cfg(feature = "board-solo2")]
-pub mod solo2;
-#[cfg(feature = "board-solo2")]
-pub use solo2 as specifics;
+#[cfg(feature = "soc-lpc55")]
+pub use lpc55_hal as hal;
+#[cfg(feature = "soc-lpc55")]
+pub mod soc_lpc55;
+#[cfg(feature = "soc-lpc55")]
+pub use soc_lpc55 as soc;
 
-#[cfg(feature = "board-nk3xn")]
-pub mod nk3xn;
-#[cfg(feature = "board-nk3xn")]
-pub use nk3xn as specifics;
+#[cfg(feature = "soc-nrf52")]
+pub use nrf52840_hal as hal;
+#[cfg(feature = "soc-nrf52")]
+pub mod soc_nrf52;
+#[cfg(feature = "soc-nrf52")]
+pub use soc_nrf52 as soc;
 
-pub use specifics::{
-    button::ThreeButtons,
-    led::RgbLed,
-};
-
-pub mod clock_controller;
-pub mod nfc;
-pub mod trussed;
-
-// pub use rgb_led::RgbLed;

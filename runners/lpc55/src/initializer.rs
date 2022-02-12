@@ -24,9 +24,9 @@ use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 use interchange::Interchange;
 use trussed::platform::UserInterface;
 
-use board::traits::buttons;
-use board::traits::buttons::Press;
-use board::traits::rgb_led::RgbLed;
+use board::soc::traits::buttons;
+use board::soc::traits::buttons::Press;
+use board::soc::traits::rgb_led::RgbLed;
 
 use crate::{types, clock_controller, build_constants};
 
@@ -150,9 +150,9 @@ impl Initializer {
     }
 
     fn enable_low_speed_for_passive_nfc(&mut self, mut iocon: hal::Iocon<hal::Enabled>, gpio: &mut hal::Gpio<hal::Enabled>)
-        -> (hal::Iocon<hal::Enabled>, hal::Pin<board::nfc::NfcIrqPin, Gpio<direction::Input>>)
+        -> (hal::Iocon<hal::Enabled>, hal::Pin<board::soc::nfc::NfcIrqPin, Gpio<direction::Input>>)
     {
-        let nfc_irq = board::nfc::NfcIrqPin::take().unwrap().into_gpio_pin(&mut iocon, gpio).into_input();
+        let nfc_irq = board::soc::nfc::NfcIrqPin::take().unwrap().into_gpio_pin(&mut iocon, gpio).into_input();
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_,w| { w.mode().pull_up() } );
@@ -183,7 +183,7 @@ impl Initializer {
         }
     }
 
-    fn is_bootrom_requested<T: Ctimer<hal::Enabled>>(&mut self, three_buttons: &board::ThreeButtons, timer: &mut Timer<T>) -> bool {
+    fn is_bootrom_requested<T: Ctimer<hal::Enabled>>(&mut self, three_buttons: &board::soc::ThreeButtons, timer: &mut Timer<T>) -> bool {
         // Boot to bootrom if buttons are all held for 5s
         timer.start(5_000_000.microseconds());
         while three_buttons.is_pressed(buttons::Button::A) &&
@@ -228,13 +228,13 @@ impl Initializer {
         clocks: &Clocks,
         iocon: &mut hal::Iocon<hal::Enabled>,
         gpio: &mut hal::Gpio<hal::Enabled>,
-        nfc_irq: hal::Pin<board::nfc::NfcIrqPin, Gpio<direction::Input>>,
+        nfc_irq: hal::Pin<board::soc::nfc::NfcIrqPin, Gpio<direction::Input>>,
         delay_timer: &mut Timer<T>,
 
         flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
         inputmux: hal::peripherals::inputmux::InputMux<Unknown>,
         pint: hal::peripherals::pint::Pint<Unknown>,
-    ) -> Option<board::nfc::NfcChip> {
+    ) -> Option<board::soc::nfc::NfcChip> {
         let token = clocks.support_flexcomm_token().unwrap();
         let syscon = &mut self.syscon;
         let spi = flexcomm0.enabled_as_spi(syscon, &token);
@@ -247,7 +247,7 @@ impl Initializer {
 
         let force_nfc_reconfig = cfg!(feature = "reconfigure-nfc");
 
-        board::nfc::try_setup(
+        board::soc::nfc::try_setup(
             spi,
             gpio,
             iocon,
@@ -302,7 +302,7 @@ impl Initializer {
 
         let clocks = clock_stage.clocks;
 
-        let mut three_buttons: Option<board::ThreeButtons> = None;
+        let mut three_buttons: Option<board::soc::ThreeButtons> = None;
 
         let pmc = &mut self.pmc;
         let syscon = &mut self.syscon;
@@ -312,7 +312,7 @@ impl Initializer {
         let mut adc = Some(if self.is_nfc_passive {
             // important to start Adc early in passive mode
             hal::Adc::from(adc)
-                .configure(board::clock_controller::DynamicClockController::adc_configuration())
+                .configure(board::soc::clock_controller::DynamicClockController::adc_configuration())
                 .enabled(pmc, syscon)
         } else {
             hal::Adc::from(adc)
@@ -327,26 +327,26 @@ impl Initializer {
         let gpio = &mut clock_stage.gpio;
 
         #[cfg(feature = "board-lpcxpresso55")]
-        let mut rgb = board::RgbLed::new(
+        let mut rgb = board::soc::RgbLed::new(
             Pwm::new(_ctimer2.enabled(syscon, clocks.support_1mhz_fro_token().unwrap())),
             iocon,
         );
 
         #[cfg(feature = "board-solo2")]
-        let mut rgb = board::RgbLed::new(
+        let mut rgb = board::soc::RgbLed::new(
             Pwm::new(_ctimer3.enabled(syscon, clocks.support_1mhz_fro_token().unwrap())),
             iocon,
         );
 
         #[cfg(feature = "board-nk3xn")]
-        let mut rgb = board::RgbLed::new(
+        let mut rgb = board::soc::RgbLed::new(
             Pwm::new(_ctimer3.enabled(syscon, clocks.support_1mhz_fro_token().unwrap())),
             iocon,
         );
 
         if !self.is_nfc_passive {
             #[cfg(feature = "board-lpcxpresso55")]
-            let new_three_buttons = board::ThreeButtons::new(
+            let new_three_buttons = board::soc::ThreeButtons::new(
                 Timer::new(ctimer1.enabled(syscon, clocks.support_1mhz_fro_token().unwrap())),
                 gpio,
                 iocon,
@@ -357,7 +357,7 @@ impl Initializer {
                 // TODO this should get saved somewhere to be released later.
                 let mut dma = hal::Dma::from(_dma).enabled(syscon);
 
-                board::ThreeButtons::new (
+                board::soc::ThreeButtons::new (
                     adc.take().unwrap(),
                     ctimer1.enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
                     _ctimer2.enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
@@ -369,7 +369,7 @@ impl Initializer {
             };
 
             #[cfg(feature = "board-nk3xn")]
-            let new_three_buttons = board::ThreeButtons::new(
+            let new_three_buttons = board::soc::ThreeButtons::new(
                 Timer::new(ctimer1.enabled(syscon, clocks.support_1mhz_fro_token().unwrap())),
                 gpio,
                 iocon,
@@ -426,7 +426,7 @@ impl Initializer {
             None
         };
 
-        let mut iso14443: Option<nfc_device::Iso14443<board::nfc::NfcChip>> = None;
+        let mut iso14443: Option<nfc_device::Iso14443<board::soc::nfc::NfcChip>> = None;
 
         let (contactless_requester, contactless_responder) = apdu_dispatch::interchanges::Contactless::claim()
             .expect("could not setup iso14443 ApduInterchange");
@@ -739,7 +739,7 @@ impl Initializer {
 
         let provisioner = cfg!(feature = "provisioner-app");
         let mut solobee_interface =
-            board::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
+            board::soc::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
         let rng = flash_stage.rng.take().unwrap();

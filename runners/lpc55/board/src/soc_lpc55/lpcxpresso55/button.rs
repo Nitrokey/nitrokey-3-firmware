@@ -10,7 +10,7 @@ use crate::hal::drivers::timer;
 use crate::hal::peripherals::{
     ctimer,
 };
-use crate::traits::buttons::{
+use crate::soc::traits::buttons::{
     Button,State,
     Press,Edge,
 };
@@ -18,10 +18,10 @@ use crate::hal::typestates::{
     init_state,
 };
 use hal::time::DurationExtensions;
-pub type UserButtonPin = pins::Pio0_31;
-// pub type WakeupButtonPin = pins::Pio1_18;
+pub type UserButtonPin = pins::Pio1_9;
+pub type WakeupButtonPin = pins::Pio1_18;
 pub type UserButton = hal::Pin<UserButtonPin, pin::state::Gpio<pin::gpio::direction::Input>>;
-// pub type WakeupButton = hal::Pin<WakeupButtonPin, pin::state::Gpio<pin::gpio::direction::Input>>;
+pub type WakeupButton = hal::Pin<WakeupButtonPin, pin::state::Gpio<pin::gpio::direction::Input>>;
 
 pub type ThreeButtons = XpressoButtons<ctimer::Ctimer1<init_state::Enabled>>;
 
@@ -34,7 +34,7 @@ where CTIMER: ctimer::Ctimer<init_state::Enabled>
 {
     last_state: State,
     user_button: UserButton,
-    // wakeup_button: WakeupButton,
+    wakeup_button: WakeupButton,
     timer: timer::Timer<CTIMER>,
 }
 
@@ -44,15 +44,15 @@ where CTIMER: ctimer::Ctimer<init_state::Enabled>
     // pub fn new (timer: timer::Timer<CTIMER>, user_button: UserButton, wakeup_button: WakeupButton) -> XpressoButtons<CTIMER> {
     pub fn new (timer: timer::Timer<CTIMER>, gpio: &mut hal::Gpio<hal::Enabled>, iocon: &mut hal::Iocon<hal::Enabled>) -> XpressoButtons<CTIMER> {
         let user_button = UserButtonPin::take().unwrap().into_gpio_pin(iocon, gpio).into_input();
-        // let wakeup_button = WakeupButtonPin::take().unwrap().into_gpio_pin(iocon, gpio).into_input();
+        let wakeup_button = WakeupButtonPin::take().unwrap().into_gpio_pin(iocon, gpio).into_input();
         let buts = State {
             a: user_button.is_high().ok().unwrap(),
-            b: user_button.is_high().ok().unwrap(),
-            middle: user_button.is_high().ok().unwrap(),
+            b: wakeup_button.is_high().ok().unwrap(),
+            middle: wakeup_button.is_high().ok().unwrap(),
         };
         Self {
             user_button: user_button,
-            // wakeup_button: wakeup_button,
+            wakeup_button: wakeup_button,
             last_state: buts,
             timer: timer,
         }
@@ -70,10 +70,10 @@ where CTIMER: ctimer::Ctimer<init_state::Enabled>
                 self.user_button.is_low().ok().unwrap()
             }
             Button::B => {
-                self.user_button.is_low().ok().unwrap()
+                self.wakeup_button.is_low().ok().unwrap()
             }
             _ => {
-                self.user_button.is_low().ok().unwrap()
+                self.wakeup_button.is_low().ok().unwrap()
             }
         }
     }
