@@ -33,6 +33,8 @@ display-interface-spi = "*"
 generic-array = "0.14"
 rand_core = "0.6"
 chacha20 = { version = "0.7", default-features = false, features = ["rng"] }
+spi-memory = "0.2"
+
 
 # se050 = { path = "../../components/se050", features = ["log-all"] }
 

@@ -55,7 +55,18 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		txd: u_tx, rxd: u_rx, cts: None, rts: None
 	};*/
 
-	/* Display SPI Bus */
+
+	/* SE050 */
+	let se_pwr = gpio_p1.p1_10.into_push_pull_output(Level::High).degrade();
+	let se_scl = gpio_p1.p1_15.into_floating_input().degrade();
+	let se_sda = gpio_p0.p0_02.into_floating_input().degrade();
+
+	let se_pins = nrf52840_hal::twim::Pins {
+		scl: se_scl,
+		sda: se_sda
+	};
+
+	/* Display SPI Bus 
 	let dsp_spi_dc = gpio_p1.p1_10.into_push_pull_output(Level::Low).degrade();
 	let dsp_spi_cs = gpio_p1.p1_11.into_push_pull_output(Level::Low).degrade();
 	let dsp_spi_clk = gpio_p1.p1_12.into_push_pull_output(Level::Low).degrade();
@@ -68,7 +79,7 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		sck: dsp_spi_clk,
 		miso: None,
 		mosi: Some(dsp_spi_mosi)
-	};
+	};*/
 
 	/* Ext. Flash SPI */
 	// Flash WP# gpio_p0.p0_22
@@ -99,8 +110,8 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		display_dc: None,
 		display_backlight: None,
 		display_power: None,
-		se_pins: None,
-		se_power: None,
+		se_pins: Some(se_pins),
+		se_power: Some(se_pwr),
 		flashnfc_spi: Some(flashnfc_spi),
 		flash_cs: Some(flash_spi_cs),
 		flash_power: None,

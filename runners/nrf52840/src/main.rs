@@ -25,6 +25,17 @@ use trussed::{
 	types::{LfsResult, LfsStorage},
 };
 
+// playground uses
+
+use spi_memory;
+use spi_memory::BlockDevice as _;
+use spi_memory::series25::Flash as _;
+use spi_memory::Read as _;
+
+
+
+// --- end playground
+
 #[macro_use]
 extern crate delog;
 delog::generate_macros!();
@@ -204,10 +215,34 @@ const APP: () = {
 			0x00u8,
 		);
 
-		let mut stickextflash = extflash::ExtFlashStorage::new(&mut spim3,
+		let mut flash = spi_memory::series25::Flash::init(spim3, board_gpio.flash_cs.take().unwrap()).unwrap();
+		
+		let addr: u32 = 0x42;
+		match flash.erase_sectors(addr, 10) {
+			Err(e) => { debug!("mem: failed erase!"); },
+			Ok(v) => { debug!("mem: erase success"); }
+		}
+
+	    let id = flash.read_jedec_id().unwrap();
+		
+		let mut write_data: [u8;1] = [0xca];
+		debug!("device id: {:?} mfr: {:?} writing: {:#04x} addr: {:#04x}", id.device_id(), id.mfr_code(), write_data[0], addr);
+		match flash.write_bytes(addr, &mut write_data) {
+			Err(e) => { debug!("error spi-mem-write: {:?} (write at {:#04x}) buf: {:#04x}", e, addr, write_data[0]); },
+			Ok(v) => { debug!("mem write (write at {:#04x}) buf: {:#04x}", addr, write_data[0]); }
+		}
+
+		let mut buf: [u8;1] = [0x01];
+		match flash.read(addr, &mut buf) {
+			Err(e) => { debug!("error spi-mem-read: {:?} (read at {:#04x}) buf: {:#04x}", e, addr, buf[0]); },
+			Ok(v) => { debug!("mem read (at {:#04x}): buf: {:#04x}", addr, buf[0]); }
+		}
+		
+
+		/*let mut stickextflash = extflash::ExtFlashStorage::new(&mut spim3,
 					board_gpio.flash_cs.take().unwrap(),
 					board_gpio.flash_power);
-		stickextflash.init(&mut spim3);
+		stickextflash.init(&mut spim3);*/
 		
 
 		debug!("Trussed Store");
@@ -230,6 +265,50 @@ const APP: () = {
 		NRFDelogger::flush();
 
 		debug!("Secure Element");
+
+		debug!("i2c: checking se050, scanning...");
+		let mut twim = Twim::new(ctx.device.TWIM0, 
+			board_gpio.se_pins.take().unwrap(), 
+			nrf52840_hal::twim::Frequency::K400);
+		let mut buf = [0u8; 128];
+		let mut found_addr = false;
+		for addr in 0x03..=0x77 {
+			let res = twim.read(addr, &mut buf);
+			if !matches!(res, Err(NackAddress)) {
+				debug!("i2c: found response address {}: {:?}", addr, res).unwrap();
+				found_addr = true;
+				break;
+			}
+		}
+		if !found_addr {
+			debug!("i2c: did not find any addr answering on i2c...");
+		}
+
+		// RESYNC command
+		match twim.write(0x48, &[0x5a, 0xc0, 0x00, 0xff, 0xfc]) {
+			Err(e) => { debug!("i2c: failed I2C write! - {:?}", e); },
+			Ok(v) => { debug!("i2c: write I2C success...."); }
+		}
+
+		crate::board_delay(100);
+
+		// RESYNC response
+		let mut response = [0; 2];
+		match twim.read(0x48, &mut response) {
+			Err(e) => { debug!("i2c: failed I2C read! - {:?}", e); },
+			Ok(v) => {
+				if response == [0xa5, 0xe0] {
+					debug!("i2c: se050 activation RESYNC cool");
+				} else {
+					debug!("i2c: se050 activation RESYNC fail!");
+				}
+			}
+		}
+	
+		//let mut i2c = I2cMaster::new(i2c, (scl, sda), Hertz::try_from(100_u32.kHz()).unwrap());
+
+
+
 
 		#[cfg(feature = "hwcrypto-se050")]
 		if board_gpio.se_pins.is_some() {
@@ -353,16 +432,23 @@ const APP: () = {
 		
 		if ui.is_user_present() {
 			debug!("user present!");
-			ui.set_led(0, Level::High);
+			ui.set_led(0, Level::Low);
 			ui.set_led(1, Level::High);
-			ui.set_led(2, Level::Low);
+			ui.set_led(2, Level::High);
 		} else {
+			debug!("no user present!");
 			ui.set_led(0, Level::Low);
 			ui.set_led(1, Level::Low);
 			ui.set_led(2, Level::Low);
 		}
+
 		//debug!("no display - idle");
 		//debug!("step");
+
+		//let mut flash = spi_memory::series25::Flash::init(spi, flash_cs).unwrap();
+
+		
+
 	}
 
 
