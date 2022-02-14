@@ -19,7 +19,6 @@ use nrf52840_hal::{
 };
 use rand_core::SeedableRng;
 use rtic::cyccnt::Instant;
-//use se050::{Se050, Se050Device, T1overI2C};
 use trussed::{
 	Interchange,
 	types::{LfsResult, LfsStorage},
@@ -257,9 +256,9 @@ const APP: () = {
 
 		/* NK3-Mini -> MODE_0 + MODE_3 should work */
 		/*          -> Frequency M2 ?  K500? M16?  */
-		let mut spim3 = Spim::new(ctx.device.SPIM1, board_gpio.flash_spi.take().unwrap(),
+		let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flash_spi.take().unwrap(),
 			nrf52840_hal::spim::Frequency::M2,
-			nrf52840_hal::spim::MODE_3,
+			nrf52840_hal::spim::MODE_0,
 			0x00u8,
 		);
 
@@ -321,10 +320,9 @@ const APP: () = {
 				Ok(v) => { debug!("setting se_power high"); },
 			}
 		}
-		let mut twim = Twim::new(ctx.device.TWIM0, 
+		let mut twim = Twim::new(ctx.device.TWIM1, 
 			board_gpio.se_pins.take().unwrap(), 
 			nrf52840_hal::twim::Frequency::K100);
-		
 		
 		//crate::board_delay(10000);
 
@@ -336,10 +334,12 @@ const APP: () = {
 				debug!("i2c: found response address {}: {:?}", addr, res).unwrap();
 				found_addr = true;
 				break;
-			}
+			} 
 		}
 		if !found_addr {
 			debug!("i2c: did not find any addr answering on i2c...");
+		} else {
+			debug!("i2c: found addr");
 		}
 
 		// RESYNC command
