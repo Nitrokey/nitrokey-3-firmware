@@ -495,7 +495,7 @@ impl Initializer {
                 anactrl,
                 pmc,
                 syscon,
-                clocks.support_usbfs_token().unwrap(),
+                clock_stage.clocks.support_usbfs_token().unwrap(),
             );
             #[cfg(not(any(feature = "highspeed", feature = "usbfs-peripheral")))]
             usbd.disable_high_speed();
