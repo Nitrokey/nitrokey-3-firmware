@@ -32,7 +32,7 @@ pub struct BoardGPIO {
 	pub se_power: Option<Pin<Output<PushPull>>>,
 
 	/* External Flash & NFC (through SPIM3) */
-	pub flashnfc_spi: Option<spim::Pins>,
+	pub flash_spi: Option<spim::Pins>,
 	pub flash_cs: Option<Pin<Output<PushPull>>>,
 	pub flash_power: Option<Pin<Output<PushPull>>>,
 	pub nfc_cs: Option<Pin<Output<PushPull>>>,

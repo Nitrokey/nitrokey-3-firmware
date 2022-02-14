@@ -209,9 +209,11 @@ const APP: () = {
 
 		debug!("External Flash");
 
-		let mut spim3 = Spim::new(ctx.device.SPIM3, board_gpio.flashnfc_spi.take().unwrap(),
+		/* NK3-Mini -> MODE_0 + MODE_3 should work */
+		/*          -> Frequency M2 ?  K500? M16?  */
+		let mut spim3 = Spim::new(ctx.device.SPIM0, board_gpio.flash_spi.take().unwrap(),
 			nrf52840_hal::spim::Frequency::M2,
-			nrf52840_hal::spim::MODE_0,
+			nrf52840_hal::spim::MODE_3,
 			0x00u8,
 		);
 
@@ -269,7 +271,7 @@ const APP: () = {
 		debug!("i2c: checking se050, scanning...");
 		let mut twim = Twim::new(ctx.device.TWIM0, 
 			board_gpio.se_pins.take().unwrap(), 
-			nrf52840_hal::twim::Frequency::K400);
+			nrf52840_hal::twim::Frequency::K100);
 		let mut buf = [0u8; 128];
 		let mut found_addr = false;
 		for addr in 0x03..=0x77 {

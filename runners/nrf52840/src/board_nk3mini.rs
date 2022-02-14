@@ -20,17 +20,7 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	// not used, just ensure output + low
 	gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
 	
-    /* Button 1-4: on DK */
-	// let btn3 = gpio_p0.p0_24.into_pullup_input().degrade();
-	// let btn4 = gpio_p0.p0_25.into_pullup_input().degrade();
-
-	// /* Button 5-8: wired through from Pico LCD */
-	// let btn5 = gpio_p1.p1_08.into_pullup_input().degrade();
-	// let btn6 = gpio_p1.p1_07.into_pullup_input().degrade();
-	// let btn7 = gpio_p1.p1_06.into_pullup_input().degrade();
-	// let btn8 = gpio_p1.p1_05.into_pullup_input().degrade();
-
-	/////////////////////
+	/* irq configuration */
 	//gpiote.port().input_pin(&t_sense).low();
 	//gpiote.port().input_pin(&t_rst).low();
 
@@ -41,21 +31,11 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	// gpiote.port().input_pin(&btn7).low();
 	// gpiote.port().input_pin(&btn8).low();
 
-	/* LEDs */
+	/* RGB LED */
 	let led_r = gpio_p0.p0_09.into_push_pull_output(Level::High).degrade();
 	let led_g = gpio_p0.p0_10.into_push_pull_output(Level::High).degrade();
 	let led_b = gpio_p1.p1_02.into_push_pull_output(Level::High).degrade();
-	//let led4 = gpio_p0.p0_16.into_push_pull_output(Level::High).degrade();
-
-	/* UART */
-	/*let u_rx = gpio_p0.p0_08.into_floating_input().degrade();
-	let u_tx = gpio_p0.p0_06.into_push_pull_output(Level::High).degrade();
-
-	let uart_pins = nrf52840_hal::uarte::Pins {
-		txd: u_tx, rxd: u_rx, cts: None, rts: None
-	};*/
-
-
+	
 	/* SE050 */
 	let se_pwr = gpio_p1.p1_10.into_push_pull_output(Level::High).degrade();
 	let se_scl = gpio_p1.p1_15.into_floating_input().degrade();
@@ -66,35 +46,20 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		sda: se_sda
 	};
 
-	/* Display SPI Bus 
-	let dsp_spi_dc = gpio_p1.p1_10.into_push_pull_output(Level::Low).degrade();
-	let dsp_spi_cs = gpio_p1.p1_11.into_push_pull_output(Level::Low).degrade();
-	let dsp_spi_clk = gpio_p1.p1_12.into_push_pull_output(Level::Low).degrade();
-	let dsp_spi_mosi = gpio_p1.p1_13.into_push_pull_output(Level::Low).degrade();
-	let dsp_spi_rst = gpio_p1.p1_14.into_push_pull_output(Level::Low).degrade();
-	let dsp_spi_bl = gpio_p1.p1_15.into_push_pull_output(Level::High).degrade();
-	// no power gate
-
-	let dsp_spi = spim::Pins {
-		sck: dsp_spi_clk,
-		miso: None,
-		mosi: Some(dsp_spi_mosi)
-	};*/
-
 	/* Ext. Flash SPI */
 	// Flash WP# gpio_p0.p0_22
 	// Flash HOLD# gpio_p0.p0_23
-        let flash_spi_cs = gpio_p0.p0_24.into_push_pull_output(Level::High).degrade();
-        let flashnfc_spi_clk = gpio_p1.p1_06.into_push_pull_output(Level::Low).degrade();
-        let flashnfc_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
-        let flashnfc_spi_miso = gpio_p1.p1_00.into_floating_input().degrade();
-	let _flash_wp = gpio_p0.p0_22.into_push_pull_output(Level::Low).degrade();
-	let _flash_hold = gpio_p0.p0_23.into_push_pull_output(Level::High).degrade();
+	let flash_spi_cs = gpio_p0.p0_24.into_push_pull_output(Level::High).degrade();
+	let flash_spi_clk = gpio_p1.p1_06.into_push_pull_output(Level::Low).degrade();
+	let flash_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
+	let flash_spi_miso = gpio_p1.p1_00.into_floating_input().degrade();
+	//let _flash_wp = gpio_p0.p0_22.into_push_pull_output(Level::Low).degrade();
+	//let _flash_hold = gpio_p0.p0_23.into_push_pull_output(Level::High).degrade();
 
-	let flashnfc_spi = spim::Pins {
-		sck: flashnfc_spi_clk,
-		miso: Some(flashnfc_spi_miso),
-		mosi: Some(flashnfc_spi_mosi)
+	let flash_spi = spim::Pins {
+		sck: flash_spi_clk,
+		miso: Some(flash_spi_miso),
+		mosi: Some(flash_spi_mosi)
 	};
 
 	BoardGPIO { buttons: [
@@ -112,7 +77,7 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		display_power: None,
 		se_pins: Some(se_pins),
 		se_power: Some(se_pwr),
-		flashnfc_spi: Some(flashnfc_spi),
+		flash_spi: Some(flash_spi),
 		flash_cs: Some(flash_spi_cs),
 		flash_power: None,
 		nfc_cs: None,
