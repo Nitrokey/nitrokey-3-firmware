@@ -32,6 +32,10 @@ use spi_memory::BlockDevice as _;
 use spi_memory::series25::Flash as _;
 use spi_memory::Read as _;
 
+use nrf52840_hal::pac::uicr::REGOUT0;
+use nrf52840_hal::uicr::Uicr;
+use nrf52840_hal::pac::Peripherals;
+use nrf52840_hal::pac::uicr::RegisterBlock;
 
 
 // --- end playground
@@ -158,6 +162,48 @@ const APP: () = {
 		info!("RESET Reason: {:08x}", ctx.device.POWER.resetreas.read().bits());
 		ctx.device.POWER.resetreas.write(|w| w);
 
+		// read UICR value for REGOUT0
+		let uicr = &*ctx.device.UICR;
+		let regout0_bits = uicr.regout0.read().bits().to_be_bytes();
+		debug!("REGOUT0 bits: {:?}", regout0_bits);
+		let nfcpins_bits = uicr.nfcpins.read().bits().to_be_bytes();
+		debug!("NFCPINS bits: {:?}", nfcpins_bits);
+
+
+		let comp = &*ctx.device.COMP;
+
+		let mut comp_psel_bits = comp.psel.read().bits().to_be_bytes();
+		let mut comp_extrefsel_bits = comp.extrefsel.read().bits().to_be_bytes();
+		debug!("COMP-psel bits: {:?}", comp_psel_bits);
+		debug!("COMP-extrefsel bits: {:?}", comp_extrefsel_bits);
+
+		comp.psel.write(|w| w.psel().analog_input1());
+		comp.extrefsel.write(|w| w.extrefsel().analog_reference1());
+
+		comp_psel_bits = comp.psel.read().bits().to_be_bytes();
+		comp_extrefsel_bits = comp.extrefsel.read().bits().to_be_bytes();
+		debug!("COMP-psel bits: {:?}", comp_psel_bits);
+		debug!("COMP-extrefsel bits: {:?}", comp_extrefsel_bits);
+
+		let lpcomp = &*ctx.device.LPCOMP;
+
+		let mut lpcomp_psel_bits = lpcomp.psel.read().bits().to_be_bytes();
+		let mut lpcomp_extrefsel_bits = lpcomp.extrefsel.read().bits().to_be_bytes();
+		debug!("LPCOMP-psel bits: {:?}", lpcomp_psel_bits);
+		debug!("LPCOMP-extrefsel bits: {:?}", lpcomp_extrefsel_bits);
+
+		let lpcomp = &*ctx.device.LPCOMP;
+
+		lpcomp.psel.write(|w| w.psel().analog_input1());
+		lpcomp.extrefsel.write(|w| w.extrefsel().analog_reference1());
+		
+		lpcomp_psel_bits = lpcomp.psel.read().bits().to_be_bytes();
+		lpcomp_extrefsel_bits = lpcomp.extrefsel.read().bits().to_be_bytes();
+		debug!("LPCOMP-psel bits: {:?}", lpcomp_psel_bits);
+		debug!("LPCOMP-extrefsel bits: {:?}", lpcomp_extrefsel_bits);
+
+
+
 		board::init_early(&ctx.device, &ctx.core);
 
 		NRFDelogger::flush();
@@ -211,7 +257,7 @@ const APP: () = {
 
 		/* NK3-Mini -> MODE_0 + MODE_3 should work */
 		/*          -> Frequency M2 ?  K500? M16?  */
-		let mut spim3 = Spim::new(ctx.device.SPIM0, board_gpio.flash_spi.take().unwrap(),
+		let mut spim3 = Spim::new(ctx.device.SPIM1, board_gpio.flash_spi.take().unwrap(),
 			nrf52840_hal::spim::Frequency::M2,
 			nrf52840_hal::spim::MODE_3,
 			0x00u8,
@@ -269,9 +315,19 @@ const APP: () = {
 		debug!("Secure Element");
 
 		debug!("i2c: checking se050, scanning...");
+		if let Some(se_ena) = &mut board_gpio.se_power {
+			match se_ena.set_high() {
+				Err(e) => { debug!("failed setting se_power high {:?}", e); },
+				Ok(v) => { debug!("setting se_power high"); },
+			}
+		}
 		let mut twim = Twim::new(ctx.device.TWIM0, 
 			board_gpio.se_pins.take().unwrap(), 
 			nrf52840_hal::twim::Frequency::K100);
+		
+		
+		//crate::board_delay(10000);
+
 		let mut buf = [0u8; 128];
 		let mut found_addr = false;
 		for addr in 0x03..=0x77 {
@@ -434,13 +490,13 @@ const APP: () = {
 		
 		if ui.is_user_present() {
 			debug!("user present!");
-			ui.set_led(0, Level::Low);
-			ui.set_led(1, Level::High);
+			ui.set_led(0, Level::High);
+			ui.set_led(1, Level::Low);
 			ui.set_led(2, Level::High);
 		} else {
 			debug!("no user present!");
-			ui.set_led(0, Level::Low);
-			ui.set_led(1, Level::Low);
+			ui.set_led(0, Level::High);
+			ui.set_led(1, Level::High);
 			ui.set_led(2, Level::Low);
 		}
 

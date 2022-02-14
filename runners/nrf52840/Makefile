@@ -71,7 +71,7 @@ program-nrfdk:
 
 reset-proto1:
 	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --chiperase --program $(OUTDIR2)/release/runner-proto1.ihex
-	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --program fidokeys_lfs_e0000+20000.ihex
+	nrfjprog -f NRF52 -s $(SERIAL_PROTO1-f NRF52 -s $(SERIAL_NRFDK) ) --program fidokeys_lfs_e0000+20000.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --reset
 
 reset-nrfdk:
@@ -82,6 +82,10 @@ reset-nrfdk:
 reset-nk3mini:
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --chiperase --program $(OUTDIR2)/release/runner-nk3mini.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program fidokeys_lfs_e0000+20000.ihex
+	# set UICR::REGOUT0 to 3v3
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --memwr 0x10001304 --val 0xfffffffc
+	# set UICR::NFCPINS to disabled
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --memwr 0x1000120C --val 0xfffffffe
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
 
 flashdump:

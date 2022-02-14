@@ -167,9 +167,9 @@ impl StickUI {
 		/* LED heartbeat (DK only, our prototype has no LEDs) */
 		if self.leds[0].is_some() {
 			if (t & 15) == 0 {
-				self.leds[0].as_mut().unwrap().set_low().ok();
+				//self.leds[0].as_mut().unwrap().set_low().ok();
 			} else if (t & 15) == 8 {
-				self.leds[0].as_mut().unwrap().set_high().ok();
+				//self.leds[0].as_mut().unwrap().set_high().ok();
 			}
 		}
 
