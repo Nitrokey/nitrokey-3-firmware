@@ -8,10 +8,7 @@
 
 use core::convert::TryFrom;
 use runner::hal;
-use hal::traits::wg::timer::Cancel;
-use hal::traits::wg::timer::CountDown;
-use hal::drivers::timer::Elapsed;
-use hal::time::{DurationExtensions, Microseconds};
+use embedded_time::duration::{Extensions, Microseconds};
 
 use rtic::cyccnt::{Instant, U32Ext as _};
 

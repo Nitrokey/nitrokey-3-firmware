@@ -35,8 +35,8 @@ pub struct Clock {
 
 /// Initialized delay & performance timers, Adc, Buttons, Nfc chip, RGB LED
 pub struct Basic {
-    pub delay_timer: Timer<hal::peripherals::ctimer::Ctimer0<hal::Enabled>>,
-    pub perf_timer: Timer<hal::peripherals::ctimer::Ctimer4<hal::Enabled>>,
+    pub delay_timer: board::soc::timer::Timer<Timer<hal::peripherals::ctimer::Ctimer0<hal::Enabled>>>,
+    pub perf_timer: board::soc::timer::Timer<Timer<hal::peripherals::ctimer::Ctimer4<hal::Enabled>>>,
     pub pfr: Pfr<hal::Enabled>,
 
     pub adc: Option<hal::Adc<hal::Enabled>>,

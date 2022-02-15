@@ -1,3 +1,6 @@
+ALL_BOARDS := nk3xn nk3am solo2
+ALL_BOARDS += lpcxpresso55 okdoe1
+# ALL_BOARDS += nrfdk ptbproto1 nk3amnrf
 BOARD ?= nk3xn
 
 FEATURES := board-${BOARD}
@@ -62,7 +65,7 @@ jlink:
 
 .PHONY: gottabuildemall
 gottabuildemall:
-	for B in nk3xn nk3am solo2 lpcxpresso55 okdoe1; do \
+	for B in $(ALL_BOARDS); do \
 		$(MAKE) build BOARD=$$B; \
 	done
 

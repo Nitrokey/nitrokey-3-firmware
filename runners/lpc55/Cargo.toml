@@ -25,6 +25,7 @@ rtt-target = { version = "0.3", optional = true, features = ["cortex-m"] }
 usb-device = "0.2.3"
 # usbd-hid = { version = "0.4.5", optional = true }
 usbd-serial = "0.1.0"
+embedded-time = "0.12"
 
 admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 apdu-dispatch = { git = "https://github.com/solokeys/apdu-dispatch" }
@@ -78,11 +79,17 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 # Format filesystem anyway
 format-filesystem = []
 
+# LPC55 based boards
 board-lpcxpresso55 = ["board/board-lpcxpresso55"]
 board-okdoe1 = ["board/board-okdoe1", "board-lpcxpresso55", "usbfs-peripheral"]
 board-solo2 = ["board/board-solo2"]
 board-nk3xn = ["board/board-nk3xn"]
 board-nk3am = ["board/board-nk3am", "board-solo2"]
+
+# NRF52840 based boards
+board-nrfdk = ["board/board-nrfdk"]
+board-ptbproto1 = ["board/board-ptbproto1"]
+board-nk3amnrf = ["board/board-nk3amnrf"]
 
 log-rtt = ["rtt-target"]
 log-semihosting = ["cortex-m-semihosting"]

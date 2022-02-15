@@ -2,7 +2,6 @@ use crate::hal;
 use hal::prelude::*;
 use hal::traits::wg::digital::v2::InputPin;
 use hal::traits::wg::timer::Cancel;
-use hal::drivers::timer::Elapsed;
 use hal::drivers::{
     clocks::Clocks,
     flash::FlashGordon,
@@ -393,8 +392,8 @@ impl Initializer {
         }
 
         stages::Basic {
-            delay_timer,
-            perf_timer,
+            delay_timer: board::soc::timer::Timer::new(delay_timer),
+            perf_timer: board::soc::timer::Timer::new(perf_timer),
             pfr,
 
             adc,
@@ -417,7 +416,7 @@ impl Initializer {
                 &mut clock_stage.iocon,
                 &mut clock_stage.gpio,
                 clock_stage.nfc_irq.take().unwrap(),
-                &mut basic_stage.delay_timer,
+                &mut basic_stage.delay_timer.timer,
                 flexcomm0,
                 mux,
                 pint,
@@ -487,7 +486,7 @@ impl Initializer {
                 anactrl,
                 pmc,
                 syscon,
-                &mut basic_stage.delay_timer,
+                &mut basic_stage.delay_timer.timer,
                 clock_stage.clocks.support_usbhs_token().unwrap(),
             );
             #[cfg(feature = "usbfs-peripheral")]

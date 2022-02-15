@@ -3,14 +3,18 @@ name = "board"
 version = "0.0.0-unreleased"
 authors = ["Conor Patrick <conor@solokeys.com>"]
 edition = "2018"
+resolver = "2"
 
 [dependencies]
 delog = "0.1.0"
 fm11nc08 = { path = "../../../components/fm11nc08", optional = true }
 lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], optional = true }
 nrf52840-hal = { git = "https://github.com/Nitrokey/nrf-hal", rev = "ba2ed35", optional = true }
+embedded-hal = "0.2"
+embedded-time = "0.12"
 nb = "1"
 trussed = { git = "https://github.com/trussed-dev/trussed" }
+void = { version = "1", default_features = false }
 
 [features]
 soc-lpc55 = [ "lpc55-hal", "fm11nc08" ]

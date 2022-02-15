@@ -122,8 +122,8 @@ use apdu_dispatch::{App as ApduApp, command::SIZE as CommandSize, response::SIZE
 use ctaphid_dispatch::app::{App as CtaphidApp};
 
 pub type DynamicClockController = board::soc::clock_controller::DynamicClockController;
-pub type NfcWaitExtender = timer::Timer<ctimer::Ctimer0<hal::typestates::init_state::Enabled>>;
-pub type PerformanceTimer = timer::Timer<ctimer::Ctimer4<hal::typestates::init_state::Enabled>>;
+pub type NfcWaitExtender = board::soc::timer::Timer<timer::Timer<ctimer::Ctimer0<hal::typestates::init_state::Enabled>>>;
+pub type PerformanceTimer = board::soc::timer::Timer<timer::Timer<ctimer::Ctimer4<hal::typestates::init_state::Enabled>>>;
 
 pub trait TrussedApp: Sized {
 
