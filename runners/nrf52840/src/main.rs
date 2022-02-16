@@ -9,13 +9,14 @@ use littlefs2::const_ram_storage;
 use nrf52840_hal::{
 	clocks::Clocks,
 	gpiote::Gpiote,
-	prelude::OutputPin,
+	prelude::OutputPin, prelude::InputPin,
 	rng::Rng,
 	rtc::{Rtc, RtcInterrupt},
 	spim::Spim,
 	twim::Twim,
 	uarte::{Baudrate, Parity, Uarte},
 	gpio::Level,
+	twim::{Error as TwimError},
 };
 use rand_core::SeedableRng;
 use rtic::cyccnt::Instant;
@@ -201,6 +202,8 @@ const APP: () = {
 		debug!("LPCOMP-psel bits: {:?}", lpcomp_psel_bits);
 		debug!("LPCOMP-extrefsel bits: {:?}", lpcomp_extrefsel_bits);
 
+		
+		let saadc = &*ctx.device.SAADC;
 
 
 		board::init_early(&ctx.device, &ctx.core);
@@ -313,19 +316,64 @@ const APP: () = {
 
 		debug!("Secure Element");
 
-		debug!("i2c: checking se050, scanning...");
+
+
+		debug!("i2c: checking se050");
+
+		/*for idx in 1..4 {
+			match board_gpio.se_pins.as_ref().unwrap().sda.is_high() {
+				Err(e) => {debug!("err sda"); },
+				Ok(v) => match v {
+					true => {debug!("sda-high");},
+					false => {debug!("sda-low");}
+				}
+			}
+			match board_gpio.se_pins.as_ref().unwrap().scl.is_high() {
+				Err(e) => {debug!("err scl"); },
+				Ok(v) => match v {
+					true => {debug!("scl-high");},
+					false => {debug!("scl-low");}
+				}
+			}
+		}*/
+		NRFDelogger::flush();
+
 		if let Some(se_ena) = &mut board_gpio.se_power {
 			match se_ena.set_high() {
 				Err(e) => { debug!("failed setting se_power high {:?}", e); },
 				Ok(v) => { debug!("setting se_power high"); },
 			}
 		}
+		crate::board_delay(100);
+
 		let mut twim = Twim::new(ctx.device.TWIM1, 
 			board_gpio.se_pins.take().unwrap(), 
-			nrf52840_hal::twim::Frequency::K100);
+			nrf52840_hal::twim::Frequency::K400);
 		
+		/*for idx in 1..4444 {
+			match board_gpio.se_pins.as_ref().unwrap().sda.is_high() {
+				Err(e) => {debug!("err sda"); },
+				Ok(v) => match v {
+					true => { },
+					false => {debug!("sda-low");}
+				}
+			}
+			match board_gpio.se_pins.as_ref().unwrap().scl.is_high() {
+				Err(e) => {debug!("err scl"); },
+				Ok(v) => match v {
+					true => { },
+					false => {debug!("scl-low");}
+				}
+			}
+			NRFDelogger::flush();
+
+
+		}*/
+
 		//crate::board_delay(10000);
 
+		/* NOT WORKING....
+		
 		let mut buf = [0u8; 128];
 		let mut found_addr = false;
 		for addr in 0x03..=0x77 {
@@ -340,10 +388,11 @@ const APP: () = {
 			debug!("i2c: did not find any addr answering on i2c...");
 		} else {
 			debug!("i2c: found addr");
-		}
+		}*/
 
 		// RESYNC command
-		match twim.write(0x48, &[0x5a, 0xc0, 0x00, 0xff, 0xfc]) {
+		let mut write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+		match twim.write(0x48, &write_buf) {
 			Err(e) => { debug!("i2c: failed I2C write! - {:?}", e); },
 			Ok(v) => { debug!("i2c: write I2C success...."); }
 		}
@@ -362,10 +411,39 @@ const APP: () = {
 				}
 			}
 		}
-	
+		NRFDelogger::flush();
 		//let mut i2c = I2cMaster::new(i2c, (scl, sda), Hertz::try_from(100_u32.kHz()).unwrap());
 
+		/*for idx in 1..100 {
+			twim.pins.scl			
+		}*/
 
+		// soft reset command
+		let mut reset_buf = [0x5a, 0xcf, 0x00, 0x37, 0x7f];
+		match twim.write(0x48, &reset_buf) {
+			Err(e) => { debug!("i2c: failed I2C write! - {:?}", e); },
+			Ok(v) => { debug!("i2c: write I2C success...."); }
+		}
+		NRFDelogger::flush();
+
+		let mut answercool = false;
+		for idx in 1..50 {
+			crate::board_delay(1000);
+
+			let mut reset_response = [0; 100];
+			match twim.read(0x48, &mut reset_response) {
+				Err(TwimError::AddressNack) => { },
+				Err(e) => { debug!("i2c: failed I2C read! - {:?}", e); },
+				Ok(v) => {
+					debug!("i2c response: {:?}", hexstr!(&reset_response));
+					answercool = true;
+					break;
+				}
+			}
+		}
+		if ! answercool {
+			debug!("i2c: failed reading answer...");
+		}
 
 
 		#[cfg(feature = "hwcrypto-se050")]
@@ -401,6 +479,11 @@ const APP: () = {
 
 		NRFDelogger::flush();
 
+		
+
+
+
+		
 		debug!("Apps");
 
 		let (fido_app, admin_app, piv_app, prov_app) = instantiate_apps(&mut srv, stickstore_prov, device_uuid);
@@ -504,6 +587,7 @@ const APP: () = {
 		//debug!("step");
 
 		//let mut flash = spi_memory::series25::Flash::init(spi, flash_cs).unwrap();
+
 
 		
 

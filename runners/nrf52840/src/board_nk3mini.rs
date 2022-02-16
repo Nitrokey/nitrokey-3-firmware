@@ -30,7 +30,6 @@ pub fn init_gpio(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	// gpiote.port().input_pin(&btn6).low();
 	// gpiote.port().input_pin(&btn7).low();
 	// gpiote.port().input_pin(&btn8).low();
-	gpiote.port().enable_interrupt();
 
 	/* RGB LED */
 	let led_r = gpio_p0.p0_09.into_push_pull_output(Level::Low).degrade();
