@@ -20,7 +20,7 @@ use nrf52840_hal::{
 };
 use rand_core::SeedableRng;
 use rtic::cyccnt::Instant;
-use se050::T1overI2C;
+use se050::{T1overI2C, Se050, Se050Device};
 use trussed::{
 	Interchange,
 	types::{LfsResult, LfsStorage},
@@ -70,7 +70,7 @@ impl delog::Flusher for NRFDelogFlusher {
 static NRFDELOG_FLUSHER: NRFDelogFlusher = NRFDelogFlusher {};
 delog::delog!(NRFDelogger, 2*1024, 512, NRFDelogFlusher);
 
-//static mut SE050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_hal::pac::TWIM1>, Nrf52840Delay>, Nrf52840Delay>> = None;
+static mut SE050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_hal::pac::TWIM1>, Nrf52840Delay>, Nrf52840Delay>> = None;
 
 /* TODO: add external flash */
 littlefs2::const_ram_storage!(ExternalRAMStore, 1024);
@@ -126,7 +126,7 @@ const APP: () = {
 		#[init(None)]
 		usb_dispatcher: Option<usb::USBDispatcher>,
 		extflash: Option<extflash::ExtFlashStorage<nrf52840_hal::spim::Spim<nrf52840_hal::pac::SPIM3>>>,
-		// se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_hal::pac::TWIM1>, Nrf52840Delay>, Nrf52840Delay>>,
+		se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_hal::pac::TWIM1>, Nrf52840Delay>, Nrf52840Delay>>,
 		power: nrf52840_hal::pac::POWER,
 		rtc: Rtc<nrf52840_hal::pac::RTC0>,
 		fido_app: dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticator, TrussedNRFClient>,
@@ -169,42 +169,6 @@ const APP: () = {
 		debug!("REGOUT0 bits: {:?}", regout0_bits);
 		let nfcpins_bits = uicr.nfcpins.read().bits().to_be_bytes();
 		debug!("NFCPINS bits: {:?}", nfcpins_bits);
-
-
-		let comp = &*ctx.device.COMP;
-
-		let mut comp_psel_bits = comp.psel.read().bits().to_be_bytes();
-		let mut comp_extrefsel_bits = comp.extrefsel.read().bits().to_be_bytes();
-		debug!("COMP-psel bits: {:?}", comp_psel_bits);
-		debug!("COMP-extrefsel bits: {:?}", comp_extrefsel_bits);
-
-		comp.psel.write(|w| w.psel().analog_input1());
-		comp.extrefsel.write(|w| w.extrefsel().analog_reference1());
-
-		comp_psel_bits = comp.psel.read().bits().to_be_bytes();
-		comp_extrefsel_bits = comp.extrefsel.read().bits().to_be_bytes();
-		debug!("COMP-psel bits: {:?}", comp_psel_bits);
-		debug!("COMP-extrefsel bits: {:?}", comp_extrefsel_bits);
-
-		let lpcomp = &*ctx.device.LPCOMP;
-
-		let mut lpcomp_psel_bits = lpcomp.psel.read().bits().to_be_bytes();
-		let mut lpcomp_extrefsel_bits = lpcomp.extrefsel.read().bits().to_be_bytes();
-		debug!("LPCOMP-psel bits: {:?}", lpcomp_psel_bits);
-		debug!("LPCOMP-extrefsel bits: {:?}", lpcomp_extrefsel_bits);
-
-		let lpcomp = &*ctx.device.LPCOMP;
-
-		lpcomp.psel.write(|w| w.psel().analog_input1());
-		lpcomp.extrefsel.write(|w| w.extrefsel().analog_reference1());
-		
-		lpcomp_psel_bits = lpcomp.psel.read().bits().to_be_bytes();
-		lpcomp_extrefsel_bits = lpcomp.extrefsel.read().bits().to_be_bytes();
-		debug!("LPCOMP-psel bits: {:?}", lpcomp_psel_bits);
-		debug!("LPCOMP-extrefsel bits: {:?}", lpcomp_extrefsel_bits);
-
-		
-		let saadc = &*ctx.device.SAADC;
 
 
 		board::init_early(&ctx.device, &ctx.core);
@@ -270,23 +234,23 @@ const APP: () = {
 		
 		let addr: u32 = 0x42;
 		match flash.erase_sectors(addr, 10) {
-			Err(e) => { debug!("mem: failed erase!"); },
-			Ok(v) => { debug!("mem: erase success"); }
+			Err(e) => { debug!("spi-mem: failed erase!"); },
+			Ok(v) => { debug!("spi-mem: erase success"); }
 		}
 
 	    let id = flash.read_jedec_id().unwrap();
 		
 		let mut write_data: [u8;1] = [0xca];
-		debug!("device id: {:?} mfr: {:?} writing: {:#04x} addr: {:#04x}", id.device_id(), id.mfr_code(), write_data[0], addr);
+		debug!("spi-mem: device id: {:?} mfr: {:?} writing: {:#04x} addr: {:#04x}", id.device_id(), id.mfr_code(), write_data[0], addr);
 		match flash.write_bytes(addr, &mut write_data) {
-			Err(e) => { debug!("error spi-mem-write: {:?} (write at {:#04x}) buf: {:#04x}", e, addr, write_data[0]); },
-			Ok(v) => { debug!("mem write (write at {:#04x}) buf: {:#04x}", addr, write_data[0]); }
+			Err(e) => { debug!("spi-mem: error spi-mem-write: {:?} ", e); },
+			Ok(v) => { debug!("spi-mem: mem write"); }
 		}
 
 		let mut buf: [u8;1] = [0x01];
 		match flash.read(addr, &mut buf) {
-			Err(e) => { debug!("error spi-mem-read: {:?} (read at {:#04x}) buf: {:#04x}", e, addr, buf[0]); },
-			Ok(v) => { debug!("mem read (at {:#04x}): buf: {:#04x}", addr, buf[0]); }
+			Err(e) => { debug!("spi-mem: error spi-mem-read: {:?}", e); },
+			Ok(v) => { debug!("spi-mem: read : buf: {:#04x}", buf[0]); }
 		}
 		
 
@@ -317,172 +281,38 @@ const APP: () = {
 
 		debug!("Secure Element");
 
-
-
-		debug!("i2c: checking se050");
-
-		/*for idx in 1..4 {
-			match board_gpio.se_pins.as_ref().unwrap().sda.is_high() {
-				Err(e) => {debug!("err sda"); },
-				Ok(v) => match v {
-					true => {debug!("sda-high");},
-					false => {debug!("sda-low");}
-				}
-			}
-			match board_gpio.se_pins.as_ref().unwrap().scl.is_high() {
-				Err(e) => {debug!("err scl"); },
-				Ok(v) => match v {
-					true => {debug!("scl-high");},
-					false => {debug!("scl-low");}
-				}
-			}
-		}*/
-		NRFDelogger::flush();
-
-		if let Some(se_ena) = &mut board_gpio.se_power {
-			match se_ena.set_high() {
-				Err(e) => { debug!("failed setting se_power high {:?}", e); },
-				Ok(v) => { debug!("setting se_power high"); },
-			}
-		}
-		crate::board_delay(100);
-
-		let mut twim = Twim::new(ctx.device.TWIM1, 
-			board_gpio.se_pins.take().unwrap(), 
-			nrf52840_hal::twim::Frequency::K400);
-		
-		/*for idx in 1..4444 {
-			match board_gpio.se_pins.as_ref().unwrap().sda.is_high() {
-				Err(e) => {debug!("err sda"); },
-				Ok(v) => match v {
-					true => { },
-					false => {debug!("sda-low");}
-				}
-			}
-			match board_gpio.se_pins.as_ref().unwrap().scl.is_high() {
-				Err(e) => {debug!("err scl"); },
-				Ok(v) => match v {
-					true => { },
-					false => {debug!("scl-low");}
-				}
-			}
-			NRFDelogger::flush();
-
-
-		}*/
-
-		//crate::board_delay(10000);
-
-		/* NOT WORKING....
-		
-		let mut buf = [0u8; 128];
-		let mut found_addr = false;
-		for addr in 0x03..=0x77 {
-			let res = twim.read(addr, &mut buf);
-			if !matches!(res, Err(NackAddress)) {
-				debug!("i2c: found response address {}: {:?}", addr, res).unwrap();
-				found_addr = true;
-				break;
-			} 
-		}
-		if !found_addr {
-			debug!("i2c: did not find any addr answering on i2c...");
-		} else {
-			debug!("i2c: found addr");
-		}*/
-
-		// RESYNC command
-		let mut write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-		match twim.write(0x48, &write_buf) {
-			Err(e) => { debug!("i2c: failed I2C write! - {:?}", e); },
-			Ok(v) => { debug!("i2c: write I2C success...."); }
-		}
-
-		crate::board_delay(100);
-
-		// RESYNC response
-		let mut response = [0; 2];
-		match twim.read(0x48, &mut response) {
-			Err(e) => { debug!("i2c: failed I2C read! - {:?}", e); },
-			Ok(v) => {
-				if response == [0xa5, 0xe0] {
-					debug!("i2c: se050 activation RESYNC cool");
-				} else {
-					debug!("i2c: se050 activation RESYNC fail!");
-				}
-			}
-		}
-		NRFDelogger::flush();
-		//let mut i2c = I2cMaster::new(i2c, (scl, sda), Hertz::try_from(100_u32.kHz()).unwrap());
-
-		/*for idx in 1..100 {
-			twim.pins.scl			
-		}*/
-
-		// soft reset command
-		let mut reset_buf = [0x5a, 0xcf, 0x00, 0x37, 0x7f];
-		match twim.write(0x48, &reset_buf) {
-			Err(e) => { debug!("i2c: failed I2C write! - {:?}", e); },
-			Ok(v) => { debug!("i2c: write I2C success...."); }
-		}
-		NRFDelogger::flush();
-
-		let mut answercool = false;
-		for idx in 1..50 {
-			crate::board_delay(1000);
-
-			let mut reset_response = [0; 100];
-			match twim.read(0x48, &mut reset_response) {
-				Err(TwimError::AddressNack) => { },
-				Err(e) => { debug!("i2c: failed I2C read! - {:?}", e); },
-				Ok(v) => {
-					debug!("i2c response: {:?}", hexstr!(&reset_response));
-					answercool = true;
-					break;
-				}
-			}
-		}
-		if ! answercool {
-			debug!("i2c: failed reading answer...");
-		}
-
-
-		#[cfg(feature = "hwcrypto-se050")]
+		let mut secelem = None;
 		if board_gpio.se_pins.is_some() {
 			let twim1 = Twim::new(ctx.device.TWIM1, board_gpio.se_pins.take().unwrap(), nrf52840_hal::twim::Frequency::K400);
 			let t1 = T1overI2C::new(twim1, Nrf52840Delay {}, 0x48, 0x5a);
-			let mut secelem = Se050::new(t1, Nrf52840Delay {});
+			secelem = Some(Se050::new(t1, Nrf52840Delay {}));
 			board_gpio.se_power.as_mut().unwrap().set_high().ok();
 			board_delay(1u32);
-			secelem.enable().expect("SE050 ERROR");
+			secelem.as_mut().unwrap().enable().expect("SE050 ERROR");
 			NRFDelogger::flush();
 
 			{
 				debug!("AES TEST");
 				let buf1: [u8; 32] = [0; 32];
 				let mut buf2: [u8; 32] = [0; 32];
-				secelem.write_aes_key(&[0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7]);
-				secelem.encrypt_aes_oneshot(&buf1, &mut buf2);
+				secelem.as_mut().unwrap().write_aes_key(&[0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7]);
+				secelem.as_mut().unwrap().encrypt_aes_oneshot(&buf1, &mut buf2);
 				debug!("RESULT: {:x}{:x}{:x}{:x}...{:x}{:x}{:x}{:x}",
 					buf2[0], buf2[1], buf2[2], buf2[3],
 					buf2[28], buf2[29], buf2[30], buf2[31]);
 			}
 
 			unsafe {
-				SE050.replace(secelem);
+				//SE050.replace(secelem);
 
-				let crypto_drivers = trussed::hwcrypto::HWCryptoDrivers {
+				/*let crypto_drivers = trussed::hwcrypto::HWCryptoDrivers {
 					se050: Some(trussed::hwcrypto::se050::Se050Wrapper { device: SE050.as_mut().unwrap() }),
 				};
-				srv.add_hwcrypto_drivers(crypto_drivers);
+				srv.add_hwcrypto_drivers(crypto_drivers);*/
 			}
 		};
 
 		NRFDelogger::flush();
-
-		
-
-
 
 		
 		debug!("Apps");
@@ -527,7 +357,8 @@ const APP: () = {
 			fido_app,
 			admin_app,
 			piv_app,
-			prov_app
+			prov_app,
+			se050: secelem,
 		}
 	}
 
