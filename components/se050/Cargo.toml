@@ -1,0 +1,22 @@
+[package]
+name = "se050"
+version = "0.0.1"
+authors = ["Jan Nordholz <j.nordholz@tu-berlin.de>"]
+edition = "2018"
+# repository = "https://github.com/x/y"
+license = "Apache-2.0 OR MIT"
+description = "Driver for NXP SE050"
+
+[dependencies]
+delog = "0.1"
+embedded-hal = "*"
+
+[features]
+default = []
+
+log-all = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []
+log-none = []

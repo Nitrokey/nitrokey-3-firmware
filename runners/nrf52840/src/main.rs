@@ -20,6 +20,7 @@ use nrf52840_hal::{
 };
 use rand_core::SeedableRng;
 use rtic::cyccnt::Instant;
+use se050::T1overI2C;
 use trussed::{
 	Interchange,
 	types::{LfsResult, LfsStorage},

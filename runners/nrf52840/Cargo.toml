@@ -36,7 +36,7 @@ chacha20 = { version = "0.7", default-features = false, features = ["rng"] }
 spi-memory = "0.2"
 
 
-# se050 = { path = "../../components/se050", features = ["log-all"] }
+se050 = { path = "../../components/se050", features = ["log-all"] }
 
 # apdu-dispatch = { git = "https://github.com/solokeys/apdu-dispatch", branch = "main" }
 #apdu-dispatch = { path = "../../components/apdu-dispatch", features = ["log-all"] }
