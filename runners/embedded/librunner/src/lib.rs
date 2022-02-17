@@ -6,15 +6,9 @@ delog::generate_macros!();
 
 pub mod types;
 
-#[cfg(feature = "soc-nrf52840")]
-pub mod soc_nrf52840;
-#[cfg(feature = "soc-nrf52840")]
-pub use soc_nrf52840 as soc;
-
-#[cfg(feature = "soc-lpc55")]
-pub mod soc_lpc55;
-#[cfg(feature = "soc-lpc55")]
-pub use soc_lpc55 as soc;
+#[cfg_attr(feature = "soc-nrf52840", path = "soc_nrf52840/mod.rs")]
+#[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
+pub mod soc;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52840")))]
 compile_error!("No SoC chosen!");
