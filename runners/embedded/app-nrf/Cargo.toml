@@ -35,23 +35,24 @@ embedded-runner-lib = { path = "../librunner" }
 
 # se050 = { path = "../../../components/se050", features = ["log-all"] }
 
-admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
-apdu-dispatch = { git = "https://github.com/solokeys/apdu-dispatch"}
-ctaphid-dispatch = { git = "https://github.com/solokeys/ctaphid-dispatch" }
-ctap-types = { git = "https://github.com/solokeys/ctap-types" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator", optional = true }
-oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
+## admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
+## apdu-dispatch = { git = "https://github.com/solokeys/apdu-dispatch"}
+## ctaphid-dispatch = { git = "https://github.com/solokeys/ctaphid-dispatch" }
+## ctap-types = { git = "https://github.com/solokeys/ctap-types" }
+## fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator", optional = true }
+## oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
+## piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
+# NB: when using this app, need to raise trussed/clients-5
+#provisioner-app = { path = "../../../components/provisioner-app", optional = true, features = ["test-attestation"] }
+## provisioner-app = { path = "../../../components/provisioner-app", optional = true, features = ["nrf52"] }
+## dispatch-fido = {path = "../../../components/dispatch-fido"}
+## ndef-app = { path = "../../../components/ndef-app", optional = true }
+
 trussed = { git = "https://github.com/trussed-dev/trussed" }
 
 # components
-dispatch-fido = {path = "../../../components/dispatch-fido"}
-ndef-app = { path = "../../../components/ndef-app", optional = true }
-# NB: when using this app, need to raise trussed/clients-5
-#provisioner-app = { path = "../../../components/provisioner-app", optional = true, features = ["test-attestation"] }
-provisioner-app = { path = "../../../components/provisioner-app", optional = true, features = ["nrf52"] }
-fm11nc08 = {path = "../../../components/fm11nc08"}
-nfc-device = {path = "../../../components/nfc-device"}
+## fm11nc08 = {path = "../../../components/fm11nc08"}
+## nfc-device = {path = "../../../components/nfc-device"}
 usbd-ccid = { path = "../../../components/usbd-ccid" }
 usbd-ctaphid = { path = "../../../components/usbd-ctaphid" }
 
@@ -66,12 +67,16 @@ littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
 board-nrfdk = ["embedded-runner-lib/board-nrfdk"]
 
 # default = ["no-reset-time-window", "trussed/clients-5", "hwcrypto-se050", "log-debugP"]
-default = ["admin-app", "piv-authenticator", "provisioner-app", "fido-authenticator", "ndef-app", "no-reset-time-window", "trussed/clients-5", "log-debugP"]
+default = ["embedded-runner-lib/admin-app", "embedded-runner-lib/piv-authenticator",
+	"embedded-runner-lib/provisioner-app", "embedded-runner-lib/fido-authenticator",
+	"embedded-runner-lib/ndef-app",
+	"no-reset-time-window", "trussed/clients-5",
+	"log-debugP"]
 
 #hwcrypto-se050 = [ "trussed/hwcrypto-se050" ]
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
-no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
+no-reset-time-window = [] # ["fido-authenticator/disable-reset-time-window"]
 no-encrypted-storage = []
 
 log-all = []

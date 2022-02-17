@@ -57,6 +57,7 @@ pub type Trussed = trussed::Service<RunnerBoard>;
 pub type TrussedClient = trussed::ClientImplementation<RunnerSyscall>;
 
 // pub type Iso14443 = nfc_device::Iso14443<board::soc::nfc::NfcChip>;
+pub struct Iso14443 {}
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
@@ -72,7 +73,7 @@ pub type FidoApp = dispatch_fido::Fido<fido_authenticator::NonSilentAuthenticato
 #[cfg(feature = "ndef-app")]
 pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
-pub type ProvisionerApp = provisioner_app::Provisioner<Runnertore, FlashStorage, TrussedClient>;
+pub type ProvisionerApp = provisioner_app::Provisioner<RunnerStore, soc::types::FlashStorage, TrussedClient>;
 
 pub trait TrussedApp: Sized {
 
@@ -130,7 +131,9 @@ impl TrussedApp for AdminApp {
     // TODO: declare uuid + version
     type NonPortable = ();
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        Self::new(trussed, soc::types::DEVICE_UUID, build_constants::CARGO_PKG_VERSION)
+        let mut buf: [u8; 16] = [0u8; 16];
+	buf.copy_from_slice(soc::types::device_uuid());
+        Self::new(trussed, buf, build_constants::CARGO_PKG_VERSION)
     }
 }
 
@@ -250,3 +253,18 @@ impl Apps {
         ])
     }
 }
+
+#[derive(Debug)]
+pub struct DelogFlusher {}
+
+impl delog::Flusher for DelogFlusher {
+	fn flush(&self, _msg: &str) {
+		#[cfg(feature = "log-rtt")]
+		rtt_target::rprint!(_msg);
+
+		#[cfg(feature = "log-semihosting")]
+		cortex_m_semihosting::hprint!(_msg).ok();
+	}
+}
+
+pub static DELOG_FLUSHER: DelogFlusher = DelogFlusher {};
