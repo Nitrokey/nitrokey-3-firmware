@@ -71,7 +71,7 @@ program-nrfdk:
 
 reset-proto1:
 	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --chiperase --program $(OUTDIR2)/release/runner-proto1.ihex
-	nrfjprog -f NRF52 -s $(SERIAL_PROTO1-f NRF52 -s $(SERIAL_NRFDK) ) --program fidokeys_lfs_e0000+20000.ihex
+	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --program fidokeys_lfs_e0000+20000.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_PROTO1) --reset
 
 reset-nrfdk:
