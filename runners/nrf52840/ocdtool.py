@@ -11,6 +11,8 @@ if "D" in sys.argv[1]:
 	BOARD = "nrfdk"
 elif "P" in sys.argv[1]:
 	BOARD = "proto1"
+elif "N" in sys.argv[1]:
+    BOARD = "nk3-mini"
 else:
 	sys.exit(1)
 
