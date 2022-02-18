@@ -3,6 +3,7 @@
 
 use embedded_runner_lib as ERL;
 use nrf52840_hal::{
+	clocks::Clocks,
 	gpio::{p0, p1},
 	gpiote::Gpiote,
 	spim::Spim,
@@ -15,14 +16,18 @@ delog::generate_macros!();
 
 delog!(Delogger, 3*1024, 512, ERL::types::DelogFlusher);
 
+type UsbClockType = Clocks<nrf52840_hal::clocks::ExternalOscillator, nrf52840_hal::clocks::Internal, nrf52840_hal::clocks::LfOscStarted>;
+static mut USB_CLOCK: Option<UsbClockType> = None;
+static mut USBD: Option<usb_device::bus::UsbBusAllocator<ERL::soc::types::UsbBus>> = None;
+
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
         struct Resources {
 		apdu_dispatch: ERL::types::ApduDispatch,
 		ctaphid_dispatch: ERL::types::CtaphidDispatch,
-		trussed: ERL::types::Trussed,
-		apps: ERL::types::Apps,
-		usb_classes: Option<ERL::types::UsbClasses>,
+		//trussed: ERL::types::Trussed,
+		//apps: ERL::types::Apps,
+		usb_classes: Option<ERL::types::usb::UsbClasses>,
 		contactless: Option<ERL::types::Iso14443>,
 
 		/* NRF specific elements */
@@ -55,16 +60,21 @@ const APP: () = {
 		ERL::soc::board::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
 		let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
-		let board_gpio = {
+		let mut board_gpio = {
 			let dev_gpio_p0 = p0::Parts::new(ctx.device.P0);
 			let dev_gpio_p1 = p1::Parts::new(ctx.device.P1);
 			ERL::soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
 		};
 		dev_gpiote.reset_events();
 
-		// - usb (SoC)
-		// - nfc (SoC)
-		// - interfaces, generic USB machinery... (indep)
+		let usb_clock = Clocks::new(ctx.device.CLOCK).start_lfclk().enable_ext_hfosc();
+		unsafe { USB_CLOCK.replace(usb_clock); }
+		let usb_peripheral = nrf52840_hal::usbd::UsbPeripheral::new(ctx.device.USBD, unsafe { USB_CLOCK.as_ref().unwrap() });
+		let usbd = nrf52840_hal::usbd::Usbd::new(usb_peripheral);
+		unsafe { USBD.replace(usbd); }
+		let usbinit = ERL::init_usb( unsafe { USBD.as_ref().unwrap() });
+
+		// TODO (later): NFC
 
 		let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
 		let _external_flash = {
@@ -88,7 +98,12 @@ const APP: () = {
 		// - apps (indep)
 
 		// compose LateResources
-		init::LateResources { }
+		init::LateResources {
+			apdu_dispatch: usbinit.apdu_dispatch,
+			ctaphid_dispatch: usbinit.ctaphid_dispatch,
+			usb_classes: Some(usbinit.classes),
+			contactless: None
+		}
 	}
 
 };

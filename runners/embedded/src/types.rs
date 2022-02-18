@@ -10,7 +10,6 @@ use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
 
 pub mod usb;
-pub use usb::{UsbClasses, SerialClass, CcidClass, CtapHidClass};
 
 // 8KB of RAM
 const_ram_storage!(
