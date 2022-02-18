@@ -12,7 +12,7 @@ if "D" in sys.argv[1]:
 elif "P" in sys.argv[1]:
 	BOARD = "proto1"
 elif "N" in sys.argv[1]:
-    BOARD = "nk3-mini"
+    BOARD = "nk3mini"
 else:
 	sys.exit(1)
 
