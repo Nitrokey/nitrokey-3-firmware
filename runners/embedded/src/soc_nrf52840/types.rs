@@ -13,14 +13,14 @@ use trussed::types::{LfsStorage, LfsResult};
 // Upper Interface (definitions towards ERL Core)
 
 pub type FlashStorage = crate::soc::flash::FlashStorage;
-const_ram_storage!(ExternalStorage, 8192);
+// const_ram_storage!(ExternalStorage, 8192);
 /*
   I would love to use the real external flash here, but only if I find a way
   to hide the implementation details (= type parameters) from the type name
   of the upper interface. What if other SoCs access their flash chips through
   other busses - surely we don't want to accumulate a sh*tload of type
   parameters here? */
-// pub type ExternalStorage = crate::soc::extflash::ExtFlashStorage<SPI, CS>;
+pub type ExternalStorage = crate::soc::extflash::ExtFlashStorage<crate::soc::board::ExternalStorageSPI, Pin<Output<PushPull>>>;
 
 /*
   The same rant as for ExternalStorage applies. However this time it's a
