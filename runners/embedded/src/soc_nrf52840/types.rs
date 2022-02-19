@@ -93,3 +93,7 @@ pub fn is_pin_latched<T>(pin: &Pin<Input<T>>, latches: &[u32]) -> bool {
 
 	((latches[pinport] >> pinshift) & 1) != 0
 }
+
+pub fn is_keepalive_pin(pinport: u32) -> bool {
+	crate::soc::board::KEEPALIVE_PINS.contains(&(pinport as u8))
+}
