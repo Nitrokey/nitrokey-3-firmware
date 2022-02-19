@@ -1,6 +1,3 @@
-use nrf52840_pac::{
-	Peripherals, CorePeripherals
-};
 use nrf52840_hal::{
 	gpio::{p0, p1, Level},
 	gpiote::Gpiote,
@@ -8,8 +5,6 @@ use nrf52840_hal::{
 };
 
 use crate::soc::types::*;
-
-pub type ExternalStorageSPI = nrf52840_hal::spim::Spim<nrf52840_pac::SPIM3>;
 
 pub fn init_bootup(ficr: &nrf52840_pac::FICR, uicr: &nrf52840_pac::UICR, power: &mut nrf52840_pac::POWER) {
 	let deviceid0 = ficr.deviceid[0].read().bits();

@@ -4,7 +4,6 @@ use interchange::Interchange;
 use littlefs2::fs::Filesystem;
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
-#[macro_use]
 extern crate delog;
 delog::generate_macros!();
 
