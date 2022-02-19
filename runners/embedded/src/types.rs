@@ -43,7 +43,7 @@ pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<soc::types::ExternalStorage>
 pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 
-platform!(RunnerBoard,
+platform!(RunnerPlatform,
 	R: soc::types::Rng,
 	S: RunnerStore,
 	UI: soc::types::TrussedUI,
@@ -59,7 +59,7 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed = trussed::Service<RunnerBoard>;
+pub type Trussed = trussed::Service<RunnerPlatform>;
 pub type TrussedClient = trussed::ClientImplementation<RunnerSyscall>;
 
 // pub type Iso14443 = nfc_device::Iso14443<board::soc::nfc::NfcChip>;
@@ -192,7 +192,7 @@ pub struct Apps {
 
 impl Apps {
     pub fn new(
-        trussed: &mut trussed::Service<RunnerBoard>,
+        trussed: &mut trussed::Service<RunnerPlatform>,
         #[cfg(feature = "provisioner-app")]
         provisioner: ProvisionerNonPortable
     ) -> Self {
