@@ -21,7 +21,7 @@ delog!(Delogger, 3*1024, 512, ERL::types::DelogFlusher);
 
 type UsbClockType = Clocks<nrf52840_hal::clocks::ExternalOscillator, nrf52840_hal::clocks::Internal, nrf52840_hal::clocks::LfOscStarted>;
 static mut USB_CLOCK: Option<UsbClockType> = None;
-static mut USBD: Option<usb_device::bus::UsbBusAllocator<ERL::soc::types::UsbBus>> = None;
+static mut USBD: Option<usb_device::bus::UsbBusAllocator<<ERL::soc::types::Soc as ERL::types::Soc>::UsbBus>> = None;
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
