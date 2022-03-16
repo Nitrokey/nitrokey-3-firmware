@@ -24,6 +24,7 @@ pub trait Soc {
 	type ExternalFlashStorage;
 	// VolatileStorage is always RAM
 	type UsbBus;
+	type NfcDevice;
 	type Rng;
 	type TrussedUI;
 	type Reboot;
@@ -299,3 +300,9 @@ impl delog::Flusher for DelogFlusher {
 }
 
 pub static DELOG_FLUSHER: DelogFlusher = DelogFlusher {};
+
+#[derive(PartialEq)]
+pub enum BootMode {
+	NFCPassive,
+	Full
+}
