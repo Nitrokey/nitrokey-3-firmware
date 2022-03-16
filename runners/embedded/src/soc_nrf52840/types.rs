@@ -22,6 +22,7 @@ impl crate::types::Soc for Soc {
 		nrf52840_hal::spim::Spim<nrf52840_pac::SPIM3>,
 		Pin<Output<PushPull>>>;
 	type UsbBus = Usbd<UsbPeripheral<'static>>;
+	type NfcDevice = DummyNfc;
 	type Rng = chacha20::ChaCha8Rng;
 	type TrussedUI = super::dummy_ui::DummyUI;
 	type Reboot = self::Reboot;
@@ -31,6 +32,17 @@ impl crate::types::Soc for Soc {
 	const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr { i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16 };
 
 	fn device_uuid() -> &'static [u8; 16] { unsafe { &DEVICE_UUID } }
+}
+
+pub struct DummyNfc;
+impl nfc_device::traits::nfc::Device for DummyNfc {
+	fn read(&mut self, buf: &mut [u8]) -> Result<nfc_device::traits::nfc::State, nfc_device::traits::nfc::Error> {
+		Err(nfc_device::traits::nfc::Error::NoActivity)
+	}
+	fn send(&mut self, buf: &[u8]) -> Result<(), nfc_device::traits::nfc::Error> {
+		Err(nfc_device::traits::nfc::Error::NoActivity)
+	}
+	fn frame_size(&self) -> usize { 0 }
 }
 
 pub struct Reboot {

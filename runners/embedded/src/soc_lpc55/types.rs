@@ -37,6 +37,7 @@ impl crate::types::Soc for Soc {
 	type InternalFlashStorage = InternalFilesystem;
 	type ExternalFlashStorage = ExternalRAMStorage;
 	type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
+	type NfcDevice = super::nfc::NfcChip;
 	type Rng = rng::Rng<lpc55_hal::Enabled>;
 	type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
 	type Reboot = Lpc55Reboot;
