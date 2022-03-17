@@ -92,10 +92,16 @@ const APP: () = {
 		// out: { usb_classes, contact_responder, ctaphid_responder }
 
 		/* -> initializer::initialize_nfc() */
+		let nfc_dev = { if bootmode == BootMode::NFCPassive {
+			ERL::soc::setup_fm11nc08(&clocks, syscon, iocon, gpio,
+					hal.flexcomm.0, hal.inputmux, hal.pint, nfc_irq, &mut delay_timer)
+		} else {
+			None
+		}};
 		// out: { iso14443, contactless_responder }
 
 		/* -> initializer::initialize_interfaces() */
-		let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
+		let usbnfcinit = ERL::init_usb_nfc(usbd_ref, nfc_dev);
 		// out: { apdu_dispatch, ctaphid_dispatch }
 
 		/* -> initializer::initialize_flash() */
