@@ -54,7 +54,9 @@ pub fn init_store(int_flash: <SocT as Soc>::InternalFlashStorage, ext_flash: <So
 }
 
 pub fn init_usb_nfc(usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
-		_nfc_opt: Option<nfc_device::Iso14443<<SocT as Soc>::NfcDevice>>) -> types::usb::UsbInit {
+		nfcdev_opt: Option<<SocT as Soc>::NfcDevice>) -> types::usb::UsbInit {
+
+	let config = <SocT as Soc>::INTERFACE_CONFIG;
 
 	/* claim interchanges */
 	let (ccid_rq, ccid_rp) = apdu_dispatch::interchanges::Contact::claim().unwrap();
@@ -70,7 +72,7 @@ pub fn init_usb_nfc(usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator
 
 	if let Some(usbbus) = usbbus_opt {
 		/* Class #1: CCID */
-		let ccid = usbd_ccid::Ccid::new(usbbus, ccid_rq, Some(b"PTB/EMC"));
+		let ccid = usbd_ccid::Ccid::new(usbbus, ccid_rq, Some(config.card_issuer));
 
 		/* Class #2: CTAPHID */
 		let ctaphid = usbd_ctaphid::CtapHid::new(usbbus, ctaphid_rq, 0u32)
@@ -81,16 +83,27 @@ pub fn init_usb_nfc(usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator
 		/* Class #3: Serial */
 		let serial = usbd_serial::SerialPort::new(usbbus);
 
-		let usbdev = UsbDeviceBuilder::new(usbbus, UsbVidPid(0x1209, 0x5090))
-			.product("EMC Stick")
-			.manufacturer("Nitrokey/PTB")
-			.serial_number("imagine.a.uuid.here")
-			.device_release(0x0001u16)
+		let vidpid = UsbVidPid(config.usb_id_vendor, config.usb_id_product);
+		let usbdev = UsbDeviceBuilder::new(usbbus, vidpid)
+			.product(config.usb_product)
+			.manufacturer(config.usb_manufacturer)
+			.serial_number(config.usb_serial)
+			.device_release(crate::types::build_constants::USB_RELEASE)
 			.max_packet_size_0(64)
 			.composite_with_iads()
 			.build();
 
 		usb_classes = Some(types::usb::UsbClasses::new(usbdev, ccid, ctaphid, serial));
+	}
+
+	if let Some(nfcdev) = nfcdev_opt {
+		let mut iso14443 = nfc_device::Iso14443::new(nfcdev, nfc_rq);
+
+		iso14443.poll();
+		if true {
+			// Give a small delay to charge up capacitors
+			// basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+		}
 	}
 
 	types::usb::UsbInit { usb_classes, apdu_dispatch, ctaphid_dispatch }

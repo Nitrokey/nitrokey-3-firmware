@@ -13,6 +13,15 @@ use nrf52840_hal::{
 
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
 
+const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
+	card_issuer: b"Nitrokey/PTB\0",
+	usb_product: super::board::USB_PRODUCT,
+	usb_manufacturer: "Nitrokey/PTB",
+	usb_serial: super::board::USB_SERIAL,
+	usb_id_vendor: crate::types::USB_ID_VENDOR_NITROKEY,
+	usb_id_product: super::board::USB_ID_PRODUCT,
+};
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
 	type InternalFlashStorage = super::flash::FlashStorage;
@@ -27,10 +36,11 @@ impl crate::types::Soc for Soc {
 	type TrussedUI = super::dummy_ui::DummyUI;
 	type Reboot = self::Reboot;
 
-	const SOC_NAME: &'static str = "NRF52840";
-	const BOARD_NAME: &'static str = super::board::BOARD_NAME;
 	const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr { i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16 };
 
+	const SOC_NAME: &'static str = "NRF52840";
+	const BOARD_NAME: &'static str = super::board::BOARD_NAME;
+	const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
 	fn device_uuid() -> &'static [u8; 16] { unsafe { &DEVICE_UUID } }
 }
 
