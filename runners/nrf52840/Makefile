@@ -89,6 +89,22 @@ reset-nk3mini:
 	# set UICR::NFCPINS to disabled
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --memwr 0x1000120C --val 0xfffffffe
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
+	
+reset-nk3mini-bootloader:
+	nrfjprog -f NRF52 --eraseall 
+	nrfjprog -f NRF52 --program mbr.hex --sectorerase
+	nrfjprog -f NRF52 --reset
+	nrfjprog -f nrf52 --program bootloader.hex --sectorerase
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program $(OUTDIR2)/release/runner-nk3mini.ihex
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program fidokeys_lfs_e0000+20000.ihex
+	# set APPROTECT (disable debugging port - reset with: `nrfjprog -f NRF52 --recover` or --chiperase(?)
+	#nrfjprog --memwr 0x10001208 --val 0xFFFFFF00	
+	# set UICR::REGOUT0 to 3v3
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --memwr 0x10001304 --val 0xfffffffc
+	# set UICR::NFCPINS to disabled
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --memwr 0x1000120C --val 0xfffffffe
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
+
 
 flashdump:
 	rm -f flashdump_text.raw flashdump_lfs2.raw flashtmp.raw flashtmp.hex
