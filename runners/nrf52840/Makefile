@@ -91,10 +91,11 @@ reset-nk3mini:
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
 	
 reset-nk3mini-bootloader:
-	nrfjprog -f NRF52 --eraseall 
-	nrfjprog -f NRF52 --program mbr.hex --sectorerase
-	nrfjprog -f NRF52 --reset
-	nrfjprog -f nrf52 --program bootloader.hex --sectorerase
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --eraseall 
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program mbr.hex --sectorerase
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program bootloader.hex --sectorerase
+	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --reset
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program $(OUTDIR2)/release/runner-nk3mini.ihex
 	nrfjprog -f NRF52 -s $(SERIAL_NRFDK) --program fidokeys_lfs_e0000+20000.ihex
 	# set APPROTECT (disable debugging port - reset with: `nrfjprog -f NRF52 --recover` or --chiperase(?)
