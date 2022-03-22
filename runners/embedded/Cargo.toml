@@ -59,6 +59,7 @@ fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"
 
 [build-dependencies]
+cargo-lock = "7"
 serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
