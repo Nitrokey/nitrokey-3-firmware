@@ -159,7 +159,7 @@ impl Initializer {
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.syscon);
         let is_passive_mode = nfc_irq.is_low().ok().unwrap();
 
-        self.is_nfc_passive = is_passive_mode;
+        self.is_nfc_passive = true;
 
         (iocon, nfc_irq)
     }
