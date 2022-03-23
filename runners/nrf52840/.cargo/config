@@ -3,7 +3,7 @@ target = "thumbv7em-none-eabihf"
 
 [target.thumbv7em-none-eabihf]
 rustflags = [
-	"-C", "linker=flip-link",
+	#"-C", "linker=flip-link",
 	#"-C", "linker=lld",
 	"-C", "link-arg=-Tlink.x",
 	"-C", "link-arg=-error-limit=0",
