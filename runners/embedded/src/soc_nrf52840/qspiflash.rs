@@ -10,7 +10,7 @@ pub struct QspiFlash {
 	io0_pin: Pin<Output<PushPull>>,
 	io1_pin: Pin<Input<Floating>>,
 
-	power_pin: Pin<Output<PushPull>>,
+	power_pin: Option<Pin<Output<PushPull>>>,
 }
 
 impl QspiFlash {
@@ -19,7 +19,7 @@ impl QspiFlash {
 	pub fn new(qspi_pac: nrf52840_pac::QSPI,
 		mut spi_pins: SpimPins,
 		cs_pin: Pin<Output<PushPull>>,
-		power_pin: Pin<Output<PushPull>>,
+		power_pin: Option<Pin<Output<PushPull>>>,
 		delay_timer: &mut dyn DelayMs<u32>) -> Self {
 		let mut obj = Self {
 			qspi: qspi_pac,
@@ -30,8 +30,10 @@ impl QspiFlash {
 			power_pin
 		};
 
-		obj.power_pin.set_high().ok();
-		delay_timer.delay_ms(200u32);
+		if obj.power_pin.is_some() {
+			obj.power_pin.as_mut().unwrap().set_high().ok();
+			delay_timer.delay_ms(200u32);
+		}
 
 		obj.qspi.psel.sck.write(|w| unsafe { w.bits(obj.clk_pin.psel_bits()) });
 		obj.qspi.psel.csn.write(|w| unsafe { w.bits(obj.cs_pin.psel_bits()) });

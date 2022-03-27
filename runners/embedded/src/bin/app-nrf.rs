@@ -81,14 +81,10 @@ const APP: () = {
 
 		let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
 
-		{ use nrf52840_hal::prelude::OutputPin;
-		  use embedded_hal::blocking::delay::DelayMs;
-		  board_gpio.flash_power.as_mut().unwrap().set_high().ok(); delay_timer.delay_ms(200u32); }
-
 		let mut crispy = ERL::soc::qspiflash::QspiFlash::new(ctx.device.QSPI,
 			board_gpio.flashnfc_spi.take().unwrap(),
 			board_gpio.flash_cs.take().unwrap(),
-			board_gpio.flash_power.take().unwrap(),
+			board_gpio.flash_power,
 			&mut delay_timer);
 		crispy.activate();
 		trace!("qspi jedec: {}", delog::hex_str!(&crispy.read_jedec_id()));
