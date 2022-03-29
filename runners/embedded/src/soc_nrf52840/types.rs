@@ -8,6 +8,17 @@ use nrf52840_hal::{
 };
 use trussed::types::{LfsStorage, LfsResult};
 
+
+
+use super::sub_board::RgbLed;
+use super::sub_board::ThreeButtons;
+
+
+use super::trussed::UserInterface;
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
@@ -39,7 +50,8 @@ impl crate::types::Soc for Soc {
 	type UsbBus = Usbd<UsbPeripheral<'static>>;
 	type NfcDevice = DummyNfc;
 	type Rng = chacha20::ChaCha8Rng;
-	type TrussedUI = super::dummy_ui::DummyUI;
+	//type TrussedUI = super::dummy_ui::DummyUI;
+	type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
 	type Reboot = self::Reboot;
 
 	const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr { i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16 };

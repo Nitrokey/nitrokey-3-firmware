@@ -108,19 +108,39 @@ const APP: () = {
 
 		let dev_rng = Rng::new(ctx.device.RNG);
 		let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
-		let dummy_ui = ERL::soc::dummy_ui::DummyUI::new();
-
-		let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(
-			chacha_rng, store, dummy_ui);
-
-		let mut trussed_service = trussed::service::Service::new(platform);
-
-		let apps = ERL::init_apps(&mut trussed_service, &store, !powered_by_usb);
 
 		let mut dev_rtc = Rtc::new(ctx.device.RTC0, 4095).unwrap();
 		dev_rtc.enable_interrupt(nrf52840_hal::rtc::RtcInterrupt::Tick, None);
 		dev_rtc.clear_counter();
 		dev_rtc.enable_counter();
+
+		//let dummy_ui = ERL::soc::dummy_ui::DummyUI::new();
+
+		/*#[cfg(feature = "board_proto1")]
+		#[cfg(feature = "board_nrfdk")]
+		#[cfg(feature = "board_nk3am")]*/
+
+		let rgb = ERL::soc::sub_board::RgbLed { 
+			red: board_gpio.leds[0].take(), 
+			green: board_gpio.leds[1].take(), 
+			blue: board_gpio.leds[2].take(),
+		};
+
+		let three_buttons = ERL::soc::sub_board::ThreeButtons {
+			touch_button: board_gpio.touch.take(),
+		};
+
+		let ui = <ERL::soc::types::Soc as ERL::types::Soc>::TrussedUI::new(
+			Some(three_buttons), Some(rgb), true);
+
+		let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(
+			chacha_rng, store, ui);
+
+		let mut trussed_service = trussed::service::Service::new(platform);
+
+		let apps = ERL::init_apps(&mut trussed_service, &store, !powered_by_usb);
+
+		
 
 		// compose LateResources
 		init::LateResources {
