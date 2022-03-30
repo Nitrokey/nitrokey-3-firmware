@@ -9,7 +9,7 @@ compile_error!("No NRF52840 board chosen!");
 #[cfg_attr(feature = "board-nk3am", path = "board_nk3am.rs")]
 pub mod board;
 
-pub mod sub_board;
+pub mod board_common;
 
 pub mod types;
 pub mod traits;

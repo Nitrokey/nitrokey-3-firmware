@@ -120,18 +120,18 @@ const APP: () = {
 		#[cfg(feature = "board_nrfdk")]
 		#[cfg(feature = "board_nk3am")]*/
 
-		let rgb = ERL::soc::sub_board::RgbLed { 
-			red: board_gpio.leds[0].take(), 
-			green: board_gpio.leds[1].take(), 
-			blue: board_gpio.leds[2].take(),
+		let rgb = ERL::soc::board_common::RgbLed { 
+			red: board_gpio.rgb_led[0].take(), 
+			green: board_gpio.rgb_led[1].take(), 
+			blue: board_gpio.rgb_led[2].take(),
 		};
 
-		let three_buttons = ERL::soc::sub_board::ThreeButtons {
+		let buttons = ERL::soc::board_common::HardwareButtons {
 			touch_button: board_gpio.touch.take(),
 		};
 
 		let ui = <ERL::soc::types::Soc as ERL::types::Soc>::TrussedUI::new(
-			Some(three_buttons), Some(rgb), true);
+			Some(buttons), Some(rgb), true);
 
 		let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(
 			chacha_rng, store, ui);

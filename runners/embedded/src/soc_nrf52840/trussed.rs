@@ -183,8 +183,8 @@ RGB: RgbLed,
     }
 
     fn uptime(&mut self) -> Duration {
-        //self.rtc.uptime()
-        core::time::Duration::from_millis(10)
+        let cyccnt = cortex_m::peripheral::DWT::cycle_count();
+		core::time::Duration::new((cyccnt as u64) / 32_000, (cyccnt / 32) % 1_000)
     }
 
     // delete this function after trussed is updated

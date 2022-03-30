@@ -14,7 +14,7 @@ pub struct RgbLed {
     pub blue: Option<Pin<Output<PushPull>>>,
 }
 
-pub struct ThreeButtons {
+pub struct HardwareButtons {
     pub touch_button: Option<Pin<Output<PushPull>>>,
 }
 
@@ -58,7 +58,7 @@ impl rgb_led::RgbLed for RgbLed {
     }
 }
 
-impl Press for ThreeButtons {
+impl Press for HardwareButtons {
 	fn is_pressed(&mut self, but: Button) -> bool {
         match but {
             

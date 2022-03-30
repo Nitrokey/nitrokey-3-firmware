@@ -77,7 +77,8 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 
 	BoardGPIO { buttons: [
 			None, None, None, None, None, None, None, None ],
-		leds: [ Some(led_r), Some(led_g), Some(led_b), None ],
+		leds: [ None, None, None, None ],
+		rgb_led: [Some(led_r), Some(led_g), Some(led_b)],
 		touch: Some(touch),
 		uart_pins: None,
 		fpr_detect: None,
