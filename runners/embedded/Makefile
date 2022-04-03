@@ -109,8 +109,12 @@ clean-all:
 	rm -f ./$(OUT) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)
 	rm -f *.log runner-*-*.ihex runner-*-*.bin symbols-*-*.txt runner-*-*.ihex
 	rm -rf ./$(CARGO_TARGET_DIR)
+	rm -f data/*.raw
 	rm -f firmware.hex mbr.hex bootloader.hex
 	rm -rf artifacts cfg.toml
+
+data/texmap.raw: data/prepare.py $(wildcard data/*.png)
+	( cd data; ./prepare.py )
 
 ###############################################################################
 #### generate test fido-keys littlefs2 flashable hex
@@ -131,7 +135,7 @@ $(eval $(call fidokeys_lfs,d8000,14000))
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+build: build-banner $(SRCS) data/texmap.raw check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	cp -f $(CFG_PATH) cfg.toml
 	echo '' >> cfg.toml
