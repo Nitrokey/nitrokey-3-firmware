@@ -19,6 +19,8 @@ pub mod trussed_ui;
 
 pub mod types;
 
+#[cfg(feature = "display_ui")]
+pub mod display_ui;
 mod flash;
 #[cfg(feature = "extflash_qspi")]
 pub mod qspiflash;
