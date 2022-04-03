@@ -23,6 +23,8 @@ mod flash;
 #[cfg(feature = "extflash_qspi")]
 pub mod qspiflash;
 pub mod rtic_monotonic;
+#[cfg(feature = "display_ui")]
+pub mod display_ui;
 
 pub fn init_bootup(ficr: &nrf52840_pac::FICR, uicr: &nrf52840_pac::UICR, power: &mut nrf52840_pac::POWER) {
 	let deviceid0 = ficr.deviceid[0].read().bits();

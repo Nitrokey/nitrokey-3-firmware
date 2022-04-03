@@ -83,7 +83,7 @@ mod app {
 			None
 		}};
 		/* TODO: set up NFC chip */
-		// let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
+		let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 
 		let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
 
@@ -109,10 +109,8 @@ mod app {
 
 		let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
 
-		let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 		/* TODO: set up fingerprint device */
 		/* TODO: set up SE050 device */
-		/* TODO: set up display */
 
 		let dev_rng = Rng::new(ctx.device.RNG);
 		let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
@@ -124,8 +122,17 @@ mod app {
 			ctx.device.PWM2, ctx.device.TIMER3,
 			board_gpio.touch.unwrap(), delay_timer
 		);
-
-		#[cfg(not(feature = "board-nk3am"))]
+		#[cfg(feature = "board-proto1")]
+		let ui = ERL::soc::board::init_ui(ctx.device.SPIM0,
+			board_gpio.display_spi.take().unwrap(),
+			board_gpio.display_dc.take().unwrap(),
+			board_gpio.display_reset.take().unwrap(),
+			board_gpio.display_power,
+			board_gpio.display_backlight,
+			board_gpio.buttons,
+			board_gpio.leds
+		);
+		#[cfg(feature = "board-nrfdk")]
 		let ui = ERL::soc::board::init_ui();
 
 		let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(

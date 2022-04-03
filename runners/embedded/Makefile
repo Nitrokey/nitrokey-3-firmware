@@ -108,7 +108,11 @@ clean-all:
 	rm -f ./$(OUT) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)
 	rm -f *.log runner-*-*.ihex runner-*-*.bin symbols-*-*.txt runner-*-*.ihex
 	rm -rf ./target
+	rm -f data/*.raw
 	rm -f firmware.hex mbr.hex bootloader.hex
+
+data/texmap.raw: data/prepare.py $(wildcard data/*.png)
+	( cd data; ./prepare.py )
 
 ###############################################################################
 ###############################################################################
@@ -122,7 +126,7 @@ endef
 
 $(eval $(call fidokeys_lfs,d8000,14000))
 
-build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+build: build-banner $(SRCS) data/texmap.raw check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	rm -f target/$(TARGET)/release/$(RAW_OUT)
 
