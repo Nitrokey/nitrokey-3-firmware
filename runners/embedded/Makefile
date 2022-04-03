@@ -24,11 +24,15 @@ build-all:
 
 clean:
 	rm -rf target
+	rm -f data/*.raw
+
+data/texmap.raw: data/prepare.py $(wildcard data/*.png)
+	( cd data; ./prepare.py )
 
 define board-targets
 .PHONY: build-$(1) clean-$(1)
 
-build-$(1):
+build-$(1): data/texmap.raw
 	@echo "***** BUILD $(1) *****"
 	rm -f target/$(2)/release/$(4)-$(1)
 	cargo build --release --target $(2) --features board-$(1) $(EXTRA_FEATURES) \
