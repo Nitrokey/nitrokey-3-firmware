@@ -19,10 +19,12 @@ mod app {
         timer::Timer,
     };
     use rand_core::SeedableRng;
+    use trussed::Interchange;
 
     #[shared]
     struct SharedResources {
         trussed: ERL::types::Trussed,
+        trussed_client: ERL::types::TrussedClient,
         apps: ERL::types::Apps,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
@@ -206,6 +208,12 @@ mod app {
         let mut trussed_service = trussed::service::Service::new(platform);
 
         let apps = ERL::init_apps(&mut trussed_service, &store, !powered_by_usb);
+        let runner_client = {
+            let (rq, rp) = trussed::pipe::TrussedInterchange::claim().unwrap();
+            trussed_service.add_endpoint(rp, "runtime".into()).ok();
+            let sys = ERL::types::RunnerSyscall::default();
+            ERL::types::TrussedClient::new(rq, sys)
+        };
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
@@ -215,6 +223,7 @@ mod app {
         (
             SharedResources {
                 trussed: trussed_service,
+                trussed_client: runner_client,
                 apps,
                 apdu_dispatch: usbnfcinit.apdu_dispatch,
                 ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
