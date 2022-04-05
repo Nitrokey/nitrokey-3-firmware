@@ -73,19 +73,17 @@ mod app {
         dev_gpiote.reset_events();
 
         /* check reason for booting */
-        let powered_by_usb: bool = true;
+        let reset_reason = ctx.device.POWER.resetreas.read().bits();
+        ctx.device.POWER.resetreas.write(|w| w);
+
+        let wakeup_by_nfc: bool = reset_reason == 0x0008_0000;
         /* a) powered through NFC: enable NFC, keep external oscillator off, don't start USB */
         /* b) powered through USB: start external oscillator, start USB, keep NFC off(?) */
 
-        let usbd_ref = {
-            if powered_by_usb {
-                Some(ERL::soc::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
-            } else {
-                None
-            }
-        };
-        /* TODO: set up NFC chip */
-        let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
+        ERL::soc::setup_lfclk_hfxo(ctx.device.CLOCK);
+        let usbd_ref = ERL::soc::setup_usb_bus(ctx.device.USBD);
+        let nfc_ref = ERL::soc::nfc::NrfNfc::new(ctx.device.NFCT);
+        let usbnfcinit = ERL::init_usb_nfc(Some(usbd_ref), Some(nfc_ref));
 
         let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
 
@@ -208,7 +206,7 @@ mod app {
 
         let mut trussed_service = trussed::service::Service::new(platform);
 
-        let apps = ERL::init_apps(&mut trussed_service, &store, !powered_by_usb);
+        let apps = ERL::init_apps(&mut trussed_service, &store, wakeup_by_nfc);
         let runner_client = {
             let (rq, rp) = trussed::pipe::TrussedInterchange::claim().unwrap();
             trussed_service.add_endpoint(rp, "runtime".into()).ok();

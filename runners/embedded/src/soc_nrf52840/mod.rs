@@ -12,19 +12,19 @@ compile_error!("No NRF52840 board chosen!");
 #[cfg_attr(feature = "board-nk3am", path = "board_nk3am.rs")]
 pub mod board;
 
-#[cfg(not(feature = "board-nk3am"))]
+#[cfg(feature = "board-proto1")]
+pub mod display_ui;
+#[cfg(feature = "board-nrfdk")]
 pub mod dummy_ui;
 #[cfg(feature = "board-nk3am")]
 pub mod trussed_ui;
 
-pub mod types;
-
-#[cfg(feature = "display_ui")]
-pub mod display_ui;
 mod flash;
+pub mod nfc;
 #[cfg(feature = "extflash_qspi")]
 pub mod qspiflash;
 pub mod rtic_monotonic;
+pub mod types;
 
 pub fn init_bootup(
     ficr: &nrf52840_pac::FICR,
@@ -88,14 +88,14 @@ type UsbBusType = usb_device::bus::UsbBusAllocator<<types::Soc as crate::types::
 static mut USB_CLOCK: Option<UsbClockType> = None;
 static mut USBD: Option<UsbBusType> = None;
 
-pub fn setup_usb_bus(
-    clock: nrf52840_pac::CLOCK,
-    usb_pac: nrf52840_pac::USBD,
-) -> &'static UsbBusType {
+pub fn setup_lfclk_hfxo(clock: nrf52840_pac::CLOCK) {
     let usb_clock = Clocks::new(clock).start_lfclk().enable_ext_hfosc();
     unsafe {
         USB_CLOCK.replace(usb_clock);
     }
+}
+
+pub fn setup_usb_bus(usb_pac: nrf52840_pac::USBD) -> &'static UsbBusType {
     let usb_clock_ref = unsafe { USB_CLOCK.as_ref().unwrap() };
 
     usb_pac.intenset.write(|w| {
