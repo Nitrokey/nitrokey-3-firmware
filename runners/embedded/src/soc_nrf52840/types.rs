@@ -39,7 +39,7 @@ impl crate::types::Soc for Soc {
     #[cfg(not(feature = "extflash_qspi"))]
     type ExternalFlashStorage = ExternalStorage;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
-    type NfcDevice = DummyNfc;
+    type NfcDevice = super::nfc::NrfNfc;
     type Rng = chacha20::ChaCha8Rng;
     type TrussedUI = super::board::TrussedUI;
     type Reboot = self::Reboot;
@@ -58,22 +58,6 @@ impl crate::types::Soc for Soc {
 
     fn device_uuid() -> &'static Self::UUID {
         unsafe { &DEVICE_UUID }
-    }
-}
-
-pub struct DummyNfc;
-impl nfc_device::traits::nfc::Device for DummyNfc {
-    fn read(
-        &mut self,
-        _buf: &mut [u8],
-    ) -> Result<nfc_device::traits::nfc::State, nfc_device::traits::nfc::Error> {
-        Err(nfc_device::traits::nfc::Error::NoActivity)
-    }
-    fn send(&mut self, _buf: &[u8]) -> Result<(), nfc_device::traits::nfc::Error> {
-        Err(nfc_device::traits::nfc::Error::NoActivity)
-    }
-    fn frame_size(&self) -> usize {
-        0
     }
 }
 
