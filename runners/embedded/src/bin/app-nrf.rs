@@ -198,6 +198,7 @@ mod app {
             board_gpio.display_backlight,
             board_gpio.buttons,
             board_gpio.leds,
+            &mut delay_timer,
         );
         #[cfg(feature = "board-nrfdk")]
         let ui = ERL::soc::board::init_ui();
