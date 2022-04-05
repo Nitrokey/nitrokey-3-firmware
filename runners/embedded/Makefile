@@ -58,15 +58,13 @@ program-nrf-$(1):
 reset-nrf-$(1): fidokeys_lfs_e0000+c000.ihex
 	nrfjprog -f NRF52 -s $(1) --chiperase --program ./nrf-runner-$(2).ihex
 	nrfjprog -f NRF52 -s $(1) --program fidokeys_lfs_e0000+c000.ihex
-	
-	# set APPROTECT (disable debugging port - reset with: `nrfjprog -f NRF52 --recover` or --chiperase(?)
-	#nrfjprog --memwr 0x10001208 --val 0xFFFFFF00
-	
-	# set UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 -s $(1) --memwr 0x10001304 --val 0xfffffffd
 
-	# set UICR::NFCPINS to disabled
+	# set APPROTECT (disable debugging port - reset with: `nrfjprog -f NRF52 --recover` or --chiperase(?)
+	### nrfjprog --memwr 0x10001208 --val 0xFFFFFF00
+
+	# nk3am: UICR::REGOUT0 => 3v3, UICR::NFCPINS => disabled
 	if [ "$(2)" = "nk3am" ]; then \
+		nrfjprog -f NRF52 -s $(1) --memwr 0x10001304 --val 0xfffffffd; \
 		nrfjprog -f NRF52 -s $(1) --memwr 0x1000120C --val 0xfffffffe; \
 	fi
 
