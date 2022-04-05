@@ -1,12 +1,10 @@
+use crate::soc::types::BoardGPIO;
+use embedded_hal::blocking::delay::DelayUs;
 use nrf52840_hal::{
     gpio::{p0, p1, Input, Level, Output, Pin, PullUp, PushPull},
     gpiote::Gpiote,
     spim,
 };
-
-use nrf52840_pac::{CorePeripherals, Peripherals};
-
-use crate::soc::types::BoardGPIO;
 
 pub type InPin = Pin<Input<PullUp>>;
 pub type OutPin = Pin<Output<PushPull>>;
@@ -25,6 +23,7 @@ pub fn init_ui(
     d_backlight: Option<OutPin>,
     buttons: [Option<InPin>; 8],
     leds: [Option<OutPin>; 4],
+    delay_timer: &mut impl DelayUs<u32>,
 ) -> TrussedUI {
     let spim0 = nrf52840_hal::spim::Spim::new(
         spi_pac,
@@ -38,7 +37,17 @@ pub fn init_ui(
 
     let disp_st7789 = picolcd114::ST7789::new(disp_intf, d_reset, 240, 135, 40, 53);
 
-    super::display_ui::DisplayUI::new(Some(disp_st7789), d_power, d_backlight, buttons, leds, None)
+    let mut ui = super::display_ui::DisplayUI::new(
+        Some(disp_st7789),
+        d_power,
+        d_backlight,
+        buttons,
+        leds,
+        None,
+    );
+    ui.power_on(delay_timer);
+
+    ui
 }
 
 pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
