@@ -20,12 +20,10 @@ mod app {
 	};
 	use panic_halt as _;
 	use rand_core::SeedableRng;
-	use trussed::Interchange;
+	use trussed::{Interchange, syscall};
 
 	#[shared]
         struct SharedResources {
-		trussed: ERL::types::Trussed,
-		trussed_client: ERL::types::TrussedClient,
 		apps: ERL::types::Apps,
 		apdu_dispatch: ERL::types::ApduDispatch,
 		ctaphid_dispatch: ERL::types::CtaphidDispatch,
@@ -46,8 +44,11 @@ mod app {
 
 	#[local]
 	struct LocalResources {
+		trussed: ERL::types::Trussed,
+		trussed_client: ERL::types::TrussedClient,
 		gpiote: Gpiote,
 		power: nrf52840_pac::POWER,
+		ui_counter: u16,
 	}
 
 	#[monotonic(binds = RTC0, default = true)]
@@ -73,6 +74,7 @@ mod app {
 			ERL::soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
 		};
 		dev_gpiote.reset_events();
+		dev_gpiote.port().enable_interrupt();
 
 		/* check reason for booting */
 		let reset_reason = ctx.device.POWER.resetreas.read().bits();
@@ -107,7 +109,10 @@ mod app {
 			qspi_extflash
 		};
 		#[cfg(not(feature = "extflash_qspi"))]
-		let extflash = ERL::soc::types::ExternalStorage::new();
+		let extflash = {
+			trace!("extflash = RAM");
+			ERL::soc::types::ExternalStorage::new()
+		};
 
 		let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
 
@@ -157,16 +162,17 @@ mod app {
 
 		// compose LateResources
 		( SharedResources {
-			trussed: trussed_service,
-			trussed_client: runner_client,
 			apps,
 			apdu_dispatch: usbnfcinit.apdu_dispatch,
 			ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
 			usb_classes: usbnfcinit.usb_classes,
 			contactless: usbnfcinit.iso14443,
 		}, LocalResources {
+			trussed: trussed_service,
+			trussed_client: runner_client,
 			gpiote: dev_gpiote,
 			power: ctx.device.POWER,
+			ui_counter: 0,
 		}, init::Monotonics(rtc_mono))
 	}
 
@@ -206,19 +212,20 @@ mod app {
 		// loop {}
 	}
 
-	#[task(priority = 2, binds = SWI0_EGU0, shared = [trussed])]
+	#[task(priority = 2, binds = SWI0_EGU0, local = [trussed])]
 	fn task_trussed(ctx: task_trussed::Context) {
-		let mut trussed = ctx.shared.trussed;
+		let mut trussed = ctx.local.trussed;
 
 		trace!("irq SWI0_EGU0");
-		trussed.lock(|trussed| {
-			ERL::runtime::run_trussed(trussed);
-		});
+		ERL::runtime::run_trussed(trussed);
 	}
 
 	#[task(priority = 5, binds = GPIOTE, local = [gpiote])] /* ui, fpr */
-	fn task_button_irq(_ctx: task_button_irq::Context) {
+	fn task_button_irq(ctx: task_button_irq::Context) {
+		let gpiote = ctx.local.gpiote;
+
 		trace!("irq GPIOTE");
+		gpiote.reset_events();
 	}
 
 	#[task(priority = 3, binds = USBD, shared = [usb_classes])]
@@ -263,7 +270,7 @@ mod app {
 
 	#[task(priority = 5, binds = POWER_CLOCK, local = [power])]
 	fn power_handler(ctx: power_handler::Context) {
-		let mut power = ctx.local.power;
+		let power = ctx.local.power;
 
 		trace!("irq PWR {:x} {:x} {:x}",
 			power.mainregstatus.read().bits(),
@@ -284,9 +291,20 @@ mod app {
 		}
 	}
 
-	#[task(priority = 1)]
-	fn ui(_ctx: ui::Context) {
-		trace!("UI");
+	#[task(priority = 1, local = [trussed_client, ui_counter])]
+	fn ui(ctx: ui::Context) {
+		use trussed::client::GuiClient;
+		let ui::LocalResources { trussed_client: cl, ui_counter: cnt } = ctx.local;
+
+		trace!("UI {} {}", *cnt, *cnt % 4);
+		match *cnt % 4 {
+			0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
+			1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
+			2 => { syscall!(cl.draw_sprite(80, 120, 1, 0)); }
+			_ => {}
+		}
+		*cnt += 1;
+
 		ui::spawn_after(RtcDuration::from_ms(2500)).ok();
 	}
 }
