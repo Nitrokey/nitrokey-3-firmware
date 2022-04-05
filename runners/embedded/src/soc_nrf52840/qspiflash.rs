@@ -35,10 +35,10 @@ impl QspiFlash {
 			power_pin
 		};
 
-		if obj.power_pin.is_some() {
+		/*if obj.power_pin.is_some() {
 			obj.power_pin.as_mut().unwrap().set_high().ok();
 			delay_timer.delay_ms(200u32);
-		}
+		}*/
 
 		obj.qspi.psel.sck.write(|w| unsafe { w.bits(obj.clk_pin.psel_bits()) });
 		obj.qspi.psel.csn.write(|w| unsafe { w.bits(obj.cs_pin.psel_bits()) });

@@ -99,7 +99,7 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	let flashnfc_spi_clk = gpio_p1.p1_02.into_push_pull_output(Level::Low).degrade();
 	let flashnfc_spi_miso = gpio_p1.p1_06.into_floating_input().degrade();
 	let flashnfc_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
-	let flash_pwr = gpio_p1.p1_00.into_push_pull_output(Level::Low).degrade();
+	let _flash_pwr = gpio_p1.p1_00.into_floating_input().degrade(); // into_push_pull_output(Level::Low).degrade();
 	let nfc_irq = gpio_p1.p1_07.into_pullup_input().degrade();
 
 	let flashnfc_spi = spim::Pins {
@@ -127,7 +127,7 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		se_power: Some(se_pwr),
 		flashnfc_spi: Some(flashnfc_spi),
 		flash_cs: Some(flash_spi_cs),
-		flash_power: Some(flash_pwr),
+		flash_power: None,
 		nfc_cs: Some(nfc_spi_cs),
 		nfc_irq: Some(nfc_irq),
 	}
