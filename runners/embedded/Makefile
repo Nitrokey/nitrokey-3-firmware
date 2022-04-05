@@ -241,16 +241,17 @@ lazy-deluxe:
 	#sudo chmod 777 /dev/ttyACM*
 	#ls -la $(TTYDEV)
 
-reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
+reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX) check-var-BOARD
 	nrfjprog -f NRF52 --recover
 	nrfjprog -f NRF52 --program nrf-bootloader/mbr.hex --sectorerase
 	nrfjprog -f NRF52 --program nrf-bootloader/bootloader.hex --sectorerase
 	
 	# UICR
-	## UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
-	## UICR::NFCPINS to disabled
-	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
+	## if nk3am, then UICR::REGOUT0 <= 3v3, UICR::NFCPINS <= disabled
+	if [ "$(BOARD)" = "nk3am" ]; then \
+		nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd; \
+		nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe; \
+	fi
 	## UICR::APPROTECT (only --recover will revive debug-access)
 	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
 	
