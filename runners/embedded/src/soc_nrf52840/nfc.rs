@@ -11,11 +11,11 @@ impl NrfNfc {
 }
 
 impl nfc::Device for NrfNfc {
-    fn read(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error> {
+    fn read(&mut self, _buf: &mut [u8]) -> Result<nfc::State, nfc::Error> {
         Err(nfc::Error::NoActivity)
     }
 
-    fn send(&mut self, buf: &[u8]) -> Result<(), nfc::Error> {
+    fn send(&mut self, _buf: &[u8]) -> Result<(), nfc::Error> {
         Ok(())
     }
 
