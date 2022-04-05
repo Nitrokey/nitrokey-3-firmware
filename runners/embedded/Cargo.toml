@@ -68,7 +68,7 @@ toml = "0.5"
 default = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator",
 		"piv-authenticator", # "provisioner-app",
 		"fido-authenticator/disable-reset-time-window",
-		"trussed/clients-5", "log-traceP", "log-rtt"]
+		"trussed/clients-6", "log-traceP", "log-rtt"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840", "display_ui"]
