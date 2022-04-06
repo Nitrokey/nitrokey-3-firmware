@@ -162,7 +162,7 @@ impl trussed::platform::UserInterface for DisplayUI {
 
     fn draw_sprite(&mut self, x: u16, y: u16, sprite_map: u16, index: u16) {
         let smap = match sprite_map {
-            1 => sprites::BATTERY_MAP,
+            1 => sprites::ICONS_MAP,
             _ => {
                 return;
             }

@@ -397,9 +397,11 @@ mod app {
                 syscall!(cl.draw_text(50, 50, b"NRF52840"));
             }
             2 => {
-                syscall!(cl.draw_sprite(80, 120, 1, 0));
+                syscall!(cl.draw_sprite(0, 125, 1, 6));
             }
-            _ => {}
+            _ => {
+                syscall!(cl.draw_sprite(215, 125, 1, 7));
+            }
         }
         *cnt += 1;
 
