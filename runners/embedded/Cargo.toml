@@ -37,7 +37,7 @@ provisioner-app = { path = "../../components/provisioner-app", optional = true }
 ### trussed core
 trussed = "0.1"
 interchange = "0.2"
-littlefs2 = { version = "0.3", features = ["c-stubs"] }
+littlefs2 = { version = "0.3", features = ["c-stubs", "ll-assertions"] }
 
 ### usb machinery
 usb-device = "0.2"
