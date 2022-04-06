@@ -994,6 +994,7 @@ checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
 [[package]]
 name = "littlefs2"
 version = "0.3.2"
+source = "git+https://github.com/jnordholz/littlefs2#7b61f1221fe410fb0fce47956db03eea8d65e217"
 dependencies = [
  "bitflags",
  "cstr_core",
@@ -1037,6 +1038,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
+source = "git+https://github.com/jnordholz/lpc55-hal#720f17550061fede7342803f1b25b5008ecc3c0d"
 dependencies = [
  "block-buffer",
  "cipher",
