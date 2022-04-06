@@ -300,8 +300,8 @@ mod app {
 		match *cnt % 4 {
 			0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
 			1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
-			2 => { syscall!(cl.draw_sprite(80, 120, 1, 0)); }
-			_ => {}
+			2 => { syscall!(cl.draw_sprite(0, 125, 1, 6)); }
+			_ => { syscall!(cl.draw_sprite(215, 125, 1, 7)); }
 		}
 		*cnt += 1;
 

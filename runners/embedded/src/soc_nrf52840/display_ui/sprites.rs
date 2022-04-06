@@ -7,11 +7,28 @@ pub struct SpriteMap {
 	buf: &'static [u8],
 }
 
-const FONT: &[u8; (9*18*2)*192] = include_bytes!("../../../data/font_9x18.raw");
+macro_rules! sprite_map {
+	($name:ident, $w:expr, $h:expr, $n:expr, $rawfile:expr) => {
+		pub const $name: SpriteMap = {
+			let data: &[u8; ($w)*($h)*2*($n)] = include_bytes!($rawfile);
+			SpriteMap {
+				count_x: 1,
+				count_y: ($n),
+				width: ($w),
+				height: ($h),
+				buf: data
+			}
+		};
+	}
+}
+
+/*const FONT: &[u8; (9*18*2)*192] = include_bytes!("../../../data/font_9x18.raw");
 pub const FONT_MAP: SpriteMap = SpriteMap { count_x: 1, count_y: 192, width: 9, height: 18, buf: FONT };
 
-const BATTERY: &[u8; (25*10*2)*6] = include_bytes!("../../../data/texmap.raw");
-pub const BATTERY_MAP: SpriteMap = SpriteMap { count_x: 1, count_y: 6, width: 25, height: 10, buf: BATTERY };
+const ICONS: &[u8; (25*10*2)*8] = include_bytes!("../../../data/texmap.raw");
+pub const ICONS_MAP: SpriteMap = SpriteMap { count_x: 1, count_y: 8, width: 25, height: 10, buf: ICONS };*/
+sprite_map!(FONT_MAP, 9, 18, 192, "../../../data/font_9x18.raw");
+sprite_map!(ICONS_MAP, 25, 10, 8, "../../../data/texmap.raw");
 
 pub enum SpriteErr {
 	UnknownError
