@@ -143,6 +143,6 @@ path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
 
 [patch.crates-io]
-littlefs2 = { path = "../../components/littlefs2" }
-lpc55-hal = { path = "../../components/lpc55-hal" }
+littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
