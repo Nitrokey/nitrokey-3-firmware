@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if pgrep -x JLinkGDBServer >/dev/null
-then
-    echo "JLink already running"
-    exit 0
-fi
-
-JLinkGDBServer -device LPC55S69 -if SWD &> jlink.log &

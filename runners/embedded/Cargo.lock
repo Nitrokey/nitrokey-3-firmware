@@ -918,6 +918,7 @@ checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 [[package]]
 name = "littlefs2"
 version = "0.3.2"
+source = "git+https://github.com/Nitrokey/littlefs2#50a634c9213d0f3e726f1229e1916087eb6af361"
 dependencies = [
  "bitflags",
  "cstr_core",
@@ -962,6 +963,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
+source = "git+https://github.com/Nitrokey/lpc55-hal#720f17550061fede7342803f1b25b5008ecc3c0d"
 dependencies = [
  "block-buffer",
  "cipher",
