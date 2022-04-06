@@ -111,6 +111,7 @@ soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "provisioner-app/nrf
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "provisioner-app/lpc55"]
 
 extflash_qspi = []
+qspi_destructive_test = []
 display_ui = ["picolcd114", "display-interface-spi", "embedded-graphics"]
 
 log-all = []
