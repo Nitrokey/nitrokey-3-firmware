@@ -169,6 +169,28 @@ pub fn init_apps(trussed: &mut types::Trussed, _store: &types::RunnerStore, _on_
 	types::Apps::new(trussed)
 }
 
+#[no_mangle]
+pub extern "C" fn __assert_func(file: *const u8, line: u32, expr: *const u8, msg: *const u8) -> ! {
+	fn strlen(s: *const u8) -> usize {
+		let mut i = 0;
+		loop {
+			if unsafe { *s } == 0 { break; }
+			unsafe { s.add(1); }
+			i += 1;
+		}
+		i
+	}
+
+	fn to_str(s: *const u8) -> &'static str {
+		let slen: usize = strlen(s);
+		let slice: &[u8] = unsafe { core::slice::from_raw_parts(s, slen) };
+		unsafe { core::str::from_utf8_unchecked(slice) }
+	}
+
+	error!("{}:{} {} {}", to_str(file), line, to_str(expr), to_str(msg));
+	panic!("");
+}
+
 #[inline(never)]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -178,4 +200,3 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
-
