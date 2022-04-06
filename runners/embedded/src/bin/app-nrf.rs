@@ -103,12 +103,28 @@ mod app {
                 "qspi jedec: {}",
                 delog::hex_str!(&qspi_extflash.read_jedec_id())
             );
-            use littlefs2::driver::Storage;
-            let mut mybuf: [u8; 32] = [0u8; 32];
-            mybuf[2] = 0x5a;
-            qspi_extflash.read(0x400, &mut mybuf[0..16]).ok();
-            trace!("qspi read: {}", delog::hex_str!(&mybuf[0..16]));
 
+            #[cfg(feature = "qspi_destructive_test")]
+            {
+                use littlefs2::driver::Storage;
+                let mut mybuf: [u8; 1024] = [0u8; 1024];
+                mybuf[2] = 0x5a;
+                trace!("qspi test 0: erase 4K @ 0x0000");
+                qspi_extflash.erase(0, 0x1000).expect("qspi erase0");
+                trace!("qspi test 1: read 16 @ 0x0400");
+                qspi_extflash
+                    .read(0x400, &mut mybuf[0..16])
+                    .expect("qspi read1");
+                trace!("-> read: {}", delog::hex_str!(&mybuf[0..16]));
+                mybuf[0..8].copy_from_slice(&[0x55, 0xaa, 0x33, 0x99, 0x5a, 0xa5, 0x39, 0x93]);
+                trace!("qspi test 2: write 55aa33995aa53993 @ 0x400");
+                qspi_extflash.write(0x400, &mybuf).expect("qspi write2");
+                trace!("qspi test 3: read 16 @ 0x0400");
+                qspi_extflash
+                    .read(0x400, &mut mybuf[0..16])
+                    .expect("qspi read3");
+                trace!("-> read: {}", delog::hex_str!(&mybuf[0..16]));
+            }
             qspi_extflash
         };
         #[cfg(not(feature = "extflash_qspi"))]
