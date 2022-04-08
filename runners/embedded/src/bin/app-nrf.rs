@@ -12,13 +12,17 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use embedded_hal::blocking::delay::DelayMs;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
+        prelude::OutputPin,
         rng::Rng,
         timer::Timer,
+        twim::Twim,
     };
     use rand_core::SeedableRng;
+    use se050::{Se050, Se050Device, T1overI2C};
     use trussed::{syscall, Interchange};
 
     #[shared]
@@ -137,62 +141,24 @@ mod app {
 
         /* TODO: set up fingerprint device */
         /* TODO: set up SE050 device */
-
-        /* *********************************** */
-        /* in the meantime just test i2c comms */
-        /* SE050 minimal functional test - TO BE REMOVED on SE050 inclusion*/
-
-        use embedded_hal::blocking::delay::DelayMs;
-        use nrf52840_hal::prelude::OutputPin;
-
-        if let Some(se_ena) = &mut board_gpio.se_power {
-            match se_ena.set_high() {
-                Err(e) => {
-                    panic!("failed setting se_power high {:?}", e);
+        let se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>>>> =
+            if board_gpio.se_pins.is_some() {
+                let twi = Twim::new(
+                    ctx.device.TWIM1,
+                    board_gpio.se_pins.take().unwrap(),
+                    nrf52840_hal::twim::Frequency::K400,
+                );
+                let t1 = T1overI2C::new(twi, 0x48, 0x5a);
+                let mut se050 = Se050::new(t1);
+                if let Some(ref mut pwr_pin) = board_gpio.se_power {
+                    pwr_pin.set_high().ok();
+                    delay_timer.delay_ms(1u32);
                 }
-                Ok(_) => {
-                    debug!("setting se_power high");
-                }
-            }
-        }
-
-        let mut twim = nrf52840_hal::twim::Twim::new(
-            ctx.device.TWIM1,
-            board_gpio.se_pins.take().unwrap(),
-            nrf52840_hal::twim::Frequency::K400,
-        );
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC command
-        let write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-        match twim.write(0x48, &write_buf) {
-            Err(e) => {
-                panic!("i2c: failed I2C write! - {:?}", e);
-            }
-            Ok(_) => {
-                debug!("i2c: write I2C success....");
-            }
-        }
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC response
-        let mut response = [0; 2];
-        match twim.read(0x48, &mut response) {
-            Err(e) => {
-                panic!("i2c: failed I2C read! - {:?}", e);
-            }
-            Ok(_) => {
-                if response == [0xa5, 0xe0] {
-                    debug!("i2c: se050 activation RESYNC cool");
-                } else {
-                    panic!("i2c: se050 activation RESYNC fail!");
-                }
-            }
-        }
-        /* end of se050 minial functional test */
-        /* *********************************** */
+                se050.enable(&mut delay_timer).expect("SE050 Enable Fail");
+                Some(se050)
+            } else {
+                None
+            };
 
         /* TODO: set up display */
 

@@ -22,6 +22,7 @@ generic-array = "0.14"
 nfc-device = { path = "../../components/nfc-device" }
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"] }
+se050 = { git = "https://github.com/jnordholz/se050" }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
