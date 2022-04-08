@@ -130,8 +130,8 @@ impl trussed::platform::UserInterface for DisplayUI {
 		if let Some(ref mut d) = self.disp {
 			rgb565_memset(self.buf, col);
 			let (xs, ys): (u16, u16) = if h > w { (15, 60) } else { (60, 15) };
-			for xi in (x..x+w-1).step_by(xs as usize) {
-				for yi in (y..y+h-1).step_by(ys as usize) {
+			for xi in (x..x+w).step_by(xs as usize) {
+				for yi in (y..y+h).step_by(ys as usize) {
 					let xd = core::cmp::min(xs, x+w-xi);
 					let yd = core::cmp::min(ys, y+h-yi);
 					d.blit_pixels(xi, yi, xd, yd, &self.buf[0..(xd*yd*2) as usize]).ok();
@@ -156,6 +156,10 @@ impl trussed::platform::UserInterface for DisplayUI {
 		};
 		if let Some(ref mut d) = self.disp {
 			smap.blit_single(index, self.buf, d, x, y).ok();
+
+			if x == 0 && y == 0 {
+				d.flip_view();
+			}
 		}
 	}
 
