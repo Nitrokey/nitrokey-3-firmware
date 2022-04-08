@@ -1357,7 +1357,7 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 [[package]]
 name = "picolcd114"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/picolcd114/#8bf6d71a95a3492ef337e67e1e54d5cd559fb090"
+source = "git+https://github.com/Nitrokey/picolcd114#54d1d7d755a8a26bbc1e010b79ed510fd3733f34"
 dependencies = [
  "display-interface",
  "embedded-hal",
