@@ -323,6 +323,7 @@ mod app {
 				syscall!(cl.draw_sprite(215, 0, 1, 6));
 				syscall!(cl.draw_sprite(215, 125, 1, 7));
 				syscall!(cl.draw_sprite(0, 0, 1, 8));
+				syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
 			}
 		}
 		*cnt += 1;

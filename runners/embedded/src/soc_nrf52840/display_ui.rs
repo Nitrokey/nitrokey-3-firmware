@@ -5,6 +5,7 @@ use nrf52840_hal::{
 	prelude::OutputPin,
 	spim::Spim,
 };
+use trussed::types::{GUIControlCommand, GUIControlResponse};
 
 mod sprites;
 
@@ -156,12 +157,33 @@ impl trussed::platform::UserInterface for DisplayUI {
 		};
 		if let Some(ref mut d) = self.disp {
 			smap.blit_single(index, self.buf, d, x, y).ok();
-
-			if x == 0 && y == 0 {
-				d.flip_view();
-			}
 		}
 	}
 
 	fn get_gui_dimension(&self) -> Option<(u16, u16)> { Some((240, 135)) }
+
+	fn gui_control(&mut self, cmd: GUIControlCommand) -> Option<GUIControlResponse> {
+		if let Some(ref mut d) = self.disp {
+			match cmd {
+				GUIControlCommand::Rotate(2) => {
+					d.flip_view();
+					Some(GUIControlResponse::Orientation(d.get_orientation()))
+				}
+				GUIControlCommand::SetOrientation(o) => {
+					let o0 = d.get_orientation();
+					if (o0 ^ o) == 2 {
+						d.flip_view();
+						Some(GUIControlResponse::Orientation(o))
+					} else if o0 == 0 {
+						Some(GUIControlResponse::Orientation(o))
+					} else {
+						None
+					}
+				}
+				_ => { None }
+			}
+		} else {
+			None
+		}
+	}
 }
