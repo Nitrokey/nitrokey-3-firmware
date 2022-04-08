@@ -312,8 +312,18 @@ mod app {
 		match *cnt % 4 {
 			0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
 			1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
-			2 => { syscall!(cl.draw_sprite(0, 125, 1, 6)); }
-			_ => { syscall!(cl.draw_sprite(215, 125, 1, 7)); }
+			2 => {
+				syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
+				syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
+				syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
+				syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+			}
+			_ => {
+				syscall!(cl.draw_sprite(0, 125, 1, 9));
+				syscall!(cl.draw_sprite(215, 0, 1, 6));
+				syscall!(cl.draw_sprite(215, 125, 1, 7));
+				syscall!(cl.draw_sprite(0, 0, 1, 8));
+			}
 		}
 		*cnt += 1;
 
