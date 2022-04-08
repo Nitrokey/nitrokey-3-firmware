@@ -20,6 +20,7 @@ nfc-device = { path = "../../components/nfc-device" }
 panic-halt = "0.2"
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"] }
+se050 = { path = "../../components/se050" }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
