@@ -50,7 +50,7 @@ pub struct CApdu<'a> {
 	pub ins: u8,
 	pub p1: u8,
 	pub p2: u8,
-	pub data: &'a [u8]
+	pub data: Option<&'a [u8]>
 }
 
 pub struct RApdu<'a> {
@@ -59,12 +59,12 @@ pub struct RApdu<'a> {
 }
 
 impl<'a> CApdu<'a> {
-	pub fn new(cla: ApduClass, ins: u8, p1: u8, p2: u8, data: &'a [u8]) -> Self {
+	pub fn new(cla: ApduClass, ins: u8, p1: u8, p2: u8, data: Option<&'a [u8]>) -> Self {
 		Self { cla, ins, p1, p2, data }
 	}
 
 	pub fn blank() -> Self {
-		Self { cla: ApduClass::StandardPlain, ins: 0, p1: 0, p2: 0, data: &[] }
+		Self { cla: ApduClass::StandardPlain, ins: 0, p1: 0, p2: 0, data: None }
 	}
 }
 

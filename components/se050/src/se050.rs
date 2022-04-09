@@ -219,6 +219,10 @@ impl<T> Se050<T> where T: T1Proto {
 
 }
 
+const APP_ID_CM: [u8; 8] = [0xa0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00];
+const APP_ID_IOT: [u8; 16] = [0xA0, 0x00, 0x00, 0x03, 0x96, 0x54, 0x53, 0x00,
+			0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00];
+
 impl<T> Se050Device for Se050<T> where T: T1Proto {
 
 	fn enable(&mut self, delay: &mut impl DelayMs<u32>) -> Result<(), Se050Error> {
@@ -231,23 +235,49 @@ impl<T> Se050Device for Se050<T> where T: T1Proto {
 		self.atr_info = r.ok();
 		debug!("SE050 ATR: {:?}", self.atr_info.as_ref().unwrap());
 
-		/* Step 2: send GP SELECT to choose SE050 JCOP APP, parse APP version */
-		let app_id: [u8; 16] = [0xA0, 0x00, 0x00, 0x03, 0x96, 0x54, 0x53, 0x00,
-                        		0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00];
-		let app_select_apdu = CApdu::new(
+		/* Step 2: request CPLC data from Card Manager */
+		let mut gp_select_apdu = CApdu::new(
+			ApduClass::StandardPlain,
+			ApduStandardInstruction::SelectFile.into(), 4, 0, None);
+		let mut appid_data: [u8; 24] = [0; 24];
+		let mut appid_apdu = RApdu::blank();
+		self.t1_proto.send_apdu(&gp_select_apdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
+		self.t1_proto.receive_apdu(&mut appid_data, &mut appid_apdu, delay).map_err(|_| Se050Error::UnknownError)?;
+
+		debug!("CM selected");
+
+		/*
+		let read_cplc_apdu = CApdu::new(ApduClass::ProprietaryPlain, 0xCA, 0x9F, 0x7F, None);
+		let mut cplc_data: [u8; 49] = [0; 49];
+		let mut cplc_apdu = RApdu::blank();
+		self.t1_proto.send_apdu(&read_cplc_apdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
+		self.t1_proto.receive_apdu(&mut cplc_data, &mut cplc_apdu, delay).map_err(|_| Se050Error::UnknownError)?;
+
+		debug!("JCOP CPLC: {}", delog::hex_str!(&cplc_data));*/
+
+		let read_df28_apdu = CApdu::new(ApduClass::ProprietaryPlain, 0xCA, 0x00, 0xFE, Some(&[0xdf, 0x28]));
+		let mut df28_data: [u8; 0x4b] = [0; 0x4b];
+		let mut df28_apdu = RApdu::blank();
+		self.t1_proto.send_apdu(&read_df28_apdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
+		self.t1_proto.receive_apdu(&mut df28_data, &mut df28_apdu, delay).map_err(|_| Se050Error::UnknownError)?;
+
+		debug!("JCOP DF28: {}", delog::hex_str!(&df28_data));
+
+		/* Step 3: send GP SELECT to choose SE050 JCOP APP, parse APP version */
+		gp_select_apdu = CApdu::new(
 			ApduClass::StandardPlain,
 			ApduStandardInstruction::SelectFile.into(),
-			0x04, 0x00, &app_id);
-		self.t1_proto.send_apdu(&app_select_apdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
-
-		let mut appid_data: [u8; 11] = [0; 11];
-		let mut appid_apdu = RApdu::blank();
+			0x04, 0x00, Some(&APP_ID_IOT));
+		appid_apdu = RApdu::blank();
+		self.t1_proto.send_apdu(&gp_select_apdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
 		self.t1_proto.receive_apdu(&mut appid_data, &mut appid_apdu, delay).map_err(|_| Se050Error::UnknownError)?;
+
+		debug!("IOT selected");
 
 		let adata = appid_apdu.data;
 		let asw = appid_apdu.sw;
 		if asw != 0x9000 || adata.len() != 7 {
-			error!("SE050 GP SELECT Err: {:?} {:x}", hexstr!(adata), asw);
+			error!("SE050 GP SELECT Err: {:?} {:x}", delog::hex_str!(adata), asw);
 			return Err(Se050Error::UnknownError);
 		}
 
@@ -276,7 +306,7 @@ impl<T> Se050Device for Se050<T> where T: T1Proto {
 			Se050ApduInstruction::Mgmt.into(),
 			Se050ApduP1CredType::Default.into(),
 			Se050ApduP2::Random.into(),
-			&tlv1);
+			Some(&tlv1));
 		self.t1_proto.send_apdu(&capdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
 
 		let mut rapdu_buf: [u8; 260] = [0; 260];
@@ -328,7 +358,7 @@ impl<T> Se050Device for Se050<T> where T: T1Proto {
 			Into::<u8>::into(Se050ApduInstruction::Write) | APDU_INSTRUCTION_TRANSIENT,
 			Se050ApduP1CredType::AES.into(),
 			Se050ApduP2::Default.into(),
-			&tlvs);
+			Some(&tlvs));
 		self.t1_proto.send_apdu(&capdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
 
 		let mut rapdu_buf: [u8; 260] = [0; 260];
@@ -366,7 +396,7 @@ impl<T> Se050Device for Se050<T> where T: T1Proto {
 			Se050ApduInstruction::Crypto.into(),
 			Se050ApduP1CredType::Cipher.into(),
 			Se050ApduP2::EncryptOneshot.into(),
-			&tlvs[0..(data.len()+11)]);
+			Some(&tlvs[0..(data.len()+11)]));
 		self.t1_proto.send_apdu(&capdu, 0, delay).map_err(|_| Se050Error::UnknownError)?;
 
 		let mut rapdu_buf: [u8; 260] = [0; 260];
