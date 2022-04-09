@@ -162,11 +162,11 @@ pub fn init_apps(trussed: &mut types::Trussed, _store: &types::RunnerStore, _on_
 
 #[no_mangle]
 pub extern "C" fn __assert_func(file: *const u8, line: u32, expr: *const u8, msg: *const u8) -> ! {
-	fn strlen(s: *const u8) -> usize {
+	fn strlen(mut s: *const u8) -> usize {
 		let mut i = 0;
 		loop {
 			if unsafe { *s } == 0 { break; }
-			unsafe { s.add(1); }
+			unsafe { s = s.add(1); }
 			i += 1;
 		}
 		i

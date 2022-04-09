@@ -174,7 +174,7 @@ impl trussed::platform::UserInterface for DisplayUI {
 					if (o0 ^ o) == 2 {
 						d.flip_view();
 						Some(GUIControlResponse::Orientation(o))
-					} else if o0 == 0 {
+					} else if o0 == o {
 						Some(GUIControlResponse::Orientation(o))
 					} else {
 						None
