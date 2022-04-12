@@ -131,9 +131,13 @@ build: build-banner $(SRCS) data/texmap.raw check-var-BOARD check-var-BUILD_PROF
 	rm -f target/$(TARGET)/release/$(RAW_OUT)
 
 	BUILD_PROFILE=$(BUILD_PROFILE) BOARD=$(BOARD) \
-		cargo build --release --target $(TARGET) \
+		cargo build --timings --release \
+		--target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
+
+	mv target/cargo-timings/cargo-timing.html target/cargo-timings/cargo-timing-$(BOARD).html
+	rm -f target/cargo-timings/cargo-timing-*Z.html
 
 	cp target/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
 

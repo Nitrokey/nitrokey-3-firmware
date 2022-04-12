@@ -50,7 +50,7 @@ usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
 chacha20 = { version = "0.7", default-features = false, features = ["rng"], optional = true }
 nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true }
 nrf52840-pac = { version = "0.11", optional = true }
-picolcd114 = { git = "https://github.com/Nitrokey/picolcd114/", default-features = false, optional = true }
+picolcd114 = { git = "https://github.com/Nitrokey/picolcd114", default-features = false, optional = true }
 display-interface-spi = { version = "0.4", optional = true }
 embedded-graphics = { version = "0.7", optional = true }
 
@@ -66,12 +66,13 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
 [features]
+# the runner itself is a client, too, so calculate #apps+1
 complete = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator",
-		"piv-authenticator", "provisioner-app",
+		"piv-authenticator", # "provisioner-app",
 		"fido-authenticator/disable-reset-time-window",
 		"trussed/clients-6", "log-traceP", "log-rtt"]
 
-default = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator", "trussed/clients-4"]
+default = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator", "trussed/clients-5"]
 
 # develop = ["no-encrypted-storage", "no-buttons", "no-reset-time-window"]
 # develop = ["no-encrypted-storage", "no-reset-time-window"]
@@ -108,8 +109,8 @@ board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
 board-solo2 = ["soc-lpc55"]
 board-nk3xn = ["soc-lpc55"]
 
-soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "provisioner-app/nrf52"]
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "provisioner-app/lpc55"]
+soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "provisioner-app?/nrf52"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "provisioner-app?/lpc55"]
 
 extflash_qspi = []
 qspi_destructive_test = []
