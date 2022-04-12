@@ -130,11 +130,14 @@ build: build-banner $(SRCS) data/texmap.raw check-var-BOARD check-var-BUILD_PROF
 
 	rm -f $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
 
-	cargo build --release --target $(TARGET) \
+	cargo build --timings --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
 
 	cp $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
+
+	mv $(CARGO_TARGET_DIR)/cargo-timings/cargo-timing.html $(CARGO_TARGET_DIR)/cargo-timings/cargo-timing-$(BOARD).html
+	rm -f $(CARGO_TARGET_DIR)/cargo-timings/cargo-timing-*Z.html
 
 	$(GNU_TARGET)-nm ./$(OUT) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
 	

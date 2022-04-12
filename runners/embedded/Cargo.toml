@@ -52,7 +52,7 @@ usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
 chacha20 = { version = "0.7", default-features = false, features = ["rng"], optional = true }
 nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true }
 nrf52840-pac = { version = "0.11", optional = true }
-picolcd114 = { git = "https://github.com/Nitrokey/picolcd114/", default-features = false, optional = true }
+picolcd114 = { git = "https://github.com/Nitrokey/picolcd114", default-features = false, optional = true }
 display-interface-spi = { version = "0.4", optional = true }
 embedded-graphics = { version = "0.7", optional = true }
 
@@ -75,7 +75,7 @@ release = []
 
 complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-4", "log-traceP", "log-rtt"]
+			"trussed/clients-5", "log-traceP", "log-rtt"]
 
 develop = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
