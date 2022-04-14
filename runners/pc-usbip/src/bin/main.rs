@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use clap_num::maybe_hex;
@@ -34,6 +35,14 @@ struct Args {
     /// Trussed state file
     #[clap(long, default_value = "trussed-state.bin")]
     state_file: String,
+
+    /// FIDO attestation key
+    #[clap(long)]
+    fido_key: Option<PathBuf>,
+
+    /// FIDO attestation cert
+    #[clap(long)]
+    fido_cert: Option<PathBuf>,
 
     /// USB VID id
     #[clap(short, long, parse(try_from_str=maybe_hex), default_value_t = 0x20a0)]
@@ -83,6 +92,14 @@ fn main() {
     log::info!("Initializing Trussed");
     let state_file = args.state_file;
     let trussed_platform = init_platform(state_file);
+
+    if let Some(fido_key) = args.fido_key {
+        store(&trussed_platform, &fido_key, "fido/sec/00");
+    }
+    if let Some(fido_cert) = args.fido_cert {
+        store(&trussed_platform, &fido_cert, "fido/x5c/00");
+    }
+
     let trussed_service = Rc::new(RefCell::new(trussed::service::Service::new(trussed_platform)));
 
     log::info!("Initializing allocator");
@@ -120,4 +137,15 @@ fn main() {
         ctaphid_dispatch.poll(&mut [&mut fido_app, &mut admin_app]);
         usb_bus.poll(&mut [&mut ctaphid]);
     }
+}
+
+fn store(platform: &impl trussed::Platform, host_file: &Path, device_file: &str) {
+    log::info!("Writing {} to file system", device_file);
+    let data = std::fs::read(host_file).expect("failed to read file");
+    trussed::store::store(
+        platform.store(),
+        trussed::types::Location::Internal,
+        &littlefs2::path::PathBuf::from(device_file),
+        &data,
+    ).expect("failed to store file");
 }
