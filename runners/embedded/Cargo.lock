@@ -11,7 +11,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed 0.1.0 (git+https://github.com/jnordholz/trussed?branch=main)",
 ]
 
 [[package]]
@@ -673,7 +673,6 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "oath-authenticator",
- "panic-halt",
  "picolcd114",
  "piv-authenticator",
  "provisioner-app",
@@ -682,7 +681,7 @@ dependencies = [
  "se050",
  "serde",
  "toml",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed 0.1.0 (git+https://github.com/jnordholz/trussed?branch=main)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -730,7 +729,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed 0.1.0 (git+https://github.com/jnordholz/trussed?branch=main)",
 ]
 
 [[package]]
@@ -1315,7 +1314,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed 0.1.0 (git+https://github.com/jnordholz/trussed?branch=main)",
 ]
 
 [[package]]
@@ -1473,7 +1472,7 @@ dependencies = [
  "littlefs2",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed 0.1.0 (git+https://github.com/jnordholz/trussed?branch=main)",
 ]
 
 [[package]]
@@ -1817,7 +1816,43 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?branch=main#258fe26ce89cd3bb4d84f192f3fe256193946886"
+source = "git+https://github.com/jnordholz/trussed?branch=main#70323361ab0bc30ae7c2252821cca6e5f15fd6cb"
+dependencies = [
+ "aes",
+ "bitflags",
+ "block-modes",
+ "cbor-smol",
+ "cfg-if",
+ "chacha20",
+ "chacha20poly1305",
+ "cosey 0.3.0",
+ "delog",
+ "des",
+ "embedded-hal",
+ "flexiber",
+ "generic-array 0.14.5",
+ "heapless 0.7.10",
+ "heapless-bytes 0.3.0",
+ "hex-literal",
+ "hmac",
+ "interchange",
+ "littlefs2",
+ "nb 1.0.0",
+ "p256-cortex-m4",
+ "postcard",
+ "rand_core",
+ "salty",
+ "serde",
+ "serde-indexed",
+ "sha-1",
+ "sha2",
+ "zeroize",
+]
+
+[[package]]
+name = "trussed"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed#258fe26ce89cd3bb4d84f192f3fe256193946886"
 dependencies = [
  "aes",
  "bitflags",
