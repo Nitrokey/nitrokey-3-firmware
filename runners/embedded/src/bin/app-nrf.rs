@@ -23,7 +23,12 @@ mod app {
     };
     use rand_core::SeedableRng;
     use se050::{Se050, Se050Device, T1overI2C};
-    use trussed::{syscall, Interchange};
+    use trussed::{client::GuiClient, syscall, Interchange};
+
+    pub enum UIOperation {
+        Animate,
+        UpdateButtons,
+    }
 
     #[shared]
     struct SharedResources {
@@ -33,6 +38,7 @@ mod app {
         usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
         contactless: Option<ERL::types::Iso14443>,
         trussed: ERL::types::Trussed,
+        trussed_client: ERL::types::TrussedClient,
         /* NRF specific elements */
         // (display UI)
         // (fingerprint sensor)
@@ -47,7 +53,6 @@ mod app {
 
     #[local]
     struct LocalResources {
-        trussed_client: ERL::types::TrussedClient,
         gpiote: Gpiote,
         power: nrf52840_pac::POWER,
         ui_counter: u16,
@@ -203,7 +208,7 @@ mod app {
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
-        ui::spawn_after(RtcDuration::from_ms(2500)).ok();
+        ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
 
         // compose LateResources
         (
@@ -214,9 +219,9 @@ mod app {
                 usb_classes: usbnfcinit.usb_classes,
                 contactless: usbnfcinit.iso14443,
                 trussed: trussed_service,
+                trussed_client: runner_client,
             },
             LocalResources {
-                trussed_client: runner_client,
                 gpiote: dev_gpiote,
                 power: ctx.device.POWER,
                 ui_counter: 0,
@@ -285,6 +290,7 @@ mod app {
         let gpiote = ctx.local.gpiote;
 
         trace!("irq GPIOTE");
+        ui::spawn(UIOperation::UpdateButtons).ok();
         gpiote.reset_events();
     }
 
@@ -355,45 +361,60 @@ mod app {
         }
     }
 
-    #[task(priority = 1, shared = [trussed], local = [trussed_client, ui_counter])]
-    fn ui(ctx: ui::Context) {
+    #[task(priority = 1, capacity = 2, shared = [trussed, trussed_client], local = [ui_counter])]
+    fn ui(ctx: ui::Context, op: UIOperation) {
         //trace!("UI");
         use trussed::client::GuiClient;
-        let ui::LocalResources {
-            trussed_client: cl,
-            ui_counter: cnt,
-        } = ctx.local;
-        let mut trussed = ctx.shared.trussed;
+        let ui::LocalResources { ui_counter: cnt } = ctx.local;
+        let ui::SharedResources {
+            mut trussed,
+            trussed_client: mut cl,
+        } = ctx.shared;
 
         //trace!("update ui");
         trussed.lock(|trussed| {
             trussed.update_ui();
         });
 
-        trace!("UI {} {}", *cnt, *cnt % 4);
-        match *cnt % 4 {
-            0 => {
-                syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
+        match op {
+            UIOperation::Animate => {
+                trace!("UI {} {}", *cnt, *cnt % 4);
+                cl.lock(|cl| match *cnt % 80 {
+                    0 => {
+                        syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
+                    }
+                    20 => {
+                        syscall!(cl.draw_text(50, 50, b"NRF52840"));
+                    }
+                    40 => {
+                        syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
+                        syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
+                        syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
+                        syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+                    }
+                    60 => {
+                        syscall!(cl.draw_sprite(0, 125, 1, 9));
+                        syscall!(cl.draw_sprite(215, 0, 1, 6));
+                        syscall!(cl.draw_sprite(215, 125, 1, 7));
+                        syscall!(cl.draw_sprite(0, 0, 1, 8));
+                        syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+                    }
+                    _ => {}
+                });
+                *cnt += 1;
+
+                ui::spawn_after(RtcDuration::from_ms(125), UIOperation::Animate).ok();
             }
-            1 => {
-                syscall!(cl.draw_text(50, 50, b"NRF52840"));
-            }
-            2 => {
-                syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
-                syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
-                syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
-                syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
-            }
-            _ => {
-                syscall!(cl.draw_sprite(0, 125, 1, 9));
-                syscall!(cl.draw_sprite(215, 0, 1, 6));
-                syscall!(cl.draw_sprite(215, 125, 1, 7));
-                syscall!(cl.draw_sprite(0, 0, 1, 8));
-                syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+            UIOperation::UpdateButtons => {
+                let mut bs: [u8; 8] = [0; 8];
+
+                cl.lock(|cl| {
+                    syscall!(cl.update_button_state());
+                    let st = syscall!(cl.get_button_state(0xff)).states;
+                    bs.copy_from_slice(&st[0..8]);
+                });
+                trace!("UI Btn {:?}", &bs);
             }
         }
-        *cnt += 1;
-
-        ui::spawn_after(RtcDuration::from_ms(125)).ok();
     }
 }
