@@ -24,7 +24,12 @@ mod app {
 	use panic_halt as _;
 	use rand_core::SeedableRng;
 	use se050::{T1overI2C, Se050, Se050Device};
-	use trussed::{Interchange, syscall};
+	use trussed::{client::GuiClient, Interchange, syscall};
+
+	pub enum UIOperation {
+		Animate,
+		UpdateButtons,
+	}
 
 	#[shared]
         struct SharedResources {
@@ -33,6 +38,7 @@ mod app {
 		ctaphid_dispatch: ERL::types::CtaphidDispatch,
 		usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
 		contactless: Option<ERL::types::Iso14443>,
+		trussed_client: ERL::types::TrussedClient,
 
 		/* NRF specific elements */
 		// (display UI)
@@ -49,7 +55,6 @@ mod app {
 	#[local]
 	struct LocalResources {
 		trussed: ERL::types::Trussed,
-		trussed_client: ERL::types::TrussedClient,
 		gpiote: Gpiote,
 		power: nrf52840_pac::POWER,
 		ui_counter: u16,
@@ -187,7 +192,7 @@ mod app {
 
 		let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
-		ui::spawn_after(RtcDuration::from_ms(2500)).ok();
+		ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
 
 		// compose LateResources
 		( SharedResources {
@@ -196,9 +201,9 @@ mod app {
 			ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
 			usb_classes: usbnfcinit.usb_classes,
 			contactless: usbnfcinit.iso14443,
+			trussed_client: runner_client,
 		}, LocalResources {
 			trussed: trussed_service,
-			trussed_client: runner_client,
 			gpiote: dev_gpiote,
 			power: ctx.device.POWER,
 			ui_counter: 0,
@@ -243,9 +248,9 @@ mod app {
 
 	#[task(priority = 2, binds = SWI0_EGU0, local = [trussed])]
 	fn task_trussed(ctx: task_trussed::Context) {
-		let mut trussed = ctx.local.trussed;
+		let trussed = ctx.local.trussed;
 
-		trace!("irq SWI0_EGU0");
+		// trace!("irq SWI0_EGU0");
 		ERL::runtime::run_trussed(trussed);
 	}
 
@@ -254,6 +259,7 @@ mod app {
 		let gpiote = ctx.local.gpiote;
 
 		trace!("irq GPIOTE");
+		ui::spawn(UIOperation::UpdateButtons).ok();
 		gpiote.reset_events();
 	}
 
@@ -320,31 +326,46 @@ mod app {
 		}
 	}
 
-	#[task(priority = 1, local = [trussed_client, ui_counter])]
-	fn ui(ctx: ui::Context) {
-		use trussed::client::GuiClient;
-		let ui::LocalResources { trussed_client: cl, ui_counter: cnt } = ctx.local;
+	#[task(priority = 1, capacity = 2, shared = [trussed_client], local = [ui_counter])]
+	fn ui(ctx: ui::Context, op: UIOperation) {
+		let ui::LocalResources { ui_counter: cnt } = ctx.local;
+		let ui::SharedResources { trussed_client: mut cl } = ctx.shared;
 
-		trace!("UI {} {}", *cnt, *cnt % 4);
-		match *cnt % 4 {
-			0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
-			1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
-			2 => {
-				syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
-				syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
-				syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
-				syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+		match op {
+		UIOperation::Animate => {
+			trace!("UI {} {}", *cnt, *cnt % 4);
+			cl.lock(|cl|
+			match *cnt % 4 {
+				0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
+				1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
+				2 => {
+					syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
+					syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
+					syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
+					syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+				}
+				_ => {
+					syscall!(cl.draw_sprite(0, 125, 1, 9));
+					syscall!(cl.draw_sprite(215, 0, 1, 6));
+					syscall!(cl.draw_sprite(215, 125, 1, 7));
+					syscall!(cl.draw_sprite(0, 0, 1, 8));
+					syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+				}
 			}
-			_ => {
-				syscall!(cl.draw_sprite(0, 125, 1, 9));
-				syscall!(cl.draw_sprite(215, 0, 1, 6));
-				syscall!(cl.draw_sprite(215, 125, 1, 7));
-				syscall!(cl.draw_sprite(0, 0, 1, 8));
-				syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
-			}
+			);
+			*cnt += 1;
+
+			ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
 		}
-		*cnt += 1;
+		UIOperation::UpdateButtons => {
+			let mut bs: [u8; 8] = [0; 8];
 
-		ui::spawn_after(RtcDuration::from_ms(2500)).ok();
+			cl.lock(|cl| {
+				syscall!(cl.update_button_state());
+				let st = syscall!(cl.get_button_state(0xff)).states;
+				bs.copy_from_slice(&st[0..8]);
+			});
+			trace!("UI Btn {:?}", &bs);
+		}}
 	}
 }

@@ -1824,7 +1824,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/jnordholz/trussed#3af7077e286d35f6dce66372001523e68365b3b3"
+source = "git+https://github.com/jnordholz/trussed#32e007d6192f730e15b88775c587e8e4c87d97c0"
 dependencies = [
  "aes",
  "bitflags",

@@ -4,7 +4,8 @@ use nrf52840_hal::{
 	gpiote::Gpiote,
 	spim,
 };
-use crate::soc::types::BoardGPIO;
+use super::types::BoardGPIO;
+use super::display_ui::ButtonPin::*;
 
 pub type InPin = Pin<Input<PullUp>>;
 pub type OutPin = Pin<Output<PushPull>>;
@@ -18,7 +19,7 @@ pub const KEEPALIVE_PINS: &'static [u8] = &[0x29, 0x2b, 0x2d, 0x2f];
 pub fn init_ui(spi_pac: nrf52840_pac::SPIM0, spi_pins: spim::Pins,
 		d_dc: OutPin, d_reset: OutPin,
 		d_power: Option<OutPin>, d_backlight: Option<OutPin>,
-		buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4],
+		mut buttons: [Option<InPin>; 8], leds: [Option<OutPin>; 4],
 		delay_timer: &mut impl DelayUs<u32>) -> TrussedUI {
 
 	let spim0 = nrf52840_hal::spim::Spim::new(spi_pac, spi_pins,
@@ -32,8 +33,15 @@ pub fn init_ui(spi_pac: nrf52840_pac::SPIM0, spi_pins: spim::Pins,
 	let disp_st7789 = picolcd114::ST7789::new(
 		disp_intf, d_reset, 240, 135, 40, 53);
 
+	let ui_buttons = [
+		LowTriggerPin(buttons[0].take().unwrap()),
+		LowTriggerPin(buttons[1].take().unwrap()),
+		LowTriggerPin(buttons[2].take().unwrap()),
+		NoPin, NoPin, NoPin, NoPin, NoPin
+	];
+
 	let mut ui = super::display_ui::DisplayUI::new(Some(disp_st7789),
-		d_power, d_backlight, buttons, leds, None);
+		d_power, d_backlight, ui_buttons, leds, None);
 	ui.power_on(delay_timer);
 
 	ui
@@ -135,6 +143,7 @@ pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
 	if !bit_set(dir[1], 11) { src |= 0b0000_0001; }
 	if !bit_set(dir[1], 13) { src |= 0b0000_0010; }
 	if !bit_set(dir[1], 15) { src |= 0b0000_0100; }
+	// if !bit_set(dir[1], 10) { src |= 0b0000_1000; }
 	if  bit_set(dir[1],  9) { src |= 0b1_0000_0000; }
 	src
 }

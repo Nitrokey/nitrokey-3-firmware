@@ -1,8 +1,8 @@
 use embedded_hal::blocking::delay::DelayUs;
 use nrf52840_hal::{
-	gpio::{Pin, Input, Output, PullUp, PushPull, Level},
+	gpio::{Pin, Input, Output, PullDown, PullUp, PushPull, Level},
 	pac::SPIM0,
-	prelude::OutputPin,
+	prelude::{InputPin, OutputPin},
 	spim::Spim,
 };
 use trussed::types::{GUIControlCommand, GUIControlResponse};
@@ -10,7 +10,11 @@ use trussed::types::{GUIControlCommand, GUIControlResponse};
 mod sprites;
 
 type OutPin = Pin<Output<PushPull>>;
-type InPin = Pin<Input<PullUp>>;
+pub enum ButtonPin {
+	LowTriggerPin(Pin<Input<PullUp>>),
+	HighTriggerPin(Pin<Input<PullDown>>),
+	NoPin
+}
 
 type LLDisplay = picolcd114::ST7789<display_interface_spi::SPIInterfaceNoCS<Spim<SPIM0>, OutPin>, OutPin>;
 
@@ -34,7 +38,8 @@ pub struct DisplayUI {
 	disp: Option<LLDisplay>,
 	disp_power: Option<OutPin>,
 	disp_backlight: Option<OutPin>,
-	buttons: [Option<InPin>; 8],
+	buttons: [ButtonPin; 8],
+	button_state: [u8; 8],
 	leds: [Option<OutPin>; 4],
 	touch: Option<OutPin>,
 	state: StickUIState,
@@ -44,14 +49,15 @@ impl DisplayUI {
 	pub fn new(disp: Option<LLDisplay>,
 			disp_power: Option<OutPin>,
 			disp_backlight: Option<OutPin>,
-			buttons: [Option<InPin>; 8],
+			buttons: [ButtonPin; 8],
 			leds: [Option<OutPin>; 4],
 			touch: Option<OutPin>) -> Self {
 
 		Self {
 			buf: unsafe { &mut DISPLAY_BUF },
 			disp, disp_power, disp_backlight,
-			buttons, leds, touch,
+			buttons, button_state: [0u8; 8],
+			leds, touch,
 			state: StickUIState::PoweredDown,
 		}
 	}
@@ -185,5 +191,19 @@ impl trussed::platform::UserInterface for DisplayUI {
 		} else {
 			None
 		}
+	}
+
+	fn update_button_state(&mut self) {
+		for i in 0..self.buttons.len() {
+			self.button_state[i] = match &self.buttons[i] {
+				ButtonPin::NoPin => { 0 }
+				ButtonPin::LowTriggerPin(p) => { if p.is_low().unwrap_or(false) { 1 } else { 0 } }
+				ButtonPin::HighTriggerPin(p) => { if p.is_low().unwrap_or(true) { 0 } else { 1 } }
+			}
+		}
+	}
+
+	fn get_button_state(&mut self, bitmap: u32) -> Option<[u8; 8]> {
+		Some(self.button_state.clone())
 	}
 }
