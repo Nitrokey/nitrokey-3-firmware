@@ -366,6 +366,10 @@ mod app {
 				bs.copy_from_slice(&st[0..8]);
 			});
 			trace!("UI Btn {:?}", &bs);
+			if bs[1] != 0 {
+				#[cfg(feature = "board-proto1")]
+				ERL::soc::board::power_off();
+			}
 		}}
 	}
 }
