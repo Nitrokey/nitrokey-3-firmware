@@ -1,6 +1,6 @@
 [platform]
 soc = "nrf52"
-boards = ["nrfdk", "proto1", "nk3am"]
+boards = ["nrfdk", "proto1", "proto2", "nk3am"]
 target = "thumbv7em-none-eabihf"
 
 [parameters]

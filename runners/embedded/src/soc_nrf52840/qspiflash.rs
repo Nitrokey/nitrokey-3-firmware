@@ -15,7 +15,7 @@ pub struct QspiFlash {
 
 impl QspiFlash {
 	/* GD25Q16C, 16 Mbit == 2 MB, c8 40 15 */
-	#[cfg(any(feature = "board-nk3am", feature = "board-proto1"))]
+	#[cfg(any(feature = "board-nk3am", feature = "board-proto1", feature = "board-proto2"))]
 	const FLASH_SIZE: usize = 0x20_0000;
 	/* MX25R6435F, 64 Mbit == 8 MB, c2 28 17 */
 	#[cfg(feature = "board-nrfdk")]
