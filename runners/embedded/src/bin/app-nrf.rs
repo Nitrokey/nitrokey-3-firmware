@@ -163,7 +163,7 @@ mod app {
 			ctx.device.PWM2, ctx.device.TIMER3,
 			board_gpio.touch.unwrap(), delay_timer
 		);
-		#[cfg(feature = "board-proto1")]
+		#[cfg(any(feature = "board-proto1", feature = "board-proto2"))]
 		let ui = ERL::soc::board::init_ui(ctx.device.SPIM0,
 			board_gpio.display_spi.take().unwrap(),
 			board_gpio.display_dc.take().unwrap(),
@@ -367,7 +367,7 @@ mod app {
 			});
 			trace!("UI Btn {:?}", &bs);
 			if bs[1] != 0 {
-				#[cfg(feature = "board-proto1")]
+				#[cfg(feature = "has_poweroff")]
 				ERL::soc::board::power_off();
 			}
 		}}

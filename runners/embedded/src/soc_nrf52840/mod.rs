@@ -1,16 +1,17 @@
 use nrf52840_hal::clocks::Clocks;
 
-#[cfg(not(any(feature = "board-nrfdk", feature = "board-proto1", feature = "board-nk3am")))]
+#[cfg(not(any(feature = "board-nrfdk", feature = "board-proto1", feature = "board-proto2", feature = "board-nk3am")))]
 compile_error!("No NRF52840 board chosen!");
 
 #[cfg_attr(feature = "board-nrfdk", path = "board_nrfdk.rs")]
 #[cfg_attr(feature = "board-proto1", path = "board_proto1.rs")]
+#[cfg_attr(feature = "board-proto2", path = "board_proto2.rs")]
 #[cfg_attr(feature = "board-nk3am", path = "board_nk3am.rs")]
 pub mod board;
 
 #[cfg(feature = "board-nk3am")]
 pub mod trussed_ui;
-#[cfg(feature = "board-proto1")]
+#[cfg(feature = "display_ui")]
 pub mod display_ui;
 #[cfg(feature = "board-nrfdk")]
 pub mod dummy_ui;

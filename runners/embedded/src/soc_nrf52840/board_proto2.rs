@@ -12,9 +12,8 @@ pub type OutPin = Pin<Output<PushPull>>;
 
 pub type TrussedUI = super::display_ui::DisplayUI;
 
-pub const BOARD_NAME: &'static str = "Proto1";
-pub const KEEPALIVE_PINS: &'static [u8] = &[0x29, 0x2b, 0x2d, 0x2f];
-
+pub const BOARD_NAME: &'static str = "Proto2";
+pub const KEEPALIVE_PINS: &'static [u8] = &[0x2a, 0x2b, 0x0e, 0x21];
 
 pub fn init_ui(spi_pac: nrf52840_pac::SPIM0, spi_pins: spim::Pins,
 		d_dc: OutPin, d_reset: OutPin,
@@ -49,14 +48,15 @@ pub fn init_ui(spi_pac: nrf52840_pac::SPIM0, spi_pins: spim::Pins,
 
 pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
 	/* Buttons */
-	let btn1 = gpio_p1.p1_11.into_pullup_input().degrade();
-	let btn2 = gpio_p1.p1_13.into_pullup_input().degrade();
-	let btn3 = gpio_p1.p1_15.into_pullup_input().degrade();
-	/* btn4 = p1_10 -- do not use, to be removed later */
+	let btn1 = gpio_p1.p1_10.into_pullup_input().degrade();
+	let btn2 = gpio_p1.p1_11.into_pullup_input().degrade();
+	let btn3 = gpio_p0.p0_14.into_pullup_input().degrade();
+	let btn4 = gpio_p1.p1_01.into_pullup_input().degrade();
 
 	gpiote.port().input_pin(&btn1).low();
 	gpiote.port().input_pin(&btn2).low();
 	gpiote.port().input_pin(&btn3).low();
+	gpiote.port().input_pin(&btn4).low();
 
 	/* Display SPI Bus */
 	let dsp_spi_cs = gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
@@ -98,12 +98,9 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 
 	/* Flash & NFC SPI Bus */
 	let flash_spi_cs = gpio_p0.p0_25.into_push_pull_output(Level::High).degrade();
-	let nfc_spi_cs = gpio_p1.p1_01.into_push_pull_output(Level::High).degrade();
 	let flashnfc_spi_clk = gpio_p1.p1_02.into_push_pull_output(Level::Low).degrade();
 	let flashnfc_spi_miso = gpio_p1.p1_06.into_floating_input().degrade();
 	let flashnfc_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
-	let _flash_pwr = gpio_p1.p1_00.into_floating_input().degrade(); // into_push_pull_output(Level::Low).degrade();
-	let nfc_irq = gpio_p1.p1_07.into_pullup_input().degrade();
 
 	let flashnfc_spi = spim::Pins {
 		sck: flashnfc_spi_clk,
@@ -112,7 +109,7 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	};
 
 	BoardGPIO { buttons: [
-			Some(btn1), Some(btn2), Some(btn3), None,
+			Some(btn1), Some(btn2), Some(btn3), Some(btn4),
 			None, None, None, None ],
 		leds: [ None, None, None, None ],
         rgb_led: [None, None, None], 
@@ -131,8 +128,8 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 		flashnfc_spi: Some(flashnfc_spi),
 		flash_cs: Some(flash_spi_cs),
 		flash_power: None,
-		nfc_cs: Some(nfc_spi_cs),
-		nfc_irq: Some(nfc_irq),
+		nfc_cs: None,
+		nfc_irq: None,
 	}
 }
 
@@ -140,10 +137,34 @@ pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
 	let mut src: u32 = 0;
 	fn bit_set(x: u32, y: u32) -> bool { (x & (1u32 << y)) != 0 }
 
-	if !bit_set(dir[1], 11) { src |= 0b0000_0001; }
-	if !bit_set(dir[1], 13) { src |= 0b0000_0010; }
-	if !bit_set(dir[1], 15) { src |= 0b0000_0100; }
-	// if !bit_set(dir[1], 10) { src |= 0b0000_1000; }
-	if  bit_set(dir[1],  9) { src |= 0b1_0000_0000; }
+	if !bit_set(dir[1], 10) { src |= 0b0000_0001; }
+	if !bit_set(dir[1], 11) { src |= 0b0000_0010; }
+	if !bit_set(dir[0], 14) { src |= 0b0000_0100; }
+	if !bit_set(dir[1],  1) { src |= 0b0000_1000; }
+	// if  bit_set(dir[x],  y) { src |= 0b1_0000_0000; }
 	src
+}
+
+pub fn power_off() {
+	let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+	// only go into System OFF when we have no USB VBUS
+	if pac.POWER.usbregstatus.read().vbusdetect().is_vbus_present() { return; }
+	// display OFF
+	unsafe { pac.P0.outset.write(|w| w.bits(1u32 << 13)); }
+	// (finger OFF)
+	unsafe { pac.P0.outset.write(|w| w.bits(1u32 << 15)); }
+	// (se050 OFF)
+	unsafe { pac.P0.outclr.write(|w| w.bits(1u32 << 20)); }
+	// peripherals OFF
+	unsafe {
+		pac.SPIM0.enable.write(|w| w.bits(0));
+		pac.TWIM1.enable.write(|w| w.bits(0));
+		pac.UARTE0.enable.write(|w| w.bits(0));
+		pac.USBD.enable.write(|w| w.bits(0));
+		pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(1));
+	}
+	// disconnect GPIOs
+	// POWER.SYSTEMOFF <= 1
+	unsafe { pac.POWER.systemoff.write(|w| w.bits(1)); }
+	loop {}
 }
