@@ -198,3 +198,37 @@ pub fn set_panic_led() {
         p1.p1_02.into_push_pull_output(Level::High).degrade();
     }
 }
+
+pub fn power_off() {
+    let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+    // only go into System OFF when we have no USB VBUS
+    if pac.POWER.usbregstatus.read().vbusdetect().is_vbus_present() {
+        return;
+    }
+    // display OFF
+    unsafe {
+        pac.P0.outset.write(|w| w.bits(1u32 << 13));
+    }
+    // (finger OFF)
+    unsafe {
+        pac.P0.outset.write(|w| w.bits(1u32 << 15));
+    }
+    // (se050 OFF)
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 20));
+    }
+    // peripherals OFF
+    unsafe {
+        pac.SPIM0.enable.write(|w| w.bits(0));
+        pac.TWIM1.enable.write(|w| w.bits(0));
+        pac.UARTE0.enable.write(|w| w.bits(0));
+        pac.USBD.enable.write(|w| w.bits(0));
+        pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(1));
+    }
+    // disconnect GPIOs
+    // POWER.SYSTEMOFF <= 1
+    unsafe {
+        pac.POWER.systemoff.write(|w| w.bits(1));
+    }
+    loop {}
+}
