@@ -5,7 +5,7 @@ CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 
 CARGO_TARGET_DIR ?= target
 
-ifeq ($(filter nk3am proto1 nrfdk,$(BOARD)), )
+ifeq ($(filter nk3am proto1 proto2 nrfdk,$(BOARD)), )
   SOC = lpc55
 else
   SOC = nrf52
@@ -42,7 +42,7 @@ COMMA_FEATURES = $(subst $(space),$(delim),$(BUILD_FEATURES))
 .PHONY: list build reset program clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
-all: build-nrfdk build-nk3am build-proto1 build-nk3xn $(ARTIFACTS)
+all: build-nrfdk build-nk3am build-proto1 build-proto2 build-nk3xn $(ARTIFACTS)
 
 $(ARTIFACTS):
 	mkdir -p $@
@@ -72,6 +72,8 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
 %-proto1: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=proto1 FEATURES=$(FEATURES)
+%-proto2: $(ARTIFACTS)
+	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=proto2 FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=lpc55 BOARD=nk3xn FEATURES=$(FEATURES)
 
@@ -101,7 +103,7 @@ list:
 	@echo "Available:"
 	@echo "  BOARD(s): $(shell find src/ -name 'board_*' | xargs -n1 basename | sed -E 's/board_([^.]*)(.rs)?/\1/g' | xargs)"
 	@echo "  BUILD_PROFILE(s): $(shell ls profiles -1 | sed -e 's/\.toml//g')"
-	@echo "  Makefile shortcuts: nrfdk, proto1, nk3xc, nk3am, nk3am.bl"
+	@echo "  Makefile shortcuts: nrfdk, proto1, proto2, nk3xc, nk3am, nk3am.bl"
 	@echo ""
 	@echo "  Usage: make <target>-<something> e.g., build-nk3am, reset-proto1, ..." 
 
