@@ -42,7 +42,7 @@ pub fn init_ui(
         LowTriggerPin(buttons[0].take().unwrap()),
         LowTriggerPin(buttons[1].take().unwrap()),
         LowTriggerPin(buttons[2].take().unwrap()),
-        NoPin,
+        LowTriggerPin(buttons[3].take().unwrap()),
         NoPin,
         NoPin,
         NoPin,

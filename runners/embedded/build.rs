@@ -149,6 +149,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // @todo: add profile 'platform' items and cross-check them here ...
     let soc_type = check_build_triplet();
 
+    let sprites_path = Path::new(&out_dir).join("sprite_data.rs");
+    Command::new("./prepare_compressed.py")
+        .current_dir("./data")
+        .args(&[sprites_path])
+        .status()
+        .unwrap();
+
     if config.parameters.filesystem_boundary & 0x3ff != 0 {
         panic!("filesystem boundary is not a multiple of the flash block size (1KB)");
     }
@@ -251,7 +258,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         SocType::Nrf52840 => ("ld/nrf52", "ld/nrf52-memory-template.x"),
     };
 
-    println!("cargo:rerun-if-changed={}", template_file);
     println!("cargo:rerun-if-changed={}", template_file);
 
     let memory_x_dir =
