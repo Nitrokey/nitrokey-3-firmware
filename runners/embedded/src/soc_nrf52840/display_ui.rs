@@ -7,7 +7,8 @@ use nrf52840_hal::{
 };
 use trussed::types::{GUIControlCommand, GUIControlResponse};
 
-mod sprites;
+// mod sprites;
+mod sprites2;
 
 type OutPin = Pin<Output<PushPull>>;
 pub enum ButtonPin {
@@ -27,14 +28,14 @@ enum StickUIState {
 }
 
 /* sufficient (rgb565) room for a 32x32 sprite, a 60x15 sprite or six 9x18 characters */
-static mut DISPLAY_BUF: [u8; 2048] = [0; 2048];
+static mut DISPLAY_BUF: [u16; 1024] = [0; 1024];
 
 //////////////////////////////////////////////////////////////////////////////
 // UI
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct DisplayUI {
-	buf: &'static mut [u8; 2048],
+	buf: &'static mut [u16; 1024],
 	disp: Option<LLDisplay>,
 	disp_power: Option<OutPin>,
 	disp_backlight: Option<OutPin>,
@@ -103,25 +104,15 @@ impl DisplayUI {
 				} else {
 					c = 0x7f - 0x20;
 				}
-				sprites::FONT_MAP.blit_single(c, self.buf, d, xi, y).ok();
-				xi += sprites::FONT_MAP.width;
+				sprites2::FONT_MAP.blit_single(c, self.buf, d, xi, y).ok();
+				xi += sprites2::FONT_MAP.width;
 			}
 		}
 	}
 }
 
-fn rgb565_memset(buf: &mut [u8], col: u16) {
-	let ch: u8 = (col >> 8) as u8;
-	let cl: u8 = (col & 255) as u8;
-	let buflen: usize = buf.len();
-
-	// the code generated from this looks more complicated than necessary;
-	// one day, replace all this nonsense with a tasty call to __aeabi_memset4()
-	// or figure out the "proper" Rust incantation the compiler happens to grasp
-	for i in (0..buflen).step_by(2) {
-		buf[i+0] = cl;
-		buf[i+1] = ch;
-	}
+fn rgb565_memset(buf: &mut [u16], col: u16) {
+	buf.fill(col);
 }
 
 impl trussed::platform::UserInterface for DisplayUI {
@@ -136,12 +127,14 @@ impl trussed::platform::UserInterface for DisplayUI {
 	fn draw_filled_rect(&mut self, x: u16, y: u16, w: u16, h: u16, col: u16) {
 		if let Some(ref mut d) = self.disp {
 			rgb565_memset(self.buf, col);
-			let (xs, ys): (u16, u16) = if h > w { (15, 60) } else { (60, 15) };
+			let (xs, ys): (u16, u16) = if h > w { (16, 64) } else { (64, 16) };
 			for xi in (x..x+w).step_by(xs as usize) {
 				for yi in (y..y+h).step_by(ys as usize) {
 					let xd = core::cmp::min(xs, x+w-xi);
 					let yd = core::cmp::min(ys, y+h-yi);
-					d.blit_pixels(xi, yi, xd, yd, &self.buf[0..(xd*yd*2) as usize]).ok();
+					let buf = &self.buf[0..(xd*yd) as usize];
+					let buf8 = bytemuck::cast_slice::<u16, u8>(buf);
+					d.blit_pixels(xi, yi, xd, yd, buf8).ok();
 				}
 			}
 		}
@@ -152,13 +145,13 @@ impl trussed::platform::UserInterface for DisplayUI {
 
 		for line in text.split(|c| *c == 0x0a_u8) {
 			self.draw_text_line(x, yi, line);
-			yi += sprites::FONT_MAP.height;
+			yi += sprites2::FONT_MAP.height;
 		}
 	}
 
 	fn draw_sprite(&mut self, x: u16, y: u16, sprite_map: u16, index: u16) {
 		let smap = match sprite_map {
-			1 => { sprites::ICONS_MAP }
+			1 => { sprites2::ICONS_MAP }
 			_ => { return; }
 		};
 		if let Some(ref mut d) = self.disp {

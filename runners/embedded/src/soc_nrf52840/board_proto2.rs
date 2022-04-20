@@ -36,7 +36,8 @@ pub fn init_ui(spi_pac: nrf52840_pac::SPIM0, spi_pins: spim::Pins,
 		LowTriggerPin(buttons[0].take().unwrap()),
 		LowTriggerPin(buttons[1].take().unwrap()),
 		LowTriggerPin(buttons[2].take().unwrap()),
-		NoPin, NoPin, NoPin, NoPin, NoPin
+		LowTriggerPin(buttons[3].take().unwrap()),
+		NoPin, NoPin, NoPin, NoPin
 	];
 
 	let mut ui = super::display_ui::DisplayUI::new(Some(disp_st7789),
