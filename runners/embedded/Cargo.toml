@@ -8,6 +8,7 @@ resolver = "2"
 
 [dependencies]
 ### base dependencies
+bytemuck = "1.9"
 cfg-if = "*"
 delog = "0.1"
 cortex-m = "0.7"

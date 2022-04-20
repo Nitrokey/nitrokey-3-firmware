@@ -647,6 +647,7 @@ version = "0.0.1"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
+ "bytemuck",
  "cargo-lock",
  "cfg-if",
  "chacha20",
