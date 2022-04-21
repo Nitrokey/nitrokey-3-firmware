@@ -45,15 +45,16 @@ class Palette(object):
 		print(self.SPRITE_PALETTE_DEF % (self.name, len(self.colors), colstr, self.bpp))
 		self.emitted = True
 
-	def closest(self, rgb):
+	def closest(self, rgb, max_dist):
 		if rgb in self.lut:
 			return self.lut[rgb]
-		closest = (0x3ffff, None)
+		closest = (max_dist, None)
 		for k in self.colors:
 			d = (k[0] - rgb[0])**2 + (k[1] - rgb[1])**2 + (k[2] - rgb[2])**2
-			if d < closest[0]:
+			if d <= closest[0]:
 				closest = (d, k)
 		self.lut[rgb] = closest[1]
+		assert closest[1] is not None, "color %s not in palette, delta %d" % (str(rgb), closest[0])
 		return closest[1]
 
 def read_palette(pilimg):
@@ -88,6 +89,15 @@ def mash_pixels(pixels, bpp):
 	for i in range(0, len(pixels), ppw):
 		data.append(_mash_pixels(pixels[i:i+ppw], bpp))
 	return data
+
+def pixel_histogram(pixels):
+	histo = {}
+	for p in pixels:
+		if p in histo:
+			histo[p] += 1
+		else:
+			histo[p] = 1
+	return histo
 
 class Image(object):
 	SPRITE_MAP_DEF = """pub const %s: SpriteMap = {
@@ -127,6 +137,9 @@ class Image(object):
 		color_count = len(self.source.getcolors(4096) or [])
 		if color_count > 2**self.palette.bpp:
 			print("// %s: source has %d > 2^%d colors, approximating" % (name, len(self.source.getcolors(4096)), self.palette.bpp))
+			self.color_approx = 0x3ffffff
+		else:
+			self.color_approx = 0
 
 	def emit(self):
 		if not self.palette.emitted:
@@ -143,12 +156,15 @@ class Image(object):
 				pixels = list(subsource.getdata())
 				# pixels[] is a list of tuples according to source image band information
 				if self.source_bands == ('L',):
-					pixels = map(lambda p: self.palette.closest((p, p, p)), pixels)
+					pixels = map(lambda p: self.palette.closest((p, p, p), self.color_approx), pixels)
 				elif self.source_bands == ('R','G','B','A') or self.source_bands == ('R','G','B'):
-					pixels = map(lambda p: self.palette.closest((p[0], p[1], p[2])), pixels)
+					pixels = map(lambda p: self.palette.closest((p[0], p[1], p[2]), self.color_approx), pixels)
 				else:
 					assert False, "Unsupported Source Data"
 				# pixels[] is a list of RGB values approximated to indicated palette
+				histo = pixel_histogram(pixels)
+				if self.color_approx > 0:
+					print("// Histogram: %s" % str(histo))
 				pixels = map(lambda p: self.palette.colors.index(p), pixels)
 				# pixels[] is a list of palette indices
 				pixeldata = mash_pixels(pixels, self.palette.bpp)

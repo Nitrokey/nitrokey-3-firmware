@@ -384,7 +384,17 @@ mod app {
                         syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
                     }
                     20 => {
-                        syscall!(cl.draw_text(50, 50, b"NRF52840"));
+                        // syscall!(cl.draw_text(50, 50, b"NRF52840"));
+                        for y in 0..6 {
+                            for x in 0..3 {
+                                syscall!(cl.draw_sprite(
+                                    120 - 78 + x * 52,
+                                    67 - 45 + y * 15,
+                                    2,
+                                    y * 3 + x
+                                ));
+                            }
+                        }
                     }
                     40 => {
                         syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
