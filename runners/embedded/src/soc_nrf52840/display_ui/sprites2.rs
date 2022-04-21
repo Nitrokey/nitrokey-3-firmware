@@ -23,6 +23,7 @@ pub enum SpriteErr {
 
 struct DataUnpacker {
 	bpp: usize,
+	ppw: usize,
 	next_index: usize,
 	next_unpacked_index: usize,
 	unpacked: [u8; 16]
@@ -30,7 +31,13 @@ struct DataUnpacker {
 
 impl DataUnpacker {
 	pub fn init(bpp: usize) -> Self {
-		Self { bpp, next_index: 0, next_unpacked_index: 0, unpacked: [0; 16] }
+		Self {
+			bpp,
+			ppw: match bpp { 1 => 16, 2 => 8, 3 => 5, 4 => 4, _ => 0 },
+			next_index: 0,
+			next_unpacked_index: 0,
+			unpacked: [0; 16]
+		}
 	}
 
 	pub fn next(&mut self, data: &'static [u16]) -> u8 {
@@ -39,7 +46,7 @@ impl DataUnpacker {
 		}
 		let v = self.unpacked[self.next_unpacked_index];
 		self.next_unpacked_index += 1;
-		if self.next_unpacked_index == 16/self.bpp {
+		if self.next_unpacked_index == self.ppw {
 			self.next_unpacked_index = 0;
 		}
 		v
@@ -48,20 +55,9 @@ impl DataUnpacker {
 	fn unpack_word(&mut self, data: &'static [u16]) {
 		let word: u16 = data[self.next_index];
 		self.next_index += 1;
-		match self.bpp {
-		1 => { for i in 0..16 {
-			self.unpacked[i] = ((word >> i) & 1) as u8;
-		}}
-		2 => { for i in (0..16).step_by(2) {
-			self.unpacked[i] = ((word >> (2*i)) & 3) as u8;
-		}}
-		3 => { for i in (0..15).step_by(3) {
-			self.unpacked[i] = ((word >> (3*i)) & 7) as u8;
-		}}
-		4 => { for i in (0..16).step_by(4) {
-			self.unpacked[i] = ((word >> (4*i)) & 15) as u8;
-		}}
-		_ => {}
+		let mask: u16 = (1 << self.bpp) - 1;
+		for i in 0..self.ppw {
+			self.unpacked[i] = ((word >> (self.bpp*i)) & mask) as u8;
 		}
 	}
 }
@@ -78,6 +74,9 @@ impl SpriteMap {
 			for x in 0..self.width {
 				let d = du.next(sp.data);
 				dbuf[(y*dstride+x) as usize] = self.palette.colors[d as usize];
+				if x == y+4 && index == 9 {
+					debug!("DBuf {:x}", dbuf[(y*dstride+x) as usize]);
+				}
 			}
 		}
 		Ok(())
@@ -85,7 +84,7 @@ impl SpriteMap {
 
 	pub fn blit_single(&self, index: u16, tmpbuf: &mut [u16], disp: &mut super::LLDisplay, px: u16, py: u16) -> Result<(), SpriteErr> {
 		let bufsz_needed: usize = (self.width * self.height) as usize;
-		self.draw(index, &mut tmpbuf[0..bufsz_needed], 0)?;
+		self.draw(index, &mut tmpbuf[0..bufsz_needed], self.width)?;
 		let buf = &tmpbuf[0..bufsz_needed];
 		let buf8 = bytemuck::cast_slice::<u16, u8>(buf);
 		disp.blit_pixels(px, py, self.width, self.height, buf8).map_err(|_| SpriteErr::UnknownError)

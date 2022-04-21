@@ -337,7 +337,12 @@ mod app {
 			cl.lock(|cl|
 			match *cnt % 4 {
 				0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
-				1 => { syscall!(cl.draw_text(50, 50, b"NRF52840")); }
+				1 => {
+					// syscall!(cl.draw_text(50, 50, b"NRF52840"));
+					for y in 0..6 { for x in 0..3 {
+						syscall!(cl.draw_sprite(120-78+x*52, 67-45+y*15, 2, y*3+x));
+					}}
+				}
 				2 => {
 					syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
 					syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));

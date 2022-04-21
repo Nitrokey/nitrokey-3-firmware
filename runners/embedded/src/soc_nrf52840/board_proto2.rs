@@ -54,10 +54,16 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	let btn3 = gpio_p0.p0_14.into_pullup_input().degrade();
 	let btn4 = gpio_p1.p1_01.into_pullup_input().degrade();
 
+	/*
 	gpiote.port().input_pin(&btn1).low();
 	gpiote.port().input_pin(&btn2).low();
 	gpiote.port().input_pin(&btn3).low();
 	gpiote.port().input_pin(&btn4).low();
+	*/
+	gpiote.channel0().input_pin(&btn1).toggle().enable_interrupt();
+	gpiote.channel1().input_pin(&btn2).toggle().enable_interrupt();
+	gpiote.channel2().input_pin(&btn3).toggle().enable_interrupt();
+	gpiote.channel3().input_pin(&btn4).toggle().enable_interrupt();
 
 	/* Display SPI Bus */
 	let dsp_spi_cs = gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
@@ -66,7 +72,7 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 	let dsp_spi_mosi = gpio_p0.p0_00.into_push_pull_output(Level::Low).degrade();
 	let dsp_rst = gpio_p0.p0_04.into_push_pull_output(Level::Low).degrade();
 	let dsp_dc = gpio_p0.p0_26.into_push_pull_output(Level::Low).degrade();
-	let dsp_bl = gpio_p0.p0_08.into_push_pull_output(Level::High).degrade();
+	let dsp_bl = gpio_p0.p0_08.into_push_pull_output(Level::Low).degrade();
 	let dsp_pwr = gpio_p0.p0_13.into_push_pull_output(Level::High).degrade();
 
 	let dsp_spi = spim::Pins {
