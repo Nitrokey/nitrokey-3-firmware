@@ -162,11 +162,12 @@ class Image(object):
 				else:
 					assert False, "Unsupported Source Data"
 				# pixels[] is a list of RGB values approximated to indicated palette
-				histo = pixel_histogram(pixels)
-				if self.color_approx > 0:
-					print("// Histogram: %s" % str(histo))
 				pixels = map(lambda p: self.palette.colors.index(p), pixels)
 				# pixels[] is a list of palette indices
+				pixels = list(pixels)
+				if self.color_approx > 0:
+					histo = pixel_histogram(pixels)
+					print("// Histogram: %s" % str(histo))
 				pixeldata = mash_pixels(pixels, self.palette.bpp)
 				pixeldatastr = "[%s]" % ", ".join(["0x%04x" % p for p in pixeldata])
 				sprite_deflist.append("&%s_%d_%d" % (self.name, x, y))
