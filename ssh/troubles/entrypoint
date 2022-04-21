@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# https://troubles.noblogs.org/post/2020/06/26/openssh-keys-on-a-fido2-dongle/
+
+exit_all() {
+  kill $(cat /var/run/sshd.pid)
+  exit 0
+}
+
+trap exit_all INT TERM
+
+grep -E "MaxAuthTries|PermitRootLogin" /etc/ssh/sshd_config
+
+/usr/sbin/sshd -E /var/log/sshd.log
+
+tail -f /var/log/sshd.log
