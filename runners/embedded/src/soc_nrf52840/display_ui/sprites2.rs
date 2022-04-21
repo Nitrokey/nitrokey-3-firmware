@@ -74,9 +74,6 @@ impl SpriteMap {
 			for x in 0..self.width {
 				let d = du.next(sp.data);
 				dbuf[(y*dstride+x) as usize] = self.palette.colors[d as usize];
-				if x == y+4 && index == 9 {
-					debug!("DBuf {:x}", dbuf[(y*dstride+x) as usize]);
-				}
 			}
 		}
 		Ok(())
