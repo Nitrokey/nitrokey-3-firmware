@@ -149,6 +149,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // @todo: add profile 'platform' items and cross-check them here ...
     let soc_type = check_build_triplet();
 
+    println!("cargo:rerun-if-changed=data/prepare_compressed.py");
     let sprites_path = Path::new(&out_dir).join("sprite_data.rs");
     Command::new("./prepare_compressed.py")
         .current_dir("./data")
