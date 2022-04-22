@@ -5,7 +5,7 @@ use nrf52840_hal::{
     prelude::{InputPin, OutputPin},
     spim::Spim,
 };
-use trussed::types::{GUIControlCommand, GUIControlResponse};
+use trussed::types::{consent, ui, GUIControlCommand, GUIControlResponse};
 
 // mod sprites;
 mod sprites2;
@@ -45,6 +45,7 @@ pub struct DisplayUI {
     leds: [Option<OutPin>; 4],
     touch: Option<OutPin>,
     state: StickUIState,
+    trussed_state: ui::Status,
 }
 
 impl DisplayUI {
@@ -66,6 +67,7 @@ impl DisplayUI {
             leds,
             touch,
             state: StickUIState::PoweredDown,
+            trussed_state: ui::Status::Idle,
         }
     }
 
@@ -134,6 +136,53 @@ impl trussed::platform::UserInterface for DisplayUI {
     // fn reboot(&mut self, to: reboot::To) -> !
     // fn wink(&mut self, duration: core::time::Duration)
 
+    fn check_user_presence(&mut self) -> consent::Level {
+        trace!("Consent Requested");
+        self.draw_filled_rect(120 - 4 - 4 * 9, 115, 9 * 9, 2 * 18, 0x0000u16);
+        self.draw_text(120 - 4 - 3 * 9, 115, b"CONSENT");
+        self.draw_text(120 - 4 - 4 * 9, 133, b"REQUESTED");
+        let mut ret = consent::Level::None;
+        loop {
+            self.update_button_state();
+            if self.button_state[1] != 0 {
+                break;
+            }
+            if self.button_state[0] != 0 {
+                ret = consent::Level::Normal;
+                break;
+            }
+            cortex_m::asm::wfi();
+        }
+        self.draw_filled_rect(120 - 4 - 4 * 9, 115, 9 * 9, 2 * 18, 0x0000u16);
+        ret
+    }
+
+    fn set_status(&mut self, status: ui::Status) {
+        self.trussed_state = status;
+        match status {
+            ui::Status::Idle => {
+                self.draw_filled_rect(120 - 5, 5, 10, 10, 0x0000u16);
+            }
+            ui::Status::Processing => {
+                self.draw_sprite(120 - 5, 5, 3, 1);
+            }
+            ui::Status::WaitingForUserPresence => {
+                self.draw_sprite(120 - 5, 5, 3, 2);
+            }
+            ui::Status::Error => {
+                self.draw_filled_rect(120 - 5, 5, 10, 10, 0x841fu16);
+            }
+        }
+    }
+
+    fn status(&self) -> ui::Status {
+        self.trussed_state
+    }
+
+    fn refresh(&mut self) {}
+
+    // above: "classical" UserInterface // below: new GUI functionality //
+
     fn draw_filled_rect(&mut self, x: u16, y: u16, w: u16, h: u16, col: u16) {
         if let Some(ref mut d) = self.disp {
             rgb565_memset(self.buf, col);
@@ -163,6 +212,7 @@ impl trussed::platform::UserInterface for DisplayUI {
         let smap = match sprite_map {
             1 => sprites2::ICONS_MAP,
             2 => sprites2::PTB_LOGO,
+            3 => sprites2::INDICATOR_MAP,
             _ => {
                 return;
             }
