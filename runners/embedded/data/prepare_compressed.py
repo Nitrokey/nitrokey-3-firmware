@@ -190,17 +190,22 @@ if len(sys.argv) == 2:
 
 pal_BW = Palette("PALETTE_BW", ["#000000", "#ffffff"])
 pal_PTB = Palette("PALETTE_PTB", ["#000000", "#404040", "#808080", "#bfbfbf", "#ffffff", "#00adbc", "#55c8d2", "#aae3e7"])
+pal_NITRO = Palette("PALETTE_NITRO", ["#000000", "#d1003b", "#e0557c", "#f0aabe", "#ffffff"])
 pal_TEX = Palette("PALETTE_ICONS", ["#ffffff", "#c0c0c0", "#808080", "#000000", "#ff0000", "#b00000", "#00ff00", "#00b000", "#ffff00"])
 
 img_font = Image("FONT_MAP", "font_9x18.png", pal_BW, (9, 18))
 img_boldfont = Image("BOLD_FONT_MAP", "font_9x18_bold.png", pal_BW, (9, 18))
-img_texmap = Image("ICONS_MAP", "texmap.png", pal_TEX, (25, 10))
 img_ptblogo = Image("PTB_LOGO", "ptb_logo.png", pal_PTB, (52, 15))
+img_nitrologo = Image("NITRO_LOGO", "nitrokey_logo90.png", pal_NITRO, (30, 30))
+img_texmap = Image("ICONS_MAP", "texmap.png", pal_TEX, (25, 10))
+img_indicators = Image("INDICATOR_MAP", "indicators.png", pal_TEX, (10, 10))
 
 img_font.emit()
 img_boldfont.emit()
 img_texmap.emit()
 img_ptblogo.emit()
+img_nitrologo.emit()
+img_indicators.emit()
 
 if outfile is not None:
 	outfile.close()
