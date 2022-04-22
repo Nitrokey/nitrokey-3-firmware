@@ -381,10 +381,6 @@ mod app {
                 trace!("UI {} {}", *cnt, *cnt % 4);
                 cl.lock(|cl| match *cnt % 80 {
                     0 => {
-                        syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
-                    }
-                    20 => {
-                        // syscall!(cl.draw_text(50, 50, b"NRF52840"));
                         for y in 0..6 {
                             for x in 0..3 {
                                 syscall!(cl.draw_sprite(
@@ -396,18 +392,23 @@ mod app {
                             }
                         }
                     }
-                    40 => {
-                        syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
-                        syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
-                        syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
-                        syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+                    20 => {
+                        syscall!(cl.draw_filled_rect(120 - 78, 67 - 45, 33, 90, 0x0000_u16));
+                        syscall!(cl.draw_filled_rect(120 + 45, 67 - 45, 33, 90, 0x0000_u16));
+                        for y in 0..3 {
+                            for x in 0..3 {
+                                syscall!(cl.draw_sprite(
+                                    120 - 45 + x * 30,
+                                    67 - 45 + y * 30,
+                                    4,
+                                    y * 3 + x
+                                ));
+                            }
+                        }
                     }
-                    60 => {
-                        syscall!(cl.draw_sprite(0, 125, 1, 9));
-                        syscall!(cl.draw_sprite(215, 0, 1, 6));
-                        syscall!(cl.draw_sprite(215, 125, 1, 7));
-                        syscall!(cl.draw_sprite(0, 0, 1, 8));
-                        syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+                    40 => {
+                        syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
+                        // syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
                     }
                     _ => {}
                 });
