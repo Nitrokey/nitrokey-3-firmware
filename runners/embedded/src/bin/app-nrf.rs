@@ -371,7 +371,7 @@ mod app {
 				bs.copy_from_slice(&st[0..8]);
 			});
 			trace!("UI Btn {:?}", &bs);
-			if bs[1] != 0 {
+			if bs[3] != 0 {
 				#[cfg(feature = "has_poweroff")]
 				ERL::soc::board::power_off();
 			}
