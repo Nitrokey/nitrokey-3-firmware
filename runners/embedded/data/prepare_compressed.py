@@ -11,7 +11,7 @@ def rgb565(rgb):
 	r >>= 3
 	g >>= 2
 	b >>= 3
-	return (b << 11) | (g << 5) | r
+	return (r << 11) | (g << 5) | b
 
 class Palette(object):
 	SPRITE_PALETTE_DEF = """const %s: SpritePalette = {
@@ -41,7 +41,8 @@ class Palette(object):
 		self.emitted = False
 
 	def emit(self):
-		colstr = ", ".join(["0x%04x" % self.list[c] for c in self.colors])
+		swab = lambda v: ((v & 0xff00) >> 8) | ((v & 0xff) << 8)
+		colstr = ", ".join(["0x%04x" % swab(self.list[c]) for c in self.colors])
 		print(self.SPRITE_PALETTE_DEF % (self.name, len(self.colors), colstr, self.bpp))
 		self.emitted = True
 
