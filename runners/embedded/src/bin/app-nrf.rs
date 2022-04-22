@@ -336,31 +336,30 @@ mod app {
 			trace!("UI {} {}", *cnt, *cnt % 4);
 			cl.lock(|cl|
 			match *cnt % 4 {
-				0 => { syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16)); }
-				1 => {
-					// syscall!(cl.draw_text(50, 50, b"NRF52840"));
+				0 => {
 					for y in 0..6 { for x in 0..3 {
 						syscall!(cl.draw_sprite(120-78+x*52, 67-45+y*15, 2, y*3+x));
 					}}
+					*cnt += 1;
+					ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
+				}
+				1 => {
+					syscall!(cl.draw_filled_rect(120-78, 67-45, 33, 90, 0x0000_u16));
+					syscall!(cl.draw_filled_rect(120+45, 67-45, 33, 90, 0x0000_u16));
+					for y in 0..3 { for x in 0..3 {
+						syscall!(cl.draw_sprite(120-45+x*30, 67-45+y*30, 4, y*3+x));
+					}}
+					*cnt += 1;
+					ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
 				}
 				2 => {
-					syscall!(cl.draw_filled_rect(0, 0, 240, 1, 0xffff_u16));
-					syscall!(cl.draw_filled_rect(0, 0, 1, 135, 0xffff_u16));
-					syscall!(cl.draw_filled_rect(239, 0, 1, 135, 0xffff_u16));
-					syscall!(cl.draw_filled_rect(0, 134, 240, 1, 0xffff_u16));
+					syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
+					// syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+					*cnt += 1;
 				}
-				_ => {
-					syscall!(cl.draw_sprite(0, 125, 1, 9));
-					syscall!(cl.draw_sprite(215, 0, 1, 6));
-					syscall!(cl.draw_sprite(215, 125, 1, 7));
-					syscall!(cl.draw_sprite(0, 0, 1, 8));
-					syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
-				}
+				_ => {}
 			}
 			);
-			*cnt += 1;
-
-			ui::spawn_after(RtcDuration::from_ms(2500), UIOperation::Animate).ok();
 		}
 		UIOperation::UpdateButtons => {
 			let mut bs: [u8; 8] = [0; 8];
