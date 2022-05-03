@@ -1,0 +1,25 @@
+FROM debian:11
+
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	wget tar patch curl ca-certificates unzip
+	
+
+RUN curl -o jlink.deb -d accept_license_agreement=accepted -d non_emb_ctr=confirmed https://www.segger.com/downloads/jlink/JLink_Linux_V762b_x86_64.deb && \
+	dpkg -i jlink.deb || true && rm jlink.deb
+RUN apt install -y --fix-broken
+
+RUN wget https://www.nordicsemi.com/-/media/Software-and-other-downloads/Desktop-software/nRF-command-line-tools/sw/Versions-10-x-x/10-15-0/nrf-command-line-tools-10.15.0_amd.zip && \
+	unzip nrf-command-line-tools-10.15.0_amd.zip && \
+  tar xvzf nrf-command-line-tools-10.15.0_Linux-amd64.tar.gz && \
+  mv nrf-command-line-tools /opt/nrf5x-command-line-tools && \
+	ln -s /opt/nrf5x-command-line-tools/bin/nrfjprog /usr/bin && \
+	ln -s /opt/nrf5x-command-line-tools/bin/mergehex /usr/bin && \
+	rm -v nrf-command-line-tools-10.15.0-1.amd64.rpm nrf-command-line-tools_10.15.0_amd64.deb  nrf-command-line-tools-10.15.0_Linux-amd64.tar.gz nrf-command-line-tools-10.15.0_amd.zip
+
+RUN nrfjprog -v
+
+WORKDIR /work
+
