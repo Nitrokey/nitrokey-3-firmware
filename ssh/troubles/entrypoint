@@ -10,6 +10,8 @@ exit_all() {
 trap exit_all INT TERM
 
 grep -E "MaxAuthTries|PermitRootLogin" /etc/ssh/sshd_config
+sshd -v 2>&1 | head -2 | tail -1
+
 
 /usr/sbin/sshd -E /var/log/sshd.log
 
