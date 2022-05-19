@@ -72,18 +72,6 @@ pub struct Initializer {
     config: Config,
 }
 
-fn get_serial_number() -> &'static str {
-    /*static mut SERIAL_NUMBER: heapless::String<heapless::consts::U36> = heapless::String(heapless::i::String::new());
-    use core::fmt::Write;
-    unsafe {
-        let uuid = crate::hal::uuid();
-        SERIAL_NUMBER.write_fmt(format_args!("{}", hexstr!(&uuid))).unwrap();
-        &SERIAL_NUMBER
-    }*/
-    "00000000-0000-0000-00000000"
-}
-
-
 // SoloKeys stores a product string in the first 64 bytes of CMPA.
 fn get_product_string(pfr: &mut Pfr<hal::typestates::init_state::Enabled>) -> &'static str {
     let data = pfr.cmpa_customer_data();
@@ -552,12 +540,10 @@ impl Initializer {
                 UsbProductName::Custom(name) => name,
                 UsbProductName::UsePfr => get_product_string(&mut basic_stage.pfr),
             };
-            let serial_number = get_serial_number();
 
             let usbd = UsbDeviceBuilder::new(usb_bus, usb_config.vid_pid)
                 .manufacturer(usb_config.manufacturer_name)
                 .product(product_string)
-                .serial_number(serial_number)
                 .device_release(device_release)
                 .max_packet_size_0(64)
                 .composite_with_iads()
