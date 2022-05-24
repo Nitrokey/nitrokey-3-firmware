@@ -153,10 +153,9 @@ RGB: RgbLed,
                 self.rgb.as_mut().unwrap().set(color.into());
                 return;
             } else {
+                self.set_status(ui::Status::Idle);
                 self.wink = None;
             }
-        } else {
-            self.set_status(ui::Status::Idle);
         }
     }
 

@@ -104,6 +104,9 @@ log-debug = []
 log-warn = []
 log-error = []
 
+[patch.crates-io]
+trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
+
 [profile.release]
 codegen-units = 1
 lto = true

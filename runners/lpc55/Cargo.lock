@@ -12,7 +12,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816 0.1.0",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
 ]
 
 [[package]]
@@ -203,7 +203,7 @@ dependencies = [
  "lpc55-hal",
  "lpc55-rtic",
  "nb 1.0.0",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
 ]
 
 [[package]]
@@ -599,7 +599,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
 ]
 
 [[package]]
@@ -1088,7 +1088,7 @@ dependencies = [
  "interchange",
  "iso7816 0.1.0",
  "serde",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
 ]
 
 [[package]]
@@ -1213,7 +1213,7 @@ dependencies = [
  "lpc55-hal",
  "nisty",
  "salty",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
 ]
 
 [[package]]
@@ -1327,7 +1327,7 @@ dependencies = [
  "piv-authenticator",
  "provisioner-app",
  "rtt-target",
- "trussed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1523,8 +1523,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7173399ed80afefa978da6c601d9712d1de03f7c6e2b9d4630addfcc0598f5e"
+source = "git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset#0994607f6fe84a3fbec9b137c9e8247f1232d536"
 dependencies = [
  "aes",
  "bitflags",
