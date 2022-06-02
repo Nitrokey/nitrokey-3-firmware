@@ -279,7 +279,7 @@ mod app {
     fn task_trussed(ctx: task_trussed::Context) {
         let mut trussed = ctx.shared.trussed;
 
-        trace!("irq SWI0_EGU0");
+        // trace!("irq SWI0_EGU0");
         trussed.lock(|trussed| {
             ERL::runtime::run_trussed(trussed);
         });
