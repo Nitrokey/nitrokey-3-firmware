@@ -51,8 +51,8 @@ pub fn init_store(int_flash: <SocT as Soc>::InternalFlashStorage, ext_flash: <So
 
 	/* Step 2: try mounting each FS in turn */
 	if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
-		let fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
-		error!("IFS Mount Error, Reformat {:?}", fmt_ext);
+		let fmt_int = littlefs2::fs::Filesystem::format(ifs_storage);
+		error!("IFS Mount Error, Reformat {:?}", fmt_int);
 	};
 	let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
 		Ok(ifs_) => { transcend!(types::INTERNAL_FS, ifs_) }
