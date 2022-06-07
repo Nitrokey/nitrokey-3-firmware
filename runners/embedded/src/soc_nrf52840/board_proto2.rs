@@ -223,25 +223,90 @@ pub fn power_off() {
     if pac.POWER.usbregstatus.read().vbusdetect().is_vbus_present() {
         return;
     }
-    // display OFF
+    // external flash -> Deep Power Down
     unsafe {
-        pac.P0.outset.write(|w| w.bits(1u32 << 13));
+        pac.QSPI.events_ready.write(|w| w.bits(0));
+        pac.QSPI.cinstrconf.write(|w| {
+            w.opcode()
+                .bits(0xb9)
+                .length()
+                ._1b()
+                .wipwait()
+                .clear_bit()
+                .wren()
+                .clear_bit()
+                .lfen()
+                .clear_bit()
+                .lfstop()
+                .clear_bit()
+        });
+        loop {
+            let p = pac.QSPI.events_ready.read().bits();
+            if p != 0 {
+                break;
+            }
+        }
     }
-    // (finger OFF)
-    unsafe {
-        pac.P0.outset.write(|w| w.bits(1u32 << 15));
-    }
-    // (se050 OFF)
-    unsafe {
-        pac.P0.outclr.write(|w| w.bits(1u32 << 20));
-    }
-    // peripherals OFF
+    // high-level NRF peripherals
     unsafe {
         pac.SPIM0.enable.write(|w| w.bits(0));
         pac.TWIM1.enable.write(|w| w.bits(0));
         pac.UARTE0.enable.write(|w| w.bits(0));
         pac.USBD.enable.write(|w| w.bits(0));
+        pac.QSPI.enable.write(|w| w.bits(0));
+        pac.TIMER0.tasks_stop.write(|w| w.tasks_stop().set_bit());
+        pac.RNG.tasks_stop.write(|w| w.tasks_stop().set_bit());
+        pac.RTC0.tasks_stop.write(|w| w.tasks_stop().set_bit());
+        // NFCT, NVMC
         pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(1));
+    }
+    // display
+    unsafe {
+        pac.P0.outset.write(|w| w.bits(1u32 << 13));
+    } // POWER
+    unsafe {
+        pac.P0.outset.write(|w| w.bits(1u32 << 8));
+    } // BACKLIGHT
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 0));
+    } // MOSI
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 1));
+    } // CLK
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 4));
+    } // RESET
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 6));
+    } // CS
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 26));
+    } // DC
+      // fingerprint reader
+    unsafe {
+        pac.P0.outset.write(|w| w.bits(1u32 << 15));
+    } // POWER
+    unsafe {
+        pac.P1.pin_cnf[9].write(|w| w.bits(2));
+    } // DETECT
+    unsafe {
+        pac.P0.pin_cnf[11].write(|w| w.bits(2));
+    } // RX
+      // SE050
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 20));
+    } // ENABLE
+    unsafe {
+        pac.P0.pin_cnf[22].write(|w| w.bits(3));
+    } // SCL
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 22));
+    }
+    unsafe {
+        pac.P0.pin_cnf[24].write(|w| w.bits(3));
+    } // SDA
+    unsafe {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 24));
     }
     // disconnect GPIOs
     // POWER.SYSTEMOFF <= 1
