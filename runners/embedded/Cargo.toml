@@ -156,3 +156,6 @@ lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "skip-up-timeout" }
 trussed = { git = "https://github.com/jnordholz/trussed", branch = "main" }
 #trussed = { path = "../../trussed" }
+
+[patch.'https://github.com/solokeys/fido-authenticator']
+fido-authenticator = { git = "https://github.com/jnordholz/fido-authenticator" }

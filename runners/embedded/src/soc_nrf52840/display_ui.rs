@@ -139,27 +139,39 @@ impl trussed::platform::UserInterface for DisplayUI {
     // fn wink(&mut self, duration: core::time::Duration)
 
     fn check_user_presence(&mut self) -> consent::Level {
+        let up_result = self.check_gui_user_presence(b"CONSENT REQUEST");
+        up_result.unwrap_or(consent::Level::None)
+    }
+
+    fn check_gui_user_presence(
+        &mut self,
+        message: &[u8],
+    ) -> Result<consent::Level, consent::Error> {
         trace!("Consent Requested");
-        self.draw_filled_rect(120 - 4 - 4 * 9, 67 - 18, 9 * 9, 2 * 18, 0x0000u16);
-        self.draw_text(120 - 4 - 3 * 9, 67 - 18, b"CONSENT");
-        self.draw_text(120 - 4 - 4 * 9, 67, b"REQUESTED");
+
+        self.draw_filled_rect(0, 20, 240, 115, 0x0000u16);
+
+        self.draw_text(5, 67, message);
+        // self.draw_text(120-4-3*9, 67-18, b"CONSENT");
+        // self.draw_text(120-4-4*9, 67, b"REQUESTED");
+
         self.draw_sprite(215, 0, 1, 6);
         self.draw_sprite(215, 125, 1, 7);
         // self.draw_sprite(0, 0, 1, 8);
         // self.draw_sprite(0, 125, 1, 9);
-        let mut ret = consent::Level::None;
+        let mut ret = Err(consent::Error::Declined);
         loop {
             self.update_button_state();
             if self.button_state[2] != 0 {
                 break;
             }
             if self.button_state[0] != 0 {
-                ret = consent::Level::Normal;
+                ret = Ok(consent::Level::Normal);
                 break;
             }
             cortex_m::asm::wfi();
         }
-        self.draw_filled_rect(120 - 4 - 4 * 9, 67 - 18, 9 * 9, 2 * 18, 0x0000u16);
+        self.draw_filled_rect(0, 20, 240, 115, 0x0000u16);
         self.draw_filled_rect(215, 0, 25, 10, 0x0000u16);
         self.draw_filled_rect(215, 125, 25, 10, 0x0000u16);
         // black rects for other two button icons
