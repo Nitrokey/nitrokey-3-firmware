@@ -66,13 +66,14 @@ pub fn init_bootup(
     deviceaddr[0..2].copy_from_slice(&(ficr.deviceaddr[1].read().bits() as u16).to_be_bytes());
     info!("FICR DevAddr  {}", delog::hex_str!(&deviceaddr));
 
-    info!(
-        "UICR REGOUT0 {:x} NFCPINS {:x}",
-        uicr.regout0.read().bits(),
-        uicr.nfcpins.read().bits()
-    );
-    if !uicr.regout0.read().vout().is_3v3() {
-        error!("REGOUT0 is not at 3.3V - external flash will fail!");
+    #[cfg(features = "board-nk3am")]
+    {
+        let regout0 = uicr.regout0.read().bits();
+        let nfcpins = uicr.nfcpins.read().bits();
+        info!("UICR REGOUT0 {:x} NFCPINS {:x}", regout0, nfcpins);
+        if !uicr.regout0.read().vout().is_3v3() {
+            error!("REGOUT0 is not at 3.3V - external flash will fail!");
+        }
     }
 }
 
