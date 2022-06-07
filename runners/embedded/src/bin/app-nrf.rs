@@ -148,6 +148,7 @@ mod app {
         /* TODO: set up SE050 device */
         let se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>>>> =
             if board_gpio.se_pins.is_some() {
+                Delogger::flush();
                 let twi = Twim::new(
                     ctx.device.TWIM1,
                     board_gpio.se_pins.take().unwrap(),
@@ -160,6 +161,7 @@ mod app {
                     delay_timer.delay_ms(1u32);
                 }
                 se050.enable(&mut delay_timer).expect("SE050 Enable Fail");
+                Delogger::flush();
                 Some(se050)
             } else {
                 None
@@ -379,7 +381,7 @@ mod app {
         match op {
             UIOperation::Animate => {
                 trace!("UI {} {}", *cnt, *cnt % 4);
-                cl.lock(|cl| match *cnt % 80 {
+                cl.lock(|cl| match *cnt {
                     0 => {
                         for y in 0..6 {
                             for x in 0..3 {
