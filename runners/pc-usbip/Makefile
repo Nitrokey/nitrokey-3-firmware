@@ -9,9 +9,8 @@ help:
 	@echo "Done. Device should be visible in your system now. Run 'make stop' to disconnect it."
 
 .PHONY: start-sim
-start-sim: $(APPNAME)
+start-sim:
 	-$(MAKE) stop
-	cp $(APPPATH) ./$(APPNAME) -v
 	env RUST_LOG=debug ./$(APPNAME) &
 	sleep 1
 
@@ -25,6 +24,10 @@ attach:
 
 .PHONY: build
 build: $(APPNAME)
+	cp $(APPPATH) ./$(APPNAME) -v
+
+.PHONY: build-clean
+build-clean: | clean build
 
 .PHONY: $(APPNAME)
 $(APPNAME):
@@ -32,7 +35,7 @@ $(APPNAME):
 
 .PHONY: stop
 stop:
-	sudo usbip detach -p "00"
+	-sudo usbip detach -p "00"
 	killall $(APPNAME)
 
 .PHONY: stop
@@ -43,3 +46,10 @@ setup-fedora:
 clean:
 	cargo clean
 	rm $(APPNAME) -v
+
+.PHONY: build-docker
+build-docker:
+	docker build -t usbip .
+	mkdir -p cargo-cache
+	docker run -it --rm -v $(PWD)/cargo-cache:/root/.cargo -v $(PWD)/../../:/app usbip make -C /app/runners/pc-usbip/ build
+	touch $(APPNAME)
