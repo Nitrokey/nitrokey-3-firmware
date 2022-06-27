@@ -175,10 +175,11 @@ FIRMWARE_VERSION = 15
 
 BL_DIR = nrf-bootloader
 BL_HEX = $(BL_DIR)/bootloader.hex
-MBR_HEX = $(BL_DIR)/mbr.hex 
+MBR_HEX = $(BL_DIR)/mbr.hex
+BL_CONFIGS = $(BL_DIR)/config/default_sdk_config.h $(BL_DIR)/config/nk_sdk_config.h $(BL_DIR)/config/sdk_config.h
 
 # descent to build mbr.hex + booloader.hex 
-$(BL_HEX) $(MBR_HEX): $(BL_DIR)
+$(BL_HEX) $(MBR_HEX): $(BL_DIR) $(BL_CONFIGS)
 	$(MAKE) -C $(BL_DIR)
 
 
@@ -191,7 +192,7 @@ UPLOAD_SH = nrf-bootloader/upload.sh
 
 FW_SIGNED = fw_signed_update.zip
 FW_RAW = fw_unsigned.hex
-TTYDEV = /dev/ttyACM1
+TTYDEV = /dev/ttyACM0
 
 fw-assemble-dfu: $(FW_SIGNED)
 
