@@ -3,6 +3,8 @@
 BUILD_ID ?= $(BUILD_PROFILE)-$(BOARD)
 CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 
+CARGO_TARGET_DIR ?= target
+
 ifeq ($(filter nk3am proto1 nrfdk,$(BOARD)), )
   SOC = lpc55
 else
@@ -10,13 +12,13 @@ else
 endif
 
 # rust triplet
-TARGET = $(shell python -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
+TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
 # gnu binutils-prefix
 GNU_TARGET = arm-none-eabi
 
 ### @TODO: ugly deluxe ? toml bash parser? dirty grep? 
-CFG_VAL_BOARDS = $(shell python -c 'import toml; print(" ".join(toml.load("$(CFG_PATH)")["platform"]["boards"]))')
-CFG_VAL_SOC = $(shell python -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["soc"])')
+CFG_VAL_BOARDS = $(shell python3 -c 'import toml; print(" ".join(toml.load("$(CFG_PATH)")["platform"]["boards"]))')
+CFG_VAL_SOC = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["soc"])')
 
 # util fn/paths
 ARTIFACTS = artifacts
@@ -108,7 +110,7 @@ list:
 clean-all: 
 	rm -f ./$(OUT) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)
 	rm -f *.log runner-*-*.ihex runner-*-*.bin symbols-*-*.txt runner-*-*.ihex
-	rm -rf ./target
+	rm -rf ./$(CARGO_TARGET_DIR)
 	rm -f firmware.hex mbr.hex bootloader.hex
 
 ###############################################################################
@@ -126,14 +128,14 @@ $(eval $(call fidokeys_lfs,d8000,14000))
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	cp -f $(CFG_PATH) cfg.toml
-	rm -f target/$(TARGET)/release/$(RAW_OUT)
+	rm -f $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT)
 
 	BUILD_PROFILE=$(BUILD_PROFILE) BOARD=$(BOARD) \
 		cargo build --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
 
-	cp target/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
+	cp $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
 
 	$(GNU_TARGET)-nm ./$(OUT) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
 	
@@ -143,7 +145,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	$(GNU_TARGET)-readelf -l ./$(OUT) | grep LOAD
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
-	rm -f ./$(OUT) ./$(OUT_IHEX) target/$(TARGET)/release/$(RAW_OUT) $(SYMBOLS) $(LOG)
+	rm -f ./$(OUT) ./$(OUT_IHEX) $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) $(SYMBOLS) $(LOG)
 
 reset: reset-banner fidokeys_lfs_d8000+14000.ihex check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OUT) 
 	nrfjprog -f NRF52 --chiperase --program $(OUT_IHEX)
