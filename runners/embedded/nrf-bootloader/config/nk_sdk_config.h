@@ -25,7 +25,7 @@
 #endif
 
 #ifndef APP_USBD_PID
-#define APP_USBD_PID 0x42DD
+#define APP_USBD_PID 0x42E8
 #endif
 
 // USB manufacturer string
@@ -44,7 +44,7 @@
 #define APP_USBD_STRING_ID_PRODUCT 2
 #endif
 #ifndef APP_USBD_STRINGS_PRODUCT
-#define APP_USBD_STRINGS_PRODUCT APP_USBD_STRING_DESC("Nitrokey 3 Bootloader r2")
+#define APP_USBD_STRINGS_PRODUCT APP_USBD_STRING_DESC("Nitrokey 3 Bootloader")
 #endif
 
 // USB serial configuration
