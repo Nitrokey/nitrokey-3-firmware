@@ -1,6 +1,6 @@
 # USB/IP Simulation
 
-This runner allows using USB/IP as a mean to simulate device connection
+This runner allows using USB/IP as a means to simulate device connection
 to the OS, and should allow faster development of the embedded applications.
 
 Platform and storage implementations are taken from the Trussed tutorial:
@@ -8,7 +8,7 @@ Platform and storage implementations are taken from the Trussed tutorial:
 
 Remarks:
 - At the moment FIDO app only (to be extended with Admin and Provision apps);
-- Works with Chromium and pynitrokey (with a patched fido2.hid module);
+- Works with Chromium and pynitrokey (with a patched fido2.hid module) [2];
 - Written length returns "1", which confuse client HID applications
   (Chromium shows error in logs, but ignores it; pynitrokey fails);
 - Currently not possible to set the FIDO certificate, thus x5c response
@@ -17,7 +17,7 @@ Remarks:
 - Requires multiple `usbip attach` calls to make it work [1].
 
 [1] https://github.com/Sawchord/usbip-device#known-bugs
-
+[2] The change is rather simple: replace `raise OSError("failed to write entire packet")` with `pass` in `FileCtapHidConnection.write_packet` in fido2’s `hid/base.py`.
 
 ## Setup
 
@@ -45,5 +45,4 @@ Stop execution with:
 make stop
 ```
 
-Warning: in some cases' simulation can sometimes cause kernel faults, which makes the system it is running unstable. 
-
+Warning: in some cases simulation can sometimes cause kernel faults, which makes the system it is running unstable.

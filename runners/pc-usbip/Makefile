@@ -1,10 +1,10 @@
 APPNAME=usbip-simulation
 APPPATH=target/debug/usbip-simulation
 
-all: | start-sim attach help
+all: | start-sim attach finish-message
 
-.PHONY:
-help:
+.PHONY: finish-message
+finish-message:
 	@echo "###################################################"
 	@echo "Done. Device should be visible in your system now. Run 'make stop' to disconnect it."
 
@@ -38,7 +38,7 @@ stop:
 	-sudo usbip detach -p "00"
 	killall $(APPNAME)
 
-.PHONY: stop
+.PHONY: setup-fedora
 setup-fedora:
 	sudo dnf install usbip
 

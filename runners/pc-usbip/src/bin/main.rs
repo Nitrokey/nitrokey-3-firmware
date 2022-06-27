@@ -47,7 +47,7 @@ fn main() {
     let args = Args::parse();
 
     log::info!("Initializing Trussed");
-    let state_file: String = args.state_file;
+    let state_file = args.state_file;
     let trussed_platform = init_platform(state_file);
     let mut trussed_service = trussed::service::Service::new(trussed_platform);
     let client_id = "fido";
