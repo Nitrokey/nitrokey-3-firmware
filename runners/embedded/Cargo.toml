@@ -145,7 +145,7 @@ required-features = ["soc-lpc55"]
 [patch.crates-io]
 littlefs2 = { path = "../../components/littlefs2" }
 lpc55-hal = { path = "../../components/lpc55-hal" }
-trussed = { git = "https://github.com/jnordholz/trussed" }
+trussed = { git = "https://github.com/daringer/trussed", branch = "store_activate" }
 
 [patch.'https://github.com/trussed-dev/trussed']
-trussed = { git = "https://github.com/jnordholz/trussed" }
+trussed = { git = "https://github.com/daringer/trussed", branch = "store_activate" }
