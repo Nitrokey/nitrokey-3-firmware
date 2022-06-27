@@ -1,0 +1,27 @@
+From aa6019ee64df3b85db92ffa3a4894f614b062437 Mon Sep 17 00:00:00 2001
+From: Szczepan Zalega <szczepan@nitrokey.com>
+Date: Mon, 27 Jun 2022 14:07:58 +0200
+Subject: [PATCH] Ignore difference between the sent data size and reported
+
+Required for the USB/IP simulation, as apparently calls on it always return 1.
+---
+ fido2/hid/base.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/fido2/hid/base.py b/fido2/hid/base.py
+index a184265..5cc2187 100644
+--- a/fido2/hid/base.py
++++ b/fido2/hid/base.py
+@@ -74,7 +74,8 @@ def close(self):
+ 
+     def write_packet(self, packet):
+         if os.write(self.handle, packet) != len(packet):
+-            raise OSError("failed to write entire packet")
++            # raise OSError("failed to write entire packet")
++            pass
+ 
+     def read_packet(self):
+         return os.read(self.handle, self.descriptor.report_size_in)
+-- 
+2.35.3
+
