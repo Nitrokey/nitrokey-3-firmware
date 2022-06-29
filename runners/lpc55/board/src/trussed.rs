@@ -102,7 +102,7 @@ RGB: RgbLed,
 
     fn set_status(&mut self, status: platform::ui::Status) {
         let uptime = self.uptime();
-        self.status.update(status);
+        self.status.update(status, uptime);
         self.refresh_ui(uptime);
     }
 

@@ -6,25 +6,24 @@ use crate::traits::rgb_led::Intensities;
 
 const BLACK: Intensities = Intensities { red: 0, green: 0, blue: 0 };
 const RED: Intensities = Intensities { red: u8::MAX, green: 0, blue: 0 };
-const GREEN: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x02 };
+const BLUE: Intensities = Intensities { red: 0, green: 0, blue: u8::MAX };
 const TEAL: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x5a };
-const ORANGE: Intensities = Intensities { red: u8::MAX, green: 0x7e, blue: 0 };
 const WHITE: Intensities = Intensities { red: u8::MAX, green: u8::MAX, blue: u8::MAX };
 
 pub enum Status {
     Idle,
     Processing,
-    WaitingForUserPresence,
+    WaitingForUserPresence(Duration),
     Winking(Range<Duration>),
     Error,
 }
 
 impl Status {
-    pub fn update(&mut self, status: ui::Status) {
+    pub fn update(&mut self, status: ui::Status, uptime: Duration) {
         if matches!(self, Self::Winking(_)) && status == ui::Status::Idle {
             return;
         }
-        *self = status.into();
+        *self = (status, uptime).into();
     }
 
     pub fn refresh(&mut self, uptime: Duration) {
@@ -40,12 +39,12 @@ impl Status {
             Self::Idle => if is_provisioner {
                 LedMode::constant(WHITE)
             } else {
-                LedMode::constant(GREEN)
+                LedMode::constant(BLACK)
             },
             Self::Processing => LedMode::constant(TEAL),
-            Self::WaitingForUserPresence => LedMode::constant(ORANGE),
+            Self::WaitingForUserPresence(start) => LedMode::simple_blinking(WHITE, *start),
             Self::Error => LedMode::constant(RED),
-            Self::Winking(range) => LedMode::simple_blinking(WHITE, range.start),
+            Self::Winking(range) => LedMode::simple_blinking(BLUE, range.start),
         }
     }
 }
@@ -56,12 +55,12 @@ impl Default for Status {
     }
 }
 
-impl From<ui::Status> for Status {
-    fn from(status: ui::Status) -> Self {
+impl From<(ui::Status, Duration)> for Status {
+    fn from((status, uptime): (ui::Status, Duration)) -> Self {
         match status {
             ui::Status::Idle => Self::Idle,
             ui::Status::Processing => Self::Processing,
-            ui::Status::WaitingForUserPresence => Self::WaitingForUserPresence,
+            ui::Status::WaitingForUserPresence => Self::WaitingForUserPresence(uptime),
             ui::Status::Error => Self::Error,
         }
     }
