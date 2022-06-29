@@ -83,10 +83,7 @@ pub fn init_store(int_flash: <SocT as Soc>::InternalFlashStorage, ext_flash: <So
 		}
 	};
 
-	let store = types::RunnerStore::claim().unwrap();
-	store.activate(ifs, efs, vfs);
-
-	store
+	types::RunnerStore::init_raw(ifs, efs, vfs)
 }
 
 pub fn init_usb_nfc(usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
