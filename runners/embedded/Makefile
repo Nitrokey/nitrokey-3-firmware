@@ -71,7 +71,6 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3am.bl: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
-	$(MAKE) fw-upload BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
 %-proto1: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=proto1 FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
@@ -185,7 +184,7 @@ $(BL_HEX) $(MBR_HEX): $(BL_DIR) $(BL_CONFIGS)
 	$(MAKE) -C $(BL_DIR)
 
 
-KEY_DIR = $(BL_DIR)/signing-key
+KEY_DIR ?= $(BL_DIR)/signing-key
 SIGNING_KEY = $(KEY_DIR)/dfu_private.key
 PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
 
@@ -194,7 +193,7 @@ UPLOAD_SH = nrf-bootloader/upload.sh
 
 FW_SIGNED = fw_signed_update.zip
 FW_RAW = fw_unsigned.hex
-TTYDEV = /dev/ttyACM0
+TTYDEV = /dev/ttyACM1
 
 fw-assemble-dfu: $(FW_SIGNED)
 
@@ -203,6 +202,9 @@ $(FW_RAW): $(OUT_IHEX)
 
 $(FW_SIGNED): $(FW_RAW) $(SIGN_SH) # $(SIGNING_KEY) 
 	bash $(SIGN_SH) $(FIRMWARE_VERSION) $(FW_SIGNED) $(FW_RAW) $(SIGNING_KEY)
+
+sign-nk3am.bl: $(FW_SIGNED)
+	
 
 fw-upload: $(FW_SIGNED) $(UPLOAD_SH) 
 	-if which nitropy; then \
@@ -242,6 +244,12 @@ lazy-deluxe:
 	#sudo chmod 777 /dev/ttyACM*
 	#ls -la $(TTYDEV)
 
+
+flash-nk3am.bl: $(FW_SIGNED)
+	$(MAKE) fw-upload BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
+
+build-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
+
 reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
 	nrfjprog -f NRF52 --recover
 	nrfjprog -f NRF52 --program nrf-bootloader/mbr.hex --sectorerase
@@ -257,13 +265,11 @@ reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
 	
 	nrfjprog -f NRF52 --reset
 
-program-bootloader:	nrf-bootloader/mbr.hex nrf-bootloader/bootloader.hex
+program-bootloader:	$(BOOTLOADER_HEX) $(MBR_HEX)
 	nrfjprog -f NRF52 --program nrf-bootloader/mbr.hex --sectorerase
 	nrfjprog -f NRF52 --program nrf-bootloader/bootloader.hex --sectorerase
 	nrfjprog -f NRF52 --reset
 
-
-	
 
 
 
