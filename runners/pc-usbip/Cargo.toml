@@ -22,8 +22,7 @@ apdu-dispatch = "0.1"
 ctap-types = "0.1"
 ctaphid-dispatch = "0.1"
 admin-app = "0.1"
-fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true }
-#piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator" }
+fido-authenticator = { version = "0.1", features = ["dispatch"] }
 trussed = { version = "0.1", features = ["clients-3"] }
 
 # components
@@ -40,8 +39,8 @@ usb-device = { version = "0.2.7", default-features = false }
 pretty_env_logger = { version = "0.4.0", optional = true}
 
 [features]
-default = [ "fido-authenticator",  "trussed/clients-1"]
-enable-logs = ["pretty_env_logger"]
+default = [ "no-buttons" ]
+enable-logs = ["pretty_env_logger", "admin-app/log-all", "fido-authenticator/log-all"]
 
 # Use to auto-succeed every user presence check
 no-buttons= []

@@ -9,7 +9,7 @@ finish-message:
 	@echo "Done. Device should be visible in your system now. Run 'make stop' to disconnect it."
 
 .PHONY: start-sim
-start-sim:
+start-sim: $(APPNAME)
 	-$(MAKE) stop
 	env RUST_LOG=debug ./$(APPNAME) &
 	sleep 1
@@ -31,7 +31,7 @@ build-clean: | clean build
 
 .PHONY: $(APPNAME)
 $(APPNAME):
-	cargo build
+	 cargo build --features=enable-logs
 
 .PHONY: stop
 stop:
@@ -40,7 +40,8 @@ stop:
 
 .PHONY: setup-fedora
 setup-fedora:
-	sudo dnf install usbip
+	sudo dnf install usbip clang-libs-13.0.0
+	sudo ln -s /usr/lib64/libclang.so.13 /usr/lib64/libclang.so
 
 .PHONY: clean
 clean:
@@ -48,8 +49,9 @@ clean:
 	rm $(APPNAME) -v
 
 .PHONY: build-docker
+CMD=make -C /app/runners/pc-usbip/ build
 build-docker:
 	docker build -t usbip .
 	mkdir -p cargo-cache
-	docker run -it --rm -v $(PWD)/cargo-cache:/root/.cargo -v $(PWD)/../../:/app usbip make -C /app/runners/pc-usbip/ build
+	docker run -it --rm -v $(PWD)/cargo-cache:/root/.cargo -v $(PWD)/../../:/app usbip $(CMD)
 	touch $(APPNAME)
