@@ -36,14 +36,14 @@ usbip-device = "*"
 usb-device = { version = "0.2.7", default-features = false }
 
 # Optional
-pretty_env_logger = { version = "0.4.0", optional = true}
+pretty_env_logger = { version = "0.4.0", optional = true }
 
 [features]
-default = [ "no-buttons" ]
+default = ["no-buttons"]
 enable-logs = ["pretty_env_logger", "admin-app/log-all", "fido-authenticator/log-all"]
 
 # Use to auto-succeed every user presence check
-no-buttons= []
+no-buttons = []
 
 # Reconfigure the NFC chip in any case
 reconfigure-nfc = []

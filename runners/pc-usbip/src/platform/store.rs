@@ -7,18 +7,25 @@
 //!
 //! Here, we use a single binary file-backed littlefs implementation for
 //! persistent storage, and RAM array-backed implementations for the volatile storage.
-use std::{fs::File, io::{Seek as _, SeekFrom}};
+use std::{
+    fs::File,
+    io::{Seek as _, SeekFrom},
+};
 
-pub use generic_array::{GenericArray, typenum::{consts, U16, U128, U256, U512, U1022}};
+pub use generic_array::{
+    typenum::{consts, U1022, U128, U16, U256, U512},
+    GenericArray,
+};
 use littlefs2::const_ram_storage;
 use log::info;
 use trussed::types::{LfsResult, LfsStorage};
 
-const_ram_storage!(VolatileStorage, 1024*10);
+const_ram_storage!(VolatileStorage, 1024 * 10);
 // currently, `trussed` needs a dummy parameter here
-const_ram_storage!(ExternalStorage, 1024*10);
+const_ram_storage!(ExternalStorage, 1024 * 10);
 
-trussed::store!(Store,
+trussed::store!(
+    Store,
     Internal: FileFlash,
     External: ExternalStorage,
     Volatile: VolatileStorage
@@ -34,10 +41,9 @@ pub struct FileFlash {
 }
 
 impl FileFlash {
-    const SIZE: u64 = 128*1024;
+    const SIZE: u64 = 128 * 1024;
 
     pub fn new(state_path: impl AsRef<std::path::Path>) -> Self {
-
         let path: std::path::PathBuf = state_path.as_ref().into();
 
         if let Ok(file) = File::open(&path) {
@@ -69,7 +75,6 @@ impl littlefs2::driver::Storage for FileFlash {
     /// TODO: We can't actually be changed currently
     // type ATTRBYTES_MAX = U1022;
 
-
     fn read(&self, offset: usize, buffer: &mut [u8]) -> LfsResult<usize> {
         use std::io::Read;
 
@@ -87,7 +92,10 @@ impl littlefs2::driver::Storage for FileFlash {
 
         // debug!("writing {} bytes from {} in {:?}...", data.len(), offset, self.path);
         // debug!("{:?}", data);
-        let mut file = std::fs::OpenOptions::new().write(true).open(&self.path).unwrap();
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&self.path)
+            .unwrap();
         file.seek(SeekFrom::Start(offset as _)).unwrap();
         let bytes_written = file.write(data).unwrap();
         assert_eq!(bytes_written, data.len());
@@ -100,10 +108,13 @@ impl littlefs2::driver::Storage for FileFlash {
         use std::io::Write;
 
         // debug!("erasing {} bytes from {} in {:?}...", len, offset, self.path);
-        let mut file = std::fs::OpenOptions::new().write(true).open(&self.path).unwrap();
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&self.path)
+            .unwrap();
         file.seek(SeekFrom::Start(offset as _)).unwrap();
         let zero_block = [0xFFu8; Self::BLOCK_SIZE];
-        for _ in 0..(len/Self::BLOCK_SIZE) {
+        for _ in 0..(len / Self::BLOCK_SIZE) {
             let bytes_written = file.write(&zero_block).unwrap();
             assert_eq!(bytes_written, Self::BLOCK_SIZE);
         }
@@ -111,6 +122,4 @@ impl littlefs2::driver::Storage for FileFlash {
         // debug!("..ok");
         Ok(len)
     }
-
 }
-

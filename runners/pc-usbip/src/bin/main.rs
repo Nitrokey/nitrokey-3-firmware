@@ -1,6 +1,6 @@
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use clap::Parser;
 use clap_num::maybe_hex;
@@ -9,8 +9,8 @@ use interchange::Interchange;
 use usb_device::{bus::UsbBusAllocator, prelude::*};
 use usbip_device::UsbIpBus;
 
-use solo_usbip::platform::{Platform, init_platform};
 use fido_authenticator;
+use solo_usbip::platform::{init_platform, Platform};
 use usbd_ctaphid::constants::MESSAGE_SIZE;
 
 pub type FidoConfig = fido_authenticator::Config;
@@ -100,7 +100,9 @@ fn main() {
         store(&trussed_platform, &fido_cert, "fido/x5c/00");
     }
 
-    let trussed_service = Rc::new(RefCell::new(trussed::service::Service::new(trussed_platform)));
+    let trussed_service = Rc::new(RefCell::new(trussed::service::Service::new(
+        trussed_platform,
+    )));
 
     log::info!("Initializing allocator");
     // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
@@ -119,16 +121,26 @@ fn main() {
         .device_sub_class(0)
         .build();
 
-    let syscall = Syscall { service: trussed_service.clone() };
+    let syscall = Syscall {
+        service: trussed_service.clone(),
+    };
 
-    let trussed_client = trussed_service.borrow_mut().try_new_client("fido", syscall.clone()).unwrap();
+    let trussed_client = trussed_service
+        .borrow_mut()
+        .try_new_client("fido", syscall.clone())
+        .unwrap();
     let mut fido_app = fido_authenticator::Authenticator::new(
         trussed_client,
         fido_authenticator::Conforming {},
-        fido_authenticator::Config { max_msg_size: MESSAGE_SIZE},
+        fido_authenticator::Config {
+            max_msg_size: MESSAGE_SIZE,
+        },
     );
 
-    let trussed_client = trussed_service.borrow_mut().try_new_client("admin", syscall.clone()).unwrap();
+    let trussed_client = trussed_service
+        .borrow_mut()
+        .try_new_client("admin", syscall.clone())
+        .unwrap();
     let mut admin_app = admin_app::App::<_, Reboot>::new(trussed_client, [0; 16], 0);
 
     log::info!("Ready for work");
@@ -147,5 +159,6 @@ fn store(platform: &impl trussed::Platform, host_file: &Path, device_file: &str)
         trussed::types::Location::Internal,
         &littlefs2::path::PathBuf::from(device_file),
         &data,
-    ).expect("failed to store file");
+    )
+    .expect("failed to store file");
 }

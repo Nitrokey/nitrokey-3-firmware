@@ -11,12 +11,12 @@ use trussed::platform::{consent, reboot, ui};
 
 pub mod store;
 
-trussed::platform!(Platform,
+trussed::platform!(
+    Platform,
     R: chacha20::ChaCha8Rng,
     S: store::Store,
     UI: UserInterface,
 );
-
 
 /// sets up the platform components and then itself
 pub fn init_platform(state_path: impl AsRef<std::path::Path>) -> Platform {
@@ -43,8 +43,7 @@ impl UserInterface {
     }
 }
 
-impl trussed::platform::UserInterface for UserInterface
-{
+impl trussed::platform::UserInterface for UserInterface {
     /// Prompt user to type a word for confirmation
     fn check_user_presence(&mut self) -> consent::Level {
         // use std::io::Read as _;
@@ -73,5 +72,4 @@ impl trussed::platform::UserInterface for UserInterface
         info!("Restart!  ({:?})", to);
         std::process::exit(25);
     }
-
 }
