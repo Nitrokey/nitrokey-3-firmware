@@ -1729,7 +1729,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/daringer/trussed?branch=store_activate#8d95eb3baafe101b2b8c927f12b2f4a7a5c565c2"
+source = "git+https://github.com/daringer/trussed?branch=store_activate#f78a1bf3f337aecdd01dad5766dc0ec2a01b28a7"
 dependencies = [
  "aes",
  "bitflags",
