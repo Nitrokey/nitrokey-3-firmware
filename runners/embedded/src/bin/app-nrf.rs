@@ -112,6 +112,51 @@ mod app {
 		let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 		/* TODO: set up fingerprint device */
 		/* TODO: set up SE050 device */
+
+		/* *********************************** */
+		/* in the meantime just test i2c comms */
+		/* SE050 minimal functional test - TO BE REMOVED on SE050 inclusion*/
+
+		use nrf52840_hal::prelude::OutputPin;
+		use embedded_hal::blocking::delay::DelayMs;
+
+		if let Some(se_ena) = &mut board_gpio.se_power {
+			match se_ena.set_high() {
+				Err(e) => { panic!("failed setting se_power high {:?}", e); },
+				Ok(v) => { debug!("setting se_power high"); },
+			}
+		}
+
+		let mut twim = nrf52840_hal::twim::Twim::new(ctx.device.TWIM1,
+			board_gpio.se_pins.take().unwrap(),
+			nrf52840_hal::twim::Frequency::K400);
+
+		delay_timer.delay_ms(100u32);
+
+		// RESYNC command
+		let mut write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+		match twim.write(0x48, &write_buf) {
+			Err(e) => { panic!("i2c: failed I2C write! - {:?}", e); },
+			Ok(v) => { debug!("i2c: write I2C success...."); }
+		}
+
+		delay_timer.delay_ms(100u32);
+
+		// RESYNC response
+		let mut response = [0; 2];
+		match twim.read(0x48, &mut response) {
+			Err(e) => { panic!("i2c: failed I2C read! - {:?}", e); },
+			Ok(v) => {
+				if response == [0xa5, 0xe0] {
+					debug!("i2c: se050 activation RESYNC cool");
+				} else {
+					panic!("i2c: se050 activation RESYNC fail!");
+				}
+			}
+		}
+		/* end of se050 minial functional test */
+		/* *********************************** */
+
 		/* TODO: set up display */
 
 		let dev_rng = Rng::new(ctx.device.RNG);
