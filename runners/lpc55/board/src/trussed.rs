@@ -7,9 +7,10 @@ use crate::hal::{
     peripherals::rtc::Rtc,
     typestates::init_state,
 };
+use crate::ui::Status;
 use crate::traits::buttons::{Press, Edge};
-use crate::traits::rgb_led::{Intensities, RgbLed};
-use trussed::platform::{consent, ui};
+use crate::traits::rgb_led::RgbLed;
+use trussed::platform::{self, consent};
 
 // Assuming there will only be one way to
 // get user presence, this should be fine.
@@ -32,8 +33,8 @@ RGB: RgbLed,
 {
     rtc: Rtc<init_state::Enabled>,
     buttons: Option<BUTTONS>,
+    status: Status,
     rgb: Option<RGB>,
-    wink: Option<core::ops::Range<Duration>>,
     provisioner: bool,
 }
 
@@ -48,25 +49,23 @@ RGB: RgbLed,
         rgb: Option<RGB>,
         provisioner: bool,
     ) -> Self {
-        let wink = None;
+        let status = Default::default();
         #[cfg(not(feature = "no-buttons"))]
-        let ui = Self { rtc, buttons: _buttons, rgb, wink, provisioner };
+        let ui = Self { rtc, buttons: _buttons, status, rgb, provisioner };
         #[cfg(feature = "no-buttons")]
-        let ui = Self { rtc, buttons: None, rgb, wink, provisioner };
+        let ui = Self { rtc, buttons: None, status, rgb, provisioner };
 
         ui
     }
-}
 
-// color codes Conor picked
-const BLACK: Intensities = Intensities { red: 0, green: 0, blue: 0 };
-const RED: Intensities = Intensities { red: u8::MAX, green: 0, blue: 0 };
-const GREEN: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x02 };
-#[allow(dead_code)]
-const BLUE: Intensities = Intensities { red: 0, green: 0, blue: u8::MAX };
-const TEAL: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x5a };
-const ORANGE: Intensities = Intensities { red: u8::MAX, green: 0x7e, blue: 0 };
-const WHITE: Intensities = Intensities { red: u8::MAX, green: u8::MAX, blue: u8::MAX };
+    fn refresh_ui(&mut self, uptime: Duration) {
+        if let Some(rgb) = &mut self.rgb {
+            self.status.refresh(uptime);
+            let mode = self.status.led_mode(self.provisioner);
+            rgb.set(mode.color(uptime));
+        }
+    }
+}
 
 impl<BUTTONS, RGB> trussed::platform::UserInterface for UserInterface<BUTTONS,RGB>
 where
@@ -101,62 +100,15 @@ RGB: RgbLed,
         }
     }
 
-    fn set_status(&mut self, status: ui::Status) {
-        if let Some(rgb) = &mut self.rgb {
-
-            match status {
-                ui::Status::Idle => {
-                    if self.provisioner {
-                        // white
-                        rgb.set(WHITE.into());
-                    } else {
-                        // green
-                        rgb.set(GREEN.into());
-                    }
-                },
-                ui::Status::Processing => {
-                    // teal
-                    rgb.set(TEAL.into());
-                }
-                ui::Status::WaitingForUserPresence => {
-                    // orange
-                    rgb.set(ORANGE.into());
-                },
-                ui::Status::Error => {
-                    // Red
-                    rgb.set(RED.into());
-                },
-            }
-
-        }
-
-        // Abort winking if the device is no longer idle
-        if status != ui::Status::Idle {
-            self.wink = None;
-        }
+    fn set_status(&mut self, status: platform::ui::Status) {
+        let uptime = self.uptime();
+        self.status.update(status);
+        self.refresh_ui(uptime);
     }
 
     fn refresh(&mut self) {
-        if self.rgb.is_none() {
-            return;
-        }
-
-        if let Some(wink) = self.wink.clone() {
-            let time = self.uptime();
-            if wink.contains(&time) {
-                // 250 ms white, 250 ms off
-                let color = if (time - wink.start).as_millis() % 500 < 250 {
-                    WHITE
-                } else {
-                    BLACK
-                };
-                self.rgb.as_mut().unwrap().set(color.into());
-                return;
-            } else {
-                self.set_status(ui::Status::Idle);
-                self.wink = None;
-            }
-        }
+        let uptime = self.uptime();
+        self.refresh_ui(uptime);
     }
 
     fn uptime(&mut self) -> Duration {
@@ -164,8 +116,8 @@ RGB: RgbLed,
     }
 
     fn wink(&mut self, duration: Duration) {
-        let time = self.uptime();
-        self.wink = Some(time..time + duration);
-        self.rgb.as_mut().unwrap().set(WHITE.into());
+        let uptime = self.uptime();
+        self.status = Status::Winking(uptime..uptime + duration);
+        self.refresh_ui(uptime);
     }
 }

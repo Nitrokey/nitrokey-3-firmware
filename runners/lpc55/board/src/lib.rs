@@ -36,5 +36,6 @@ pub use specifics::{
 pub mod clock_controller;
 pub mod nfc;
 pub mod trussed;
+pub mod ui;
 
 // pub use rgb_led::RgbLed;
