@@ -49,12 +49,13 @@ RGB: RgbLed,
         rgb: Option<RGB>,
         provisioner: bool,
     ) -> Self {
-        let status = Default::default();
+        let uptime = rtc.uptime();
+        let status = Status::Startup(uptime);
         #[cfg(not(feature = "no-buttons"))]
-        let ui = Self { rtc, buttons: _buttons, status, rgb, provisioner };
+        let mut ui = Self { rtc, buttons: _buttons, status, rgb, provisioner };
         #[cfg(feature = "no-buttons")]
-        let ui = Self { rtc, buttons: None, status, rgb, provisioner };
-
+        let mut ui = Self { rtc, buttons: None, status, rgb, provisioner };
+        ui.refresh_ui(uptime);
         ui
     }
 
