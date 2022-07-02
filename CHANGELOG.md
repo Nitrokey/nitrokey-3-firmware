@@ -1,3 +1,11 @@
+# Unreleased
+
+## Features
+
+- Change the LED patterns so that the LED is off by default, blinks white during a user confirmation request and blinks blue when winking([#34][])
+
+[#34]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/34
+
 # v1.0.3 (2022-04-11)
 
 This release fixes a FIDO authentication issue with Google.
