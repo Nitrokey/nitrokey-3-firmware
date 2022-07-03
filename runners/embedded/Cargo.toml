@@ -1,7 +1,7 @@
 [package]
 name = "embedded-runner-lib"
 version = "0.0.1"
-authors = ["Jan Nordholz <j.nordholz@tu-berlin.de"]
+authors = ["Jan Nordholz <j.nordholz@tu-berlin.de", "Markus Meissner <meissner@nitrokey.com>"]
 edition = "2018"
 license = "ISC"
 resolver = "2"
@@ -145,7 +145,4 @@ required-features = ["soc-lpc55"]
 [patch.crates-io]
 littlefs2 = { path = "../../components/littlefs2" }
 lpc55-hal = { path = "../../components/lpc55-hal" }
-trussed = { git = "https://github.com/daringer/trussed", branch = "store_activate" }
-
-[patch.'https://github.com/trussed-dev/trussed']
-trussed = { git = "https://github.com/daringer/trussed", branch = "store_activate" }
+trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
