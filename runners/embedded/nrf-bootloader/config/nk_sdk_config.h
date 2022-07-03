@@ -124,7 +124,7 @@
 // Timeout in ms before automatically starting a valid application due to inactivity.  <0-60000000>
 // If 0, no inactivity timer will be used. Values 1-99 are invalid.
 #ifndef NRF_BL_DFU_INACTIVITY_TIMEOUT_MS
-#define NRF_BL_DFU_INACTIVITY_TIMEOUT_MS 120000
+#define NRF_BL_DFU_INACTIVITY_TIMEOUT_MS 0
 #endif
 
 // <o> NRF_BL_FW_COPY_PROGRESS_STORE_STEP - Number of pages copied after which progress in the settings page is updated.
@@ -137,7 +137,7 @@
 #endif
 
 // NRF_BL_RESET_DELAY_MS - Time to wait before resetting the bootloader.
-// Time (in ms) to wait before resetting the bootloader after DFU has been completed or aborted. 
+// Time (in ms) to wait before resetting the bootloader after DFU has been completed or aborted.
 // This allows more time for e.g. disconnecting the BLE link or writing logs.
 #ifndef NRF_BL_RESET_DELAY_MS
 #define NRF_BL_RESET_DELAY_MS 0
