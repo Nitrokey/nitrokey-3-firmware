@@ -111,18 +111,26 @@ clean-all:
 	rm -f *.log runner-*-*.ihex runner-*-*.bin symbols-*-*.txt runner-*-*.ihex
 	rm -rf ./$(CARGO_TARGET_DIR)
 	rm -f firmware.hex mbr.hex bootloader.hex
+	rm -rf artifacts cfg.toml
 
 ###############################################################################
+#### generate test fido-keys littlefs2 flashable hex
 ###############################################################################
+
+GEN_KEYS_PATH = ../../gen-fido-keys
 
 define fidokeys_lfs
 fidokeys_lfs_$(1)+$(2).ihex:
-	$(MAKE) -C deployment clean
-	$(MAKE) -C deployment fs.hex FS_BASE=0x$(1) FS_SIZE=0x$(2)
-	cp deployment/fs.hex $$@
+	$(MAKE) -C $(GEN_KEYS_PATH) clean
+	$(MAKE) -C $(GEN_KEYS_PATH) fs.hex FS_BASE=0x$(1) FS_SIZE=0x$(2) FS_BLK_SHIFT=8
+	cp $(GEN_KEYS_PATH)/fs.hex $$@
 endef
 
 $(eval $(call fidokeys_lfs,d8000,14000))
+
+###############################################################################
+#### actual build, clean, reset, program targets
+###############################################################################
 
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
@@ -164,114 +172,4 @@ program: program-banner check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OU
 	nrfjprog -f NRF52 --program $(OUT_IHEX) --sectorerase
 	
 	nrfjprog -f NRF52 --reset
-
-
-############################################
-############################################  NRF52 Bootloader stuff
-############################################
-
-.PHONY: fw-assemble-dfu fw-upload-dfu generate-key
-
-FIRMWARE_VERSION = 15
-
-BL_DIR = nrf-bootloader
-BL_HEX = $(BL_DIR)/bootloader.hex
-MBR_HEX = $(BL_DIR)/mbr.hex
-BL_CONFIGS = $(BL_DIR)/config/default_sdk_config.h $(BL_DIR)/config/nk_sdk_config.h $(BL_DIR)/config/sdk_config.h
-
-# descent to build mbr.hex + booloader.hex 
-$(BL_HEX) $(MBR_HEX): $(BL_DIR) $(BL_CONFIGS)
-	$(MAKE) -C $(BL_DIR)
-
-
-KEY_DIR ?= $(BL_DIR)/signing-key
-SIGNING_KEY = $(KEY_DIR)/dfu_private.key
-PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
-
-SIGN_SH = nrf-bootloader/sign.sh
-UPLOAD_SH = nrf-bootloader/upload.sh
-
-FW_SIGNED = fw_signed_update.zip
-FW_RAW = fw_unsigned.hex
-TTYDEV = /dev/ttyACM1
-
-fw-assemble-dfu: $(FW_SIGNED)
-
-$(FW_RAW): $(OUT_IHEX)
-	cp $< $(@)
-
-$(FW_SIGNED): $(FW_RAW) $(SIGN_SH) # $(SIGNING_KEY) 
-	bash $(SIGN_SH) $(FIRMWARE_VERSION) $(FW_SIGNED) $(FW_RAW) $(SIGNING_KEY)
-
-sign-nk3am.bl: $(FW_SIGNED)
-	
-
-fw-upload: $(FW_SIGNED) $(UPLOAD_SH) 
-	-if which nitropy; then \
-		nitropy nk3 reboot --bootloader; \
-	fi
-	bash $(UPLOAD_SH) $(FW_SIGNED) $(TTYDEV)
-
-generate-key:
-	@echo "----------- THIS IS NOT AN AUTOMATED STEP ----------"
-	@echo "Before following these steps, make sure you are not overwriting a key!"
-	@echo "To generate a proper key-pair run the following command:"
-	@echo "$ generate_key.sh <target_directory>"
-
-$(SIGNING_KEY): generate-key
-	@echo "NO SIGNING KEY FOUND...."
-	@echo "GENERATE one and put it here: $(SIGNING_KEY)"
-	exit 1
-
-
-lazy: build-nk3am.bl
-	$(MAKE) lazy-deluxe BUILD_PROFILE=nrf52-bootloader BOARD=nk3am
-
-lazy-fw:
-	$(MAKE) fw-assemble-dfu
-	$(MAKE) fw-upload-dfu TTYDEV=`ls -1rt | tail -n1`
-
-
-lazy-bl: reset-bootloader
-
-
-lazy-fresh:
-
-
-lazy-deluxe:
-	nrfjprog -f NRF52 --program fidokeys_lfs_d8000+14000.ihex
-	#sleep 3
-	#sudo chmod 777 /dev/ttyACM*
-	#ls -la $(TTYDEV)
-
-
-flash-nk3am.bl: $(FW_SIGNED)
-	$(MAKE) fw-upload BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
-
-build-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
-
-reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
-	nrfjprog -f NRF52 --recover
-	nrfjprog -f NRF52 --program nrf-bootloader/mbr.hex --sectorerase
-	nrfjprog -f NRF52 --program nrf-bootloader/bootloader.hex --sectorerase
-	
-	# UICR
-	## UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
-	## UICR::NFCPINS to disabled
-	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
-	## UICR::APPROTECT (only --recover will revive debug-access)
-	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
-	
-	nrfjprog -f NRF52 --reset
-
-program-bootloader:	$(BOOTLOADER_HEX) $(MBR_HEX)
-	nrfjprog -f NRF52 --program nrf-bootloader/mbr.hex --sectorerase
-	nrfjprog -f NRF52 --program nrf-bootloader/bootloader.hex --sectorerase
-	nrfjprog -f NRF52 --reset
-
-
-
-
-
 

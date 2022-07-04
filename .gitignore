@@ -8,3 +8,4 @@ memory.x
 solo-state.bin
 bee.littlefs2
 !runners/lpc55/Cargo.lock
+runners/embedded/cfg.toml
