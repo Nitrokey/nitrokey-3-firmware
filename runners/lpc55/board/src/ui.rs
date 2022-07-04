@@ -11,6 +11,7 @@ const TEAL: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x5a };
 const WHITE: Intensities = Intensities { red: u8::MAX, green: u8::MAX, blue: u8::MAX };
 
 pub enum Status {
+    Startup(Duration),
     Idle,
     Processing,
     WaitingForUserPresence(Duration),
@@ -20,15 +21,22 @@ pub enum Status {
 
 impl Status {
     pub fn update(&mut self, status: ui::Status, uptime: Duration) {
-        if matches!(self, Self::Winking(_)) && status == ui::Status::Idle {
-            return;
+        if status == ui::Status::Idle {
+            if matches!(self, Self::Startup(_) | Self::Winking(_)) {
+                return;
+            }
         }
         *self = (status, uptime).into();
     }
 
     pub fn refresh(&mut self, uptime: Duration) {
-        if let Self::Winking(ref range) = self {
-            if !range.contains(&uptime) {
+        let end = match self {
+            Self::Startup(ref start) => Some(*start + Duration::from_millis(500)),
+            Self::Winking(ref range) => Some(range.end),
+            _ => None,
+        };
+        if let Some(end) = end {
+            if uptime > end {
                 *self = Self::Idle;
             }
         }
@@ -36,6 +44,7 @@ impl Status {
 
     pub fn led_mode(&self, is_provisioner: bool) -> LedMode {
         match self {
+            Self::Startup(_) => LedMode::constant(WHITE),
             Self::Idle => if is_provisioner {
                 LedMode::constant(WHITE)
             } else {
@@ -46,12 +55,6 @@ impl Status {
             Self::Error => LedMode::constant(RED),
             Self::Winking(range) => LedMode::simple_blinking(BLUE, range.start),
         }
-    }
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::Idle
     }
 }
 

@@ -2,7 +2,8 @@
 
 ## Features
 
-- Change the LED patterns so that the LED is off by default, blinks white during a user confirmation request and blinks blue when winking([#34][])
+- Change the LED patterns so that the LED is off by default, blinks white during a user confirmation request and blinks blue when winking ([#34][])
+- Add a single white LED blink for 0.5 seconds after startup ([#34][])
 
 [#34]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/34
 
