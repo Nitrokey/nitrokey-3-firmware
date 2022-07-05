@@ -8,7 +8,7 @@ use core::convert::TryInto;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
-use trussed::types::{LfsResult, LfsStorage};
+use trussed::types::{ClientId, LfsResult, LfsStorage};
 use trussed::{platform, store};
 pub mod usbnfc;
 
@@ -129,8 +129,7 @@ pub trait TrussedApp: Sized {
         let (trussed_requester, trussed_responder) =
             trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
-        let mut client_id = littlefs2::path::PathBuf::new();
-        client_id.push(Self::CLIENT_ID.try_into().unwrap());
+        let client_id = ClientId::new(Self::CLIENT_ID);
         assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
 
         let syscaller = RunnerSyscall::default();
