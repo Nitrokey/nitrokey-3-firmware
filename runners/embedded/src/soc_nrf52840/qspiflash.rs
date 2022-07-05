@@ -139,7 +139,7 @@ impl littlefs2::driver::Storage for QspiFlash {
     type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
-        trace!("EFr {:x} {:x}", off, buf.len());
+        // trace!("EFr {:x} {:x}", off, buf.len());
         let bufptr: *mut u8 = buf.as_mut_ptr();
         if (bufptr as usize & buf.len() & (Self::READ_SIZE - 1)) != 0 {
             return Err(littlefs2::io::Error::Invalid);
@@ -165,7 +165,7 @@ impl littlefs2::driver::Storage for QspiFlash {
     }
 
     fn write(&mut self, off: usize, buf: &[u8]) -> Result<usize, littlefs2::io::Error> {
-        trace!("EFw {:x} {:x}", off, buf.len());
+        // trace!("EFw {:x} {:x}", off, buf.len());
         let bufptr: *const u8 = buf.as_ptr();
         if (bufptr as usize & buf.len() & (Self::READ_SIZE - 1)) != 0 {
             return Err(littlefs2::io::Error::Invalid);
@@ -191,7 +191,7 @@ impl littlefs2::driver::Storage for QspiFlash {
     }
 
     fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {
-        trace!("EFe {:x} {:x}", off, len);
+        // trace!("EFe {:x} {:x}", off, len);
         let step: usize;
         if off == 0 && len == Self::FLASH_SIZE {
             self.qspi.erase.len.write(|w| w.len().all());
