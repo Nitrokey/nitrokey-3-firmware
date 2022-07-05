@@ -76,11 +76,11 @@ build-nrf52-nk3mini:
     - rustup target add thumbv7em-none-eabihf
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
-    - cp runners/embedded/artifacts/*.bin artifacts/provisioner-firmware.bin
-    - cp runners/embedded/artifacts/*.ihex artifacts/provisioner-firmware.ihex
+    - cp runners/embedded/artifacts/*.bin artifacts/provisioner-nk3am-nrf52.bin
+    - cp runners/embedded/artifacts/*.ihex artifacts/provisioner-nk3am-nrf52.ihex
     - make -C runners/embedded build-nk3am.bl FEATURES=develop
-    - cp runners/embedded/artifacts/*.bin artifacts/develop-firmware.bin
-    - cp runners/embedded/artifacts/*.ihex artifacts/develop-firmware.ihex
+    - cp runners/embedded/artifacts/*.bin artifacts/firmware-nk3am-nrf52.bin
+    - cp runners/embedded/artifacts/*.ihex artifacts/firmware-nk3am-nrf52.ihex
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
