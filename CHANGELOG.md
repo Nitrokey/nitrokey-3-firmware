@@ -1,13 +1,18 @@
 # Unreleased
 
-## Features
+### Features
 
 - Change the LED patterns so that the LED is off by default, blinks white during a user confirmation request and blinks blue when winking ([#34][])
 - Add a single white LED blink for 0.5 seconds after startup ([#34][])
 - Support retrieval of OpenSSH resident keys ([#48][])
 
+### Bugfixes
+
+- Improve stability of FIDO2 operations on Windows 10 ([#54][])
+
 [#34]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/34
 [#48]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/48
+[#54]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/54
 
 # v1.0.3 (2022-04-11)
 
