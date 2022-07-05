@@ -1,4 +1,6 @@
-# Unreleased
+# v1.0.4 (unreleased)
+
+## v1.0.4-rc.3 (2022-07-05)
 
 ### Features
 
