@@ -60,11 +60,3 @@ pub trait RgbLed {
     fn blue(&mut self, intensity: u8);
 }
 
-
-pub const BLACK: Intensities = Intensities { red: 0, green: 0, blue: 0 };
-pub const RED: Intensities = Intensities { red: u8::MAX, green: 0, blue: 0 };
-pub const GREEN: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x02 };
-pub const BLUE: Intensities = Intensities { red: 0, green: 0, blue: u8::MAX };
-pub const TEAL: Intensities = Intensities { red: 0, green: u8::MAX, blue: 0x5a };
-pub const ORANGE: Intensities = Intensities { red: u8::MAX, green: 0x7e, blue: 0 };
-pub const WHITE: Intensities = Intensities { red: u8::MAX, green: u8::MAX, blue: u8::MAX };

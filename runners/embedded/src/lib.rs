@@ -12,6 +12,7 @@ delog::generate_macros!();
 pub mod runtime;
 pub mod types;
 pub mod traits;
+pub mod ui;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52840")))]
 compile_error!("No SoC chosen!");

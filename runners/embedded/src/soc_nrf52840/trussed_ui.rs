@@ -6,11 +6,7 @@ use core::time::Duration;
 
 use crate::traits::{
 	buttons::{Press, Button},
-	rgb_led::{
-        RgbLed,
-        GREEN, WHITE, TEAL, ORANGE, RED, BLACK, BLUE
-    }
-
+	rgb_led::RgbLed,
 };
 use trussed::platform::{
     ui, consent,
@@ -18,6 +14,7 @@ use trussed::platform::{
 
 use crate::runtime::UserPresenceStatus;
 
+use crate::ui::Status;
 
 use rtic::Monotonic;
 use embedded_time::duration::*;
@@ -31,7 +28,7 @@ RGB: RgbLed,
 {
     buttons: Option<BUTTONS>,
     rgb: Option<RGB>,
-    wink: Option<core::ops::Range<Duration>>,
+    status: Status,
     provisioner: bool,
     rtc_mono: RtcMonotonic,
 }
@@ -46,16 +43,29 @@ RGB: RgbLed,
         rgb: Option<RGB>,
         provisioner: bool
     ) -> Self {
-        let wink = None;
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-        let rtc_mono = RtcMonotonic::new(pac.RTC0);
+        let mut rtc_mono = RtcMonotonic::new(pac.RTC0);
+
+        //let uptime = rtc_mono.uptime();
+        let ms: embedded_time::duration::units::Milliseconds = rtc_mono.now().into();
+        let uptime: Duration = core::time::Duration::from_millis(ms.integer().into());
+
+        let status = Status::Startup(uptime);
 
         #[cfg(not(feature = "no-buttons"))]
-        let ui = Self { buttons: _buttons, rgb, wink, provisioner, rtc_mono };
+        let mut ui = Self { buttons: _buttons, status, rgb, provisioner, rtc_mono };
         #[cfg(feature = "no-buttons")]
-        let ui = Self { buttons: None, rgb, wink, provisioner, rtc_mono };
+        let mut ui = Self { buttons: None, status, rgb, provisioner, rtc_mono };
 
+        ui.refresh_ui(uptime);
         ui
+    }
+    fn refresh_ui(&mut self, uptime: Duration) {
+        if let Some(rgb) = &mut self.rgb {
+            self.status.refresh(uptime);
+            let mode = self.status.led_mode(self.provisioner);
+            rgb.set(mode.color(uptime));
+        }
     }
 }
 
@@ -106,11 +116,6 @@ RGB: RgbLed,
                 counter += 1;
                 // with press -> delay 25ms
                 next_check = cur_time + 25;
-
-                // during press set LED to blue
-                if let Some(rgb) = &mut self.rgb {
-                    rgb.set(BLUE.into());
-                }
             } else {
                 // w/o press -> delay 100ms
                 next_check = cur_time + 100;
@@ -129,88 +134,15 @@ RGB: RgbLed,
         }
     }
 
-    fn set_status(&mut self, status: ui::Status) {
-        if let Some(rgb) = &mut self.rgb {
-
-            match status {
-                ui::Status::Idle => {
-                    if self.provisioner {
-                        rgb.set(WHITE.into());
-                    } else {
-                        rgb.set(GREEN.into());
-                    }
-
-                },
-                ui::Status::Processing => {
-                    rgb.set(TEAL.into());
-                }
-                ui::Status::WaitingForUserPresence => {
-                    rgb.set(ORANGE.into());
-                },
-                ui::Status::Error => {
-                    rgb.set(RED.into());
-                },
-            }
-
-        }
-
-        // Abort winking if the device is no longer idle
-        if status != ui::Status::Idle {
-            self.wink = None;
-        }
+    fn set_status(&mut self, status: trussed::platform::ui::Status) {
+        let uptime = self.uptime();
+        self.status.update(status, uptime);
+        self.refresh_ui(uptime);
     }
 
     fn refresh(&mut self) {
-        if self.rgb.is_none() {
-            return;
-        }
-
-        if let Some(wink) = self.wink.clone() {
-            let time = self.uptime();
-            if wink.contains(&time) {
-                // 250 ms white, 250 ms off
-                let color = if (time - wink.start).as_millis() % 500 < 250 {
-                    WHITE
-                } else {
-                    BLACK
-                };
-                self.rgb.as_mut().unwrap().set(color.into());
-                return;
-            } else {
-                self.wink = None;
-            }
-        } else {
-            self.set_status(ui::Status::Idle);
-        }
-
-        /*if self.buttons.is_some() {
-
-            // 1. Get time & pick a period (here 4096).
-            // 2. Map it to a value between 0 and pi.
-            // 3. Calculate sine and map to amplitude between 0 and 255.
-            //let time = (self.uptime().as_millis()) % 4096;
-            //let amplitude = (sin((time as f32) * 3.14159265f32/4096f32) * 255f32) as u32;
-
-            let state = self.buttons.as_mut().unwrap().state();
-            let color = if state.a || state.b || state.middle {
-                // Use blue if button is pressed.
-                0x00_00_01 | (amplitude << 0)
-            } else {
-                // Use green if no button is pressed.
-                0x00_00_01 | (amplitude << 8)
-            };
-            let color = 0x00_00_01 ;
-
-            // use logging::hex::*;
-            // use logging::hex;
-            // crate::logger::info!("time: {}", time).ok();
-            // crate::logger::info!("amp: {}", hex!(amplitude)).ok();
-            // crate::logger::info!("color: {}", hex!(color)).ok();
-            self.rgb.as_mut().unwrap().set(color.into());
-
-            self.set_status(ui::Status::Idle);
-        }*/
-
+        let uptime = self.uptime();
+        self.refresh_ui(uptime);
     }
 
     fn uptime(&mut self) -> Duration {
@@ -219,8 +151,8 @@ RGB: RgbLed,
     }
 
     fn wink(&mut self, duration: Duration) {
-        let time = self.uptime();
-        self.wink = Some(time..time + duration);
-        self.rgb.as_mut().unwrap().set(WHITE.into());
+        let uptime = self.uptime();
+        self.status = Status::Winking(uptime..uptime + duration);
+        self.refresh_ui(uptime);
     }
 }
