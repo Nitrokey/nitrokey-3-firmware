@@ -30,7 +30,7 @@ pub use nk3xn as specifics;
 
 pub use specifics::{
     button::ThreeButtons,
-    led::RgbLed,
+    led::{RgbLed, set_panic_led},
 };
 
 pub mod clock_controller;

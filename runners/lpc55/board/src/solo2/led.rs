@@ -90,3 +90,4 @@ impl rgb_led::RgbLed for RgbLed {
     }
 }
 
+pub fn set_panic_led() {}
