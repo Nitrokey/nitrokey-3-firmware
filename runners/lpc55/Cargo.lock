@@ -585,8 +585,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c809364e63e0bfc7153a6101235cd407a11d34e97b27984eb1f49e8e6a25122"
+source = "git+https://github.com/nitrokey/fido-authenticator?branch=skip-up-timeout#3a3329443562244e97040eefff99bd7566412d2c"
 dependencies = [
  "apdu-dispatch 0.1.0",
  "ctap-types",

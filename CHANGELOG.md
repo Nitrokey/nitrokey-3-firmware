@@ -1,8 +1,10 @@
 # Unreleased
 
 - Change the LED color to red on panics ([#52][])
+- Skip the additional user presence check for the first Get Assertion or Authenticate request within two seconds after boot ([#61][])
 
 [#52]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/52
+[#61]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/61
 
 # v1.0.4 (2022-07-14)
 
