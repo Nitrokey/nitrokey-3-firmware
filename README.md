@@ -17,11 +17,12 @@ Documentation for users is available in the [Nitrokey 3 section on docs.nitrokey
 
 [docs.nitrokey.com]: https://docs.nitrokey.com/nitrokey3/index.html
 
-This documentation is available for developers:
+This documentation is available for developers and testers:
 - [Quickstart Guide](./docs/quickstart.md): Compiling and flashing the firmware
 - [Troubleshooting Guide](./docs/troubleshooting.md): Solving common development issues
 - [Contributing Guide](./docs/contributing.md): Contributing to this repository
 - [Maintenance Guide](./docs/maintenance.md): Maintaining this repository
+- [Testing Guide](./docs/testing.md): Testing beta firmware versions
 
 ## Dependencies
 
