@@ -6,6 +6,7 @@ use std::str;
 struct Config {
     parameters: Parameters,
     identifier: Identifier,
+    build: Build,
 }
 
 #[derive(serde::Deserialize)]
@@ -24,6 +25,11 @@ struct Identifier {
     ccid_issuer: String
 }
 
+#[derive(serde::Deserialize)]
+struct Build {
+    build_profile: String,
+    board: String
+}
 
 #[derive(Eq, PartialEq)]
 enum SocType {
@@ -108,7 +114,6 @@ fn generate_memory_x(outpath: &Path, template: &str, config: &Config) {
 fn main() -> Result<(), Box<dyn error::Error>> {
 
     let out_dir = env::var("OUT_DIR").expect("$OUT_DIR unset");
-    let _profile = env::var("BUILD_PROFILE").expect("$BUILD_PROFILE env var unset");
 
     let config_fn = "cfg.toml";
 
