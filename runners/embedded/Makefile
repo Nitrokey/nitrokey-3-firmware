@@ -135,10 +135,14 @@ $(eval $(call fidokeys_lfs,d8000,14000))
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	cp -f $(CFG_PATH) cfg.toml
-	rm -f $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT)
+	echo '' >> cfg.toml
+	echo '[build]' >> cfg.toml
+	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
+	echo 'board = "$(BOARD)"' >> cfg.toml
 
-	BUILD_PROFILE=$(BUILD_PROFILE) BOARD=$(BOARD) \
-		cargo build --release --target $(TARGET) \
+	rm -f $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
+
+	cargo build --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
 
