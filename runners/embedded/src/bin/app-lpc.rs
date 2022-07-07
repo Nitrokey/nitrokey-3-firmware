@@ -14,7 +14,6 @@ mod app {
 	use super::{ERL, Delogger, ERL::types::BootMode};
 	use embedded_hal::digital::v2::InputPin;
 	use embedded_time::rate::Megahertz;
-	use panic_halt as _;
 
 	#[shared]
         struct SharedResources {

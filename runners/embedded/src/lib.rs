@@ -163,3 +163,13 @@ pub fn init_apps(trussed: &mut types::Trussed, store: &types::RunnerStore, on_nf
 pub fn init_apps(trussed: &mut types::Trussed, _store: &types::RunnerStore, _on_nfc_power: bool) -> types::Apps {
 	types::Apps::new(trussed)
 }
+
+#[inline(never)]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    error_now!("{}", _info);
+    soc::board::set_panic_led();
+    loop {
+        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
+    }
+}

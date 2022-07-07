@@ -18,7 +18,6 @@ mod app {
 		rng::Rng,
 		timer::Timer,
 	};
-	use panic_halt as _;
 	use rand_core::SeedableRng;
 
 	#[shared]

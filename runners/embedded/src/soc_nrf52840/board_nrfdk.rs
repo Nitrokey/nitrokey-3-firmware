@@ -130,3 +130,18 @@ pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
 	src
 }
 */
+
+pub fn set_panic_led() {
+    unsafe {
+		let pac = nrf52840_pac::Peripherals::steal();
+		let p0 = nrf52840_hal::gpio::p0::Parts::new(pac.P0);
+		let p1 = nrf52840_hal::gpio::p1::Parts::new(pac.P1);
+
+		// red
+		p0.p0_09.into_push_pull_output(Level::Low).degrade();
+		// green
+		p0.p0_10.into_push_pull_output(Level::High).degrade();
+		// blue
+		p1.p1_02.into_push_pull_output(Level::High).degrade();
+    }
+}

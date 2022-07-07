@@ -87,3 +87,20 @@ impl rgb_led::RgbLed for RgbLed {
     }
 }
 
+pub fn set_panic_led() {
+    unsafe {
+        let mut syscon = lpc55_hal::Syscon::steal();
+        let mut iocon = lpc55_hal::Iocon::steal().enabled(&mut syscon);
+        let mut gpio = lpc55_hal::Gpio::steal().enabled(&mut syscon);
+
+        RedLedPin::steal()
+            .into_gpio_pin(&mut iocon, &mut gpio)
+            .into_output_low();
+        GreenLedPin::steal()
+            .into_gpio_pin(&mut iocon, &mut gpio)
+            .into_output_high();
+        BlueLedPin::steal()
+            .into_gpio_pin(&mut iocon, &mut gpio)
+            .into_output_high();
+    }
+}
