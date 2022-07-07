@@ -20,7 +20,6 @@ embedded-hal = "0.2.3"
 embedded-time = "0.12"
 generic-array = "0.14"
 nfc-device = { path = "../../components/nfc-device" }
-panic-halt = "0.2"
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"] }
 

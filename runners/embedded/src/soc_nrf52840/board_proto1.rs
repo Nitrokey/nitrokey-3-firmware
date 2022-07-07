@@ -88,7 +88,7 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
 			Some(btn1), Some(btn2), Some(btn3), None,
 			None, None, None, None ],
 		leds: [ None, None, None, None ],
-        rgb_led: [None, None, None], 
+		rgb_led: [None, None, None],
 		touch: None,
 		uart_pins: Some(uart_pins),
 		fpr_detect: Some(fp_detect),
@@ -118,4 +118,19 @@ pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
 	if !bit_set(dir[1], 15) { src |= 0b0000_0100; }
 	if  bit_set(dir[1],  9) { src |= 0b1_0000_0000; }
 	src
+}
+
+pub fn set_panic_led() {
+    unsafe {
+		let pac = nrf52840_pac::Peripherals::steal();
+		let p0 = nrf52840_hal::gpio::p0::Parts::new(pac.P0);
+		let p1 = nrf52840_hal::gpio::p1::Parts::new(pac.P1);
+
+		// red
+		p0.p0_09.into_push_pull_output(Level::Low).degrade();
+		// green
+		p0.p0_10.into_push_pull_output(Level::High).degrade();
+		// blue
+		p1.p1_02.into_push_pull_output(Level::High).degrade();
+    }
 }
