@@ -1,0 +1,14 @@
+[package]
+name = "collect-license-info"
+version = "0.1.0"
+edition = "2021"
+authors = ["Robin Krahl <robin@nitrokey.com>"]
+license = "Apache-2.0 or MIT"
+
+[dependencies]
+askama = "0.11.1"
+cargo-license = "0.4.2"
+cargo_metadata = "0.14.0"
+gumdrop = "0.8.1"
+spdx = "0.8.1"
+ureq = "2.4.0"
