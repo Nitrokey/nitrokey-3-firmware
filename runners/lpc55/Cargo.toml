@@ -3,9 +3,16 @@
 [package]
 name = "runner"
 version = "1.0.4"
-authors = ["Nicolas Stalder <n@stalder.io>", "Conor Patrick <conor@solokeys.com>"]
+authors = [
+    "Conor Patrick <conor@solokeys.com>",
+    "Nicolas Stalder <n@stalder.io>",
+    "Robin Krahl <robin@nitrokey.com>",
+    "Markus Meissner <meissner@nitrokey.com>",
+    "Szczepan Zalega <szczepan@nitrokey.com>",
+]
 edition = "2021"
 rust-version = "1.59.0"
+license = "Apache-2.0 OR MIT"
 
 [lib]
 name = "runner"
