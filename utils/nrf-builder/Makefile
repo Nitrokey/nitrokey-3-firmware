@@ -51,6 +51,8 @@ ALL_ARTIFACTS := $(FW_NAME) $(FW_NAME_PROVISIONER) $(BL_OUTPUT) $(BL_SIGNED_NAME
 								 $(FW_NAME_HEX) $(FW_NAME_PROVISIONER_HEX) \
 								 $(FW_NAME_BIN) $(FW_NAME_PROVISIONER_BIN)
 
+TTY := $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
+
 ######
 
 .PHONY: build clean flash-provisioner flash-fw flash-bootloader provision-keys full-deploy
@@ -75,12 +77,11 @@ build: $(ALL_ARTIFACTS)
 	@echo "- active branch: $(shell git branch -l | grep "*" | cut -d ' ' -f 2)"
 	@echo "#########################################################"
 
-
 flash-fw: $(FW_NAME) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
 	./wait_for_usb.sh 20a0:42e8
 	
-	$(SH_UPLOAD) $(FW_NAME) $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
+	$(SH_UPLOAD) $(FW_NAME) $(TTY)
 	
 	./wait_for_usb.sh 20a0:42b2
 
@@ -88,7 +89,7 @@ flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
 	./wait_for_usb.sh 20a0:42e8
 	
-	$(SH_UPLOAD) $(FW_NAME_PROVISIONER) $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
+	$(SH_UPLOAD) $(FW_NAME_PROVISIONER) $(TTY)
 	
 	./wait_for_usb.sh 20a0:42b2
 

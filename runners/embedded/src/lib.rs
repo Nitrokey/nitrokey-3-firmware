@@ -21,6 +21,7 @@ compile_error!("No SoC chosen!");
 #[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
 pub mod soc;
 
+use admin_app::Reboot;
 
 pub fn banner() {
 		info!("Embedded Runner ({}:{}) using librunner {}.{}.{}",
@@ -151,10 +152,15 @@ pub fn init_usb_nfc(usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator
 pub fn init_apps(trussed: &mut types::Trussed, store: &types::RunnerStore, on_nfc_power: bool) -> types::Apps {
 	let store_2 = store.clone();
 	let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
+	let uuid: [u8; 16] = *<SocT as types::Soc>::device_uuid();
+	let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
+
 	let pnp = types::ProvisionerNonPortable {
 		store: store_2,
 		stolen_filesystem: int_flash_ref,
-		nfc_powered: on_nfc_power
+		nfc_powered: on_nfc_power,
+		uuid,
+		rebooter,
 	};
 	types::Apps::new(trussed, pnp)
 }

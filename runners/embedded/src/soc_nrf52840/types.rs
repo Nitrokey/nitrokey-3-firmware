@@ -9,7 +9,6 @@ use nrf52840_hal::{
 use nrf52840_pac;
 use crate::soc::types::pac::SCB;
 
-
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
@@ -44,6 +43,7 @@ impl crate::types::Soc for Soc {
 	type Rng = chacha20::ChaCha8Rng;
 	type TrussedUI = super::board::TrussedUI;
 	type Reboot = self::Reboot;
+	type UUID = [u8; 16];
 
 	type Duration = super::rtic_monotonic::RtcDuration;
 	type Instant = super::rtic_monotonic::RtcInstant;
@@ -53,7 +53,8 @@ impl crate::types::Soc for Soc {
 	const SOC_NAME: &'static str = "NRF52840";
 	const BOARD_NAME: &'static str = super::board::BOARD_NAME;
 	const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
-	fn device_uuid() -> &'static [u8; 16] { unsafe { &DEVICE_UUID } }
+
+	fn device_uuid() -> &'static Self::UUID { unsafe { &DEVICE_UUID } }
 }
 
 pub struct DummyNfc;
