@@ -61,7 +61,6 @@ pub fn init_store(int_flash: <SocT as Soc>::InternalFlashStorage, ext_flash: <So
 			panic!("store");
 		}
 	};
-
 	if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
 		let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
 		error!("EFS Mount Error, Reformat {:?}", fmt_ext);
@@ -179,3 +178,4 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
+

@@ -56,6 +56,8 @@ ALL_ARTIFACTS := $(FW_NAME) $(FW_NAME_PROVISIONER) $(BL_OUTPUT) $(BL_SIGNED_NAME
 								 $(FW_NAME_BIN) $(FW_NAME_PROVISIONER_BIN) \
 								 $(FW_RELEASE) $(FW_RELEASE_BIN) $(FW_RELEASE_HEX) \
 
+SRCS = $(shell find $(FW_RUNNER)/src -name "*.rs" )
+
 TTY := $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
 
 ######
@@ -81,6 +83,14 @@ build: $(ALL_ARTIFACTS)
 	@echo "- describe: $(shell git describe)"
 	@echo "- active branch: $(shell git branch -l | grep "*" | cut -d ' ' -f 2)"
 	@echo "#########################################################"
+
+flash-release: $(FW_RELEASE) $(SH_UPLOAD)
+	-nitropy nk3 reboot --bootloader
+	./wait_for_usb.sh 20a0:42e8
+	
+	$(SH_UPLOAD) $(FW_RELEASE) $(TTY)
+	
+	./wait_for_usb.sh 20a0:42b2
 
 flash-fw: $(FW_NAME) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
@@ -110,8 +120,12 @@ provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 full-deploy:
 	$(MAKE) flash-bootloader
 	$(MAKE) flash-provisioner
-	$(MAKE) flash-release
+	#$(MAKE) flash-release
 	$(MAKE) provision-keys
+	$(MAKE) flash-fw
+
+fast-deploy:
+	$(MAKE) flash-bootloader
 	$(MAKE) flash-fw
 
 clean:
@@ -146,17 +160,18 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 %.zip: %.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
-$(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR)
+
+$(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
-$(FW_NAME_HEX) $(FW_NAME_BIN): $(NK3_FW_DIR)
+$(FW_NAME_HEX) $(FW_NAME_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop
 	cp $(FW_IHEX) $(FW_NAME_HEX)
 	cp $(FW_BIN) $(FW_NAME_BIN)
 
-$(FW_RELEASE_HEX) $(FW_RELEASE_BIN): $(NK3_FW_DIR)
+$(FW_RELEASE_HEX) $(FW_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release
 	cp $(FW_IHEX) $(FW_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_RELEASE_BIN)

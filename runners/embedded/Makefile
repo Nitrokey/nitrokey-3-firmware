@@ -26,7 +26,7 @@ LOG ?= build-$(BUILD_ID).err.log
 SYMBOLS ?= symbols-$(BUILD_ID).txt
 
 # input files and outputs
-SRCS = $(shell find . -name "*.rs" | grep -v '/target/')
+SRCS = $(shell find src -name "*.rs" )
 OUT = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_IHEX = $(OUT).ihex
 RAW_OUT = $(SOC)_runner
@@ -38,7 +38,6 @@ BUILD_FEATURES := board-$(BOARD) $(FEATURES)
 delim = ,
 space := $(null) #
 COMMA_FEATURES = $(subst $(space),$(delim),$(BUILD_FEATURES))
-
 
 .PHONY: list build reset program clean clean-all check-env set-vars
 

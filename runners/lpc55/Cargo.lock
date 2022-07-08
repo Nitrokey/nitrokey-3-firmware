@@ -1210,7 +1210,6 @@ dependencies = [
  "heapless 0.7.9",
  "heapless-bytes 0.3.0",
  "littlefs2",
- "lpc55-hal",
  "nisty",
  "salty",
  "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
