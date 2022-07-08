@@ -41,18 +41,40 @@ impl littlefs2::driver::Storage for FlashStorage {
 		let real_off_remainer: u32 = (off as u32) % REAL_BLOCK_SIZE;
 		let real_off: u32 = (off as u32) - real_off_remainer;
 		let mut buf: [u8; REAL_BLOCK_SIZE as usize] = [0x00; REAL_BLOCK_SIZE as usize];
-		self.nvmc.read(real_off as u32, &mut buf);
 
-		/* nrf52840_hal has nvmc.erase(from, to) */
-		//let res = self.nvmc.erase(off as u32, (off+len) as u32);
+		// 1) read the physical block
+		let res = self.nvmc.read(real_off as u32, &mut buf);
+		if res.is_err() {
+			// "best-case" error, lfs can likely handle this
+			return nvmc_to_lfs_return(res, len)
+		}
 
-		let res = self.nvmc.erase(real_off as u32, (real_off + REAL_BLOCK_SIZE) as u32);
+		// 2) now erase the full block
+		let erase_res = self.nvmc.erase(real_off as u32, (real_off + REAL_BLOCK_SIZE) as u32);
+		if erase_res.is_err() {
+			// 50:50 depending on whether something was erased or not...
+			return nvmc_to_lfs_return(erase_res, len);
+		}
 
 		trace!("IFex {:x} {:x} {:x}", real_off, (off - (real_off as usize)), ((real_off_remainer as usize) + len) );
-		self.nvmc.write(real_off as u32, &buf[0..(off - (real_off as usize))]);
-		self.nvmc.write((off + len) as u32, &buf[((real_off_remainer as usize) + len)..]);
 
-		nvmc_to_lfs_return(res, len)
+		// 3) write left part back again
+		let write_res1 = self.nvmc.write(real_off as u32, &buf[0..(off - (real_off as usize))]);
+		// 4) write right part back again
+		let write_res2 = self.nvmc.write((off + len) as u32, &buf[((real_off_remainer as usize) + len)..]);
+
+		// even if the 1st write fails - better try both!
+		if write_res1.is_err() || write_res2.is_err() {
+			// no way lfs can do something useful, thus just pass the 1st error found
+			let res = if write_res1.is_err() { write_res1 } else { write_res2 };
+			return nvmc_to_lfs_return(res, len);
+		}
+		// return erase result, as this is what lfs might expect
+		nvmc_to_lfs_return(erase_res, len)
+
+		// original implementation, with 4k blocks
+		/* nrf52840_hal has nvmc.erase(from, to) */
+		//let res = self.nvmc.erase(off as u32, (off+len) as u32);
 	}
 }
 
