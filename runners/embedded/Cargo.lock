@@ -917,7 +917,7 @@ checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 [[package]]
 name = "littlefs2"
 version = "0.3.2"
-source = "git+https://github.com/Nitrokey/littlefs2#50a634c9213d0f3e726f1229e1916087eb6af361"
+source = "git+https://github.com/Nitrokey/littlefs2#99d43731039ee3185beee301781599dfe03f8a40"
 dependencies = [
  "bitflags",
  "cstr_core",

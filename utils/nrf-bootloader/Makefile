@@ -106,22 +106,23 @@ build-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
 
 reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
 	nrfjprog -f NRF52 --recover
-	nrfjprog -f NRF52 --program mbr.hex --sectorerase
-	nrfjprog -f NRF52 --program bootloader.hex --sectorerase
+	nrfjprog -f NRF52 --eraseall
+	nrfjprog -f NRF52 --program mbr.hex --sectorerase --verify
+	nrfjprog -f NRF52 --program bootloader.hex --sectorerase --verify
 	
 	# UICR
 	## UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
+	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd --verify
 	## UICR::NFCPINS to disabled
-	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
+	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe --verify
 	## UICR::APPROTECT (only --recover will revive debug-access)
 	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
 	
 	nrfjprog -f NRF52 --reset
 
 program-bootloader:	$(BOOTLOADER_HEX) $(MBR_HEX)
-	nrfjprog -f NRF52 --program mbr.hex --sectorerase
-	nrfjprog -f NRF52 --program bootloader.hex --sectorerase
+	nrfjprog -f NRF52 --program mbr.hex --sectorerase --verify
+	nrfjprog -f NRF52 --program bootloader.hex --sectorerase --verify
 	nrfjprog -f NRF52 --reset
 
 
