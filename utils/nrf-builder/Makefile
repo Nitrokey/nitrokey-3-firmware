@@ -38,18 +38,23 @@ FW_VERSION_PATCH := $(shell echo $(FW_VERSION) | cut -d "." -f 3)
 SIGN_VERSION := $(shell python -c "print( ($(FW_VERSION_MAJOR) << 22) | ($(FW_VERSION_MINOR) << 6) | ($(FW_VERSION_PATCH)) )")
 
 FW_NAME_PROVISIONER_HEX := provisioner-nk3am-nrf52-$(FW_VERSION).hex
-FW_NAME_HEX := firmware-nk3am-nrf52-$(FW_VERSION).hex
-
-FW_NAME_PROVISIONER := provisioner-nk3am-nrf52-$(FW_VERSION).zip
-FW_NAME := firmware-nk3am-nrf52-$(FW_VERSION).zip
-BL_SIGNED_NAME := bootloader-nk3am-nrf52-$(FW_VERSION).zip
-
 FW_NAME_PROVISIONER_BIN := provisioner-nk3am-nrf52-$(FW_VERSION).bin
-FW_NAME_BIN := firmware-nk3am-nrf52-$(FW_VERSION).bin
+FW_NAME_PROVISIONER := provisioner-nk3am-nrf52-$(FW_VERSION).zip
+
+FW_NAME_HEX := develop-nk3am-nrf52-$(FW_VERSION).hex
+FW_NAME_BIN := develop-nk3am-nrf52-$(FW_VERSION).bin
+FW_NAME := develop-nk3am-nrf52-$(FW_VERSION).zip
+
+FW_RELEASE_HEX := firmware-nk3am-nrf52-$(FW_VERSION).hex
+FW_RELEASE_BIN := firmware-nk3am-nrf52-$(FW_VERSION).bin
+FW_RELEASE := firmware-nk3am-nrf52-$(FW_VERSION).zip
+
+BL_SIGNED_NAME := bootloader-nk3am-nrf52-$(FW_VERSION).zip
 
 ALL_ARTIFACTS := $(FW_NAME) $(FW_NAME_PROVISIONER) $(BL_OUTPUT) $(BL_SIGNED_NAME) \
 								 $(FW_NAME_HEX) $(FW_NAME_PROVISIONER_HEX) \
-								 $(FW_NAME_BIN) $(FW_NAME_PROVISIONER_BIN)
+								 $(FW_NAME_BIN) $(FW_NAME_PROVISIONER_BIN) \
+								 $(FW_RELEASE) $(FW_RELEASE_BIN) $(FW_RELEASE_HEX) \
 
 TTY := $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
 
@@ -105,6 +110,7 @@ provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 full-deploy:
 	$(MAKE) flash-bootloader
 	$(MAKE) flash-provisioner
+	$(MAKE) flash-release
 	$(MAKE) provision-keys
 	$(MAKE) flash-fw
 
@@ -149,4 +155,9 @@ $(FW_NAME_HEX) $(FW_NAME_BIN): $(NK3_FW_DIR)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop
 	cp $(FW_IHEX) $(FW_NAME_HEX)
 	cp $(FW_BIN) $(FW_NAME_BIN)
+
+$(FW_RELEASE_HEX) $(FW_RELEASE_BIN): $(NK3_FW_DIR)
+	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release
+	cp $(FW_IHEX) $(FW_RELEASE_HEX)
+	cp $(FW_BIN) $(FW_RELEASE_BIN)
 
