@@ -50,6 +50,7 @@ impl crate::types::Soc for Soc {
 	type Rng = rng::Rng<lpc55_hal::Enabled>;
 	type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
 	type Reboot = Lpc55Reboot;
+	type UUID = [u8; 16];
 
 	type Instant = ();
 	type Duration = LpcTimerDuration;

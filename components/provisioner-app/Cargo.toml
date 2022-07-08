@@ -31,6 +31,3 @@ log-error = []
 
 test-attestation = []
 
-# supported boards / HALs
-lpc55 = ["lpc55-hal"]
-nrf52 = ["nrf52840-pac"]

@@ -26,14 +26,11 @@ use trussed::{
     Client as TrussedClient,
     key::{Kind as KeyKind, Key, Flags},
 };
+
 use heapless::Vec;
 use apdu_dispatch::iso7816::{Status, Instruction};
 use apdu_dispatch::app::Result as ResponseResult;
 use apdu_dispatch::{Command, response, command::SIZE as CommandSize, response::SIZE as ResponseSize};
-
-#[cfg_attr(feature = "lpc55", path = "board_lpc55.rs")]
-#[cfg_attr(feature = "nrf52", path = "board_nrf52.rs")]
-mod board;
 
 //
 const SOLO_PROVISIONER_AID: [u8; 9] = [ 0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
@@ -104,6 +101,7 @@ enum TestAttestationP1 {
     T1Key = 6,
 }
 
+type UUID = [u8; 16];
 
 const FILENAME_T1_PUBLIC: &'static [u8] = b"/attn/pub/00";
 
@@ -122,6 +120,7 @@ enum SelectedBuffer {
     File,
 }
 
+
 pub struct Provisioner<S, FS, T>
 where S: Store,
       FS: 'static + LfsStorage,
@@ -137,6 +136,8 @@ where S: Store,
     stolen_filesystem: &'static mut FS,
     #[allow(dead_code)]
     is_passive: bool,
+    uuid: UUID,
+    rebooter: fn() -> !,
 }
 
 impl<S, FS, T> Provisioner<S, FS, T>
@@ -149,6 +150,8 @@ where S: Store,
         store: S,
         stolen_filesystem: &'static mut FS,
         is_passive: bool,
+        uuid: UUID,
+        rebooter: fn() -> !,
     ) -> Provisioner<S, FS, T> {
 
 
@@ -161,6 +164,8 @@ where S: Store,
             store,
             stolen_filesystem,
             is_passive,
+            uuid,
+            rebooter
         }
     }
 
@@ -518,11 +523,11 @@ where S: Store,
 
                         GetUuid => {
                             // Get UUID
-                            reply.extend_from_slice(&board::uuid()).unwrap();
+                            reply.extend_from_slice(&self.uuid);
                             Ok(())
                         },
                         BootToBootrom => {
-                            board::boot_to_bootrom();
+                            (self.rebooter)();
                             Ok(())
                         },
 
@@ -574,7 +579,7 @@ where S: Store,
         self.buffer_file_contents.clear();
         self.buffer_filename.clear();
         // For manufacture speed, return uuid on select
-        reply.extend_from_slice(&board::uuid()).unwrap();
+        reply.extend_from_slice(&self.uuid).unwrap();
         Ok(())
     }
 

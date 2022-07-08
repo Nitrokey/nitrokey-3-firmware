@@ -8,7 +8,6 @@ use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
-
 pub mod usbnfc;
 
 #[derive(Clone,Copy)]
@@ -38,6 +37,7 @@ pub trait Soc {
 	type Rng;
 	type TrussedUI;
 	type Reboot;
+    type UUID;
 
 	type Duration;
 	type Instant;
@@ -50,7 +50,7 @@ pub trait Soc {
 	const BOARD_NAME: &'static str;
 	const INTERFACE_CONFIG: &'static Config;
 
-	fn device_uuid() -> &'static [u8; 16];
+	fn device_uuid() -> &'static Self::UUID;
 }
 
 // 8KB of RAM
@@ -191,6 +191,8 @@ pub struct ProvisionerNonPortable {
     pub store: RunnerStore,
     pub stolen_filesystem: &'static mut <SocT as Soc>::InternalFlashStorage,
     pub nfc_powered: bool,
+    pub uuid: [u8; 16],
+    pub rebooter: fn() -> !,
 }
 
 #[cfg(feature = "provisioner-app")]
@@ -198,8 +200,8 @@ impl TrussedApp for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
 
     type NonPortable = ProvisionerNonPortable;
-    fn with_client(trussed: TrussedClient, ProvisionerNonPortable { store, stolen_filesystem, nfc_powered }: Self::NonPortable) -> Self {
-        Self::new(trussed, store, stolen_filesystem, nfc_powered)
+    fn with_client(trussed: TrussedClient, ProvisionerNonPortable { store, stolen_filesystem, nfc_powered, uuid, rebooter }: Self::NonPortable) -> Self {
+        Self::new(trussed, store, stolen_filesystem, nfc_powered, uuid, rebooter )
     }
 
 }
