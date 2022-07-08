@@ -64,29 +64,27 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
 [features]
-complete = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator",
-		"piv-authenticator", # "provisioner-app",
-		"fido-authenticator/disable-reset-time-window",
-		"trussed/clients-5", "log-traceP", "log-rtt"]
 
-#default = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator", "trussed/clients-4"]
+default = ["admin-app", "fido-authenticator", "ndef-app", "no-encrypted-storage",
+			"trussed/clients-3"]
 
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+release = []
 
-# develop = ["no-encrypted-storage", "no-buttons", "no-reset-time-window"]
-# develop = ["no-encrypted-storage", "no-reset-time-window"]
-# develop = ["no-encrypted-storage", "no-buttons"]
-develop = ["fido-authenticator", "ndef-app", "oath-authenticator",
-           "no-encrypted-storage", "trussed/clients-4",
-					 "fido-authenticator/disable-reset-time-window",
-				   "log-traceP", "log-rtt"]
+complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
+			"fido-authenticator/disable-reset-time-window",
+			"trussed/clients-5", "log-traceP", "log-rtt"]
+
+develop = ["default", "oath-authenticator", "trussed/clients-4",
+			"fido-authenticator/disable-reset-time-window",
+			"log-traceP", "log-rtt"]
 
 develop-piv = ["develop", "piv-authenticator", "trussed/clients-5"]
-#develop-provisioner = ["develop", "provisioner-app", "trussed/clients-5"]
+
+develop-no-press = ["develop", "no-buttons"]
 
 provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
-               "write-undefined-flash", "no-buttons",
-			   "no-reset-time-window", "provisioner-app", "trussed/clients-3"]
+			"write-undefined-flash", "no-buttons", "no-encrypted-storage",
+			"no-reset-time-window", "provisioner-app", "trussed/clients-4"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
@@ -106,7 +104,7 @@ format-filesystem = []
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
-board-nk3am = ["soc-nrf52840", "extflash_qspi"]
+board-nk3am = ["soc-nrf52840" , "extflash_qspi"]
 
 board-lpcxpresso55 = ["soc-lpc55"]
 board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
