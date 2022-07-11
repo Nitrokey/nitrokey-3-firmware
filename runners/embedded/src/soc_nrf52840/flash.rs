@@ -17,13 +17,15 @@ impl littlefs2::driver::Storage for FlashStorage {
 	const READ_SIZE: usize = 4;
 	const WRITE_SIZE: usize = 4;
 	const BLOCK_COUNT: usize = FLASH_SIZE / Self::BLOCK_SIZE;
+
 	type CACHE_SIZE = generic_array::typenum::U256;
 	type LOOKAHEADWORDS_SIZE = generic_array::typenum::U1;
 
-	// the ReadNorFlash trait exposes a try_read() which (stupidly) expects a mutable self
-	// can't get those two to align - so clone the function and drop the mut there
 	fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
-		trace!("IFr {:x} {:x}", off, buf.len());
+		// w/o this too much spam is generated, thus writes/deletes traces get lost
+		if buf.len() > 4 {
+			trace!("IFr {:x} {:x}", off, buf.len());
+		}
 		let res = self.nvmc.read(off as u32, buf);
 		nvmc_to_lfs_return(res, buf.len())
 	}
@@ -35,46 +37,27 @@ impl littlefs2::driver::Storage for FlashStorage {
 	}
 
 	fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {
-		const REAL_BLOCK_SIZE: u32 = 4096;
-		trace!("IFe {:x} {:x}", off, len);
+		trace!("EE {:x} {:x}", off, len);
 
-		let real_off_remainer: u32 = (off as u32) % REAL_BLOCK_SIZE;
-		let real_off: u32 = (off as u32) - real_off_remainer;
-		let mut buf: [u8; REAL_BLOCK_SIZE as usize] = [0x00; REAL_BLOCK_SIZE as usize];
+		const REAL_BLOCK_SIZE: usize = 4 * 1024;
 
-		// 1) read the physical block
-		let res = self.nvmc.read(real_off as u32, &mut buf);
-		if res.is_err() {
-			// "best-case" error, lfs can likely handle this
-			return nvmc_to_lfs_return(res, len)
+		let block_off: usize = off - (off % REAL_BLOCK_SIZE);
+
+		let mut buf: [u8; REAL_BLOCK_SIZE] = [0x00; REAL_BLOCK_SIZE];
+		self.nvmc.read(block_off as u32, &mut buf).expect("EE - failed read");
+		let erase_res = self.nvmc.erase(block_off as u32, (block_off + REAL_BLOCK_SIZE) as u32);
+
+		let left_end: usize = off - block_off;
+		if left_end > 0 {
+			self.nvmc.write(block_off as u32, &buf[..left_end]).expect("EE - failed write 1");
 		}
 
-		// 2) now erase the full block
-		let erase_res = self.nvmc.erase(real_off as u32, (real_off + REAL_BLOCK_SIZE) as u32);
-		if erase_res.is_err() {
-			// 50:50 depending on whether something was erased or not...
-			return nvmc_to_lfs_return(erase_res, len);
+		let right_off: usize = left_end + len;
+		if REAL_BLOCK_SIZE - right_off > 0 {
+			self.nvmc.write((off + len) as u32, &buf[right_off..]).expect("EE - failed write 2");
 		}
 
-		trace!("IFex {:x} {:x} {:x}", real_off, (off - (real_off as usize)), ((real_off_remainer as usize) + len) );
-
-		// 3) write left part back again
-		let write_res1 = self.nvmc.write(real_off as u32, &buf[0..(off - (real_off as usize))]);
-		// 4) write right part back again
-		let write_res2 = self.nvmc.write((off + len) as u32, &buf[((real_off_remainer as usize) + len)..]);
-
-		// even if the 1st write fails - better try both!
-		if write_res1.is_err() || write_res2.is_err() {
-			// no way lfs can do something useful, thus just pass the 1st error found
-			let res = if write_res1.is_err() { write_res1 } else { write_res2 };
-			return nvmc_to_lfs_return(res, len);
-		}
-		// return erase result, as this is what lfs might expect
 		nvmc_to_lfs_return(erase_res, len)
-
-		// original implementation, with 4k blocks
-		/* nrf52840_hal has nvmc.erase(from, to) */
-		//let res = self.nvmc.erase(off as u32, (off+len) as u32);
 	}
 }
 
