@@ -1,5 +1,9 @@
 # v1.0.4 (unreleased)
 
+### Features
+
+- Use white instead of blue as the LED color for winking ([#34][])
+
 ## v1.0.4-rc.3 (2022-07-05)
 
 ### Features
