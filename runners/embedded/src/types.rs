@@ -1,65 +1,70 @@
 include!(concat!(env!("OUT_DIR"), "/build_constants.rs"));
 
-pub use apdu_dispatch::{App as ApduApp, command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize};
-use core::convert::TryInto;
 use crate::soc::types::Soc as SocT;
-pub use ctaphid_dispatch::app::{App as CtaphidApp};
+pub use apdu_dispatch::{
+    command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
+};
+use core::convert::TryInto;
+pub use ctaphid_dispatch::app::App as CtaphidApp;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
 pub mod usbnfc;
 
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub struct IrqNr {
-	pub i: u16
+    pub i: u16,
 }
 unsafe impl cortex_m::interrupt::InterruptNumber for IrqNr {
-	fn number(self) -> u16 { self.i }
+    fn number(self) -> u16 {
+        self.i
+    }
 }
 
 pub struct Config {
-	pub card_issuer: &'static [u8; 13],
-	pub usb_product: &'static str,
-	pub usb_manufacturer: &'static str,
-	pub usb_serial: &'static str,
-	// pub usb_release: u16 --> taken from build_constants::USB_RELEASE
-	pub usb_id_vendor: u16,
-	pub usb_id_product: u16,
+    pub card_issuer: &'static [u8; 13],
+    pub usb_product: &'static str,
+    pub usb_manufacturer: &'static str,
+    pub usb_serial: &'static str,
+    // pub usb_release: u16 --> taken from build_constants::USB_RELEASE
+    pub usb_id_vendor: u16,
+    pub usb_id_product: u16,
 }
 
 pub trait Soc {
-	type InternalFlashStorage;
-	type ExternalFlashStorage;
-	// VolatileStorage is always RAM
-	type UsbBus;
-	type NfcDevice;
-	type Rng;
-	type TrussedUI;
-	type Reboot;
+    type InternalFlashStorage;
+    type ExternalFlashStorage;
+    // VolatileStorage is always RAM
+    type UsbBus;
+    type NfcDevice;
+    type Rng;
+    type TrussedUI;
+    type Reboot;
     type UUID;
 
-	type Duration;
-	type Instant;
+    type Duration;
+    type Instant;
 
-	// cannot use dyn cortex_m::interrupt::Nr
-	// cannot use actual types, those are usually Enums exported by the soc PAC
-	const SYSCALL_IRQ: IrqNr;
+    // cannot use dyn cortex_m::interrupt::Nr
+    // cannot use actual types, those are usually Enums exported by the soc PAC
+    const SYSCALL_IRQ: IrqNr;
 
-	const SOC_NAME: &'static str;
-	const BOARD_NAME: &'static str;
-	const INTERFACE_CONFIG: &'static Config;
+    const SOC_NAME: &'static str;
+    const BOARD_NAME: &'static str;
+    const INTERFACE_CONFIG: &'static Config;
 
-	fn device_uuid() -> &'static Self::UUID;
+    fn device_uuid() -> &'static Self::UUID;
 }
 
 // 8KB of RAM
 const_ram_storage!(VolatileStorage, 8192);
 
-store!(RunnerStore,
-	Internal: <SocT as Soc>::InternalFlashStorage,
-	External: <SocT as Soc>::ExternalFlashStorage,
-	Volatile: VolatileStorage
+store!(
+    RunnerStore,
+    Internal: <SocT as Soc>::InternalFlashStorage,
+    External: <SocT as Soc>::ExternalFlashStorage,
+    Volatile: VolatileStorage
 );
 
 pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
@@ -72,10 +77,11 @@ pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-platform!(RunnerPlatform,
-	R: <SocT as Soc>::Rng,
-	S: RunnerStore,
-	UI: <SocT as Soc>::TrussedUI,
+platform!(
+    RunnerPlatform,
+    R: <SocT as Soc>::Rng,
+    S: RunnerStore,
+    UI: <SocT as Soc>::TrussedUI,
 );
 
 #[derive(Default)]
@@ -99,7 +105,7 @@ pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
 #[cfg(feature = "admin-app")]
 pub type AdminApp = admin_app::App<TrussedClient, <SocT as Soc>::Reboot>;
 #[cfg(feature = "piv-authenticator")]
-pub type PivApp = piv_authenticator::Authenticator<TrussedClient, {ApduCommandSize}>;
+pub type PivApp = piv_authenticator::Authenticator<TrussedClient, { ApduCommandSize }>;
 #[cfg(feature = "oath-authenticator")]
 pub type OathApp = oath_authenticator::Authenticator<TrussedClient>;
 #[cfg(feature = "fido-authenticator")]
@@ -107,10 +113,10 @@ pub type FidoApp = fido_authenticator::Authenticator<fido_authenticator::Conform
 #[cfg(feature = "ndef-app")]
 pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
-pub type ProvisionerApp = provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
+pub type ProvisionerApp =
+    provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
 
 pub trait TrussedApp: Sized {
-
     /// non-portable resources needed by this Trussed app
     type NonPortable;
 
@@ -120,18 +126,15 @@ pub trait TrussedApp: Sized {
     fn with_client(trussed: TrussedClient, non_portable: Self::NonPortable) -> Self;
 
     fn with(trussed: &mut Trussed, non_portable: Self::NonPortable) -> Self {
-        let (trussed_requester, trussed_responder) = trussed::pipe::TrussedInterchange::claim()
-            .expect("could not setup TrussedInterchange");
+        let (trussed_requester, trussed_responder) =
+            trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
         let mut client_id = littlefs2::path::PathBuf::new();
         client_id.push(Self::CLIENT_ID.try_into().unwrap());
         assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
 
         let syscaller = RunnerSyscall::default();
-        let trussed_client = TrussedClient::new(
-            trussed_requester,
-            syscaller,
-        );
+        let trussed_client = TrussedClient::new(trussed_requester, syscaller);
 
         let app = Self::with_client(trussed_client, non_portable);
         app
@@ -180,7 +183,9 @@ impl TrussedApp for FidoApp {
         let authnr = fido_authenticator::Authenticator::new(
             trussed,
             fido_authenticator::Conforming {},
-            fido_authenticator::Config { max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE }
+            fido_authenticator::Config {
+                max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
+            },
         );
 
         authnr
@@ -200,10 +205,25 @@ impl TrussedApp for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
 
     type NonPortable = ProvisionerNonPortable;
-    fn with_client(trussed: TrussedClient, ProvisionerNonPortable { store, stolen_filesystem, nfc_powered, uuid, rebooter }: Self::NonPortable) -> Self {
-        Self::new(trussed, store, stolen_filesystem, nfc_powered, uuid, rebooter )
+    fn with_client(
+        trussed: TrussedClient,
+        ProvisionerNonPortable {
+            store,
+            stolen_filesystem,
+            nfc_powered,
+            uuid,
+            rebooter,
+        }: Self::NonPortable,
+    ) -> Self {
+        Self::new(
+            trussed,
+            store,
+            stolen_filesystem,
+            nfc_powered,
+            uuid,
+            rebooter,
+        )
     }
-
 }
 
 pub struct Apps {
@@ -224,8 +244,7 @@ pub struct Apps {
 impl Apps {
     pub fn new(
         trussed: &mut trussed::Service<RunnerPlatform>,
-        #[cfg(feature = "provisioner-app")]
-        provisioner: ProvisionerNonPortable
+        #[cfg(feature = "provisioner-app")] provisioner: ProvisionerNonPortable,
     ) -> Self {
         #[cfg(feature = "admin-app")]
         let admin = AdminApp::with(trussed, ());
@@ -258,9 +277,7 @@ impl Apps {
 
     pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn
-                ApduApp<ApduCommandSize, ApduResponseSize>
-            ]) -> T
+        F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T,
     {
         f(&mut [
             #[cfg(feature = "ndef-app")]
@@ -280,7 +297,7 @@ impl Apps {
 
     pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn CtaphidApp ]) -> T
+        F: FnOnce(&mut [&mut dyn CtaphidApp]) -> T,
     {
         f(&mut [
             #[cfg(feature = "fido-authenticator")]
@@ -295,30 +312,36 @@ impl Apps {
 pub struct DelogFlusher {}
 
 impl delog::Flusher for DelogFlusher {
-	fn flush(&self, _msg: &str) {
-		#[cfg(feature = "log-rtt")]
-		rtt_target::rprint!(_msg);
+    fn flush(&self, _msg: &str) {
+        #[cfg(feature = "log-rtt")]
+        rtt_target::rprint!(_msg);
 
-		#[cfg(feature = "log-semihosting")]
-		cortex_m_semihosting::hprint!(_msg).ok();
-	}
+        #[cfg(feature = "log-semihosting")]
+        cortex_m_semihosting::hprint!(_msg).ok();
+    }
 }
 
 pub static DELOG_FLUSHER: DelogFlusher = DelogFlusher {};
 
 #[derive(PartialEq)]
 pub enum BootMode {
-	NFCPassive,
-	Full
+    NFCPassive,
+    Full,
 }
 
 pub struct DummyPinError {}
 pub struct DummyPin {}
 impl DummyPin {
-	pub fn new() -> Self { Self {} }
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 impl embedded_hal::digital::v2::OutputPin for DummyPin {
-	type Error = DummyPinError;
-	fn set_low(&mut self) -> Result<(), DummyPinError> { Ok(()) }
-	fn set_high(&mut self) -> Result<(), DummyPinError> { Ok(()) }
+    type Error = DummyPinError;
+    fn set_low(&mut self) -> Result<(), DummyPinError> {
+        Ok(())
+    }
+    fn set_high(&mut self) -> Result<(), DummyPinError> {
+        Ok(())
+    }
 }

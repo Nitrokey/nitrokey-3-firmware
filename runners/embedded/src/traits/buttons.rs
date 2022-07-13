@@ -28,7 +28,6 @@ pub struct State {
 ///
 /// Only `is_pressed` needs to actually be implemented.
 pub trait Press {
-
     /// Is the specific button currently pressed
     fn is_pressed(&mut self, button: Button) -> bool;
 
