@@ -1,4 +1,6 @@
-# v1.0.4 (unreleased)
+# v1.0.4 (2022-07-14)
+
+This release improves compatibility with Windows 10 and with OpenSSH and changes the LED patterns.
 
 ### Features
 
