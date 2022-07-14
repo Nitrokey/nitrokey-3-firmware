@@ -86,7 +86,7 @@ impl admin_app::Reboot for Reboot {
     }
     fn reboot_to_firmware_update() -> ! {
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-        pac.POWER.gpregret.write(|w| unsafe { w.bits(0xb1 as u32) });
+        pac.POWER.gpregret.write(|w| unsafe { w.bits(0xb1_u32) });
 
         SCB::sys_reset()
     }

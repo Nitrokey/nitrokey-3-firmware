@@ -8,10 +8,10 @@ use nrf52840_hal::{
     spim,
 };
 
-pub const BOARD_NAME: &'static str = "NK3AM";
+pub const BOARD_NAME: &str = "NK3AM";
 
 // @todo: remove these, actually only needed for physical, literal, mechanical keep-alive
-pub const KEEPALIVE_PINS: &'static [u8] = &[0x0b, 0x0c, 0x18, 0x19, 0x25, 0x26, 0x27, 0x28];
+pub const KEEPALIVE_PINS: &[u8] = &[0x0b, 0x0c, 0x18, 0x19, 0x25, 0x26, 0x27, 0x28];
 
 use crate::traits::buttons::{Button, Press};
 use crate::traits::rgb_led;

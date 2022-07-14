@@ -130,7 +130,7 @@ mod app {
                 Err(e) => {
                     panic!("failed setting se_power high {:?}", e);
                 }
-                Ok(v) => {
+                Ok(_) => {
                     debug!("setting se_power high");
                 }
             }
@@ -145,12 +145,12 @@ mod app {
         delay_timer.delay_ms(100u32);
 
         // RESYNC command
-        let mut write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+        let write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
         match twim.write(0x48, &write_buf) {
             Err(e) => {
                 panic!("i2c: failed I2C write! - {:?}", e);
             }
-            Ok(v) => {
+            Ok(_) => {
                 debug!("i2c: write I2C success....");
             }
         }
@@ -163,7 +163,7 @@ mod app {
             Err(e) => {
                 panic!("i2c: failed I2C read! - {:?}", e);
             }
-            Ok(v) => {
+            Ok(_) => {
                 if response == [0xa5, 0xe0] {
                     debug!("i2c: se050 activation RESYNC cool");
                 } else {

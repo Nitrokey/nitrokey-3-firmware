@@ -206,6 +206,6 @@ impl littlefs2::driver::Storage for QspiFlash {
         for x in (off..off + len).step_by(step) {
             self._erase(x);
         }
-        return Ok(len);
+        Ok(len)
     }
 }

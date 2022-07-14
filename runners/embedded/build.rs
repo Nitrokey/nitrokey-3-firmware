@@ -6,6 +6,7 @@ use std::{env, error, fs::File, io::Write, path::Path};
 struct Config {
     parameters: Parameters,
     identifier: Identifier,
+    #[allow(dead_code)]
     build: Build,
 }
 
@@ -27,7 +28,9 @@ struct Identifier {
 
 #[derive(serde::Deserialize)]
 struct Build {
+    #[allow(dead_code)]
     build_profile: String,
+    #[allow(dead_code)]
     board: String,
 }
 
@@ -66,7 +69,7 @@ macro_rules! add_build_variable {
     };
 
     ($file:expr, $name:literal, $value:expr) => {
-        writeln!($file, "pub const {}: &'static str = \"{}\";", $name, $value)
+        writeln!($file, "pub const {}: &str = \"{}\";", $name, $value)
             .expect("Could not write build_constants.rs file");
     };
 }

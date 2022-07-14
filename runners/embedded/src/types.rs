@@ -136,8 +136,7 @@ pub trait TrussedApp: Sized {
         let syscaller = RunnerSyscall::default();
         let trussed_client = TrussedClient::new(trussed_requester, syscaller);
 
-        let app = Self::with_client(trussed_client, non_portable);
-        app
+        Self::with_client(trussed_client, non_portable)
     }
 }
 
@@ -180,15 +179,13 @@ impl TrussedApp for FidoApp {
 
     type NonPortable = ();
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        let authnr = fido_authenticator::Authenticator::new(
+        fido_authenticator::Authenticator::new(
             trussed,
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
             },
-        );
-
-        authnr
+        )
     }
 }
 
@@ -336,6 +333,13 @@ impl DummyPin {
         Self {}
     }
 }
+
+impl Default for DummyPin {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl embedded_hal::digital::v2::OutputPin for DummyPin {
     type Error = DummyPinError;
     fn set_low(&mut self) -> Result<(), DummyPinError> {

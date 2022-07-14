@@ -41,10 +41,8 @@ pub enum Status {
 
 impl Status {
     pub fn update(&mut self, status: ui::Status, uptime: Duration) {
-        if status == ui::Status::Idle {
-            if matches!(self, Self::Startup(_) | Self::Winking(_)) {
-                return;
-            }
+        if status == ui::Status::Idle && matches!(self, Self::Startup(_) | Self::Winking(_)) {
+            return;
         }
         *self = (status, uptime).into();
     }

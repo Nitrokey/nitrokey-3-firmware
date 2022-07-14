@@ -21,6 +21,7 @@ compile_error!("No SoC chosen!");
 #[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
 pub mod soc;
 
+#[cfg(feature = "provisioner-app")]
 use admin_app::Reboot;
 
 pub fn banner() {

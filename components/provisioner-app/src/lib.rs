@@ -523,12 +523,11 @@ where S: Store,
 
                         GetUuid => {
                             // Get UUID
-                            reply.extend_from_slice(&self.uuid);
+                            reply.extend_from_slice(&self.uuid).expect("failed copying UUID");
                             Ok(())
                         },
                         BootToBootrom => {
                             (self.rebooter)();
-                            Ok(())
                         },
 
                     }

@@ -124,11 +124,8 @@ fn maybe_spawn_ccid<F, T, E>(status: usbd_ccid::types::Status, ccid_spawner: F)
 where
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
-    match status {
-        usbd_ccid::types::Status::ReceivedData(ms) => {
-            ccid_spawner(ms.into()).ok();
-        }
-        _ => {}
+    if let usbd_ccid::types::Status::ReceivedData(ms) = status {
+        ccid_spawner(ms.into()).ok();
     };
 }
 
@@ -136,11 +133,8 @@ fn maybe_spawn_ctaphid<F, T, E>(status: usbd_ctaphid::types::Status, ctaphid_spa
 where
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
-    match status {
-        usbd_ctaphid::types::Status::ReceivedData(ms) => {
-            ctaphid_spawner(ms.into()).ok();
-        }
-        _ => {}
+    if let usbd_ctaphid::types::Status::ReceivedData(ms) = status {
+        ctaphid_spawner(ms.into()).ok();
     };
 }
 
@@ -148,11 +142,8 @@ fn maybe_spawn_nfc<F, T, E>(status: nfc_device::Iso14443Status, nfc_spawner: F)
 where
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
-    match status {
-        nfc_device::Iso14443Status::ReceivedData(ms) => {
-            nfc_spawner(ms.into()).ok();
-        }
-        _ => {}
+    if let nfc_device::Iso14443Status::ReceivedData(ms) = status {
+        nfc_spawner(ms.into()).ok();
     };
 }
 
