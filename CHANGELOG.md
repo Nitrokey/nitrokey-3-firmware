@@ -1,3 +1,9 @@
+# Unreleased
+
+- Change the LED color to red on panics ([#52][])
+
+[#52]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/52
+
 # v1.0.4 (2022-07-14)
 
 This release improves compatibility with Windows 10 and with OpenSSH and changes the LED patterns.

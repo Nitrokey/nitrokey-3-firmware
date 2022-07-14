@@ -88,3 +88,5 @@ impl rgb_led::RgbLed for RgbLed {
         self.pwm.set_duty(BlueLed::CHANNEL, intensity.into());
     }
 }
+
+pub fn set_panic_led() {}

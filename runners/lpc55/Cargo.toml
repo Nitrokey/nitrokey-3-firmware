@@ -55,11 +55,6 @@ nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
 usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
 
-
-# panic
-panic-halt = "0.2.0"
-# panic-semihosting = "0.5.6"
-
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
 
