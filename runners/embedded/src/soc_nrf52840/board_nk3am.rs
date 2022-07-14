@@ -25,12 +25,6 @@ use crate::soc::trussed_ui::UserInterface;
 
 pub type TrussedUI = UserInterface<HardwareButtons, RgbLed>;
 
-pub struct RgbLed {
-    pwm_red: Pwm<pac::PWM0>,
-    pwm_green: Pwm<pac::PWM1>,
-    pwm_blue: Pwm<pac::PWM2>,
-}
-
 pub struct HardwareButtons {
     pub touch_button: Option<OutPin>,
 }
@@ -75,33 +69,34 @@ impl Press for HardwareButtons {
     }
 }
 
+pub struct RgbLed {
+    pwm_red: Pwm<pac::PWM0>,
+    pwm_green: Pwm<pac::PWM1>,
+    pwm_blue: Pwm<pac::PWM2>,
+}
+
 impl RgbLed {
     pub fn init_led<T: pwm::Instance>(led: OutPin, raw_pwm: T, channel: pwm::Channel) -> Pwm<T> {
         let pwm = Pwm::new(raw_pwm);
         pwm.set_output_pin(channel, led);
-
-        //pwm.set_period(500u32.hz());
-        //debug!("max duty: {:?}", pwm.max_duty());
-        pwm.set_max_duty(255);
+        pwm.set_max_duty(u8::MAX as u16);
         pwm
     }
 
     pub fn set_led(&mut self, color: Color, channel: pwm::Channel, intensity: u8) {
+        let intensity: f32 = intensity as f32;
         match color {
             Color::Red => {
-                let duty: u16 =
-                    ((intensity as f32 / 255.0) * self.pwm_red.max_duty() as f32) as u16;
-                self.pwm_red.set_duty_on(channel, duty as u16);
+                let duty: u16 = (intensity / 4f32) as u16;
+                self.pwm_red.set_duty_on(channel, duty);
             }
             Color::Green => {
-                let duty: u16 =
-                    ((intensity as f32 / 255.0) * self.pwm_green.max_duty() as f32) as u16;
-                self.pwm_green.set_duty_on(channel, duty as u16);
+                let duty: u16 = (intensity / 2f32) as u16;
+                self.pwm_green.set_duty_on(channel, duty);
             }
             Color::Blue => {
-                let duty: u16 =
-                    ((intensity as f32 / 255.0) * self.pwm_blue.max_duty() as f32) as u16;
-                self.pwm_blue.set_duty_on(channel, duty as u16);
+                let duty: u16 = (intensity) as u16;
+                self.pwm_blue.set_duty_on(channel, duty);
             }
         }
     }
