@@ -1,14 +1,12 @@
 use lpc55_hal::{
-	prelude::*,
-	Adc,
-	Enabled,
-	Gpio,
-	Iocon,
-	peripherals::adc::{self, ChannelType},
-	Syscon,
-	Pmc,
-	drivers::{clocks::Clocks, pins::{self, Pin}},
-	typestates::pin::{state, gpio:: direction},
+    drivers::{
+        clocks::Clocks,
+        pins::{self, Pin},
+    },
+    peripherals::adc::{self, ChannelType},
+    prelude::*,
+    typestates::pin::{gpio::direction, state},
+    Adc, Enabled, Gpio, Iocon, Pmc, Syscon,
 };
 
 pub type SignalPin = pins::Pio0_23;
@@ -46,34 +44,52 @@ impl DynamicClockController {
         gpio: &mut Gpio<Enabled>,
         iocon: &mut Iocon<Enabled>,
     ) -> DynamicClockController {
-
-        let signal_button = SignalPin::take().unwrap().into_gpio_pin(iocon, gpio).into_output_high();
+        let signal_button = SignalPin::take()
+            .unwrap()
+            .into_gpio_pin(iocon, gpio)
+            .into_output_high();
 
         let adc = adc.release();
 
         adc.ie.write(|w| w.fwmie0().set_bit());
 
         adc.tctrl[ChannelType::Comparator as usize].write(|w| unsafe {
-            w.hten().set_bit()
-            .fifo_sel_a().fifo_sel_a_0()
-            .fifo_sel_b().fifo_sel_b_0()
-            .tcmd().bits(1)
-            .tpri().bits(0)
-            .tdly().bits(0)
+            w.hten()
+                .set_bit()
+                .fifo_sel_a()
+                .fifo_sel_a_0()
+                .fifo_sel_b()
+                .fifo_sel_b_0()
+                .tcmd()
+                .bits(1)
+                .tpri()
+                .bits(0)
+                .tdly()
+                .bits(0)
         });
 
-        adc.cmdl1.write(|w| unsafe {  w.adch().bits(13)     // 13 is internal 1v reference
-                                    .ctype().ctype_0()
-                                    .mode().mode_0()        // 12 bit resolution
-                                    } );
+        adc.cmdl1.write(|w| unsafe {
+            w.adch()
+                .bits(13) // 13 is internal 1v reference
+                .ctype()
+                .ctype_0()
+                .mode()
+                .mode_0() // 12 bit resolution
+        });
 
         // shouldn't use more than 2^2 averages or compare seems to lock up
-        adc.cmdh1.write(|w| unsafe { w.avgs().avgs_0()      // average 2^2 samples
-                                    .cmpen().bits(0b11)        // compare repeatedly until true
-                                    .loop_().bits(0)         // no loop
-                                    .next().bits(0)         // no next command
-                                    .sts().bits(2)
-                                } );
+        adc.cmdh1.write(|w| unsafe {
+            w.avgs()
+                .avgs_0() // average 2^2 samples
+                .cmpen()
+                .bits(0b11) // compare repeatedly until true
+                .loop_()
+                .bits(0) // no loop
+                .next()
+                .bits(0) // no next command
+                .sts()
+                .bits(2)
+        });
 
         DynamicClockController {
             adc: adc,
@@ -85,77 +101,74 @@ impl DynamicClockController {
         }
     }
 
-    pub fn start_low_voltage_compare(&mut self, ) {
-        self.adc.cv1.write(|w| unsafe {
-            w.cvl().bits(0)
-            .cvh().bits(ADC_VOLTAGE_LOW)
-        });
+    pub fn start_low_voltage_compare(&mut self) {
+        self.adc
+            .cv1
+            .write(|w| unsafe { w.cvl().bits(0).cvh().bits(ADC_VOLTAGE_LOW) });
 
-        self.adc.swtrig.write(|w| unsafe {w.bits(0)});
-        self.adc.swtrig.write(|w| unsafe {w.bits(1<<(ChannelType::Comparator as usize))});
+        self.adc.swtrig.write(|w| unsafe { w.bits(0) });
+        self.adc
+            .swtrig
+            .write(|w| unsafe { w.bits(1 << (ChannelType::Comparator as usize)) });
     }
 
+    pub fn start_high_voltage_compare(&mut self) {
+        self.adc
+            .cv1
+            .write(|w| unsafe { w.cvl().bits(ADC_VOLTAGE_HIGH).cvh().bits(0x7ff8) });
 
-
-    pub fn start_high_voltage_compare(&mut self, ) {
-        self.adc.cv1.write(|w| unsafe {
-            w.cvl().bits(ADC_VOLTAGE_HIGH)
-            .cvh().bits(0x7ff8)
-        });
-
-        self.adc.swtrig.write(|w| unsafe {w.bits(0)});
-        self.adc.swtrig.write(|w| unsafe {w.bits(1<<(ChannelType::Comparator as usize))});
+        self.adc.swtrig.write(|w| unsafe { w.bits(0) });
+        self.adc
+            .swtrig
+            .write(|w| unsafe { w.bits(1 << (ChannelType::Comparator as usize)) });
     }
 
-    fn decrease_clock(&mut self,){
+    fn decrease_clock(&mut self) {
         #[cfg(feature = "enable-clock-controller-signal-pin")]
         self.signal_button.set_low().ok();
 
-        let requirements = lpc55_hal::ClockRequirements::default()
-            .system_frequency(12.MHz());
+        let requirements = lpc55_hal::ClockRequirements::default().system_frequency(12.MHz());
 
-        self.clocks = unsafe { requirements.reconfigure(self.clocks, &mut self.pmc, &mut self.syscon) };
+        self.clocks =
+            unsafe { requirements.reconfigure(self.clocks, &mut self.pmc, &mut self.syscon) };
         self.decrease_count += 1;
     }
 
-    fn increase_clock(&mut self,){
+    fn increase_clock(&mut self) {
         #[cfg(feature = "enable-clock-controller-signal-pin")]
         self.signal_button.set_high().ok();
 
         let requirements = if self.decrease_count > 2 {
             // opt for slower freq if there's too many dips in power
-            lpc55_hal::ClockRequirements::default()
-                .system_frequency(48.MHz())
+            lpc55_hal::ClockRequirements::default().system_frequency(48.MHz())
         } else {
-            lpc55_hal::ClockRequirements::default()
-                .system_frequency(96.MHz())
+            lpc55_hal::ClockRequirements::default().system_frequency(96.MHz())
         };
 
-        self.clocks = unsafe { requirements.reconfigure(self.clocks, &mut self.pmc, &mut self.syscon) };
+        self.clocks =
+            unsafe { requirements.reconfigure(self.clocks, &mut self.pmc, &mut self.syscon) };
     }
 
     /// Used for debugging to tune the ADC points
-    pub fn evaluate(&mut self){
+    pub fn evaluate(&mut self) {
         info_now!("status = {:02X}", self.adc.stat.read().bits());
-        self.adc.cmdh1.modify(|_,w| unsafe { w
-                                    .cmpen().bits(0)
-                                } );
-        for _ in 0 .. 50 {
-            self.adc.swtrig.write(|w| unsafe {w.bits(0)});
-            self.adc.swtrig.write(|w| unsafe {w.bits(1<<(ChannelType::Comparator as usize))});
-            while self.adc.fctrl[0].read().fcount().bits() == 0 {
-            }
+        self.adc.cmdh1.modify(|_, w| unsafe { w.cmpen().bits(0) });
+        for _ in 0..50 {
+            self.adc.swtrig.write(|w| unsafe { w.bits(0) });
+            self.adc
+                .swtrig
+                .write(|w| unsafe { w.bits(1 << (ChannelType::Comparator as usize)) });
+            while self.adc.fctrl[0].read().fcount().bits() == 0 {}
             let result = self.adc.resfifo[0].read().bits();
             let _sample = (result & 0xffff) as u16;
             info_now!("Vref bias = {}", _sample);
         }
-        self.adc.cmdh1.modify(|_,w| unsafe { w
-                                    .cmpen().bits(0b11)
-                                } );
+        self.adc
+            .cmdh1
+            .modify(|_, w| unsafe { w.cmpen().bits(0b11) });
     }
 
     pub fn handle(&mut self) {
-
         let count = self.adc.fctrl[0].read().fcount().bits();
         if count == 0 {
             info!("Error: no sample in fifo!");
@@ -166,16 +179,17 @@ impl DynamicClockController {
             info!("Got >1 sample!");
         }
         let result = self.adc.resfifo[0].read().bits();
-        if  (result & 0x80000000) == 0 {
+        if (result & 0x80000000) == 0 {
             panic!("underflow on compare");
         }
         let sample = (result & 0xffff) as u16;
 
-        self.adc.ctrl.modify(|_,w| { w.rstfifo0().set_bit().rstfifo1().set_bit() });
+        self.adc
+            .ctrl
+            .modify(|_, w| w.rstfifo0().set_bit().rstfifo1().set_bit());
         // info!("handle ADC: {}. status: {}", sample, self.adc.stat.read().bits());
         #[cfg(not(feature = "no-clock-controller"))]
         {
-
             if sample < ADC_VOLTAGE_HIGH {
                 // info!("Voltage is high.  increase clock rate!");
                 self.increase_clock();

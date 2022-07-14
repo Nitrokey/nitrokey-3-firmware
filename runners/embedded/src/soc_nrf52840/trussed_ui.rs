@@ -3,28 +3,25 @@
 
 use core::time::Duration;
 
-
 use crate::traits::{
-	buttons::{Press, Button},
-	rgb_led::RgbLed,
+    buttons::{Button, Press},
+    rgb_led::RgbLed,
 };
-use trussed::platform::{
-    ui, consent,
-};
+use trussed::platform::{consent, ui};
 
 use crate::runtime::UserPresenceStatus;
 
 use crate::ui::Status;
 
-use rtic::Monotonic;
 use embedded_time::duration::*;
+use rtic::Monotonic;
 type RtcMonotonic = crate::soc::rtic_monotonic::RtcMonotonic;
 type RtcInstant = crate::soc::rtic_monotonic::RtcInstant;
 
 pub struct UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press,
-RGB: RgbLed,
+    BUTTONS: Press,
+    RGB: RgbLed,
 {
     buttons: Option<BUTTONS>,
     rgb: Option<RGB>,
@@ -35,14 +32,10 @@ RGB: RgbLed,
 
 impl<BUTTONS, RGB> UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press,
-RGB: RgbLed,
+    BUTTONS: Press,
+    RGB: RgbLed,
 {
-    pub fn new(
-        _buttons: Option<BUTTONS>,
-        rgb: Option<RGB>,
-        provisioner: bool
-    ) -> Self {
+    pub fn new(_buttons: Option<BUTTONS>, rgb: Option<RGB>, provisioner: bool) -> Self {
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
         let mut rtc_mono = RtcMonotonic::new(pac.RTC0);
 
@@ -53,9 +46,21 @@ RGB: RgbLed,
         let status = Status::Startup(uptime);
 
         #[cfg(not(feature = "no-buttons"))]
-        let mut ui = Self { buttons: _buttons, status, rgb, provisioner, rtc_mono };
+        let mut ui = Self {
+            buttons: _buttons,
+            status,
+            rgb,
+            provisioner,
+            rtc_mono,
+        };
         #[cfg(feature = "no-buttons")]
-        let mut ui = Self { buttons: None, status, rgb, provisioner, rtc_mono };
+        let mut ui = Self {
+            buttons: None,
+            status,
+            rgb,
+            provisioner,
+            rtc_mono,
+        };
 
         ui.refresh_ui(uptime);
         ui
@@ -69,10 +74,10 @@ RGB: RgbLed,
     }
 }
 
-impl<BUTTONS, RGB> trussed::platform::UserInterface for UserInterface<BUTTONS,RGB>
+impl<BUTTONS, RGB> trussed::platform::UserInterface for UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press,
-RGB: RgbLed,
+    BUTTONS: Press,
+    RGB: RgbLed,
 {
     fn check_user_presence(&mut self) -> consent::Level {
         // essentially a blocking call for up to ~30secs

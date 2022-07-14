@@ -3,31 +3,23 @@
 
 use core::time::Duration;
 
-use lpc55_hal::{
-    peripherals::rtc::Rtc,
-    typestates::init_state,
-};
 use crate::traits::{
-	buttons::{Press, Edge},
-	rgb_led::RgbLed
+    buttons::{Edge, Press},
+    rgb_led::RgbLed,
 };
 use crate::ui::Status;
-use trussed::platform::{
-    reboot, consent,
-};
-
+use lpc55_hal::{peripherals::rtc::Rtc, typestates::init_state};
+use trussed::platform::{consent, reboot};
 
 // translated from https://stackoverflow.com/a/2284929/2490057
-fn sin(x: f32) -> f32
-{
-
+fn sin(x: f32) -> f32 {
     let mut res = 0f32;
     let mut pow = x;
     let mut fact = 1f32;
     for i in 0..5 {
-        res += pow/fact;
+        res += pow / fact;
         pow *= -1f32 * x * x;
-        fact *= ((2*(i+1))*(2*(i+1)+1)) as f32;
+        fact *= ((2 * (i + 1)) * (2 * (i + 1) + 1)) as f32;
     }
 
     res
@@ -43,15 +35,14 @@ impl UserPresenceStatus {
         unsafe { WAITING = waiting };
     }
     pub fn waiting() -> bool {
-        unsafe{ WAITING }
+        unsafe { WAITING }
     }
 }
 
-
 pub struct UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press + Edge,
-RGB: RgbLed,
+    BUTTONS: Press + Edge,
+    RGB: RgbLed,
 {
     rtc: Rtc<init_state::Enabled>,
     buttons: Option<BUTTONS>,
@@ -62,8 +53,8 @@ RGB: RgbLed,
 
 impl<BUTTONS, RGB> UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press + Edge,
-RGB: RgbLed,
+    BUTTONS: Press + Edge,
+    RGB: RgbLed,
 {
     pub fn new(
         rtc: Rtc<init_state::Enabled>,
@@ -75,9 +66,21 @@ RGB: RgbLed,
         let status = Status::Startup(uptime);
 
         #[cfg(not(feature = "no-buttons"))]
-        let mut ui = Self { rtc, buttons: _buttons, status, rgb, provisioner };
+        let mut ui = Self {
+            rtc,
+            buttons: _buttons,
+            status,
+            rgb,
+            provisioner,
+        };
         #[cfg(feature = "no-buttons")]
-        let mut ui = Self { rtc, buttons: None, status, rgb, provisioner };
+        let mut ui = Self {
+            rtc,
+            buttons: None,
+            status,
+            rgb,
+            provisioner,
+        };
 
         ui.refresh_ui(uptime);
         ui
@@ -91,15 +94,14 @@ RGB: RgbLed,
     }
 }
 
-impl<BUTTONS, RGB> trussed::platform::UserInterface for UserInterface<BUTTONS,RGB>
+impl<BUTTONS, RGB> trussed::platform::UserInterface for UserInterface<BUTTONS, RGB>
 where
-BUTTONS: Press + Edge,
-RGB: RgbLed,
+    BUTTONS: Press + Edge,
+    RGB: RgbLed,
 {
     fn check_user_presence(&mut self) -> consent::Level {
         match &mut self.buttons {
             Some(buttons) => {
-
                 // important to read state before checking for edge,
                 // since reading an edge could clear the state.
                 let state = buttons.state();
