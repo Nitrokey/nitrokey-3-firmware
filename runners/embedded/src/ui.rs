@@ -14,11 +14,6 @@ const RED: Intensities = Intensities {
     green: 0,
     blue: 0,
 };
-const BLUE: Intensities = Intensities {
-    red: 0,
-    green: 0,
-    blue: u8::MAX,
-};
 const TEAL: Intensities = Intensities {
     red: 0,
     green: u8::MAX,
@@ -73,7 +68,7 @@ impl Status {
             Self::Processing => LedMode::constant(TEAL),
             Self::WaitingForUserPresence(start) => LedMode::simple_blinking(WHITE, *start),
             Self::Error => LedMode::constant(RED),
-            Self::Winking(range) => LedMode::simple_blinking(BLUE, range.start),
+            Self::Winking(range) => LedMode::simple_blinking(WHITE, range.start),
         }
     }
 }
