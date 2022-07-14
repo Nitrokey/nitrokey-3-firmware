@@ -29,6 +29,10 @@ const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
 pub const FILESYSTEM_END: usize = crate::types::build_constants::CONFIG_FILESYSTEM_END;
 
 #[cfg(not(feature = "extflash_qspi"))]
+use littlefs2::const_ram_storage;
+#[cfg(not(feature = "extflash_qspi"))]
+use trussed::types::{LfsResult, LfsStorage};
+#[cfg(not(feature = "extflash_qspi"))]
 const_ram_storage!(ExternalStorage, 8192);
 
 pub struct Soc {}
