@@ -101,8 +101,11 @@ pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
 pub type ProvisionerApp = provisioner_app::Provisioner<Store, FlashStorage, TrussedClient>;
 
+pub type WebcryptApp = Webcrypt<TrussedClient>;
+
 use apdu_dispatch::{App as ApduApp, command::SIZE as CommandSize, response::SIZE as ResponseSize};
 use ctaphid_dispatch::app::{App as CtaphidApp};
+use webcrypt::Webcrypt;
 
 pub type DynamicClockController = board::clock_controller::DynamicClockController;
 pub type NfcWaitExtender = timer::Timer<ctimer::Ctimer0<hal::typestates::init_state::Enabled>>;
@@ -168,6 +171,15 @@ impl TrussedApp for AdminApp {
     }
 }
 
+impl TrussedApp for WebcryptApp {
+    type NonPortable = ();
+
+    const CLIENT_ID: &'static [u8] = b"webcrypt\0";
+    fn with_client(trussed: TrussedClient, _: ()) -> Self {
+        Self::new(trussed)
+    }
+}
+
 #[cfg(feature = "fido-authenticator")]
 impl TrussedApp for FidoApp {
     const CLIENT_ID: &'static [u8] = b"fido\0";
@@ -219,6 +231,7 @@ pub struct Apps {
     pub piv: PivApp,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerApp,
+    pub webcrypt: WebcryptApp,
 }
 
 impl Apps {
@@ -239,6 +252,7 @@ impl Apps {
         let ndef = NdefApp::new();
         #[cfg(feature = "provisioner-app")]
         let provisioner = ProvisionerApp::with(trussed, provisioner);
+        let webcrypt = WebcryptApp::with(trussed, ());
 
         Self {
             #[cfg(feature = "admin-app")]
@@ -253,6 +267,7 @@ impl Apps {
             piv,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            webcrypt,
         }
     }
 
@@ -285,6 +300,7 @@ impl Apps {
         F: FnOnce(&mut [&mut dyn CtaphidApp ]) -> T
     {
         f(&mut [
+            &mut self.webcrypt,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
