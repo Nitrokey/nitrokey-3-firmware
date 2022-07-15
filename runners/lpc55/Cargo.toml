@@ -37,7 +37,7 @@ admin-app = { version = "0.1", optional = true }
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 ctap-types = "0.1"
-fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true }
+fido-authenticator = { path = "../../components/fido-authenticator", features = ["dispatch"], optional = true }
 #fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator", features = ["dispatch"], optional = true}
 oath-authenticator = { version = "0.1", features = ["apdu-dispatch"], optional = true }
 piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
@@ -112,6 +112,7 @@ log-error = []
 #trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
 trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-hmac-p256" }
 ctap-types = { path = "../../../nitrokey-webcrypt-rust/components/ctap-types" }
+#fido-authenticator = {path = "../../components/fido-authenticator"}
 
 [profile.release]
 codegen-units = 1
