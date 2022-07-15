@@ -41,7 +41,8 @@ fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true
 #fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator", features = ["dispatch"], optional = true}
 oath-authenticator = { version = "0.1", features = ["apdu-dispatch"], optional = true }
 piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
-trussed = "0.1"
+#trussed = "0.1"
+trussed = { git = "https://github.com/Nitrokey/trussed.git", branch="sz-hmac-p256" }
 
 # board
 board = { path = "board" }
@@ -53,7 +54,8 @@ provisioner-app = { path = "../../components/provisioner-app", optional = true, 
 fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
-usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+usbd-ctaphid = { path = "../../../webcrypt-usbip/components/usbd-ctaphid" }
+webcrypt = { path = "../../../nitrokey-webcrypt-rust" }
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
@@ -107,7 +109,8 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
+#trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
+trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-hmac-p256" }
 
 [profile.release]
 codegen-units = 1
