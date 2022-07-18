@@ -23,7 +23,7 @@ generic-array = "0.14"
 nfc-device = { path = "../../components/nfc-device" }
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"] }
-se050 = { git = "https://github.com/jnordholz/se050" }
+se050 = { git = "https://github.com/jnordholz/se050", optional = true }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -108,8 +108,8 @@ format-filesystem = []
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-nk3am = ["soc-nrf52840", "extflash_qspi"]
-board-proto1 = ["soc-nrf52840", "display_ui"]
-board-proto2 = ["soc-nrf52840", "display_ui", "has_poweroff"]
+board-proto1 = ["soc-nrf52840", "display_ui", "hwcrypto_se050"]
+board-proto2 = ["soc-nrf52840", "display_ui", "hwcrypto_se050", "has_poweroff"]
 
 board-lpcxpresso55 = ["soc-lpc55"]
 board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
@@ -123,6 +123,7 @@ extflash_qspi = []
 qspi_destructive_test = []
 display_ui = ["picolcd114", "display-interface-spi", "embedded-graphics"]
 has_poweroff = []
+hwcrypto_se050 = ["se050", "trussed/backend-se050"]
 
 log-all = []
 log-trace = []
