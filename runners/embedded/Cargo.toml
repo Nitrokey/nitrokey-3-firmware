@@ -5,7 +5,7 @@ authors = [
 	"Jan Nordholz <j.nordholz@tu-berlin.de",
 	"Markus Meissner <meissner@nitrokey.com>"
 ]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 resolver = "2"
 
@@ -146,3 +146,4 @@ required-features = ["soc-lpc55"]
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
+#trussed = { path = "../../trussed" }
