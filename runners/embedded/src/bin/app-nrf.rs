@@ -22,8 +22,15 @@ mod app {
         twim::Twim,
     };
     use rand_core::SeedableRng;
-    use se050::{Se050, Se050Device, T1overI2C};
     use trussed::{client::GuiClient, syscall, Interchange};
+
+    static mut global_delay_timer4: Option<Timer::<nrf52840_pac::TIMER4>> = None;
+    #[cfg(feature = "hwcrypto_se050")]
+    static mut global_wrapped_delay_timer4: Option<se050::DelayWrapper> = None;
+    #[cfg(feature = "hwcrypto_se050")]
+    use se050::{Se050, Se050Device, T1overI2C};
+    #[cfg(feature = "hwcrypto_se050")]
+    static mut se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>>>> = None;
 
     pub enum UIOperation {
         Animate,
@@ -72,7 +79,16 @@ mod app {
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
-        let mut delay_timer = Timer::<nrf52840_pac::TIMER0>::new(ctx.device.TIMER0);
+        let delay_timer: &'static mut Timer::<nrf52840_pac::TIMER4> = unsafe {
+            let mut delay_timer = Timer::<nrf52840_pac::TIMER4>::new(ctx.device.TIMER4);
+            global_delay_timer4.replace(delay_timer);
+            global_delay_timer4.as_mut().unwrap()
+        };
+        #[cfg(feature = "hwcrypto_se050")]
+        let wrapped_delay_timer = unsafe {
+            global_wrapped_delay_timer4.replace(global_delay_timer4.as_mut().unwrap().into());
+            global_wrapped_delay_timer4.as_mut().unwrap()
+        };
 
         let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
         let mut board_gpio = {
@@ -105,7 +121,7 @@ mod app {
                 board_gpio.flashnfc_spi.take().unwrap(),
                 board_gpio.flash_cs.take().unwrap(),
                 board_gpio.flash_power,
-                &mut delay_timer,
+                delay_timer,
             );
             qspi_extflash.activate();
             trace!(
@@ -145,29 +161,6 @@ mod app {
         let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
 
         /* TODO: set up fingerprint device */
-        /* TODO: set up SE050 device */
-        let se050: Option<Se050<T1overI2C<nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>>>> =
-            if board_gpio.se_pins.is_some() {
-                Delogger::flush();
-                let twi = Twim::new(
-                    ctx.device.TWIM1,
-                    board_gpio.se_pins.take().unwrap(),
-                    nrf52840_hal::twim::Frequency::K400,
-                );
-                let t1 = T1overI2C::new(twi, 0x48, 0x5a);
-                let mut se050 = Se050::new(t1);
-                if let Some(ref mut pwr_pin) = board_gpio.se_power {
-                    pwr_pin.set_high().ok();
-                    delay_timer.delay_ms(1u32);
-                }
-                se050.enable(&mut delay_timer).expect("SE050 Enable Fail");
-                Delogger::flush();
-                Some(se050)
-            } else {
-                None
-            };
-
-        /* TODO: set up display */
 
         let dev_rng = Rng::new(ctx.device.RNG);
         let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
@@ -190,13 +183,42 @@ mod app {
             board_gpio.display_backlight,
             board_gpio.buttons,
             board_gpio.leds,
-            &mut delay_timer,
+            delay_timer,
         );
         #[cfg(feature = "board-nrfdk")]
         let ui = ERL::soc::board::init_ui();
 
-        let platform: ERL::types::RunnerPlatform =
-            ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
+        #[cfg(feature = "hwcrypto_se050")]
+        {
+            let pins = board_gpio.se_pins.take().unwrap();
+            Delogger::flush();
+            let twi = Twim::new(
+                ctx.device.TWIM1,
+                pins,
+                nrf52840_hal::twim::Frequency::K400,
+            );
+            let t1 = T1overI2C::new(twi, 0x48, 0x5a);
+            let mut my_se050 = Se050::new(t1);
+            if let Some(ref mut pwr_pin) = board_gpio.se_power {
+                pwr_pin.set_high().ok();
+                delay_timer.delay_ms(1u32);
+            }
+            my_se050.enable(wrapped_delay_timer).expect("SE050 Enable Fail");
+            Delogger::flush();
+            unsafe { se050.replace(my_se050); }
+        };
+
+        #[cfg(feature = "hwcrypto_se050")]
+        let platform: ERL::types::RunnerPlatform = {
+            let trussed_se050 = trussed::service::backend_se050::Se050Wrapper {
+                device: unsafe { se050.as_mut().unwrap() },
+                delay: wrapped_delay_timer,
+            };
+
+            ERL::types::RunnerPlatform::new(chacha_rng, store, ui, trussed_se050)
+        };
+        #[cfg(not(feature = "hwcrypto_se050"))]
+        let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 
         let mut trussed_service = trussed::service::Service::new(platform);
 

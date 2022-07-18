@@ -77,6 +77,15 @@ pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
+#[cfg(feature = "hwcrypto_se050")]
+platform!(
+    RunnerPlatform,
+    R: <SocT as Soc>::Rng,
+    S: RunnerStore,
+    UI: <SocT as Soc>::TrussedUI,
+    trussed::types::ServiceBackends::SE050(_), se050, trussed::service::backend_se050::Se050Wrapper
+);
+#[cfg(not(feature = "hwcrypto_se050"))]
 platform!(
     RunnerPlatform,
     R: <SocT as Soc>::Rng,
@@ -129,7 +138,7 @@ pub trait TrussedApp: Sized {
         let (trussed_requester, trussed_responder) =
             trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
-        let client_id = ClientId::new(Self::CLIENT_ID);
+        let client_id = ClientId::from(littlefs2::path::PathBuf::from(Self::CLIENT_ID));
         assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
 
         let syscaller = RunnerSyscall::default();
