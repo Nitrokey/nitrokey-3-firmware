@@ -11,7 +11,7 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
-    use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use super::{Delogger, ERL, ERL::types::TrussedApp as _, ERL::soc::rtic_monotonic::RtcDuration};
     use embedded_hal::blocking::delay::DelayMs;
     use nrf52840_hal::{
         gpio::{p0, p1},
@@ -22,7 +22,7 @@ mod app {
         twim::Twim,
     };
     use rand_core::SeedableRng;
-    use trussed::{client::GuiClient, syscall, Interchange};
+    use trussed::{client::GuiClient, client::CryptoClient, syscall, Interchange};
 
     static mut global_delay_timer4: Option<Timer::<nrf52840_pac::TIMER4>> = None;
     #[cfg(feature = "hwcrypto_se050")]
@@ -45,7 +45,7 @@ mod app {
         usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
         contactless: Option<ERL::types::Iso14443>,
         trussed: ERL::types::Trussed,
-        trussed_client: ERL::types::TrussedClient,
+        trussed_client: ERL::types::RunnerClient,
         /* NRF specific elements */
         // (display UI)
         // (fingerprint sensor)
@@ -223,12 +223,7 @@ mod app {
         let mut trussed_service = trussed::service::Service::new(platform);
 
         let apps = ERL::init_apps(&mut trussed_service, &store, wakeup_by_nfc);
-        let runner_client = {
-            let (rq, rp) = trussed::pipe::TrussedInterchange::claim().unwrap();
-            trussed_service.add_endpoint(rp, "runtime".into()).ok();
-            let sys = ERL::types::RunnerSyscall::default();
-            ERL::types::TrussedClient::new(rq, sys)
-        };
+        let runner_client = ERL::types::RunnerClient::with(&mut trussed_service, ());
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
@@ -407,7 +402,7 @@ mod app {
                     0 => {
                         for y in 0..6 {
                             for x in 0..3 {
-                                syscall!(cl.draw_sprite(
+                                syscall!(cl.client.draw_sprite(
                                     120 - 78 + x * 52,
                                     67 - 45 + y * 15,
                                     2,
@@ -415,13 +410,15 @@ mod app {
                                 ));
                             }
                         }
+                        let rnd = syscall!(cl.client.random_bytes(32));
+                        trace!("RND: {:?}", rnd.bytes);
                     }
                     20 => {
-                        syscall!(cl.draw_filled_rect(120 - 78, 67 - 45, 33, 90, 0x0000_u16));
-                        syscall!(cl.draw_filled_rect(120 + 45, 67 - 45, 33, 90, 0x0000_u16));
+                        syscall!(cl.client.draw_filled_rect(120 - 78, 67 - 45, 33, 90, 0x0000_u16));
+                        syscall!(cl.client.draw_filled_rect(120 + 45, 67 - 45, 33, 90, 0x0000_u16));
                         for y in 0..3 {
                             for x in 0..3 {
-                                syscall!(cl.draw_sprite(
+                                syscall!(cl.client.draw_sprite(
                                     120 - 45 + x * 30,
                                     67 - 45 + y * 30,
                                     4,
@@ -431,8 +428,8 @@ mod app {
                         }
                     }
                     40 => {
-                        syscall!(cl.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
-                        // syscall!(cl.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+                        syscall!(cl.client.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
+                        // syscall!(cl.client.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
                     }
                     _ => {}
                 });
@@ -444,8 +441,8 @@ mod app {
                 let mut bs: [u8; 8] = [0; 8];
 
                 cl.lock(|cl| {
-                    syscall!(cl.update_button_state());
-                    let st = syscall!(cl.get_button_state(0xff)).states;
+                    syscall!(cl.client.update_button_state());
+                    let st = syscall!(cl.client.get_button_state(0xff)).states;
                     bs.copy_from_slice(&st[0..8]);
                 });
                 trace!("UI Btn {:?}", &bs);

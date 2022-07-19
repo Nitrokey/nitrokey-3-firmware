@@ -126,6 +126,10 @@ pub type NdefApp = ndef_app::App<'static>;
 pub type ProvisionerApp =
     provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
 
+pub struct RunnerClient {
+    pub client: TrussedClient
+}
+
 pub trait TrussedApp: Sized {
     /// non-portable resources needed by this Trussed app
     type NonPortable;
@@ -139,7 +143,15 @@ pub trait TrussedApp: Sized {
         let (trussed_requester, trussed_responder) =
             trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
-        let client_id = ClientId::from(littlefs2::path::PathBuf::from(Self::CLIENT_ID));
+        #[cfg(feature = "hwcrypto_se050")]
+        let client_backends =
+            trussed::types::Vec::from_slice(&[trussed::types::ServiceBackends::SE050(trussed::service::backend_se050::Se050Parameters {}),
+                trussed::types::ServiceBackends::Software]);
+        #[cfg(not(feature = "hwcrypto_se050"))]
+        let client_backends =
+            trussed::types::Vec::from_slice(&[trussed::types::ServiceBackends::Software]);
+
+        let client_id = ClientId::new(littlefs2::path::PathBuf::from(Self::CLIENT_ID), client_backends.unwrap());
         assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
 
         let syscaller = RunnerSyscall::default();
@@ -230,6 +242,15 @@ impl TrussedApp for ProvisionerApp {
             uuid,
             rebooter,
         )
+    }
+}
+
+impl TrussedApp for RunnerClient {
+    const CLIENT_ID: &'static [u8] = b"runtime\0";
+
+    type NonPortable = ();
+    fn with_client(trussed: TrussedClient, _: ()) -> Self {
+        Self { client: trussed }
     }
 }
 
