@@ -59,7 +59,7 @@ webcrypt = { path = "../../../nitrokey-webcrypt-rust" }
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
 
 [features]
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-3"]
 
 develop = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "trussed/clients-4"]
 develop-provisioner = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "provisioner-app", "trussed/clients-5"]
