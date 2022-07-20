@@ -48,7 +48,7 @@ impl<SPI, CS> littlefs2::driver::Storage for ExtFlashStorage<SPI, CS> where SPI:
 	const WRITE_SIZE: usize = 256;
 	const BLOCK_COUNT: usize = FLASH_PROPERTIES.size / Self::BLOCK_SIZE;
 	type CACHE_SIZE = generic_array::typenum::U256;
-	type LOOKAHEADWORDS_SIZE = generic_array::typenum::U1;
+	type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 
 	fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
 		trace!("EFr {:x} {:x}", off, buf.len());
