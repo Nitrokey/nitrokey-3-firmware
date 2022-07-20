@@ -81,6 +81,7 @@ complete = ["admin-app", "fido-authenticator", "ndef-app", "oath-authenticator",
 		"trussed/clients-6", "log-traceP", "log-rtt"]
 
 develop = ["default", "oath-authenticator", "trussed/clients-4",
+			"se050/log-debug", "se050/log-error",
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP", "log-rtt"]
 
