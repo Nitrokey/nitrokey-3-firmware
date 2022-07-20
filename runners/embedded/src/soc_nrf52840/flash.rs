@@ -18,7 +18,7 @@ impl littlefs2::driver::Storage for FlashStorage {
     const BLOCK_COUNT: usize = FLASH_SIZE / Self::BLOCK_SIZE;
 
     type CACHE_SIZE = generic_array::typenum::U256;
-    type LOOKAHEADWORDS_SIZE = generic_array::typenum::U1;
+    type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
         // w/o this too much spam is generated, thus writes/deletes traces get lost
