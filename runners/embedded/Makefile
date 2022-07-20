@@ -122,7 +122,7 @@ data/texmap.raw: data/prepare.py $(wildcard data/*.png)
 #### generate test fido-keys littlefs2 flashable hex
 ###############################################################################
 
-GEN_KEYS_PATH = ../../gen-fido-keys
+GEN_KEYS_PATH = ../../utils/gen-fido-keys
 
 define fidokeys_lfs
 fidokeys_lfs_$(1)+$(2).ihex:
