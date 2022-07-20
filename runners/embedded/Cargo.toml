@@ -78,7 +78,8 @@ complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
 			"trussed/clients-5", "log-traceP", "log-rtt"]
 
-develop = ["default", "oath-authenticator", "trussed/clients-3",
+develop = ["default", "oath-authenticator", "trussed/clients-4",
+			"se050/log-debug", "se050/log-error",
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP", "log-rtt"]
 

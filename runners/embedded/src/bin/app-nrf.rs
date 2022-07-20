@@ -22,7 +22,10 @@ mod app {
         twim::Twim,
     };
     use rand_core::SeedableRng;
-    use trussed::{client::GuiClient, client::CryptoClient, syscall, Interchange};
+    use trussed::{
+        client::{GuiClient, CryptoClient, PollClient},
+        syscall, types::Vec, types::ServiceBackends, Interchange
+    };
 
     static mut global_delay_timer4: Option<Timer::<nrf52840_pac::TIMER4>> = None;
     #[cfg(feature = "hwcrypto_se050")]
@@ -410,6 +413,9 @@ mod app {
                                 ));
                             }
                         }
+                        let rnd = syscall!(cl.client.random_bytes(32));
+                        trace!("RND: {:?}", rnd.bytes);
+                        syscall!(cl.client.set_service_backends(Vec::from_slice(&[ServiceBackends::Software]).unwrap()));
                         let rnd = syscall!(cl.client.random_bytes(32));
                         trace!("RND: {:?}", rnd.bytes);
                     }
