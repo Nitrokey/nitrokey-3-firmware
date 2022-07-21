@@ -172,9 +172,9 @@ reset: reset-banner fidokeys_lfs_d8000+14000.ihex check-var-BOARD check-var-BUIL
 	
 	# UICR
 	## UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
+	if [ "$(BOARD)" = "nk3am" ]; then nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd; fi
 	## UICR::NFCPINS to disabled
-	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
+	if [ "$(BOARD)" = "nk3am" ]; then nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe; fi
 	## UICR::APPROTECT (only --recover will revive debug-access)
 	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
 	
