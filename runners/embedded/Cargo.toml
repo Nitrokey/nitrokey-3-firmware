@@ -156,8 +156,11 @@ required-features = ["soc-lpc55"]
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "skip-up-timeout" }
-trussed = { git = "https://github.com/jnordholz/trussed", branch = "main" }
+trussed = { git = "https://github.com/jnordholz/trussed", branch = "service-backends" }
 #trussed = { path = "../../trussed" }
 
 [patch.'https://github.com/solokeys/fido-authenticator']
 fido-authenticator = { git = "https://github.com/jnordholz/fido-authenticator" }
+
+[patch.'https://github.com/trussed-dev/trussed']
+trussed = { git = "https://github.com/jnordholz/trussed", branch = "service-backends" }
