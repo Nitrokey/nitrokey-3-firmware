@@ -12,7 +12,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -172,7 +172,7 @@ dependencies = [
  "lpc55-hal",
  "lpc55-rtic",
  "nb 1.0.0",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -566,7 +566,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -1048,7 +1048,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -1166,7 +1166,7 @@ dependencies = [
  "lpc55-hal",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -1279,7 +1279,7 @@ dependencies = [
  "piv-authenticator",
  "provisioner-app",
  "rtt-target",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1491,7 +1491,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256#44899b8aa09b69186a63576aaf02db2f78b14af0"
+source = "git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key#45d2ce3cc9b6afbf9164a3073e19e9737b681700"
 dependencies = [
  "aes",
  "bitflags",
@@ -1688,7 +1688,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-hmac-p256)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]

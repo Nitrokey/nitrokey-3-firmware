@@ -108,7 +108,7 @@ log-error = []
 
 [patch.crates-io]
 #trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
-trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-hmac-p256" }
+trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-unsafe-inject-any-key" }
 ctap-types = { path = "../../../nitrokey-webcrypt-rust/components/ctap-types" }
 
 [profile.release]
