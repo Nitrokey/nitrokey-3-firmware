@@ -66,25 +66,25 @@ toml = "0.5"
 [features]
 
 default = ["admin-app", "fido-authenticator", "ndef-app", "no-encrypted-storage",
-			"trussed/clients-3"]
+			"trussed/clients-2"]
 
 release = []
 
 complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-5", "log-traceP", "log-rtt"]
+			"trussed/clients-4", "log-traceP", "log-rtt"]
 
-develop = ["default", "oath-authenticator", "trussed/clients-4",
+develop = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP", "log-rtt"]
 
-develop-piv = ["develop", "piv-authenticator", "trussed/clients-5"]
+develop-piv = ["develop", "piv-authenticator", "trussed/clients-4"]
 
 develop-no-press = ["develop", "no-buttons"]
 
 provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
 			"write-undefined-flash", "no-buttons", "no-encrypted-storage",
-			"no-reset-time-window", "provisioner-app", "trussed/clients-4"]
+			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
