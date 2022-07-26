@@ -9,6 +9,8 @@ pub use board::hal; // re-export for convenience
 use hal::drivers::timer::Elapsed;
 
 use types::Board;
+use board::shared;
+use admin_app::Reboot;
 
 #[macro_use]
 extern crate delog;
@@ -136,6 +138,10 @@ pub fn init_board(
     let store = everything.filesystem.store.clone();
     #[cfg(feature = "provisioner-app")]
     let internal_fs = everything.filesystem.internal_storage_fs;
+    #[cfg(feature = "provisioner-app")]
+    let uuid: [u8; 16] = hal::uuid();
+    #[cfg(feature = "provisioner-app")]
+    let rebooter: fn() -> ! = shared::Reboot::reboot_to_firmware_update;
 
     let apps = types::Apps::new(
         &mut everything.trussed,
@@ -145,6 +151,8 @@ pub fn init_board(
                 store,
                 stolen_filesystem: internal_fs.as_mut().unwrap(),
                 nfc_powered: _is_passive_mode,
+                uuid,
+                rebooter,
             }
         }
     );
