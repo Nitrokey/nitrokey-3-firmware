@@ -36,7 +36,7 @@ build-license-txt:
     paths:
       - artifacts
 
-build-nk3xn:
+build-lpc55-nk3xn:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -60,7 +60,7 @@ build-nk3xn:
     paths:
       - artifacts
 
-build-nk3am:
+build-lpc55-nk3am:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -97,7 +97,12 @@ build-nrf52-nk3mini:
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
     - cp runners/embedded/artifacts/*.bin artifacts/provisioner-nk3am-nrf52.bin
     - cp runners/embedded/artifacts/*.ihex artifacts/provisioner-nk3am-nrf52.ihex
+    - make -C runners/embedded clean-nk3am.bl FEATURES=provisioner
     - make -C runners/embedded build-nk3am.bl FEATURES=develop
+    - cp runners/embedded/artifacts/*.bin artifacts/develop-nk3am-nrf52.bin
+    - cp runners/embedded/artifacts/*.ihex artifacts/develop-nk3am-nrf52.ihex
+    - make -C runners/embedded clean-nk3am.bl FEATURES=develop
+    - make -C runners/embedded build-nk3am.bl FEATURES=release
     - cp runners/embedded/artifacts/*.bin artifacts/firmware-nk3am-nrf52.bin
     - cp runners/embedded/artifacts/*.ihex artifacts/firmware-nk3am-nrf52.ihex
   after_script:
