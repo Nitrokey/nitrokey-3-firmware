@@ -32,7 +32,7 @@ OUT_IHEX = $(OUT).ihex
 RAW_OUT = $(SOC)_runner
 
 # feature definition
-FEATURES ?= develop
+FEATURES ?= release
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
 # assemble comma-seperated list to pass to `cargo build`
 delim = ,

@@ -41,20 +41,20 @@ FW_NAME_PROVISIONER_HEX := provisioner-nk3am-nrf52-$(FW_VERSION).hex
 FW_NAME_PROVISIONER_BIN := provisioner-nk3am-nrf52-$(FW_VERSION).bin
 FW_NAME_PROVISIONER := provisioner-nk3am-nrf52-$(FW_VERSION).zip
 
-FW_NAME_HEX := develop-nk3am-nrf52-$(FW_VERSION).hex
-FW_NAME_BIN := develop-nk3am-nrf52-$(FW_VERSION).bin
-FW_NAME := develop-nk3am-nrf52-$(FW_VERSION).zip
+FW_NAME_DEVELOP_HEX := develop-nk3am-nrf52-$(FW_VERSION).hex
+FW_NAME_DEVELOP_BIN := develop-nk3am-nrf52-$(FW_VERSION).bin
+FW_NAME_DEVELOP := develop-nk3am-nrf52-$(FW_VERSION).zip
 
-FW_RELEASE_HEX := firmware-nk3am-nrf52-$(FW_VERSION).hex
-FW_RELEASE_BIN := firmware-nk3am-nrf52-$(FW_VERSION).bin
-FW_RELEASE := firmware-nk3am-nrf52-$(FW_VERSION).zip
+FW_NAME_RELEASE_HEX := firmware-nk3am-nrf52-$(FW_VERSION).hex
+FW_NAME_RELEASE_BIN := firmware-nk3am-nrf52-$(FW_VERSION).bin
+FW_NAME_RELEASE := firmware-nk3am-nrf52-$(FW_VERSION).zip
 
 BL_SIGNED_NAME := bootloader-nk3am-nrf52-$(FW_VERSION).zip
 
-ALL_ARTIFACTS := $(FW_NAME) $(FW_NAME_PROVISIONER) $(BL_OUTPUT) $(BL_SIGNED_NAME) \
-								 $(FW_NAME_HEX) $(FW_NAME_PROVISIONER_HEX) \
-								 $(FW_NAME_BIN) $(FW_NAME_PROVISIONER_BIN) \
-								 $(FW_RELEASE) $(FW_RELEASE_BIN) $(FW_RELEASE_HEX) \
+ALL_ARTIFACTS := $(FW_NAME_RELEASE) $(FW_NAME_PROVISIONER) $(FW_NAME_DEVELOP) \
+                 $(BL_OUTPUT) $(BL_SIGNED_NAME) \
+								 $(FW_NAME_DEVELOP_HEX) $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_RELEASE_HEX) \
+								 $(FW_NAME_DEVELOP_BIN) $(FW_NAME_PROVISIONER_BIN) $(FW_NAME_RELEASE_BIN) 
 
 SRCS = $(shell find $(FW_RUNNER)/src -name "*.rs" )
 
@@ -84,19 +84,19 @@ build: $(ALL_ARTIFACTS)
 	@echo "- active branch: $(shell git branch -l | grep "*" | cut -d ' ' -f 2)"
 	@echo "#########################################################"
 
-flash-release: $(FW_RELEASE) $(SH_UPLOAD)
+flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
 	./wait_for_usb.sh 20a0:42e8
 	
-	$(SH_UPLOAD) $(FW_RELEASE) $(TTY)
+	$(SH_UPLOAD) $(FW_NAME_RELEASE) $(TTY)
 	
 	./wait_for_usb.sh 20a0:42b2
 
-flash-fw: $(FW_NAME) $(SH_UPLOAD)
+flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
 	./wait_for_usb.sh 20a0:42e8
 	
-	$(SH_UPLOAD) $(FW_NAME) $(TTY)
+	$(SH_UPLOAD) $(FW_NAME_DEVELOP) $(TTY)
 	
 	./wait_for_usb.sh 20a0:42b2
 
@@ -120,13 +120,12 @@ provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 full-deploy:
 	$(MAKE) flash-bootloader
 	$(MAKE) flash-provisioner
-	#$(MAKE) flash-release
 	$(MAKE) provision-keys
-	$(MAKE) flash-fw
+	$(MAKE) flash-release
 
 fast-deploy:
 	$(MAKE) flash-bootloader
-	$(MAKE) flash-fw
+	$(MAKE) flash-release
 
 clean:
 	rm -rf $(ALL_ARTIFACTS)
@@ -160,19 +159,18 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 %.zip: %.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
-
 $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
-$(FW_NAME_HEX) $(FW_NAME_BIN): $(NK3_FW_DIR) $(SRCS)
+$(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop
-	cp $(FW_IHEX) $(FW_NAME_HEX)
-	cp $(FW_BIN) $(FW_NAME_BIN)
+	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
+	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
-$(FW_RELEASE_HEX) $(FW_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
+$(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release
-	cp $(FW_IHEX) $(FW_RELEASE_HEX)
-	cp $(FW_BIN) $(FW_RELEASE_BIN)
+	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
+	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
 
