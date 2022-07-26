@@ -32,6 +32,10 @@ ci:
 	$(MAKE) objcopy
 	$(MAKE) size
 
+.PHONY: check
+check:
+	cargo check --features $(FEATURES)
+
 .PHONY: build
 build:
 	cargo build --release --features $(FEATURES)

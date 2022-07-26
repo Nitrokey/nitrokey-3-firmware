@@ -37,8 +37,7 @@ admin-app = { version = "0.1", optional = true }
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 ctap-types = "0.1"
-fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true }
-#fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator", features = ["dispatch"], optional = true}
+fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true}
 oath-authenticator = { version = "0.1", features = ["apdu-dispatch"], optional = true }
 piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
 trussed = "0.1"
@@ -53,13 +52,14 @@ provisioner-app = { path = "../../components/provisioner-app", optional = true, 
 fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
-usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+usbd-ctaphid = { path = "../../../webcrypt-usbip/components/usbd-ctaphid" }
+webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust.git" }
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
 
 [features]
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-3"]
 
 develop = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "trussed/clients-4"]
 develop-provisioner = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "provisioner-app", "trussed/clients-5"]
@@ -97,7 +97,6 @@ serial = []
 reconfigure-nfc = []
 no-clock-controller = ["board/no-clock-controller"]
 enable-clock-controller-signal-pin = ["board/enable-clock-controller-signal-pin"]
-# very-twitchy-mouse = ["usbd-hid"]
 
 log-all = []
 log-none = []
@@ -107,7 +106,7 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
+trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-unsafe-inject-any-key" }
 
 [profile.release]
 codegen-units = 1
