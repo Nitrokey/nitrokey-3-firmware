@@ -5,6 +5,7 @@ pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
 use core::convert::TryInto;
+use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
@@ -184,6 +185,7 @@ impl TrussedApp for FidoApp {
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
+                skip_up_timeout: Some(Duration::from_secs(2)),
             },
         )
     }
