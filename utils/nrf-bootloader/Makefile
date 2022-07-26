@@ -19,11 +19,11 @@ enter:
 		bash
 
 verify:
-	if [[ "4" == "$(shell docker run -it \
+	if [ "4" = "$(shell docker run -it \
 		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
-		sha256sum -c /work/sha256sums.txt | grep -c "OK")" ]]; \
+		sha256sum -c /work/sha256sums.txt | grep -c "OK")" ]; \
 	then \
 		echo "Verification OK"; \
 	else \
