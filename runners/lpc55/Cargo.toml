@@ -53,7 +53,7 @@ fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
 usbd-ctaphid = { path = "../../../webcrypt-usbip/components/usbd-ctaphid" }
-webcrypt = { path = "../../../nitrokey-webcrypt-rust" }
+webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust.git" }
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
@@ -97,7 +97,6 @@ serial = []
 reconfigure-nfc = []
 no-clock-controller = ["board/no-clock-controller"]
 enable-clock-controller-signal-pin = ["board/enable-clock-controller-signal-pin"]
-# very-twitchy-mouse = ["usbd-hid"]
 
 log-all = []
 log-none = []
@@ -107,9 +106,7 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-#trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
 trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-unsafe-inject-any-key" }
-ctap-types = { path = "../../../nitrokey-webcrypt-rust/components/ctap-types" }
 
 [profile.release]
 codegen-units = 1

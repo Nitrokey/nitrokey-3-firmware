@@ -379,6 +379,8 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e4fa005ff525537460e1fd70a1ff4f417ae4a6ed14887f3e4720221e20f7562"
 dependencies = [
  "bitflags",
  "cbor-smol",
@@ -1674,6 +1676,7 @@ dependencies = [
 [[package]]
 name = "webcrypt"
 version = "0.2.0"
+source = "git+https://github.com/Nitrokey/nitrokey-webcrypt-rust.git#bc8d79e7da1823dafe0b6092ecba432ab9c45451"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
