@@ -1,6 +1,6 @@
 [package]
 name = "embedded-runner-lib"
-version = "1.0.5"
+version = "1.1.0"
 authors = [
 	"Jan Nordholz <j.nordholz@tu-berlin.de",
 	"Markus Meissner <meissner@nitrokey.com>"

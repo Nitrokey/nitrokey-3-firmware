@@ -1,5 +1,6 @@
 # Unreleased
 
+- include the embedded runner, currently only confirmed working for nRF52
 - Change the LED color to red on panics ([#52][])
 - Skip the additional user presence check for the first Get Assertion or Authenticate request within two seconds after boot ([#61][])
 
