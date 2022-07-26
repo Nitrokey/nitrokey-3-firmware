@@ -113,21 +113,6 @@ clean-all:
 	rm -rf artifacts cfg.toml
 
 ###############################################################################
-#### generate test fido-keys littlefs2 flashable hex
-###############################################################################
-
-GEN_KEYS_PATH = ../../gen-fido-keys
-
-define fidokeys_lfs
-fidokeys_lfs_$(1)+$(2).ihex:
-	$(MAKE) -C $(GEN_KEYS_PATH) clean
-	$(MAKE) -C $(GEN_KEYS_PATH) fs.hex FS_BASE=0x$(1) FS_SIZE=0x$(2) FS_BLK_SHIFT=8
-	cp $(GEN_KEYS_PATH)/fs.hex $$@
-endef
-
-$(eval $(call fidokeys_lfs,d8000,14000))
-
-###############################################################################
 #### actual build, clean, reset, program targets
 ###############################################################################
 
@@ -156,23 +141,4 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
 	rm -f ./$(OUT) ./$(OUT_IHEX) $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) $(SYMBOLS) $(LOG)
-
-reset: reset-banner fidokeys_lfs_d8000+14000.ihex check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OUT) 
-	nrfjprog -f NRF52 --chiperase --program $(OUT_IHEX)
-	nrfjprog -f NRF52 --program fidokeys_lfs_d8000+14000.ihex
-	
-	# UICR
-	## UICR::REGOUT0 to 3v3
-	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
-	## UICR::NFCPINS to disabled
-	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
-	## UICR::APPROTECT (only --recover will revive debug-access)
-	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
-	
-	nrfjprog -f NRF52 --reset
-
-program: program-banner check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OUT) 
-	nrfjprog -f NRF52 --program $(OUT_IHEX) --sectorerase
-	
-	nrfjprog -f NRF52 --reset
 
