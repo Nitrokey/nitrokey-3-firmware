@@ -1,0 +1,150 @@
+[package]
+name = "embedded-runner-lib"
+version = "1.1.0"
+authors = [
+	"Jan Nordholz <j.nordholz@tu-berlin.de",
+	"Markus Meissner <meissner@nitrokey.com>"
+]
+edition = "2021"
+license = "MIT"
+resolver = "2"
+
+[dependencies]
+### base dependencies
+cfg-if = "*"
+delog = "0.1"
+cortex-m = "0.7"
+cortex-m-rtic = "1.0"
+embedded-storage = "0.3"
+embedded-hal = "0.2.3"
+embedded-time = "0.12"
+generic-array = "0.14"
+nfc-device = { path = "../../components/nfc-device" }
+rand_core = "0.6"
+rtt-target = { version = "0.3", features = ["cortex-m"] }
+
+### protocols and dispatchers
+apdu-dispatch = "0.1"
+ctaphid-dispatch = "0.1"
+ctap-types = "0.1"
+
+### client apps
+admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
+fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true }
+ndef-app = { path = "../../components/ndef-app", optional = true }
+oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
+piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
+provisioner-app = { path = "../../components/provisioner-app", optional = true }
+
+### trussed core
+trussed = "0.1"
+interchange = "0.2"
+littlefs2 = { version = "0.3", features = ["c-stubs"] }
+
+### usb machinery
+usb-device = "0.2"
+usbd-serial = "0.1"
+usbd-ccid = { path = "../../components/usbd-ccid" }
+usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+
+### NRF52 specific dependencies
+chacha20 = { version = "0.7", default-features = false, features = ["rng"], optional = true }
+nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true }
+nrf52840-pac = { version = "0.11", optional = true }
+
+### LPC55 specific dependencies
+lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], optional = true }
+lpc55-pac = { version = "0.4", optional = true }
+fm11nc08 = { path = "../../components/fm11nc08", optional = true }
+nb = "1"
+
+[build-dependencies]
+cargo-lock = "7"
+serde = { version = "1", features = ["derive"] }
+toml = "0.5"
+
+[features]
+
+default = ["admin-app", "fido-authenticator", "ndef-app", "no-encrypted-storage",
+			"trussed/clients-2"]
+
+release = []
+
+complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
+			"fido-authenticator/disable-reset-time-window",
+			"trussed/clients-4", "log-traceP", "log-rtt"]
+
+develop = ["default", "oath-authenticator", "trussed/clients-3",
+			"fido-authenticator/disable-reset-time-window",
+			"log-traceP", "log-rtt"]
+
+develop-piv = ["develop", "piv-authenticator", "trussed/clients-4"]
+
+develop-no-press = ["develop", "no-buttons"]
+
+provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
+			"write-undefined-flash", "no-buttons", "no-encrypted-storage",
+			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
+
+# Do not use encryption for the filesystem
+no-encrypted-storage = []
+
+# Check for undefined flash and write to determined value (for prince provisioning)
+write-undefined-flash = []
+
+# Use to auto-succeed every user presence check
+no-buttons = []
+
+# Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
+no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
+
+# Format filesystem anyway
+format-filesystem = []
+
+
+board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
+board-proto1 = ["soc-nrf52840"]
+board-nk3am = ["soc-nrf52840" , "extflash_qspi"]
+
+board-lpcxpresso55 = ["soc-lpc55"]
+board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
+board-solo2 = ["soc-lpc55"]
+board-nk3xn = ["soc-lpc55"]
+
+soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08"]
+
+extflash_qspi = []
+
+log-all = []
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []
+log-none = []
+
+log-traceP = [ "log-trace", "log-debug", "log-info", "log-warn", "log-error" ]
+log-debugP = [ "log-debug", "log-info", "log-warn", "log-error" ]
+log-infoP = [ "log-info", "log-warn", "log-error" ]
+log-warnP = [ "log-warn", "log-error" ]
+
+log-rtt = []
+log-semihosting = []
+
+[[bin]]
+name = "nrf52_runner"
+path = "src/bin/app-nrf.rs"
+required-features = ["soc-nrf52840"]
+
+[[bin]]
+name = "lpc55_runner"
+path = "src/bin/app-lpc.rs"
+required-features = ["soc-lpc55"]
+
+[patch.crates-io]
+littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
+fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "skip-up-timeout" }
+trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
+#trussed = { path = "../../trussed" }

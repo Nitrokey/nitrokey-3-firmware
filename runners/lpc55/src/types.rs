@@ -196,6 +196,8 @@ pub struct ProvisionerNonPortable {
     pub store: Store,
     pub stolen_filesystem: &'static mut FlashStorage,
     pub nfc_powered: bool,
+    pub uuid: [u8; 16],
+    pub rebooter: fn() -> !,
 }
 
 #[cfg(feature = "provisioner-app")]
@@ -203,8 +205,8 @@ impl TrussedApp for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
 
     type NonPortable = ProvisionerNonPortable;
-    fn with_client(trussed: TrussedClient, ProvisionerNonPortable { store, stolen_filesystem, nfc_powered }: Self::NonPortable) -> Self {
-        Self::new(trussed, store, stolen_filesystem, nfc_powered)
+    fn with_client(trussed: TrussedClient, ProvisionerNonPortable { store, stolen_filesystem, nfc_powered, uuid, rebooter }: Self::NonPortable) -> Self {
+        Self::new(trussed, store, stolen_filesystem, nfc_powered, uuid, rebooter)
     }
 
 }

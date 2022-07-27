@@ -1,5 +1,21 @@
 # Unreleased
 
+- include the embedded runner, currently only confirmed working for nRF52
+- Change the LED color to red on panics ([#52][])
+- Skip the additional user presence check for the first Get Assertion or Authenticate request within two seconds after boot ([#61][])
+
+[#52]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/52
+[#61]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/61
+
+# v1.1.0-rc.1 (2022-07-27)
+
+This is the first official nRF52 release(candidate) for the Nitrokey 3A Mini.
+
+### Features
+
+- `embedded` runner to allow building for different SoCs from within a common code-base
+- This pre-release only includes binaries for the nRF52 
+- All features from the v1.0.4 release are included 
 - Change the LED color to red on panics ([#52][])
 - Skip the additional user presence check for the first Get Assertion or Authenticate request within two seconds after boot ([#61][])
 
