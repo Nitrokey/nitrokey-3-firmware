@@ -40,12 +40,12 @@ enum Error {
     CommandNotSupported = 0x00,
 }
 
-pub struct Pipe<Bus, I, const N: usize>
+pub struct Pipe<'alloc, Bus, I, const N: usize>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
 {
-    pub(crate) write: EndpointIn<'static, Bus>,
+    pub(crate) write: EndpointIn<'alloc, Bus>,
     // pub(crate) rpc: TransportEndpoint<'rpc>,
     seq: u8,
     state: State,
@@ -63,13 +63,13 @@ where
     atr: Vec<u8, 32>,
 }
 
-impl<Bus, I, const N: usize> Pipe<Bus, I, N>
+impl<'alloc, Bus, I, const N: usize> Pipe<'alloc, Bus, I, N>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
 {
     pub(crate) fn new(
-        write: EndpointIn<'static, Bus>,
+        write: EndpointIn<'alloc, Bus>,
         request_pipe: Requester<I>,
         card_issuers_data: Option<&[u8]>,
     ) -> Self {
@@ -137,7 +137,7 @@ where
 }
 
 
-impl<Bus, I, const N: usize> Pipe<Bus, I, N>
+impl<'alloc, Bus, I, const N: usize> Pipe<'alloc, Bus, I, N>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
