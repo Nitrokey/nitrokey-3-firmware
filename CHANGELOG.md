@@ -1,3 +1,9 @@
+# Unreleased
+
+- Implement CCID abort handling, fixing an issue where GnuPG would stall for up to a minute on the first operation if a Nitrokey 3 is connected and recognized as a CCID device ([#22][])
+
+[#22]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/22
+
 # v1.1.0 (2022-08-02)
 
 This release adds support for the NRF52 MCU, changes the LED color to red on
