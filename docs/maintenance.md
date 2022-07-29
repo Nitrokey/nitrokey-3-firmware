@@ -17,8 +17,8 @@ As we have a `Cargo.lock` file with fixed dependency versions, we don’t automa
 ### Creating Releases
 
 To release a new version of the firmware, perform the following steps:
-1. Update the version counter in `runners/lpc55/Cargo.toml`.
-2. Run the firmware build.
+1. Update the version counter in `runners/lpc55/Cargo.toml` and `runners/embedded/Cargo.toml`.
+2. Run the firmware build for both runners and add the updated `Cargo.lock`.
 3. Update the changelog.
 4. Update the `runners/lpc55/config/commands.bd` file:
    - The `productVersion` and `componentVersion` should be set to the current firmware version.
@@ -26,7 +26,7 @@ To release a new version of the firmware, perform the following steps:
 5. Commit all changed files and create a signed tag with a `v` prefix and the version number, for example `v1.0.0`.
 6. Create a release on GitHub and copy the relevant section from the changelog to the release description.
 
-### Signing Releases
+### Signing Releases (lpc55)
 
 1. Download the `firmware-nk3xn.bin` as built by the CI from the release tag.
 2. Download the [`runners/lpc55/commands.bd`][] for the release tag.

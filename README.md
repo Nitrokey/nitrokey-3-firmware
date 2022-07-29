@@ -13,17 +13,9 @@ The Nitrokey 3 firmware is written in [Rust][].  It uses the [Trussed][] firmwar
 
 ## Documentation
 
-Documentation for users is available in the [Nitrokey 3 section on docs.nitrokey.com][docs.nitrokey.com].
+Documentation for users is available in the [Nitrokey 3 section on docs.nitrokey.com][docs.nitrokey.com].  For developer documentation, see the [`docs`](./docs/index.md) directory.
 
 [docs.nitrokey.com]: https://docs.nitrokey.com/nitrokey3/index.html
-
-This documentation is available for developers and testers:
-- [Quickstart Guide](./docs/quickstart.md): Compiling and flashing the firmware
-- [Troubleshooting Guide](./docs/troubleshooting.md): Solving common development issues
-- [Contributing Guide](./docs/contributing.md): Contributing to this repository
-- [Maintenance Guide](./docs/maintenance.md): Maintaining this repository
-- [Testing Guide](./docs/testing.md): Testing beta firmware versions
-- [Identifiers List](./docs/identifiers.md): List of identifiers used by firmware
 
 ## Dependencies
 
