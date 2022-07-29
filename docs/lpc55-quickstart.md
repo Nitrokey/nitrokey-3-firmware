@@ -1,6 +1,6 @@
-# Quickstart Guide
+# LPC55 Quickstart Guide
 
-This guide explains how to compile and flash the firmware on a prototype device.
+This guide explains how to compile and flash the firmware on a LPC55 prototype device.
 
 *See also: [Solo 2 Getting Started](https://hackmd.io/@solokeys/solo2-getting-started)*
 
