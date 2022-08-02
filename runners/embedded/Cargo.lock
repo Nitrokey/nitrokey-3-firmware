@@ -612,6 +612,7 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "oath-authenticator",
+ "playground-app",
  "provisioner-app",
  "rand_core",
  "rtt-target",
@@ -1057,6 +1058,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "modular-bitfield"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a53d79ba8304ac1c4f9eb3b9d281f21f7be9d4626f72ce7df4ad8fbde4f38a74"
+dependencies = [
+ "modular-bitfield-impl",
+ "static_assertions",
+]
+
+[[package]]
+name = "modular-bitfield-impl"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a7d5f7076603ebc68de2dc6a650ec331a062a13abaa346975be747bbfa4b789"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "nb"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1303,6 +1325,23 @@ name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
+
+[[package]]
+name = "playground-app"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "delog",
+ "heapless 0.7.16",
+ "interchange",
+ "iso7816",
+ "littlefs2",
+ "serde",
+ "serde-indexed",
+ "serde_cbor",
+ "trussed",
+]
 
 [[package]]
 name = "poly1305"
@@ -1665,6 +1704,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
 name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1720,7 +1765,6 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?branch=main#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
 dependencies = [
  "aes",
  "bitflags",
@@ -1741,6 +1785,7 @@ dependencies = [
  "hmac",
  "interchange",
  "littlefs2",
+ "modular-bitfield",
  "nb 1.0.0",
  "p256-cortex-m4",
  "postcard",

@@ -34,6 +34,7 @@ fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = tr
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
+playground-app = { git = "https://github.com/daringer/playground-app", optional = true }
 
 ### trussed core
 trussed = "0.1"
@@ -73,9 +74,10 @@ complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
 			"trussed/clients-3", "log-traceP", "log-rtt"]
 
-develop = ["default", "oath-authenticator", "trussed/clients-3",
+develop = ["default", "trussed/clients-4",
 			"fido-authenticator/disable-reset-time-window",
-			"log-traceP", "log-rtt"]
+			"playground-app", "playground-app/log-all",
+			"log-traceP", "log-rtt", "trussed/log-all"]
 
 develop-no-press = ["develop", "no-buttons"]
 
@@ -142,5 +144,9 @@ required-features = ["soc-lpc55"]
 [patch.crates-io]
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
-trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
-#trussed = { path = "../../trussed" }
+
+#trussed = { git = "https://github.com/Nitrokey/trussed", branch = "main" }
+trussed = { path = "../../trussed" }
+
+[patch."https://github.com/daringer/playground-app"]
+playground-app = { path = "../../playground-app" }
