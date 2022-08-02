@@ -9,7 +9,7 @@ use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
-use trussed::types::{LfsResult, LfsStorage};
+use trussed::types::{LfsResult, LfsStorage, ClientContext};
 use trussed::{platform, store};
 pub mod usbnfc;
 
@@ -114,6 +114,9 @@ pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
 pub type ProvisionerApp =
     provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
+#[cfg(feature = "playground-app")]
+pub type PlaygroundApp = playground_app::App<TrussedClient>;
+
 
 pub trait TrussedApp: Sized {
     /// non-portable resources needed by this Trussed app
@@ -121,6 +124,7 @@ pub trait TrussedApp: Sized {
 
     /// the desired client ID
     const CLIENT_ID: &'static [u8];
+    const ENCRYPTED: bool;
 
     fn with_client(trussed: TrussedClient, non_portable: Self::NonPortable) -> Self;
 
@@ -128,9 +132,14 @@ pub trait TrussedApp: Sized {
         let (trussed_requester, trussed_responder) =
             trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
-        let mut client_id = littlefs2::path::PathBuf::new();
+        /*let mut client_id = littlefs2::path::PathBuf::new();
         client_id.push(Self::CLIENT_ID.try_into().unwrap());
-        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
+        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());*/
+
+        let pin = if Self::ENCRYPTED { Some("1234") } else { None };
+
+        let client_ctx = ClientContext::new(littlefs2::path::PathBuf::from(Self::CLIENT_ID), pin);
+        assert!(trussed.add_endpoint(trussed_responder, client_ctx).is_ok());
 
         let syscaller = RunnerSyscall::default();
         let trussed_client = TrussedClient::new(trussed_requester, syscaller);
@@ -142,6 +151,7 @@ pub trait TrussedApp: Sized {
 #[cfg(feature = "oath-authenticator")]
 impl TrussedApp for OathApp {
     const CLIENT_ID: &'static [u8] = b"oath\0";
+    const ENCRYPTED: bool = false;
 
     type NonPortable = ();
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
@@ -153,6 +163,7 @@ impl TrussedApp for OathApp {
 #[cfg(feature = "admin-app")]
 impl TrussedApp for AdminApp {
     const CLIENT_ID: &'static [u8] = b"admin\0";
+    const ENCRYPTED: bool = false;
 
     // TODO: declare uuid + version
     type NonPortable = ();
@@ -163,9 +174,22 @@ impl TrussedApp for AdminApp {
     }
 }
 
+#[cfg(feature = "playground-app")]
+impl TrussedApp for PlaygroundApp {
+    const CLIENT_ID: &'static [u8] = b"playground\0";
+    const ENCRYPTED: bool = true;
+
+    type NonPortable = ();
+    fn with_client(trussed: TrussedClient, _: ()) -> Self {
+        Self::new(trussed)
+    }
+}
+
+
 #[cfg(feature = "fido-authenticator")]
 impl TrussedApp for FidoApp {
     const CLIENT_ID: &'static [u8] = b"fido\0";
+    const ENCRYPTED: bool = false;
 
     type NonPortable = ();
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
@@ -191,6 +215,7 @@ pub struct ProvisionerNonPortable {
 #[cfg(feature = "provisioner-app")]
 impl TrussedApp for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
+    const ENCRYPTED: bool = false;
 
     type NonPortable = ProvisionerNonPortable;
     fn with_client(
@@ -225,6 +250,8 @@ pub struct Apps {
     pub ndef: NdefApp,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerApp,
+    #[cfg(feature = "playground-app")]
+    pub playground: PlaygroundApp,
 }
 
 impl Apps {
@@ -242,6 +269,8 @@ impl Apps {
         let ndef = NdefApp::new();
         #[cfg(feature = "provisioner-app")]
         let provisioner = ProvisionerApp::with(trussed, provisioner);
+        #[cfg(feature = "playground-app")]
+        let playground = PlaygroundApp::with(trussed, ());
 
         Self {
             #[cfg(feature = "admin-app")]
@@ -254,6 +283,8 @@ impl Apps {
             ndef,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            #[cfg(feature = "playground-app")]
+            playground,
         }
     }
 
@@ -284,6 +315,8 @@ impl Apps {
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
+            #[cfg(feature = "playground-app")]
+            &mut self.playground,
         ])
     }
 }

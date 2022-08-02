@@ -11,7 +11,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
 ]
 
 [[package]]
@@ -612,12 +612,13 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "oath-authenticator",
+ "playground-app",
  "provisioner-app",
  "rand_core",
  "rtt-target",
  "serde",
  "toml",
- "trussed",
+(??) "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -666,7 +667,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
 ]
 
 [[package]]
@@ -1246,7 +1247,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
 ]
 
 [[package]]
@@ -1303,6 +1304,24 @@ name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
+
+[[package]]
+name = "playground-app"
+version = "0.1.0"
+source = "git+https://github.com/daringer/playground-app#ea258a5171c8d0bef4b755bf3d31a8cbca4f3cef"
+dependencies = [
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "delog",
+ "heapless 0.7.14",
+ "interchange",
+ "iso7816",
+ "littlefs2",
+ "serde",
+ "serde-indexed",
+ "serde_cbor",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+]
 
 [[package]]
 name = "poly1305"
@@ -1376,7 +1395,7 @@ dependencies = [
  "littlefs2",
  "nisty",
  "salty",
- "trussed",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
 ]
 
 [[package]]
@@ -1720,7 +1739,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?branch=main#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
+source = "git+https://github.com/Nitrokey/trussed?branch=raw_store#24ef623d0a73e12ca3583c59369d4c5622c91b4c"
 dependencies = [
  "aes",
  "bitflags",
