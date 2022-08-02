@@ -9,7 +9,7 @@ pub use board::hal; // re-export for convenience
 use hal::drivers::timer::Elapsed;
 
 use types::Board;
-use board::shared;
+#[cfg(feature = "provisioner-app")]
 use admin_app::Reboot;
 
 #[macro_use]
@@ -134,25 +134,16 @@ pub fn init_board(
     // rgb.turn_off();
     info!("init took {} ms", everything.basic.perf_timer.elapsed().0/1000);
 
-    #[cfg(feature = "provisioner-app")]
-    let store = everything.filesystem.store.clone();
-    #[cfg(feature = "provisioner-app")]
-    let internal_fs = everything.filesystem.internal_storage_fs;
-    #[cfg(feature = "provisioner-app")]
-    let uuid: [u8; 16] = hal::uuid();
-    #[cfg(feature = "provisioner-app")]
-    let rebooter: fn() -> ! = shared::Reboot::reboot_to_firmware_update;
-
     let apps = types::Apps::new(
         &mut everything.trussed,
         #[cfg(feature = "provisioner-app")]
         {
             types::ProvisionerNonPortable {
-                store,
-                stolen_filesystem: internal_fs.as_mut().unwrap(),
+                store: everything.filesystem.store.clone(),
+                stolen_filesystem: everything.filesystem.internal_storage_fs.as_mut().unwrap(),
                 nfc_powered: _is_passive_mode,
-                uuid,
-                rebooter,
+                uuid: hal::uuid(),
+                rebooter: board::shared::Reboot::reboot_to_firmware_update,
             }
         }
     );
