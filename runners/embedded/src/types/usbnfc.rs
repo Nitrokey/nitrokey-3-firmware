@@ -2,6 +2,7 @@ use crate::soc::types::Soc as SocT;
 use crate::types::Soc;
 
 pub type CcidClass = usbd_ccid::Ccid<
+    'static,
     <SocT as Soc>::UsbBus,
     apdu_dispatch::interchanges::Contact,
     { apdu_dispatch::interchanges::SIZE },
