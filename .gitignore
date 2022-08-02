@@ -9,3 +9,4 @@ solo-state.bin
 bee.littlefs2
 !runners/lpc55/Cargo.lock
 /license.txt
+/commands.bd
