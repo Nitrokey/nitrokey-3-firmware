@@ -55,7 +55,7 @@ build-lpc55-nk3xn:
     - cp ./runners/lpc55/firmware-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
     - cp ./runners/lpc55/provisioner-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
     - cp ./commands.bd artifacts
-    - sha256sum artifacts/* | tee artifacts/sha256sum
+    - cd artifacts ; sha256sum * | tee sha256sum ; cd ..
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
