@@ -1,3 +1,11 @@
+# Unreleased
+
+### Bugfixes
+
+- fido-authenticator: Return an error instead of panicking if the credential ID is too long ([#49][])
+
+[#49]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/49
+
 # v1.1.0 (2022-08-02)
 
 This release adds support for the NRF52 MCU, changes the LED color to red on

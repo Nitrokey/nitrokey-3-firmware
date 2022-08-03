@@ -585,7 +585,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/fido-authenticator?branch=skip-up-timeout#3a3329443562244e97040eefff99bd7566412d2c"
+source = "git+https://github.com/nitrokey/fido-authenticator?branch=main#4022d6ce568c309150248b6ba14b493a8e82a743"
 dependencies = [
  "apdu-dispatch 0.1.0",
  "ctap-types",
