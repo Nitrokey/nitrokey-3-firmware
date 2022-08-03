@@ -51,8 +51,9 @@ build-lpc55-nk3xn:
     - make -C runners/lpc55 ci BOARD=nk3xn PROVISIONER=1
   after_script:
     - mkdir -p artifacts
-    - cp ./runners/lpc55/firmware-*.bin artifacts
-    - cp ./runners/lpc55/provisioner-*.bin artifacts
+    - export VERSION=`git describe --always`
+    - cp ./runners/lpc55/firmware-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - cp ./runners/lpc55/provisioner-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
     - cp ./commands.bd artifacts
     - sha256sum artifacts/* | tee artifacts/sha256sum
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
