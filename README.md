@@ -23,6 +23,7 @@ This documentation is available for developers and testers:
 - [Contributing Guide](./docs/contributing.md): Contributing to this repository
 - [Maintenance Guide](./docs/maintenance.md): Maintaining this repository
 - [Testing Guide](./docs/testing.md): Testing beta firmware versions
+- [Identifiers List](./docs/identifiers.md): List of identifiers used by firmware
 
 ## Dependencies
 
