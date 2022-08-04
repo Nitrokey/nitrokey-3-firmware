@@ -17,19 +17,19 @@ use crate::{
 use usb_device::class_prelude::*;
 type Result<T> = core::result::Result<T, UsbError>;
 
-pub struct Ccid<Bus, I, const N: usize>
+pub struct Ccid<'alloc, Bus, I, const N: usize>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
 {
     interface_number: InterfaceNumber,
     string_index: StringIndex,
-    read: EndpointOut<'static, Bus>,
+    read: EndpointOut<'alloc, Bus>,
     // interrupt: EndpointIn<'static, Bus>,
-    pipe: Pipe<Bus, I, N>,
+    pipe: Pipe<'alloc, Bus, I, N>,
 }
 
-impl<Bus, I, const N: usize> Ccid<Bus, I, N>
+impl<'alloc, Bus, I, const N: usize> Ccid<'alloc, Bus, I, N>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
@@ -40,7 +40,7 @@ where
     /// and allows personalizing the Answer-to-Reset, for instance by
     /// ASCII-encoding vendor or model information.
     pub fn new(
-        allocator: &'static UsbBusAllocator<Bus>,
+        allocator: &'alloc UsbBusAllocator<Bus>,
         request_pipe: Requester<I>,
         card_issuers_data: Option<&[u8]>,
     ) -> Self {
@@ -83,7 +83,7 @@ where
     }
 }
 
-impl<Bus, I, const N: usize> UsbClass<Bus> for Ccid<Bus, I, N>
+impl<'alloc, Bus, I, const N: usize> UsbClass<Bus> for Ccid<'alloc, Bus, I, N>
 where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
