@@ -105,8 +105,6 @@ pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
 
 #[cfg(feature = "admin-app")]
 pub type AdminApp = admin_app::App<TrussedClient, <SocT as Soc>::Reboot>;
-#[cfg(feature = "piv-authenticator")]
-pub type PivApp = piv_authenticator::Authenticator<TrussedClient, { ApduCommandSize }>;
 #[cfg(feature = "oath-authenticator")]
 pub type OathApp = oath_authenticator::Authenticator<TrussedClient>;
 #[cfg(feature = "fido-authenticator")]
@@ -151,15 +149,6 @@ impl TrussedApp for OathApp {
     }
 }
 
-#[cfg(feature = "piv-authenticator")]
-impl TrussedApp for PivApp {
-    const CLIENT_ID: &'static [u8] = b"piv\0";
-
-    type NonPortable = ();
-    fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        Self::new(trussed)
-    }
-}
 
 #[cfg(feature = "admin-app")]
 impl TrussedApp for AdminApp {
@@ -234,8 +223,6 @@ pub struct Apps {
     pub oath: OathApp,
     #[cfg(feature = "ndef-app")]
     pub ndef: NdefApp,
-    #[cfg(feature = "piv-authenticator")]
-    pub piv: PivApp,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerApp,
 }
@@ -251,8 +238,6 @@ impl Apps {
         let fido = FidoApp::with(trussed, ());
         #[cfg(feature = "oath-authenticator")]
         let oath = OathApp::with(trussed, ());
-        #[cfg(feature = "piv-authenticator")]
-        let piv = PivApp::with(trussed, ());
         #[cfg(feature = "ndef-app")]
         let ndef = NdefApp::new();
         #[cfg(feature = "provisioner-app")]
@@ -267,8 +252,6 @@ impl Apps {
             oath,
             #[cfg(feature = "ndef-app")]
             ndef,
-            #[cfg(feature = "piv-authenticator")]
-            piv,
             #[cfg(feature = "provisioner-app")]
             provisioner,
         }
@@ -281,8 +264,6 @@ impl Apps {
         f(&mut [
             #[cfg(feature = "ndef-app")]
             &mut self.ndef,
-            #[cfg(feature = "piv-authenticator")]
-            &mut self.piv,
             #[cfg(feature = "oath-authenticator")]
             &mut self.oath,
             #[cfg(feature = "fido-authenticator")]

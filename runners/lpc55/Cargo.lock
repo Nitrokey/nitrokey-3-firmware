@@ -8,11 +8,11 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67d9f4831720ac3f95d708922b71cbec0d085548affb935f4af35395af28366c"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "ctaphid-dispatch",
  "delog",
- "iso7816 0.1.0",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "iso7816",
+ "trussed",
 ]
 
 [[package]]
@@ -48,17 +48,6 @@ dependencies = [
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.0.1"
-source = "git+https://github.com/solokeys/apdu-dispatch#f01d4ba9bf3b02fc68dc6b94fceba1750d3f47d9"
-dependencies = [
- "delog",
- "heapless 0.7.9",
- "interchange",
- "iso7816 0.1.0-alpha.1",
-]
-
-[[package]]
-name = "apdu-dispatch"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4984da9e0c0fa55506888d6fa48bab859b20d788654267bebedfac64f54dff17"
@@ -66,7 +55,7 @@ dependencies = [
  "delog",
  "heapless 0.7.9",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
 ]
 
 [[package]]
@@ -203,7 +192,7 @@ dependencies = [
  "lpc55-hal",
  "lpc55-rtic",
  "nb 1.0.0",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "trussed",
 ]
 
 [[package]]
@@ -420,7 +409,7 @@ dependencies = [
  "heapless 0.7.9",
  "heapless-bytes 0.3.0",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
  "serde",
  "serde-indexed",
  "serde_repr",
@@ -587,18 +576,18 @@ name = "fido-authenticator"
 version = "0.1.0"
 source = "git+https://github.com/nitrokey/fido-authenticator?branch=main#4022d6ce568c309150248b6ba14b493a8e82a743"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "heapless 0.7.9",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
  "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "trussed",
 ]
 
 [[package]]
@@ -792,15 +781,6 @@ checksum = "65d9ab155e6b8e53ae742a06a850b2645e333d40d89ef2e28f190763742d768c"
 
 [[package]]
 name = "iso7816"
-version = "0.1.0-alpha.1"
-source = "git+https://github.com/ycrypto/iso7816#b2350f41ea44f90c69cdde94ead869be017b844c"
-dependencies = [
- "delog",
- "heapless 0.7.9",
-]
-
-[[package]]
-name = "iso7816"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a921942ff6163b5dc8be6996deed8193064db1f57ae3c327ac29a7c3cfffc71d"
@@ -968,21 +948,21 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 name = "ndef-app"
 version = "0.1.0"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "heapless 0.7.9",
- "iso7816 0.1.0",
+ "iso7816",
 ]
 
 [[package]]
 name = "nfc-device"
 version = "0.0.1"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "delog",
  "embedded-time",
  "heapless 0.7.9",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
  "nb 1.0.0",
 ]
 
@@ -1078,16 +1058,16 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11470bb97635a0d1943211c7b9cd473ecee002342480e8fc7347beba27f38243"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "delog",
  "flexiber",
  "heapless 0.7.9",
  "heapless-bytes 0.3.0",
  "hex-literal",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "trussed",
 ]
 
 [[package]]
@@ -1141,23 +1121,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
-name = "piv-authenticator"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/solokeys/piv-authenticator#91caa3c7ddbe3f8329c6a1830cab542d892c2c4d"
-dependencies = [
- "apdu-dispatch 0.0.1",
- "delog",
- "flexiber",
- "heapless 0.7.9",
- "hex-literal",
- "interchange",
- "iso7816 0.1.0-alpha.1",
- "serde",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed)",
- "untrusted",
-]
-
-[[package]]
 name = "poly1305"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1198,14 +1161,14 @@ dependencies = [
 name = "provisioner-app"
 version = "0.1.0"
 dependencies = [
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "delog",
  "heapless 0.7.9",
  "heapless-bytes 0.3.0",
  "littlefs2",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "trussed",
 ]
 
 [[package]]
@@ -1299,7 +1262,7 @@ name = "runner"
 version = "1.1.0"
 dependencies = [
  "admin-app",
- "apdu-dispatch 0.1.0",
+ "apdu-dispatch",
  "board",
  "cortex-m-semihosting",
  "ctap-types",
@@ -1315,10 +1278,9 @@ dependencies = [
  "ndef-app",
  "nfc-device",
  "oath-authenticator",
- "piv-authenticator",
  "provisioner-app",
  "rtt-target",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=no-ui-status-reset)",
+ "trussed",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1548,42 +1510,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trussed"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed#c52e9c7a3a075bb143ae23e01e6ec78851d3a0b0"
-dependencies = [
- "aes",
- "bitflags",
- "block-modes",
- "cbor-smol",
- "cfg-if",
- "chacha20",
- "chacha20poly1305",
- "cosey 0.3.0",
- "delog",
- "des",
- "embedded-hal",
- "flexiber",
- "generic-array 0.14.5",
- "heapless 0.7.9",
- "heapless-bytes 0.3.0",
- "hex-literal",
- "hmac",
- "interchange",
- "littlefs2",
- "nb 1.0.0",
- "p256-cortex-m4",
- "postcard",
- "rand_core",
- "salty",
- "serde",
- "serde-indexed",
- "sha-1",
- "sha2",
- "zeroize",
-]
-
-[[package]]
 name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1612,12 +1538,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "untrusted"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
-
-[[package]]
 name = "usb-device"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1631,7 +1551,7 @@ dependencies = [
  "embedded-time",
  "heapless 0.7.9",
  "interchange",
- "iso7816 0.1.0",
+ "iso7816",
  "usb-device",
 ]
 

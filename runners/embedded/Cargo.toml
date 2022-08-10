@@ -33,7 +33,6 @@ admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-piv-authenticator = { git = "https://github.com/solokeys/piv-authenticator", features = ["apdu-dispatch"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -70,15 +69,13 @@ default = ["admin-app", "fido-authenticator", "ndef-app", "no-encrypted-storage"
 
 release = []
 
-complete = ["oath-authenticator", "piv-authenticator", # "provisioner-app",
+complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-4", "log-traceP", "log-rtt"]
+			"trussed/clients-3", "log-traceP", "log-rtt"]
 
 develop = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP", "log-rtt"]
-
-develop-piv = ["develop", "piv-authenticator", "trussed/clients-4"]
 
 develop-no-press = ["develop", "no-buttons"]
 
