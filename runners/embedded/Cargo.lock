@@ -11,7 +11,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
 ]
 
 [[package]]
@@ -606,13 +606,12 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "oath-authenticator",
- "piv-authenticator",
  "provisioner-app",
  "rand_core",
  "rtt-target",
  "serde",
  "toml",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -660,7 +659,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
 ]
 
 [[package]]
@@ -1231,7 +1230,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
 ]
 
 [[package]]
@@ -1288,23 +1287,6 @@ name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
-
-[[package]]
-name = "piv-authenticator"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/solokeys/piv-authenticator#1922d6d97ba9ea4800572eea4b8a243ada2bf668"
-dependencies = [
- "apdu-dispatch",
- "delog",
- "flexiber",
- "heapless 0.7.14",
- "hex-literal",
- "interchange",
- "iso7816",
- "serde",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed)",
- "untrusted",
-]
 
 [[package]]
 name = "poly1305"
@@ -1378,7 +1360,7 @@ dependencies = [
  "littlefs2",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
 ]
 
 [[package]]
@@ -1756,42 +1738,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trussed"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed#258fe26ce89cd3bb4d84f192f3fe256193946886"
-dependencies = [
- "aes",
- "bitflags",
- "block-modes",
- "cbor-smol",
- "cfg-if",
- "chacha20",
- "chacha20poly1305",
- "cosey 0.3.0",
- "delog",
- "des",
- "embedded-hal",
- "flexiber",
- "generic-array 0.14.5",
- "heapless 0.7.14",
- "heapless-bytes 0.3.0",
- "hex-literal",
- "hmac",
- "interchange",
- "littlefs2",
- "nb 1.0.0",
- "p256-cortex-m4",
- "postcard",
- "rand_core",
- "salty",
- "serde",
- "serde-indexed",
- "sha-1",
- "sha2",
- "zeroize",
-]
-
-[[package]]
 name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1839,12 +1785,6 @@ dependencies = [
  "generic-array 0.14.5",
  "subtle",
 ]
-
-[[package]]
-name = "untrusted"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "url"
