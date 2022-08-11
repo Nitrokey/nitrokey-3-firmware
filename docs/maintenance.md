@@ -28,3 +28,11 @@ To release a new version of the firmware, perform the following steps:
 1. Download the `firmware-nk3xn.bin` and `commands.bd` as built by the CI from the release tag.
 2. Sign the firmware and build a SB2.1 image using the `commands.bd` file.
 3. Upload the SB2.1 image to the GitHub release using the filename pattern `firmware-<device>-<chip>-v<version>.sb2`, for example `firmware-nk3xn-lpc55-v1.0.0.sb2`.
+
+## Forking Dependencies
+
+If it is necessary to fork dependencies, please use the following guidelines:
+- Create the fork in the Nitrokey namespace on Github and use its main branch.
+- Try to create upstream PRs for all changes in the fork.
+- Create a tracking issue that lists these upstream PRs ([example](https://github.com/Nitrokey/fido-authenticator/issues/5)).
+- When patching `nitrokey-3-firmware` to use the fork, use a tag to specify the dependency version.  This tag should have the format `v0.1.0-nitrokey.1`, where `v0.1.0` is the latest upstream version and `1` can be incremented if more changes are added to the fork.
