@@ -26,11 +26,28 @@ endif
 
 FILENAME := ${FILENAME_PREFIX}${BOARD}${FILENAME_SUFFIX}.bin
 
-.PHONY: ci
+.PHONY: ci ci-all webcrypt update
 ci:
 	$(MAKE) build 
 	$(MAKE) objcopy
 	$(MAKE) size
+
+ci-all:
+	$(MAKE) ci BOARD=nk3xn
+	$(MAKE) ci BOARD=nk3xn PROVISIONER=1
+
+webcrypt:
+	# $(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-serial,serial,log-all
+	$(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-all
+	cp firmware-nk3xn.bin webcrypt-nk3xn-`git describe --long --always`.bin
+
+
+LPC55=lpc55
+update:
+	-nitropy nk3 reboot --bootloader && sleep 2
+	$(LPC55) write-flash $(FILENAME)
+	$(LPC55) reboot && sleep 1
+	nitropy nk3 test
 
 .PHONY: check
 check:
@@ -48,7 +65,7 @@ run:
 objcopy:
 	cargo objcopy --release --features $(FEATURES) -- -O binary "${FILENAME}"
 
-.PHONY: flash
+.PHONY: flash update
 flash: objcopy
 	mboot erase --mass
 	mboot write "${FILENAME}"

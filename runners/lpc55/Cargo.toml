@@ -11,7 +11,7 @@ authors = [
     "Szczepan Zalega <szczepan@nitrokey.com>",
 ]
 edition = "2021"
-rust-version = "1.59.0"
+# rust-version = "1.59.0"
 license = "Apache-2.0 OR MIT"
 
 [lib]
@@ -53,13 +53,13 @@ fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
 usbd-ctaphid = { path = "../../../webcrypt-usbip/components/usbd-ctaphid" }
-webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust.git" }
+webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust.git" , branch = "webcrypt-devel"}
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
 
 [features]
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-3"]
+default = ["admin-app", "fido-authenticator", "trussed/clients-4"]
 
 develop = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "trussed/clients-4"]
 develop-provisioner = ["oath-authenticator", "piv-authenticator", "no-encrypted-storage", "no-buttons", "no-reset-time-window", "provisioner-app", "trussed/clients-5"]
@@ -106,7 +106,8 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-trussed = { git = "https://github.com/nitrokey/trussed", branch = "sz-unsafe-inject-any-key" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "sz-unsafe-inject-any-key" }
+ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", branch="multiple_apps" }
 
 [profile.release]
 codegen-units = 1

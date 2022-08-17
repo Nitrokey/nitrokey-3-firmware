@@ -12,7 +12,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -21,8 +21,8 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b613b8e1e3cf911a086f53f03bf286f52fd7a7258e4fa606f0ef220d39d8877"
 dependencies = [
- "generic-array 0.14.5",
- "heapless 0.7.15",
+ "generic-array 0.14.6",
+ "heapless 0.7.16",
 ]
 
 [[package]]
@@ -53,7 +53,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4984da9e0c0fa55506888d6fa48bab859b20d788654267bebedfac64f54dff17"
 dependencies = [
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "interchange",
  "iso7816",
 ]
@@ -66,15 +66,15 @@ checksum = "45403b49e3954a4b8428a0ac21a4b7afadccf92bfd96273f1a58cd4812496ae0"
 dependencies = [
  "generic-array 0.12.4",
  "generic-array 0.13.3",
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "stable_deref_trait",
 ]
 
 [[package]]
 name = "atomic-polyfill"
-version = "0.1.8"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e14bf7b4f565e5e717d7a7a65b2a05c0b8c96e4db636d6f780f03b15108cdd1b"
+checksum = "9c041a8d9751a520ee19656232a18971f18946a7900f1520ee4400002244dd89"
 dependencies = [
  "critical-section",
 ]
@@ -143,7 +143,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
 ]
 
 [[package]]
@@ -172,7 +172,7 @@ dependencies = [
  "lpc55-hal",
  "lpc55-rtic",
  "nb 1.0.0",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -188,7 +188,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d516e3e353d5fc5ee156028f43224033430fd08ef05f8d5dba18a57a4ee5df49"
 dependencies = [
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "serde",
 ]
@@ -246,7 +246,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ee52072ec15386f770805afd189a01c8841be8696bed250fa2f13c4c0d6dfb7"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
 ]
 
 [[package]]
@@ -261,9 +261,9 @@ dependencies = [
 
 [[package]]
 name = "cortex-m"
-version = "0.7.5"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd20d4ac4aa86f4f75f239d59e542ef67de87cce2c282818dc6e84155d3ea126"
+checksum = "70858629a458fdfd39f9675c4dc309411f2a3f83bede76988d81bf1a0ecee9e0"
 dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
@@ -350,7 +350,7 @@ version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83bd3bb4314701c568e340cd8cf78c975aa0ca79e03d3f6d1677d5b0c9c0c03"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "rand_core",
  "subtle",
  "zeroize",
@@ -362,15 +362,15 @@ version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "subtle",
 ]
 
 [[package]]
 name = "cstr_core"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644828c273c063ab0d39486ba42a5d1f3a499d35529c759e763a9c6cb8a0fb08"
+checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
 dependencies = [
  "cty",
  "memchr",
@@ -386,7 +386,7 @@ dependencies = [
  "cbor-smol",
  "cosey 0.3.0",
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "interchange",
  "iso7816",
@@ -397,12 +397,11 @@ dependencies = [
 
 [[package]]
 name = "ctaphid-dispatch"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24f378100ce2ecda0bc9c882254583168b63afd788f277f45d494c33b4493d5a"
+version = "0.1.1"
+source = "git+https://github.com/Nitrokey/ctaphid-dispatch.git?branch=multiple_apps#8bad0da13dead343c13c152140ef66dcb6f0e6a4"
 dependencies = [
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "interchange",
 ]
@@ -483,7 +482,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3dd60d1080a57a05ab032377049e0591415d2b31afd7028356dbf3cc6dcb066"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
 ]
 
 [[package]]
@@ -515,7 +514,7 @@ checksum = "beca177dcb8eb540133e7680baff45e7cc4d93bf22002676cec549f82343721b"
 dependencies = [
  "crypto-bigint",
  "ff",
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "group",
  "rand_core",
  "subtle",
@@ -561,14 +560,14 @@ dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "interchange",
  "iso7816",
  "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -579,7 +578,7 @@ checksum = "e3df5b1466eec7b03f5848d8388b99975a0ba1a26510db61ba87c2a6177938e5"
 dependencies = [
  "delog",
  "flexiber_derive",
- "heapless 0.7.15",
+ "heapless 0.7.16",
 ]
 
 [[package]]
@@ -625,9 +624,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.5"
+version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd48d33ec7f05fbfa152300fdad764757cbded343c1aa1cff2fbaf4134851803"
+checksum = "bff49e947297f3312447abdca79f45f4738097cc82b06e72054d2223f601f1b9"
 dependencies = [
  "typenum",
  "version_check",
@@ -676,9 +675,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.12.2"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "607c8a29735385251a339424dd462993c0fed8fa09d378f259377df08c126022"
+checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "heapless"
@@ -687,16 +686,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "634bd4d29cbf24424d0a4bfcbf80c6960129dc24424752a7d1d1390607023422"
 dependencies = [
  "as-slice",
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "hash32 0.1.1",
  "stable_deref_trait",
 ]
 
 [[package]]
 name = "heapless"
-version = "0.7.15"
+version = "0.7.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f6733da246dc2af610133c8be0667170fd68e8ca5630936b520300eee8846f9"
+checksum = "db04bc24a18b9ea980628ecf00e6c0264f3c1426dac36c00cb49b6fbad8b0743"
 dependencies = [
  "atomic-polyfill",
  "hash32 0.2.1",
@@ -723,7 +722,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7285eba272c6af3e9f15fb9e1c1b6e7d35aa70580ffe0d47af017e97dfb6f48b"
 dependencies = [
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "serde",
  "serde_cbor",
  "typenum",
@@ -768,7 +767,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a921942ff6163b5dc8be6996deed8193064db1f57ae3c327ac29a7c3cfffc71d"
 dependencies = [
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
 ]
 
 [[package]]
@@ -785,9 +784,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.126"
+version = "0.2.132"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
+checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
 name = "littlefs2"
@@ -799,8 +798,8 @@ dependencies = [
  "cstr_core",
  "cty",
  "delog",
- "generic-array 0.14.5",
- "heapless 0.7.15",
+ "generic-array 0.14.6",
+ "heapless 0.7.16",
  "littlefs2-sys",
  "serde",
 ]
@@ -847,7 +846,7 @@ dependencies = [
  "digest",
  "embedded-hal",
  "embedded-time",
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "littlefs2",
  "lpc55-pac",
  "lpc55-rtic",
@@ -932,7 +931,7 @@ name = "ndef-app"
 version = "0.1.0"
 dependencies = [
  "apdu-dispatch",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "iso7816",
 ]
 
@@ -943,7 +942,7 @@ dependencies = [
  "apdu-dispatch",
  "delog",
  "embedded-time",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "interchange",
  "iso7816",
  "nb 1.0.0",
@@ -1044,13 +1043,13 @@ dependencies = [
  "apdu-dispatch",
  "delog",
  "flexiber",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "hex-literal",
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
@@ -1110,7 +1109,7 @@ dependencies = [
  "apdu-dispatch",
  "delog",
  "flexiber",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "hex-literal",
  "interchange",
  "iso7816",
@@ -1136,7 +1135,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a25c0b0ae06fcffe600ad392aabfa535696c8973f2253d9ac83171924c58a858"
 dependencies = [
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "postcard-cobs",
  "serde",
 ]
@@ -1149,9 +1148,9 @@ checksum = "7c68cb38ed13fd7bc9dd5db8f165b7c8d9c1a315104083a2b10f11354c2af97f"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.40"
+version = "1.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
+checksum = "0a2ca2c61bc9f3d74d2886294ab7b9853abd9c1ad903a3ac7815c58989bb7bab"
 dependencies = [
  "unicode-ident",
 ]
@@ -1162,20 +1161,20 @@ version = "0.1.0"
 dependencies = [
  "apdu-dispatch",
  "delog",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "littlefs2",
  "lpc55-hal",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.20"
+version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
+checksum = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179"
 dependencies = [
  "proc-macro2",
 ]
@@ -1281,7 +1280,7 @@ dependencies = [
  "piv-authenticator",
  "provisioner-app",
  "rtt-target",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1310,7 +1309,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.12",
+ "semver 1.0.13",
 ]
 
 [[package]]
@@ -1342,9 +1341,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.12"
+version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2333e6df6d6598f2b1974829f853c2b4c5f4a6e503c10af918081aa6f8564e1"
+checksum = "93f6841e709003d68bb2deee8c343572bf446003ec20a583e76f7b15cebf3711"
 
 [[package]]
 name = "semver-parser"
@@ -1354,9 +1353,9 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.139"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
+checksum = "53e8e5d5b70924f74ff5c6d64d9a5acd91422117c60f48c4e07855238a254553"
 dependencies = [
  "serde_derive",
 ]
@@ -1384,9 +1383,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.139"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb"
+checksum = "d3d8e8de557aee63c26b85b947f5e59b690d0454c753f3adeb5cd7835ab88391"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1395,9 +1394,9 @@ dependencies = [
 
 [[package]]
 name = "serde_repr"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2ad84e47328a31223de7fed7a4f5087f2d6ddfe586cf3ca25b7a165bc0a5aed"
+checksum = "1fe39d9fbb0ebf5eb2c7cb7e2a47e4f462fad1379f1166b8ae49ad9eae89a7ca"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1469,9 +1468,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.98"
+version = "1.0.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50aef8a904de4c23c788f104b7dddc7d6f79c647c7c8ce4cc8f73eb0ca773dd"
+checksum = "58dbef6ec655055e20b86b15a8cc6d439cca19b667537ac6a1369572d151ab13"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1493,7 +1492,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key#45d2ce3cc9b6afbf9164a3073e19e9737b681700"
+source = "git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key#45d2ce3cc9b6afbf9164a3073e19e9737b681700"
 dependencies = [
  "aes",
  "bitflags",
@@ -1507,8 +1506,8 @@ dependencies = [
  "des",
  "embedded-hal",
  "flexiber",
- "generic-array 0.14.5",
- "heapless 0.7.15",
+ "generic-array 0.14.6",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "hex-literal",
  "hmac",
@@ -1529,7 +1528,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed#258fe26ce89cd3bb4d84f192f3fe256193946886"
+source = "git+https://github.com/trussed-dev/trussed#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
 dependencies = [
  "aes",
  "bitflags",
@@ -1543,8 +1542,8 @@ dependencies = [
  "des",
  "embedded-hal",
  "flexiber",
- "generic-array 0.14.5",
- "heapless 0.7.15",
+ "generic-array 0.14.6",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "hex-literal",
  "hmac",
@@ -1576,9 +1575,9 @@ checksum = "e87a2ed6b42ec5e28cc3b94c09982969e9227600b2e3dcbc1db927a84c06bd69"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.1"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
+checksum = "c4f5b37a154999a8f3f98cc23a628d850e154479cd94decf3414696e12e31aaf"
 
 [[package]]
 name = "unicode-xid"
@@ -1592,7 +1591,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f214e8f697e925001e66ec2c6e37a4ef93f0f78c2eed7814394e10c62025b05"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array 0.14.6",
  "subtle",
 ]
 
@@ -1604,9 +1603,9 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "usb-device"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6be90410d4772074ea49525e2e753b65920b94b57eee21a6ef7b6a6fe6296245"
+checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ccid"
@@ -1614,7 +1613,7 @@ version = "0.0.0-unreleased"
 dependencies = [
  "delog",
  "embedded-time",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "interchange",
  "iso7816",
  "usb-device",
@@ -1628,7 +1627,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
- "heapless 0.7.15",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "interchange",
  "serde",
@@ -1676,22 +1675,22 @@ dependencies = [
 [[package]]
 name = "webcrypt"
 version = "0.2.0"
-source = "git+https://github.com/Nitrokey/nitrokey-webcrypt-rust.git#bc8d79e7da1823dafe0b6092ecba432ab9c45451"
+source = "git+https://github.com/Nitrokey/nitrokey-webcrypt-rust.git?branch=webcrypt-devel#ab393c77ed4a949ddfa120acfb25e147bbaff698"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
- "generic-array 0.14.5",
- "heapless 0.7.15",
+ "generic-array 0.14.6",
+ "heapless 0.7.16",
  "heapless-bytes 0.3.0",
  "littlefs2",
  "log",
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
 ]
 
 [[package]]
