@@ -52,8 +52,9 @@ provisioner-app = { path = "../../components/provisioner-app", optional = true, 
 fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
-usbd-ctaphid = { path = "../../../webcrypt-usbip/components/usbd-ctaphid" }
-webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust.git" , branch = "webcrypt-devel"}
+usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-webcrypt-rust.git", branch="main" }
+
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
@@ -106,8 +107,9 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "sz-unsafe-inject-any-key" }
-ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", branch="multiple_apps" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", branch="sz-unsafe-inject-any-key" }
+ctaphid-dispatch = { git = "https://github.com/nitrokey/ctaphid-dispatch.git", branch="multiple_apps" }
+apdu-dispatch = { git = "https://github.com/nitrokey/apdu-dispatch.git", branch="sz-multiple-apps" }
 
 [profile.release]
 codegen-units = 1

@@ -48,9 +48,8 @@ dependencies = [
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4984da9e0c0fa55506888d6fa48bab859b20d788654267bebedfac64f54dff17"
+version = "0.1.1"
+source = "git+https://github.com/nitrokey/apdu-dispatch.git?branch=sz-multiple-apps#a48af4351268ef43fc86cb1a5ed3252b5de326fb"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -325,9 +324,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59a6001667ab124aebae2a495118e11d30984c3a653e99d86d58971708cf5e4b"
+checksum = "1079fb8528d9f9c888b1e8aa651e6e079ade467323d58f75faf1d30b1808f540"
 dependencies = [
  "libc",
 ]
@@ -398,7 +397,7 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/ctaphid-dispatch.git?branch=multiple_apps#8bad0da13dead343c13c152140ef66dcb6f0e6a4"
+source = "git+https://github.com/nitrokey/ctaphid-dispatch.git?branch=multiple_apps#8bad0da13dead343c13c152140ef66dcb6f0e6a4"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -1674,8 +1673,8 @@ dependencies = [
 
 [[package]]
 name = "webcrypt"
-version = "0.2.0"
-source = "git+https://github.com/Nitrokey/nitrokey-webcrypt-rust.git?branch=webcrypt-devel#ab393c77ed4a949ddfa120acfb25e147bbaff698"
+version = "0.2.1"
+source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust.git?branch=main#6573f2130cfb16b0da5bc4da4ae77c87dd117341"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
