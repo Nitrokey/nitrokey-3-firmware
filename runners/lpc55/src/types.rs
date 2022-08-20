@@ -279,6 +279,7 @@ impl Apps {
             ]) -> T
     {
         f(&mut [
+            &mut self.webcrypt,
             #[cfg(feature = "ndef-app")]
             &mut self.ndef,
             #[cfg(feature = "piv-authenticator")]
