@@ -61,6 +61,10 @@ where
     in_chain: usize,
     pub(crate) started_processing: bool,
     atr: Vec<u8, 32>,
+    // The sequence number of the last bulk command if it was an abort command.
+    bulk_abort: Option<u8>,
+    // The sequence number of the last abort command received over the control pipe, if any.
+    control_abort: Option<u8>,
 }
 
 impl<'alloc, Bus, I, const N: usize> Pipe<'alloc, Bus, I, N>
@@ -94,6 +98,8 @@ where
             // if for some reason not signaling T=0 support leads to issues,
             // we can enable it here.
             atr: Self::construct_atr(card_issuers_data, false),
+            bulk_abort: None,
+            control_abort: None,
         }
     }
 
@@ -193,6 +199,18 @@ where
             Ok(command) => {
                 self.seq = command.seq();
 
+                // If we receive an ABORT on the control pipe, we reject all further commands until
+                // we receive a matching ABORT on the bulk endpoint too.
+                if let Some(control_abort) = self.control_abort {
+                    if matches!(command, PacketCommand::Abort(_)) && control_abort == self.seq {
+                        self.abort();
+                    } else {
+                        self.send_slot_status_error(Error::CmdAborted);
+                    }
+                    return;
+                }
+                self.bulk_abort = None;
+
                 // happy path
                 match command {
                     PacketCommand::PowerOn(_command) => self.send_atr(),
@@ -203,9 +221,8 @@ where
 
                     PacketCommand::XfrBlock(command) => self.handle_transfer(command),
 
-                    PacketCommand::Abort(_command) => {
-                        todo!();
-                    }
+                    PacketCommand::Abort(_command) => self.bulk_abort = Some(self.seq),
+
                     PacketCommand::GetParameters(_command) => self.send_parameters(),
                 }
             }
@@ -517,10 +534,35 @@ where
     //     self.write.address()
     // }
 
-    pub fn expect_abort(&mut self, slot: u8, _seq: u8) {
+    // Called if we receive an ABORT request on the control pipe.
+    pub fn expect_abort(&mut self, slot: u8, seq: u8) {
         debug_assert!(slot == 0);
-        info!("ABORT expected for seq = {}", _seq);
-        todo!();
+        info!("ABORT expected for seq = {}", seq);
+        // We only have one slot (see FUNCTIONAL_INTERFACE_DESCRIPTOR in constants.rs)
+        if slot != 0 {
+            return;
+        }
+        if self.bulk_abort == Some(seq) {
+            self.abort();
+        } else {
+            self.control_abort = Some(seq);
+        }
+    }
+
+    // This method performs an abort and should only be called if we received matching ABORT
+    // requets both from the control pipe and from the bulk endpoint.
+    fn abort(&mut self) {
+        // reset state
+        self.bulk_abort = None;
+        self.control_abort = None;
+        self.state = State::Idle;
+        self.outbox = None;
+        self.started_processing = false;
+        self.receiving_long = false;
+        self.long_packet_missing = 0;
+
+        // send response for successful abort
+        self.send_slot_status_ok();
     }
 
 }
