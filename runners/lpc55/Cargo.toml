@@ -104,7 +104,6 @@ log-warn = []
 log-error = []
 
 [patch.crates-io]
-fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "main" }
 trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
 
 [profile.release]

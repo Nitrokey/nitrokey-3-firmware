@@ -4,9 +4,18 @@
 
 - fido-authenticator: Return an error instead of panicking if the credential ID is too long ([#49][])
 - Implement CCID abort handling, fixing an issue where GnuPG would stall for up to a minute on the first operation if a Nitrokey 3 is connected and recognized as a CCID device ([#22][])
+- fido-authenticator: Fix handling of U2F commands over NFC ([fido-authenticator#18][])
+- interchange: Fix unsound usage of `UnsafeCell` ([interchange#4][])
+- Improve APDU handling ([iso7816#4][], [iso7816#5][], [apdu-dispatch#5][])
+- Update all dependencies
 
 [#22]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/22
 [#49]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/49
+[apdu-dispatch#5]: https://github.com/solokeys/apdu-dispatch/pull/5
+[fido-authenticator#18]: https://github.com/solokeys/fido-authenticator/pull/18
+[interchange#4]: https://github.com/trussed-dev/interchange/pull/4
+[iso7816#4]: https://github.com/ycrypto/iso7816/pull/4
+[iso7816#5]: https://github.com/ycrypto/iso7816/pull/5
 
 # v1.1.0 (2022-08-02)
 
