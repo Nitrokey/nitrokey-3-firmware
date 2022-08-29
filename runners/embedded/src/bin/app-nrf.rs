@@ -24,7 +24,7 @@ mod app {
     use rand_core::SeedableRng;
     use trussed::{
         client::{GuiClient, CryptoClient, PollClient},
-        syscall, types::Vec, types::ServiceBackends, Interchange
+        syscall, types::Vec, types::ServiceBackends, Interchange, types::Mechanism, types::StorageAttributes
     };
 
     static mut global_delay_timer4: Option<Timer::<nrf52840_pac::TIMER4>> = None;
@@ -415,9 +415,9 @@ mod app {
                         }
                         let rnd = syscall!(cl.client.random_bytes(32));
                         trace!("RND: {:?}", rnd.bytes);
-                        syscall!(cl.client.set_service_backends(Vec::from_slice(&[ServiceBackends::Software]).unwrap()));
-                        let rnd = syscall!(cl.client.random_bytes(32));
-                        trace!("RND: {:?}", rnd.bytes);
+                        // syscall!(cl.client.set_service_backends(Vec::from_slice(&[ServiceBackends::Software]).unwrap()));
+                        // let rnd = syscall!(cl.client.random_bytes(32));
+                        // trace!("RND: {:?}", rnd.bytes);
                     }
                     20 => {
                         syscall!(cl.client.draw_filled_rect(120 - 78, 67 - 45, 33, 90, 0x0000_u16));
@@ -436,6 +436,11 @@ mod app {
                     40 => {
                         syscall!(cl.client.draw_filled_rect(0, 0, 240, 135, 0x0000_u16));
                         // syscall!(cl.client.gui_control(trussed::types::GUIControlCommand::Rotate(2)));
+                    }
+                    60 => {
+                        trace!("Gen P256");
+			let keyid = syscall!(cl.client.generate_key(Mechanism::P256, StorageAttributes::new()));
+                        trace!("Gen P256 ok: {:?}", &keyid.key);
                     }
                     _ => {}
                 });
