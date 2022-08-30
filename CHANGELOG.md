@@ -1,4 +1,6 @@
-# Unreleased
+# v1.2.0 (2022-08-30)
+
+This release contains various bugfixes and stability improvements.
 
 ### Bugfixes
 
