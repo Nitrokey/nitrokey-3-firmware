@@ -2,6 +2,15 @@
 
 This document lists identifiers used by Nitrokey 3 devices.
 
+## Part Numbers and Project Names
+
+| Device        | Part Number | Project Name | USB    | NFC | SoC   |
+| ------------- | ----------- | ------------ | :----: | :-: | :---: |
+| Nitrokey 3 AM | NK3AM1xx    | Athene       | Type A | no  | nrf52 |
+| Nitrokey 3 AN | NK3AN1xx    | Gaia         | Type A | yes | lpc55 |
+| Nitrokey 3 CN | NK3CN1xx    | Hades        | Type C | yes | lpc55 |
+
+
 ## USB Vendor and Product ID
 
 | Device                        | Vendor ID | Product ID |
