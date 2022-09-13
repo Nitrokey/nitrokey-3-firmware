@@ -22,6 +22,7 @@ pub mod dummy_ui;
 pub mod trussed_ui;
 
 mod flash;
+pub mod fpr;
 pub mod nfc;
 #[cfg(feature = "extflash_qspi")]
 pub mod qspiflash;

@@ -20,6 +20,7 @@ mod app {
         rng::Rng,
         timer::Timer,
         twim::Twim,
+        uarte::{Baudrate, Parity, Uarte},
     };
     use rand_core::SeedableRng;
     use trussed::{
@@ -164,6 +165,11 @@ mod app {
         let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
 
         /* TODO: set up fingerprint device */
+	let uarte = Uarte::new(ctx.device.UARTE0, board_gpio.uart_pins.take().unwrap(),
+		Parity::EXCLUDED, Baudrate::BAUD57600);
+	let _fpr = ERL::soc::fpr::FingerprintReader::new(uarte, 0xffff_ffffu32,
+		board_gpio.fpr_power.take().unwrap(),
+		board_gpio.fpr_detect.take().unwrap());
 
         let dev_rng = Rng::new(ctx.device.RNG);
         let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
