@@ -84,8 +84,8 @@ impl DisplayUI {
     }
 
     pub fn power_off(&mut self) {
-        if let Some(ref mut p) = self.disp_power {
-            p.set_high().ok();
+        if let Some(ref mut d) = self.disp {
+            d.shutdown();
         }
         // self.state = StickUIState::PoweredDown;
     }
@@ -265,6 +265,10 @@ impl trussed::platform::UserInterface for DisplayUI {
                     } else {
                         None
                     }
+                }
+                GUIControlCommand::PowerOff => {
+                    self.power_off();
+                    None
                 }
                 _ => None,
             }

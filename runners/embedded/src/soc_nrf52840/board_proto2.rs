@@ -262,8 +262,10 @@ pub fn power_off() {
     }
     // display
     unsafe {
-        pac.P0.outset.write(|w| w.bits(1u32 << 13));
-    } // POWER
+        /* pac.P0.outset.write(|w| w.bits(1u32 << 13)); */
+    } // POWER: do not cut main power supply; display will draw even more power
+      // through its data pins in that case. Instead, runner puts display to sleep
+      // before calling this function.
     unsafe {
         pac.P0.outset.write(|w| w.bits(1u32 << 8));
     } // BACKLIGHT

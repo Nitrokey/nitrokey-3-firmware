@@ -463,8 +463,11 @@ mod app {
                     bs.copy_from_slice(&st[0..8]);
                 });
                 trace!("UI Btn {:?}", &bs);
+                #[cfg(feature = "has_poweroff")]
                 if bs[3] != 0 {
-                    #[cfg(feature = "has_poweroff")]
+                    cl.lock(|cl| {
+                        syscall!(cl.client.gui_control(trussed::types::GUIControlCommand::PowerOff));
+                    });
                     ERL::soc::board::power_off();
                 }
             }
