@@ -12,7 +12,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
@@ -171,7 +171,7 @@ dependencies = [
  "lpc55-hal",
  "lpc55-rtic",
  "nb 1.0.0",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
@@ -566,7 +566,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
@@ -1070,7 +1070,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
@@ -1194,7 +1194,7 @@ dependencies = [
  "lpc55-hal",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
@@ -1307,7 +1307,7 @@ dependencies = [
  "piv-authenticator",
  "provisioner-app",
  "rtt-target",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1519,7 +1519,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key#45d2ce3cc9b6afbf9164a3073e19e9737b681700"
+source = "git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel#0535b305b34763f77df7eda7517859b5ad7c8853"
 dependencies = [
  "aes",
  "bitflags",
@@ -1718,7 +1718,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/nitrokey/trussed.git?branch=sz-unsafe-inject-any-key)",
+ "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed.git?branch=webcrypt-devel)",
 ]
 
 [[package]]
