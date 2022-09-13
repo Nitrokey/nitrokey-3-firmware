@@ -126,7 +126,7 @@ pub trait TrussedApp: Sized {
 
         let mut client_id = littlefs2::path::PathBuf::new();
         client_id.push(Self::CLIENT_ID.try_into().unwrap());
-        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
+        assert!(trussed.add_endpoint(trussed_responder, client_id.into()).is_ok());
 
         let syscaller = Syscall::default();
         let trussed_client = TrussedClient::new(

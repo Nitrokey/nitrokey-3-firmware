@@ -105,10 +105,6 @@ log-debug = []
 log-warn = []
 log-error = []
 
-[patch.crates-io]
-fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "skip-up-timeout" }
-trussed = { git = "https://github.com/nitrokey/trussed", branch = "no-ui-status-reset" }
-
 [profile.release]
 codegen-units = 1
 lto = true
@@ -123,3 +119,16 @@ opt-level = 2
 # TODO: see which if any settings are best for p256-cortex-m4
 # [profile.release.package.nisty]
 # opt-level = 2
+
+[patch.crates-io]
+littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
+fido-authenticator = { git = "https://github.com/nitrokey/fido-authenticator", branch = "skip-up-timeout" }
+trussed = { git = "https://github.com/jnordholz/trussed", branch = "ptb" }
+#trussed = { path = "../../../trussed" }
+
+[patch.'https://github.com/solokeys/fido-authenticator']
+fido-authenticator = { git = "https://github.com/jnordholz/fido-authenticator" }
+
+[patch.'https://github.com/trussed-dev/trussed']
+trussed = { git = "https://github.com/jnordholz/trussed", branch = "ptb" }

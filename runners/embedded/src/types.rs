@@ -9,7 +9,7 @@ use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
-use trussed::types::{ClientId, LfsResult, LfsStorage};
+use trussed::types::{ClientContext, LfsResult, LfsStorage};
 use trussed::{platform, store};
 pub mod usbnfc;
 
@@ -151,7 +151,7 @@ pub trait TrussedApp: Sized {
         let client_backends =
             trussed::types::Vec::from_slice(&[trussed::types::ServiceBackends::Software]);
 
-        let client_id = ClientId::new(littlefs2::path::PathBuf::from(Self::CLIENT_ID), client_backends.unwrap());
+        let client_id = ClientContext::new(littlefs2::path::PathBuf::from(Self::CLIENT_ID), client_backends.unwrap());
         assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
 
         let syscaller = RunnerSyscall::default();
