@@ -11,6 +11,9 @@ def get_img_dim(fn):
 	assert perr is None
 	assert p.returncode == 0
 	dim = pout.strip().split(" ")[2].split("x")
+	# dimension may be "144x216" or "144x216+0+0" - cut off "+0+0" if present
+	if "+" in dim[1]:
+		dim[1] = dim[1].split("+")[0]
 	return int(dim[0]), int(dim[1])
 
 SEEN_RGBVALS = {}
@@ -25,6 +28,7 @@ def png_to_raw565(fn, cw=None, ch=None, cntx=None, cnty=None):
 		ch = ih
 		cntx = 1
 		cnty = 1
+  
 	else:
 		assert iw == cw*cntx
 		assert ih == ch*cnty
@@ -35,7 +39,8 @@ def png_to_raw565(fn, cw=None, ch=None, cntx=None, cnty=None):
 	fnbmp = fn.replace(".png", ".bmp")
 	fnraw = fn.replace(".png", ".raw")
 
-	p = subprocess.Popen("convert %s -type TrueColor -define BMP:subtype=rgb565 %s" % (fn, fnbmp),
+	# some imagemagick versions ignore 565 flag, so use ffmpeg instead
+	p = subprocess.Popen("ffmpeg -i %s -pix_fmt rgb565 %s" % (fn, fnbmp),
 			stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
 			shell=True)
 	p.communicate()
@@ -83,5 +88,4 @@ def png_to_raw565(fn, cw=None, ch=None, cntx=None, cnty=None):
 png_to_raw565("font_9x18.png", 9, 18, 16, 12)
 png_to_raw565("font_9x18_bold.png", 9, 18, 16, 12)
 png_to_raw565("texmap.png")
-
 sys.exit(0)
