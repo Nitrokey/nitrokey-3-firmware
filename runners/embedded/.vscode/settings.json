@@ -1,0 +1,114 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.cargo.noDefaultFeatures": true,
+    "rust-analyzer.cargo.features": ["board-proto2", "develop"],
+    "rust-analyzer.cargo.target": "thumbv7em-none-eabihf"
+} 
+
+/*
+{
+    // disable cargo check on save
+    "rust-analyzer.checkOnSave.enable": false,
+    "rust-analyzer.checkOnSave.allTargets": false,
+  }
+*/
+
+/*
+  {
+    // override the default setting (`cargo check --all-targets`) which produces the following error
+    // "can't find crate for `test`" when the default compilation target is a no_std target
+    // with these changes RA will call `cargo check --bins` on save
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.checkOnSave.extraArgs": [
+        "--bins"
+    ]
+}
+*/
+
+/*
+{
+  
+
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+
+
+
+"rust-analyzer.server.extraEnv": { "RUSTUP_TOOLCHAIN": "stable" },
+
+"rust-analyzer.trace.server": "verbose" ,
+
+
+
+
+"rust-analyzer.cargo.buildScripts.enable":true,
+
+
+
+
+
+
+}
+*/
+/*
+{
+  "makefile.extensionOutputFolder": "./.vscode",
+
+  // override the default setting (`cargo check --all-targets`) which produces the following error
+  // "can't find crate for `test`" when the default compilation target is a no_std target
+  // with these changes RA will call `cargo check --bins` on save
+  "rust-analyzer.checkOnSave.allTargets": false,
+  "rust-analyzer.checkOnSave.extraArgs": [
+      
+
+      "  --build-proto2, --bin,  -timings --release --target"
+
+
+  ],
+
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+
+
+
+  "rust-analyzer.server.extraEnv": { "RUSTUP_TOOLCHAIN": "stable" },
+
+"rust-analyzer.trace.server": "verbose" ,
+
+
+
+
+"rust-analyzer.cargo.buildScripts.enable":true,
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+*/
+
+
+/*
+
+{
+  "makefile.extensionOutputFolder": "./.vscode",
+
+  "rust-analyzer.checkOnSave.allTargets": false,
+
+
+  "rust-analyzer.checkOnSave.extraArgs": [
+    "--bins, --timings, --release, --target"
+  ],
+}   */
+

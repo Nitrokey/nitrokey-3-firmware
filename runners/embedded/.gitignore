@@ -7,3 +7,7 @@ custom_memory.x
 !/Cargo.lock
 /fidokeys_lfs*.ihex
 /data/*.raw
+artifacts/*.bin
+artifacts/*.ihex
+/cfg.toml
+.vscode/*.log
