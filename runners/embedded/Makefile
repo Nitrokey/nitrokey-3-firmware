@@ -32,7 +32,7 @@ OUT_IHEX = $(OUT).ihex
 RAW_OUT = $(SOC)_runner
 
 # feature definition
-FEATURES ?= release
+FEATURES ?= develop
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
 # assemble comma-seperated list to pass to `cargo build`
 delim = ,
@@ -151,3 +151,45 @@ build: build-banner $(SRCS) data/texmap.raw check-var-BOARD check-var-BUILD_PROF
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
 	rm -f ./$(OUT) ./$(OUT_IHEX) $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) $(SYMBOLS) $(LOG)
 
+###############################################################################
+#### DEPLOYMENT TARGETS - PTB
+###############################################################################
+
+## a) generate initial littlefs2 filesystem with fido keys
+
+GEN_KEYS_PATH = ../../gen-fido-keys
+# these sizes have to match values in profiles/nrf52.toml
+PTB_PROTO2_LITTLEFS_BASE := d8000
+PTB_PROTO2_LITTLEFS_SIZE := 14000
+
+define fidokeys_lfs
+fidokeys_lfs_$(1)+$(2).ihex:
+	$(MAKE) -C $(GEN_KEYS_PATH) clean
+	$(MAKE) -C $(GEN_KEYS_PATH) fs.hex FS_BASE=0x$(1) FS_SIZE=0x$(2) FS_BLK_SHIFT=8
+	cp $(GEN_KEYS_PATH)/fs.hex $$@
+endef
+
+$(eval $(call fidokeys_lfs,$(PTB_PROTO2_LITTLEFS_BASE),$(PTB_PROTO2_LITTLEFS_SIZE)))
+FIDOKEYS_LITTLEFS_IMAGE := fidokeys_lfs_$(PTB_PROTO2_LITTLEFS_BASE)+$(PTB_PROTO2_LITTLEFS_SIZE).ihex
+
+## b) program board (only firmware - filesystem is not changed)
+
+program: program-banner check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OUT)
+	nrfjprog -f NRF52 --program $(OUT_IHEX) --sectorerase
+	nrfjprog -f NRF52 --reset
+
+## c) reset board (full flash erase, program firmware + initial filesystem)
+
+reset: reset-banner $(FIDOKEYS_LITTLEFS_IMAGE) check-var-BOARD check-var-BUILD_PROFILE $(OUT_IHEX) $(OUT)
+	nrfjprog -f NRF52 --chiperase --program $(OUT_IHEX)
+	nrfjprog -f NRF52 --program $(FIDOKEYS_LITTLEFS_IMAGE)
+	
+	# UICR
+	## UICR::REGOUT0 to 3v3
+	nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd
+	## UICR::NFCPINS to disabled
+	nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe
+	## UICR::APPROTECT (only --recover will revive debug-access)
+	#nrfjprog -f NRF52 --memwr 0x10001208 --val 0xFFFFFF00
+	
+	nrfjprog -f NRF52 --reset
