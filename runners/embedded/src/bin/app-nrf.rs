@@ -25,7 +25,8 @@ mod app {
     use rand_core::SeedableRng;
     use trussed::{
         client::{GuiClient, CryptoClient, PollClient},
-        syscall, types::Vec, types::ServiceBackends, Interchange, types::Mechanism, types::StorageAttributes
+        syscall, try_syscall,
+        types::Vec, types::ServiceBackends, Interchange, types::Mechanism, types::StorageAttributes
     };
 
     static mut global_delay_timer4: Option<Timer::<nrf52840_pac::TIMER4>> = None;
@@ -164,12 +165,14 @@ mod app {
 
         let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
 
-        /* TODO: set up fingerprint device */
-	let uarte = Uarte::new(ctx.device.UARTE0, board_gpio.uart_pins.take().unwrap(),
-		Parity::EXCLUDED, Baudrate::BAUD57600);
-	let _fpr = ERL::soc::fpr::FingerprintReader::new(uarte, 0xffff_ffffu32,
-		board_gpio.fpr_power.take().unwrap(),
-		board_gpio.fpr_detect.take().unwrap());
+        if board_gpio.fpr_power.is_some() && board_gpio.fpr_detect.is_some() {
+            let uarte = Uarte::new(ctx.device.UARTE0, board_gpio.uart_pins.take().unwrap(),
+                Parity::EXCLUDED, Baudrate::BAUD57600);
+            let _fpr = ERL::soc::fpr::FingerprintReader::new(uarte, 0xffff_ffffu32,
+                board_gpio.fpr_power.take().unwrap(),
+                board_gpio.fpr_detect.take().unwrap());
+        }
+        /* TODO: add fpr to RTIC resources, add interrupt handling etc. */
 
         let dev_rng = Rng::new(ctx.device.RNG);
         let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
@@ -419,8 +422,19 @@ mod app {
                                 ));
                             }
                         }
-                        let rnd = syscall!(cl.client.random_bytes(32));
-                        trace!("RND: {:?}", rnd.bytes);
+                        /* SE050 Test Sequence */
+
+                        Delogger::flush();
+                        trace!("SE050 Test GetRandom(32)");
+                        let _rnd = try_syscall!(cl.client.random_bytes(32));
+                        trace!("RND: {:?}", _rnd);
+
+                        // Delogger::flush();
+                        // trace!("SE050 Test GetRandom(320)");
+                        // let _rnd = try_syscall!(cl.client.random_bytes(320));
+                        // trace!("RND: {:?}", _rnd);
+
+                        // Delogger::flush();
                         // syscall!(cl.client.set_service_backends(Vec::from_slice(&[ServiceBackends::Software]).unwrap()));
                         // let rnd = syscall!(cl.client.random_bytes(32));
                         // trace!("RND: {:?}", rnd.bytes);
@@ -445,8 +459,11 @@ mod app {
                     }
                     60 => {
                         trace!("Gen P256");
-			let keyid = syscall!(cl.client.generate_key(Mechanism::P256, StorageAttributes::new()));
-                        trace!("Gen P256 ok: {:?}", &keyid.key);
+                        let key_res = try_syscall!(cl.client.generate_key(Mechanism::P256, StorageAttributes::new()));
+                        trace!("P256: {:?}", key_res);
+                        if let Ok(keyid) = key_res {
+                            trace!("P256 KeyID: {:?}", &keyid.key);
+                        }
                     }
                     _ => {}
                 });
