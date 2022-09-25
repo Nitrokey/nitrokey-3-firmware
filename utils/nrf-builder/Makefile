@@ -7,7 +7,7 @@ TEST_FIDO_KEY := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-key.trussed
 
 NK3_FW_REPO := git@github.com:Nitrokey/nitrokey-3-firmware.git
 NK3_FW_DIR := nk3-fw
-NK3_FW_BRANCH := embedded-pr
+NK3_FW_BRANCH := enc-fs
 
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
@@ -63,6 +63,10 @@ TTY := $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
 ######
 
 .PHONY: build clean flash-provisioner flash-fw flash-bootloader provision-keys full-deploy
+
+test:
+	echo $(SIGN_VERSION)
+
 
 build: $(ALL_ARTIFACTS)
 	@echo "#########################################################"
@@ -160,16 +164,19 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
 $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
+	$(MAKE) -C $(FW_RUNNER) clean-nk3am.bl FEATURES=provisioner
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
 $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
+	$(MAKE) -C $(FW_RUNNER) clean-nk3am.bl FEATURES=develop
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop
 	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
 $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
+	$(MAKE) -C $(FW_RUNNER) clean-nk3am.bl FEATURES=release
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
