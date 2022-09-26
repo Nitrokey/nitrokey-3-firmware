@@ -145,4 +145,7 @@ required-features = ["soc-lpc55"]
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/Nitrokey/trussed", branch = "raw_store" }
+
 #trussed = { path = "../../trussed" }
+#[patch."https://github.com/daringer/playground-app"]
+#playground-app = { path = "../../playground-app" }

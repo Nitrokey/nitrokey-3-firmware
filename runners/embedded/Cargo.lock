@@ -11,7 +11,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "iso7816",
- "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+ "trussed",
 ]
 
 [[package]]
@@ -618,7 +618,7 @@ dependencies = [
  "rtt-target",
  "serde",
  "toml",
-(??) "trussed 0.1.0 (git+https://github.com/trussed-dev/trussed?branch=main)",
+ "trussed",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -667,7 +667,7 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+ "trussed",
 ]
 
 [[package]]
@@ -1247,7 +1247,7 @@ dependencies = [
  "interchange",
  "iso7816",
  "serde",
- "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+ "trussed",
 ]
 
 [[package]]
@@ -1308,19 +1308,19 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 [[package]]
 name = "playground-app"
 version = "0.1.0"
-source = "git+https://github.com/daringer/playground-app#ea258a5171c8d0bef4b755bf3d31a8cbca4f3cef"
+source = "git+https://github.com/daringer/playground-app#2e7dc736088ba44aba99e57dbfe201a14b1380c4"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
  "delog",
- "heapless 0.7.14",
+ "heapless 0.7.16",
  "interchange",
  "iso7816",
  "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
- "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+ "trussed",
 ]
 
 [[package]]
@@ -1395,7 +1395,7 @@ dependencies = [
  "littlefs2",
  "nisty",
  "salty",
- "trussed 0.1.0 (git+https://github.com/Nitrokey/trussed?branch=raw_store)",
+ "trussed",
 ]
 
 [[package]]
@@ -1739,7 +1739,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?branch=raw_store#24ef623d0a73e12ca3583c59369d4c5622c91b4c"
+source = "git+https://github.com/Nitrokey/trussed?branch=raw_store#fe578c5d75d705c37dd29b0353706a225f0baba6"
 dependencies = [
  "aes",
  "bitflags",
