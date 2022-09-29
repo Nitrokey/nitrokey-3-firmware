@@ -2,10 +2,23 @@ use super::display_ui::ButtonPin::*;
 use super::types::BoardGPIO;
 use embedded_hal::blocking::delay::DelayUs;
 use nrf52840_hal::{
+    self as hal,//ERWEITERT
     gpio::{p0, p1, Input, Level, Output, Pin, PullUp, PushPull},
     gpiote::Gpiote,
     spim,
+    pac::TIMER0,//ERWEITERT
+    prelude::*,//ERWEITERT
+    timer::OneShot,//ERWEITERT
+    Temp,    //ERWEITERT
+    Timer,//ERWEITERT
 };
+
+use cortex_m::asm::delay; //ERWEITERT
+
+use embedded_hal::prelude::*; //ERWEITERT
+
+use asm_delay::AsmDelay; //ERWEITERT
+use asm_delay::bitrate::*; //ERWEITERT
 
 pub type InPin = Pin<Input<PullUp>>;
 pub type OutPin = Pin<Output<PushPull>>;
@@ -14,7 +27,7 @@ pub type TrussedUI = super::display_ui::DisplayUI;
 
 pub const BOARD_NAME: &'static str = "Proto1";
 pub const KEEPALIVE_PINS: &'static [u8] = &[0x29, 0x2b, 0x2d, 0x2f];
-
+ 
 pub fn init_ui(
     spi_pac: nrf52840_pac::SPIM0,
     spi_pins: spim::Pins,
@@ -42,11 +55,12 @@ pub fn init_ui(
         LowTriggerPin(buttons[0].take().unwrap()),
         LowTriggerPin(buttons[1].take().unwrap()),
         LowTriggerPin(buttons[2].take().unwrap()),
+        LowTriggerPin(buttons[3].take().unwrap()),//ERWEITERT
         NoPin,
         NoPin,
         NoPin,
         NoPin,
-        NoPin,
+        //NoPin, //ERWEITERT ->AUSKOMMENTIERT
     ];
 
     let mut ui = super::display_ui::DisplayUI::new(
@@ -68,10 +82,34 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
     let btn2 = gpio_p1.p1_13.into_pullup_input().degrade();
     let btn3 = gpio_p1.p1_15.into_pullup_input().degrade();
     /* btn4 = p1_10 -- do not use, to be removed later */
+    let btn4 = gpio_p1.p1_10.into_pullup_input().degrade(); //ERWEITERT
 
-    gpiote.port().input_pin(&btn1).low();
+   /*  gpiote.port().input_pin(&btn1).low();
     gpiote.port().input_pin(&btn2).low();
     gpiote.port().input_pin(&btn3).low();
+    gpiote.port().input_pin(&btn4).low(); //ERWEITERT*/
+
+
+        gpiote
+        .channel0()
+        .input_pin(&btn1)
+        .toggle()
+        .enable_interrupt();
+        gpiote
+        .channel1()
+        .input_pin(&btn2)
+        .toggle()
+        .enable_interrupt();
+        gpiote
+        .channel2()
+        .input_pin(&btn3)
+        .toggle()
+        .enable_interrupt();
+        gpiote
+        .channel3()
+        .input_pin(&btn4)
+        .toggle()
+        .enable_interrupt();
 
     /* Display SPI Bus */
     let dsp_spi_cs = gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
@@ -102,7 +140,13 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
         rts: None,
     };
 
-    gpiote.port().input_pin(&fp_detect).high();
+    //gpiote.port().input_pin(&fp_detect).high();
+
+    gpiote
+    .channel4()
+    .input_pin(&fp_detect)
+    .lo_to_hi()
+    .enable_interrupt();
 
     /* SE050 */
     let se_pwr = gpio_p0.p0_20.into_push_pull_output(Level::Low).degrade();
@@ -120,7 +164,8 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
     let flashnfc_spi_clk = gpio_p1.p1_02.into_push_pull_output(Level::Low).degrade();
     let flashnfc_spi_miso = gpio_p1.p1_06.into_floating_input().degrade();
     let flashnfc_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
-    let _flash_pwr = gpio_p1.p1_00.into_floating_input().degrade(); // into_push_pull_output(Level::Low).degrade();
+    //let _flash_pwr = gpio_p1.p1_00.into_floating_input().degrade(); // into_push_pull_output(Level::Low).degrade();
+    let _flash_pwr = gpio_p1.p1_00.into_push_pull_output(Level::Low).degrade();//ERWEITERT NEU
     let nfc_irq = gpio_p1.p1_07.into_pullup_input().degrade();
 
     let flashnfc_spi = spim::Pins {
@@ -134,11 +179,12 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
             Some(btn1),
             Some(btn2),
             Some(btn3),
+            Some(btn4),//ERWEITERT
             None,
             None,
             None,
             None,
-            None,
+           //None, //ERWEITERT->AUSKOMMENTIERT
         ],
         leds: [None, None, None, None],
         rgb_led: [None, None, None],
@@ -156,7 +202,8 @@ pub fn init_pins(gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Boa
         se_power: Some(se_pwr),
         flashnfc_spi: Some(flashnfc_spi),
         flash_cs: Some(flash_spi_cs),
-        flash_power: None,
+        //flash_power: None,
+        flash_power: Some(_flash_pwr),
         nfc_cs: Some(nfc_spi_cs),
         nfc_irq: Some(nfc_irq),
     }
@@ -178,9 +225,13 @@ pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
         src |= 0b0000_0100;
     }
     // if !bit_set(dir[1], 10) { src |= 0b0000_1000; }
-    if bit_set(dir[1], 9) {
+  /*    if bit_set(dir[1], 9) {
         src |= 0b1_0000_0000;
+    }*/
+    if !bit_set(dir[1], 10) {
+        src |= 0b0000_1000;
     }
+
     src
 }
 
@@ -198,37 +249,417 @@ pub fn set_panic_led() {
         p1.p1_02.into_push_pull_output(Level::High).degrade();
     }
 }
+  
+//#######################################################################################################################
+//Konfiguration welche circa 485 uA Poweroff bei Prototyp 1 liefert.// gemessen an der USB Zuleitung   CLEAN UP
+//Normalbetrieb circa 43,5mA
 
-pub fn power_off() {
+pub fn power_off() { 
+
+    //let d = AsmDelay::new(64.mhz());
+    let mut d = AsmDelay::new(asm_delay::bitrate::U32BitrateExt::mhz(64));
+    d.delay_ms(10u32);
+
     let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-    // only go into System OFF when we have no USB VBUS
+   // delay(10_000_000); //ERWEITERT 
+    d.delay_ms(10u32);
+
+    //#####################################################
+     // only go into System OFF when we have no USB VBUS    
+/* proto 1 does not have battery -only for test cases
     if pac.POWER.usbregstatus.read().vbusdetect().is_vbus_present() {
         return;
-    }
-    // display OFF
+    }*/
+    //  delay(10_000_000);
+     d.delay_ms(10u32);
+
+
+    //#####################################################
+    // external flash -> Deep Power Down with QUAD SPI// SPI QSPI  
+    //Deep Power-Down (DP) (B9H) GD25Q16C
+    
+    //flash_spi_cs -> p0.p0_25  auf 1 setzen
     unsafe {
-        pac.P0.outset.write(|w| w.bits(1u32 << 13));
-    }
-    // (finger OFF)
+        pac.P0.pin_cnf[25].write(|w| w.bits(1));
+    }  
+    //delay(10_000_000); 
+    d.delay_ms(10u32);
+
+    //flash_spi_cs -> p0.p0_25  auf 0setzen
     unsafe {
-        pac.P0.outset.write(|w| w.bits(1u32 << 15));
-    }
-    // (se050 OFF)
+        pac.P0.pin_cnf[25].write(|w| w.bits(0));
+    }  
+    //delay(10_000_000); 
+    d.delay_ms(10u32);
+
+    //B9H senden 
     unsafe {
-        pac.P0.outclr.write(|w| w.bits(1u32 << 20));
+
+        pac.QSPI.events_ready.write(|w| w.bits(0));
+
+        //delay(5_000_000);
+        d.delay_ms(10u32);
+
+        pac.QSPI.cinstrconf.write(|w| {
+            w.opcode()
+                .bits(0xb9)
+                .length()
+                ._1b()
+                .wipwait()
+                .clear_bit()
+                .wren()
+                .clear_bit()
+                .lfen()
+                .clear_bit()
+                .lfstop()
+                .clear_bit()
+        });
+
+        //  delay(10_000_000);
+          d.delay_ms(10u32);
+        /*         
+        loop {
+            let p = pac.QSPI.events_ready.read().bits();
+
+            
+            if p != 0 {
+                break;
+            }
+        }*/
+    
     }
-    // peripherals OFF
+
+    //delay(5_000_000);
+    //d.delay_ms(10u32);
+ 
+    //flash_spi_cs -> p0.p0_25 auf 1 sezen
+    
     unsafe {
-        pac.SPIM0.enable.write(|w| w.bits(0));
-        pac.TWIM1.enable.write(|w| w.bits(0));
+        pac.P0.pin_cnf[25].write(|w| w.bits(1));
+    }  
+    //delay(10_000_000); 
+    d.delay_ms(10u32);
+
+
+    //#####################################################
+    //    /* Flash & NFC SPI Bus */ //PINS
+
+
+    //ERWEITERT
+    //######################################
+    //  flashnfc_spi_clk   p1.p1_02  mit 1 setzen s.g.
+    
+    unsafe {
+        pac.P1.pin_cnf[2].write(|w| w.bits(1));
+    }  
+    //delay(5_000_000);   
+    d.delay_ms(10u32);
+   
+    
+    //######################################
+    //  flashnfc_spi_miso p1.p1_06
+    
+    unsafe {
+            pac.P1.pin_cnf[6].write(|w| w.bits(1));
+        }  
+    //delay(5_000_000);    
+    d.delay_ms(10u32);
+
+    //######################################
+    //flashnfc_spi_mosi -> p1.p1_04 
+    
+    unsafe {
+            pac.P1.pin_cnf[4].write(|w| w.bits(1));
+        }  
+
+        //delay(5_000_000);      
+        d.delay_ms(10u32);
+
+
+
+    //#################################
+    //   _flash_pwr P1.0 ->p1.p1_00
+    
+    unsafe {
+        pac.P1.pin_cnf[0].write(|w| w.bits(0));
+    }  
+
+    //delay(10_000_000);    
+    d.delay_ms(10u32);
+
+ 
+    //#####################################################
+    //#####################################################
+    //DISPLAY 
+
+    //######################################    
+    // display  BACKLIGHT->P0.08 S.g.w. TRANSISTOR
+
+    unsafe {
+        pac.P0.pin_cnf[8].write(|w| w.bits(0));
+    }  
+
+    //delay(10_000_000);
+    d.delay_ms(10u32);
+
+    //###################################### 
+    //DISPLAY POWER    
+    // display Transistor P0.13 w
+    
+    unsafe {
+        pac.P0.pin_cnf[13].write(|w| w.bits(0));
+    }  
+
+    //delay(10_000_000);
+    d.delay_ms(10u32);
+
+    //######################################      
+    // display MOSI->P0.00 w
+    
+    unsafe {
+        pac.P0.pin_cnf[0].write(|w| w.bits(0));
+    }  
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+
+    //######################################      
+    // display  CLK->P0.01 W 
+    
+    unsafe {
+        pac.P0.pin_cnf[1].write(|w| w.bits(0));
+    }  
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+  
+    //######################################      
+    // display  CS->P0.06   W 
+
+    unsafe 
+    {
+        pac.P0.outclr.write(|w| w.bits(1u32 << 6));
+    } // CS
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+
+    //######################################      
+    // display  DC->P0.26   W 
+
+    unsafe {     
+    pac.P0.pin_cnf[26].write(|w| w.bits(0));
+    } 
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+    
+
+    //######################################     
+    //display  RESET->P0.04 W
+    
+    unsafe {
+        pac.P0.pin_cnf[4].write(|w| w.bits(0));
+    }  
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+ 
+
+    //##################################################################### 
+    //###################################### 
+    //SE050    
+
+    //###################################### 
+    // SE050 //I2C SCL ->P0.22 W
+    
+    unsafe {
+    // pac.P0.pin_cnf[22].write(|w| w.bits(1));
+        pac.P0.pin_cnf[22].write(|w| w.bits(1));
+    } // SCL 
+
+    //delay(15_000_000);
+    d.delay_ms(10u32);
+
+    //###################################### 
+    // SE050 //I2C SDA ->P0.24  W
+    
+    unsafe {
+    // pac.P0.pin_cnf[24].write(|w| w.bits(1));
+        pac.P0.pin_cnf[24].write(|w| w.bits(1));
+    } // SDA 
+
+    //delay(15_000_000);
+    d.delay_ms(10u32);
+
+
+    //###################################### 
+    // SE050 POWER ->P0.20  //W
+
+    unsafe {
+        pac.P0.pin_cnf[20].write(|w| w.bits(0));
+    } 
+    //delay(15_000_000);
+    d.delay_ms(10u32);
+        
+
+    //##################################################################### 
+    //###################################### 
+    //fingerprint reader
+
+    //######################################     
+    // fingerprint reader //UART TX P0.12 W
+    unsafe {
+        pac.P0.pin_cnf[12].write(|w| w.bits(0));
+    } // TX
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+    
+    //###################################### 
+    // fingerprint reader //UART RX P0.11 -W
+    
+    unsafe {
+        pac.P0.pin_cnf[11].write(|w| w.bits(0));
+    } // RX
+
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+
+
+    //###################################### 
+    // fingerprint reader //UART DETECT/TRIGGER P1.09 W
+
+    unsafe {
+        pac.P1.pin_cnf[9].write(|w| w.bits(0));
+    } // DETECT
+    
+    //delay(5_000_000);
+    d.delay_ms(10u32);
+
+    //###################################### 
+    // fingerprint reader //UART PWR P0.15 W
+
+    unsafe {
+        pac.P0.pin_cnf[15].write(|w| w.bits(0));
+    }
+
+    //delay(5_000_000);    
+    d.delay_ms(10u32);
+
+
+
+
+
+   //##################################################################### 
+    //#####################################################
+    // NFCT, NVMC
+
+    unsafe {
+        //pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(1));
+        pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(0));
+    }
+    //delay(15_000_000); 
+    d.delay_ms(10u32);
+
+   
+ //#####################################################
+    //UARTE0
+    
+    unsafe {
         pac.UARTE0.enable.write(|w| w.bits(0));
-        pac.USBD.enable.write(|w| w.bits(0));
-        pac.CLOCK.tasks_hfclkstop.write(|w| w.bits(1));
     }
+    //delay(15_000_000); 
+    d.delay_ms(10u32);
+
+
+//#####################################################
+    //TIMER0
+    
+    unsafe {
+    // pac.TIMER0.tasks_stop.write(|w| w.tasks_stop().set_bit());
+    pac.TIMER0.tasks_stop.write(|w| w.tasks_stop().set_bit());
+
+    }
+    //delay(15_000_000);  
+    d.delay_ms(10u32);
+    
+    //#####################################################
+    //TIMER1
+    
+    unsafe {
+        pac.TIMER1.tasks_stop.write(|w| w.tasks_stop().set_bit());
+    }
+    //delay(10_000_000);  
+    d.delay_ms(10u32);
+
+   //#####################################################
+    //RTC0
+    
+    unsafe {
+        pac.RTC0.tasks_stop.write(|w| w.tasks_stop().set_bit());
+    }
+    //delay(15_000_000); 
+    d.delay_ms(10u32);
+
+   
+  //#####################################################
+    //RNG
+
+    unsafe {
+        pac.RNG.tasks_stop.write(|w| w.tasks_stop().set_bit());
+    }
+    //delay(15_000_000); 
+    d.delay_ms(10u32);
+ 
+
+   //#####################################################
+    //USBD
+    
+    unsafe {
+        pac.USBD.enable.write(|w| w.bits(0));
+    }
+    //delay(16_000_000); 
+    d.delay_ms(10u32);
+
+   //#####################################################
+    unsafe {
+        pac.QSPI.enable.write(|w| w.bits(0));
+    }
+    //delay(15_000_000); 
+    d.delay_ms(10u32);
+
+    //####################################################
+    //GPIOTE 
+
+    unsafe {
+        pac.GPIOTE.intenclr.write(|w| w.port().set_bit());
+        delay(10_000_000);
+        d.delay_ms(10u32);
+    }
+
+    //####################################################
+    //SPIM0   
+
+        unsafe {
+        pac.SPIM0.enable.write(|w| w.bits(0));
+        }
+        delay(10_000_000);
+        d.delay_ms(10u32);
+
+    //####################################################
+ 
     // disconnect GPIOs
     // POWER.SYSTEMOFF <= 1
-    unsafe {
-        pac.POWER.systemoff.write(|w| w.bits(1));
-    }
-    loop {}
+ 
+        unsafe {
+        pac.POWER.systemoff.write(|w| w.bits(1));     
+        //delay(5_000_000);//ERWEITERT
+        d.delay_ms(10u32);
+        }
+        //delay(10_000_000);//ERWEITERT
+        d.delay_ms(10u32);
+     
+  
+        loop {}
+
 }
