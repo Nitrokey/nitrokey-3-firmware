@@ -24,7 +24,7 @@ nfc-device = { path = "../../components/nfc-device" }
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"] }
 se050 = { git = "https://github.com/jnordholz/se050", optional = true }
-
+asm-delay = "0.9.0"#ERWEITERT
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
@@ -107,10 +107,10 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 format-filesystem = []
 
 
-board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
+board-nrfdk = ["soc-nrf52840", "extflash_qspi" , "display_ui", "has_poweroff"]#board-nrfdk = ["soc-nrf52840", "extflash_qspi" , "display_ui", "hwcrypto_se050","has_poweroff"] # ORIGINAL  ERWEITERT NRFDK AUSKOMMENTIERT -> board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-nk3am = ["soc-nrf52840", "extflash_qspi"]
-board-proto1 = ["soc-nrf52840", "display_ui", "hwcrypto_se050"]
-board-proto2 = ["soc-nrf52840", "display_ui", "hwcrypto_se050", "has_poweroff"]
+board-proto1 = ["soc-nrf52840", "display_ui", "hwcrypto_se050","has_poweroff" ]#ERWEITERT aLT:#board-proto1 = ["soc-nrf52840", "display_ui", "hwcrypto_se050"]
+board-proto2 = ["soc-nrf52840", "display_ui", "hwcrypto_se050", "has_poweroff"]#ERWEITERT alt:#board-proto2 = ["soc-nrf52840", "display_ui", "hwcrypto_se050", "has_poweroff"]
 
 board-lpcxpresso55 = ["soc-lpc55"]
 board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
