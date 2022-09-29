@@ -21,7 +21,7 @@ embedded-time = "0.12"
 generic-array = "0.14"
 nfc-device = { path = "../../components/nfc-device" }
 rand_core = "0.6"
-rtt-target = { version = "0.3", features = ["cortex-m"] }
+rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -127,7 +127,7 @@ log-debugP = [ "log-debug", "log-info", "log-warn", "log-error" ]
 log-infoP = [ "log-info", "log-warn", "log-error" ]
 log-warnP = [ "log-warn", "log-error" ]
 
-log-rtt = []
+log-rtt = ["rtt-target"]
 log-semihosting = ["cortex-m-semihosting"]
 
 [[bin]]

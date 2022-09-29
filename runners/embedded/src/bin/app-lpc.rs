@@ -37,6 +37,7 @@ mod app {
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        #[cfg(feature = "log-rtt")]
         rtt_target::rtt_init_print!();
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
         ERL::banner();

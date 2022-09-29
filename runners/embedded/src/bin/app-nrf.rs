@@ -54,6 +54,7 @@ mod app {
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
 
+        #[cfg(feature = "log-rtt")]
         rtt_target::rtt_init_print!();
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
         ERL::banner();
