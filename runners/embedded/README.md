@@ -1,7 +1,7 @@
 
 # Multi-Factor Authentication Device (USB key) Firmware
 
-This repository the firmware of  Multi-Factor Authentication Device (USB key).
+This repository contains the firmware of  Multi-Factor Authentication Device (USB key).
 
 Please use the proto2-dev2 branch for current measurements and further development of the Multi-Factor Authentication Device.
 
