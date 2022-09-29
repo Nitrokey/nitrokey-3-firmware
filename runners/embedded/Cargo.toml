@@ -76,7 +76,7 @@ complete = ["oath-authenticator", # "provisioner-app",
 
 develop = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
-			"log-traceP", "log-rtt"]
+			"log-traceP"]
 
 develop-no-press = ["develop", "no-buttons"]
 
