@@ -185,7 +185,7 @@ mod app {
             ctx.device.PWM2,
             board_gpio.touch.unwrap(),
         );
-        #[cfg(any(feature = "board-proto1", feature = "board-proto2"))]
+        #[cfg(any(feature = "board-proto1", feature = "board-proto2", feature = "board-nrfdk"))]//ERWEITERT NRFDK  feature = "board-nrfdk" ORIGINAL WAR-> #[cfg(any(feature = "board-proto1", feature = "board-proto2"))]
         let ui = ERL::soc::board::init_ui(
             ctx.device.SPIM0,
             board_gpio.display_spi.take().unwrap(),
@@ -197,8 +197,8 @@ mod app {
             board_gpio.leds,
             delay_timer,
         );
-        #[cfg(feature = "board-nrfdk")]
-        let ui = ERL::soc::board::init_ui();
+       // #[cfg(feature = "board-nrfdk")] // ERWEITERT NRFDK ORIGINAL AUSKOMMENTIERT
+        //let ui = ERL::soc::board::init_ui();//// ERWEITERT NRFDK ORIGINAL AUSKOMMENTIERT
 
         #[cfg(feature = "hwcrypto_se050")]
         {
@@ -480,10 +480,11 @@ mod app {
                     bs.copy_from_slice(&st[0..8]);
                 });
                 trace!("UI Btn {:?}", &bs);
-                #[cfg(feature = "has_poweroff")]
-                if bs[3] != 0 {
+               #[cfg(feature = "has_poweroff")]
+                if bs[3] != 0 {                  
                     cl.lock(|cl| {
-                        syscall!(cl.client.gui_control(trussed::types::GUIControlCommand::PowerOff));
+                  //  syscall!(cl.client.gui_control(trussed::types::GUIControlCommand::PowerOff)); //ERWEITERT: AUSKOMMENTIERT da im logger meldung panicked at 'no errors: RequestNotAvailable', src/bin/app-nrf.rs:486:25
+                       
                     });
                     ERL::soc::board::power_off();
                 }
