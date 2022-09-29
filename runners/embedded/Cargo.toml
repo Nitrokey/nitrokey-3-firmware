@@ -52,6 +52,7 @@ nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true }
 nrf52840-pac = { version = "0.11", optional = true }
 
 ### LPC55 specific dependencies
+cortex-m-semihosting = { version = "0.3.5", optional = true }
 lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], optional = true }
 lpc55-pac = { version = "0.4", optional = true }
 fm11nc08 = { path = "../../components/fm11nc08", optional = true }
@@ -127,7 +128,7 @@ log-infoP = [ "log-info", "log-warn", "log-error" ]
 log-warnP = [ "log-warn", "log-error" ]
 
 log-rtt = []
-log-semihosting = []
+log-semihosting = ["cortex-m-semihosting"]
 
 [[bin]]
 name = "nrf52_runner"
