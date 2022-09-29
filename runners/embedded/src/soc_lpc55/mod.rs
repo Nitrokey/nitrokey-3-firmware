@@ -81,9 +81,6 @@ pub fn init_rgb(
     }
 }
 
-#[cfg(feature = "usbfs-peripheral")]
-pub type UsbPeripheralType = lpc55_hal::peripherals::usbfs::Usbfs;
-#[cfg(not(feature = "usbfs-peripheral"))]
 pub type UsbPeripheralType = lpc55_hal::peripherals::usbhs::Usbhs;
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<types::Soc as crate::types::Soc>::UsbBus>;

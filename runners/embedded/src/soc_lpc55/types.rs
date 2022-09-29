@@ -27,9 +27,6 @@ littlefs2_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BO
 #[cfg(not(feature = "no-encrypted-storage"))]
 littlefs2_prince_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
 
-#[cfg(feature = "usbfs-peripheral")]
-type UsbPeripheral = lpc55_hal::peripherals::usbfs::EnabledUsbfsDevice;
-#[cfg(not(feature = "usbfs-peripheral"))]
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
 const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {

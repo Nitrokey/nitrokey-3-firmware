@@ -118,30 +118,15 @@ mod app {
         /* -> initializer::initialize_usb() */
         let usbd_ref = {
             if bootmode == BootMode::Full {
-                #[cfg(feature = "usbfs-peripheral")]
-                {
-                    Some(ERL::soc::setup_usb_bus(
-                        hal.usbfs,
-                        anactrl,
-                        iocon,
-                        pmc,
-                        syscon,
-                        clocks,
-                        &mut delay_timer,
-                    ))
-                }
-                #[cfg(not(feature = "usbfs-peripheral"))]
-                {
-                    Some(ERL::soc::setup_usb_bus(
-                        hal.usbhs,
-                        anactrl,
-                        iocon,
-                        pmc,
-                        syscon,
-                        clocks,
-                        &mut delay_timer,
-                    ))
-                }
+                Some(ERL::soc::setup_usb_bus(
+                    hal.usbhs,
+                    anactrl,
+                    iocon,
+                    pmc,
+                    syscon,
+                    clocks,
+                    &mut delay_timer,
+                ))
             } else {
                 None
             }
