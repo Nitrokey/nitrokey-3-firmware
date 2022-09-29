@@ -70,6 +70,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "asm-delay"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9a69a963b70ddacfcd382524f72a4576f359af9334b3bf48a79566590bb8bfa"
+dependencies = [
+ "bitrate",
+ "cortex-m",
+ "embedded-hal",
+]
+
+[[package]]
 name = "atomic-polyfill"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -141,6 +152,12 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "bitrate"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c147d86912d04bef727828fda769a76ca81629a46d8ba311a8d58a26aa91473d"
 
 [[package]]
 name = "block-buffer"
@@ -640,6 +657,7 @@ version = "1.1.0"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
+ "asm-delay",
  "bytemuck",
  "cargo-lock",
  "cfg-if",
