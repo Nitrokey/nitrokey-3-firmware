@@ -4,7 +4,7 @@ use crate::hal;
 use hal::drivers::timer;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, consts};
-use trussed::types::{LfsResult, LfsStorage};
+use trussed::types::{ClientContext, LfsResult, LfsStorage};
 use trussed::{platform, store};
 use hal::peripherals::ctimer;
 
@@ -118,6 +118,7 @@ pub trait TrussedApp: Sized {
 
     /// the desired client ID
     const CLIENT_ID: &'static [u8];
+    const ENCRYPTED: bool = false;
 
     fn with_client(trussed: TrussedClient, non_portable: Self::NonPortable) -> Self;
 
@@ -127,7 +128,11 @@ pub trait TrussedApp: Sized {
 
         let mut client_id = littlefs2::path::PathBuf::new();
         client_id.push(Self::CLIENT_ID.try_into().unwrap());
-        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
+
+        let pin = if Self::ENCRYPTED { Some("1234") } else { None };  // FIXME replace with DEFAULT_ENCRYPTION_PIN
+        let client_ctx = ClientContext::new(littlefs2::path::PathBuf::from(Self::CLIENT_ID), pin);
+        assert!(trussed.add_endpoint(trussed_responder, client_ctx).is_ok());
+
 
         let syscaller = Syscall::default();
         let trussed_client = TrussedClient::new(
@@ -175,6 +180,8 @@ impl TrussedApp for WebcryptApp {
     type NonPortable = ();
 
     const CLIENT_ID: &'static [u8] = b"webcrypt\0";
+    const ENCRYPTED: bool = true;
+
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
         Self::new(trussed)
     }
