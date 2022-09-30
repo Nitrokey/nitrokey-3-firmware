@@ -74,7 +74,7 @@ complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
 			"trussed/clients-3", "log-traceP", "log-rtt"]
 
-develop = ["default", "oath-authenticator", "trussed/clients-4",
+develop = ["default", "trussed/clients-4",
 			"fido-authenticator/disable-reset-time-window",
 			"playground-app", "playground-app/log-all",
 			"log-traceP", "log-rtt", "trussed/log-all"]
