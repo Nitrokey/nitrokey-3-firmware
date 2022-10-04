@@ -149,7 +149,6 @@ impl TrussedApp for OathApp {
     }
 }
 
-
 #[cfg(feature = "admin-app")]
 impl TrussedApp for AdminApp {
     const CLIENT_ID: &'static [u8] = b"admin\0";

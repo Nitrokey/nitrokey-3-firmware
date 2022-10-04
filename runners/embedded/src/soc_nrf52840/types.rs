@@ -96,7 +96,8 @@ impl admin_app::Reboot for Reboot {
         SCB::sys_reset()
     }
     fn locked() -> bool {
-        false
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        pac.UICR.approtect.read().pall().is_enabled()
     }
 }
 

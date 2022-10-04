@@ -70,6 +70,12 @@ pub fn init_bootup(
     if !uicr.regout0.read().vout().is_3v3() {
         error!("REGOUT0 is not at 3.3V - external flash will fail!");
     }
+
+    if uicr.approtect.read().pall().is_enabled() {
+        info!("UICR APPROTECT is ENABLED!");
+    } else {
+        info!("UICR APPROTECT is DISABLED!");
+    };
 }
 
 pub fn init_internal_flash(nvmc: nrf52840_pac::NVMC) -> flash::FlashStorage {
