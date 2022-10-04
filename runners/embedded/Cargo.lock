@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
