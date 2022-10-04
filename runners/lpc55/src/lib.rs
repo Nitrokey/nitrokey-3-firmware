@@ -126,6 +126,8 @@ pub fn init_board(
 
 
         hal.rtc,
+
+        hal.flexcomm.5,
     );
 
     let _is_passive_mode = initializer.is_in_passive_operation(&everything.clock);
