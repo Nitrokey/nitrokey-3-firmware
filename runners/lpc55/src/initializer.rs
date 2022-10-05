@@ -777,6 +777,53 @@ impl Initializer {
         }
     }
 
+    #[cfg(feature = "provisioner-app")]
+    pub fn run_hardware_checks(
+        &mut self,
+        basic_stage: &mut stages::Basic,
+        clock_stage: &mut stages::Clock,
+        flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
+    ) {
+        // SE050 check
+        let _enabled = pins::Pio1_26::take()
+            .unwrap()
+            .into_gpio_pin(&mut clock_stage.iocon, &mut clock_stage.gpio)
+            .into_output_high();
+
+        basic_stage.delay_timer.start(100_000.microseconds());
+        nb::block!(basic_stage.delay_timer.wait()).ok();
+
+        let token = clock_stage.clocks.support_flexcomm_token().unwrap();
+        let i2c = flexcomm5.enabled_as_i2c(&mut self.syscon, &token);
+        let scl = pins::Pio0_9::take().unwrap().into_i2c5_scl_pin(&mut clock_stage.iocon);
+        let sda = pins::Pio1_14::take().unwrap().into_i2c5_sda_pin(&mut clock_stage.iocon);
+        let mut i2c = hal::I2cMaster::new(
+            i2c,
+            (scl, sda),
+            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+        );
+
+        basic_stage.delay_timer.start(100_000.microseconds());
+        nb::block!(basic_stage.delay_timer.wait()).ok();
+
+        // RESYNC command
+        let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+        i2c.write(0x48, &command).expect("failed to send RESYNC command");
+
+        basic_stage.delay_timer.start(100_000.microseconds());
+        nb::block!(basic_stage.delay_timer.wait()).ok();
+
+        // RESYNC response
+        let mut response = [0; 2];
+        i2c.read(0x48, &mut response).expect("failed to read RESYNC response");
+
+        if response != [0xa5, 0xe0] {
+            panic!("Unexpected RESYNC response: {:?}", response);
+        }
+
+        info_now!("hardware checks successful");
+    }
+
     #[inline(never)]
     pub fn initialize_all(&mut self,
         iocon: hal::Iocon<Unknown>,
@@ -803,6 +850,8 @@ impl Initializer {
         flash: hal::peripherals::flash::Flash<Unknown>,
 
         rtc: hal::peripherals::rtc::Rtc<Unknown>,
+
+        flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
     ) -> stages::All {
 
         let mut clock_stage = self.initialize_clocks(iocon, gpio,);
@@ -853,6 +902,9 @@ impl Initializer {
         );
 
         self.perform_data_migrations(&basic_stage, &filesystem_stage);
+
+        #[cfg(feature = "provisioner-app")]
+        self.run_hardware_checks(&mut basic_stage, &mut clock_stage, flexcomm5);
 
         stages::All {
             trussed: trussed,
