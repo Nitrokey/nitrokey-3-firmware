@@ -1,3 +1,21 @@
+# v1.2.2 (2022-10-05)
+
+This release contains additional internal tests.
+v1.2.1 was skipped due to an incorrectly determined bugfix.
+
+### Bugfixes
+
+- change fido-authenticator version from 0.1 to 0.1.1 (not needed, to be reverted) ([#87][])
+
+### Features
+
+- add proper `Reboot::is_locked` for nRF52 ([#89][])
+- add i2c/se050 test to LPC55 (panicks in provisioner mode) ([#90][])
+
+[#89]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/89
+[#90]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
+[#87]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
+
 # v1.2.0 (2022-08-30)
 
 This release contains various bugfixes and stability improvements.
