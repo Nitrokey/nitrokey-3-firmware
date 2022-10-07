@@ -21,6 +21,7 @@ use hal::peripherals::pfr::Pfr;
 use hal::typestates::init_state::Unknown;
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
+use littlefs2::fs::Filesystem;
 use interchange::Interchange;
 use trussed::platform::UserInterface;
 
@@ -228,19 +229,16 @@ impl Initializer {
 
     fn try_enable_fm11nc08 <T: Ctimer<hal::Enabled>>(
         &mut self,
-        clocks: &Clocks,
         iocon: &mut hal::Iocon<hal::Enabled>,
         gpio: &mut hal::Gpio<hal::Enabled>,
         nfc_irq: hal::Pin<board::nfc::NfcIrqPin, Gpio<direction::Input>>,
         delay_timer: &mut Timer<T>,
 
-        flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
+        spi: board::spi::Spi,
         inputmux: hal::peripherals::inputmux::InputMux<Unknown>,
         pint: hal::peripherals::pint::Pint<Unknown>,
     ) -> Option<board::nfc::NfcChip> {
-        let token = clocks.support_flexcomm_token().unwrap();
         let syscon = &mut self.syscon;
-        let spi = flexcomm0.enabled_as_spi(syscon, &token);
 
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(syscon);
@@ -411,19 +409,18 @@ impl Initializer {
     pub fn initialize_nfc(&mut self,
         clock_stage: &mut stages::Clock,
         basic_stage: &mut stages::Basic,
-        flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
+        spi: board::spi::Spi,
         mux: hal::peripherals::inputmux::InputMux<Unknown>,
         pint: hal::peripherals::pint::Pint<Unknown>,
     ) -> stages::Nfc {
 
         let nfc_chip = if self.config.nfc_enabled {
             self.try_enable_fm11nc08(
-                &clock_stage.clocks,
                 &mut clock_stage.iocon,
                 &mut clock_stage.gpio,
                 clock_stage.nfc_irq.take().unwrap(),
                 &mut basic_stage.delay_timer,
-                flexcomm0,
+                spi,
                 mux,
                 pint,
             )
@@ -610,7 +607,7 @@ impl Initializer {
         nfc_stage: &mut stages::Nfc,
         flash_stage: &mut stages::Flash,
     ) -> stages::Filesystem {
-        use littlefs2::fs::{Allocation, Filesystem};
+        use littlefs2::fs::Allocation;
         use types::{ExternalStorage, VolatileStorage};
 
         let syscon = &mut self.syscon;
@@ -783,6 +780,7 @@ impl Initializer {
         basic_stage: &mut stages::Basic,
         clock_stage: &mut stages::Clock,
         flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
+        spi: &mut board::spi::Spi,
     ) {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
@@ -821,7 +819,40 @@ impl Initializer {
             panic!("Unexpected RESYNC response: {:?}", response);
         }
 
+        // External Flash checks
+        let spi = types::SpiMut(spi);
+        let flash_cs = pins::Pio0_13::take()
+            .unwrap()
+            .into_gpio_pin(&mut clock_stage.iocon, &mut clock_stage.gpio)
+            .into_output_high();
+        let _power = pins::Pio0_21::take()
+            .unwrap()
+            .into_gpio_pin(&mut clock_stage.iocon, &mut clock_stage.gpio)
+            .into_output_high();
+
+        basic_stage.delay_timer.start(200_000.microseconds());
+        nb::block!(basic_stage.delay_timer.wait()).ok();
+
+        let mut flash = types::ExtFlashStorage::new(spi, flash_cs);
+        if !Filesystem::is_mountable(&mut flash) {
+            debug_now!("external filesystem not mountable, trying to format");
+            Filesystem::format(&mut flash).expect("failed to format external filesystem");
+        }
+        if !Filesystem::is_mountable(&mut flash) {
+            panic!("filesystem not mountable after format");
+        }
+
         info_now!("hardware checks successful");
+    }
+
+    fn setup_spi(
+        &mut self,
+        clock_stage: &mut stages::Clock,
+        flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
+    ) -> board::spi::Spi {
+        let token = clock_stage.clocks.support_flexcomm_token().unwrap();
+        let spi = flexcomm0.enabled_as_spi(&mut self.syscon, &token);
+        board::spi::init(spi, &mut clock_stage.iocon)
     }
 
     #[inline(never)]
@@ -851,7 +882,7 @@ impl Initializer {
 
         rtc: hal::peripherals::rtc::Rtc<Unknown>,
 
-        flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
+        _flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
     ) -> stages::All {
 
         let mut clock_stage = self.initialize_clocks(iocon, gpio,);
@@ -866,10 +897,16 @@ impl Initializer {
             perf_timer,
             pfr,
         );
+        let mut spi = self.setup_spi(&mut clock_stage, flexcomm0);
+
+        #[cfg(feature = "provisioner-app")]
+        self.run_hardware_checks(&mut basic_stage, &mut clock_stage, _flexcomm5, &mut spi);
+
+        let spi = board::spi::reconfigure(spi);
         let mut nfc_stage = self.initialize_nfc(
             &mut clock_stage,
             &mut basic_stage,
-            flexcomm0,
+            spi,
             mux,
             pint
         );
@@ -902,9 +939,6 @@ impl Initializer {
         );
 
         self.perform_data_migrations(&basic_stage, &filesystem_stage);
-
-        #[cfg(feature = "provisioner-app")]
-        self.run_hardware_checks(&mut basic_stage, &mut clock_stage, flexcomm5);
 
         stages::All {
             trussed: trussed,
