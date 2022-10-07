@@ -48,8 +48,7 @@ dependencies = [
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17bee13295997ab0b4809e5bf25bfd27844c93cf901220d643f7c0c53f288258"
+source = "git+https://github.com/robin-nitrokey/apdu-dispatch?branch=max-response-len#47c65f20f93e9215ad0afd6d960487f58676c2ea"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -273,6 +272,7 @@ checksum = "5a050e2153c5be08febd6734e29298e844fdb0fa21aeddd63b4eb7baa106c69b"
 dependencies = [
  "glob",
  "libc",
+ "libloading",
 ]
 
 [[package]]
@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.2.2"
+version = "1.2.2-alpha.opcard.0.1.0"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -612,6 +612,7 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "oath-authenticator",
+ "opcard",
  "provisioner-app",
  "rand_core",
  "rtt-target",
@@ -898,8 +899,7 @@ dependencies = [
 [[package]]
 name = "interchange"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "310d743c23f798f10d5ba2f77fdd3eff06aaf2d8f8b9d78beba7fb1167f4ccbf"
+source = "git+https://github.com/trussed-dev/interchange.git?rev=fe5633466640e1e9a8c06d9b5dd1d0af08c272af#fe5633466640e1e9a8c06d9b5dd1d0af08c272af"
 
 [[package]]
 name = "iso7816"
@@ -930,6 +930,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
+name = "libloading"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efbc0f03f9a775e9f6aed295c6a1ba2253c5757a9e03d55c6caa46a681abcddd"
+dependencies = [
+ "cfg-if",
+ "winapi",
+]
+
+[[package]]
 name = "littlefs2"
 version = "0.3.2"
 source = "git+https://github.com/Nitrokey/littlefs2#23b9e5028ce0b2ff77c78545c44ac75da9a79acb"
@@ -947,8 +957,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aac150caec8a056e1248754f738c2330e578469093a522cf1afe30bbe545b90b"
+source = "git+https://github.com/sosthene-nitrokey/littlefs2-sys.git?branch=bindgen-runtime-feature#8ebb88edc59c0cf9503a9b9377065a0f74440448"
 dependencies = [
  "bindgen",
  "cc",
@@ -1254,6 +1263,24 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "opcard"
+version = "0.1.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v0.1.0#59f1e968b1a76915f3a6c0ebbab43bf3a09b07f8"
+dependencies = [
+ "apdu-dispatch",
+ "delog",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "hex-literal",
+ "iso7816",
+ "log",
+ "serde",
+ "serde_repr",
+ "subtle",
+ "trussed",
+]
 
 [[package]]
 name = "p256"
@@ -1720,7 +1747,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?branch=main#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
+source = "git+https://github.com/trussed-dev/trussed?rev=6de826f3bcbef247e55fd890d80d9ed6ce9f0abc#6de826f3bcbef247e55fd890d80d9ed6ce9f0abc"
 dependencies = [
  "aes",
  "bitflags",
@@ -1884,6 +1911,28 @@ checksum = "9ee8f19f9d74293faf70901bc20ad067dc1ad390d2cbf1e3f75f721ffee908b6"
 dependencies = [
  "vcell",
 ]
+
+[[package]]
+name = "winapi"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
+dependencies = [
+ "winapi-i686-pc-windows-gnu",
+ "winapi-x86_64-pc-windows-gnu",
+]
+
+[[package]]
+name = "winapi-i686-pc-windows-gnu"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
+
+[[package]]
+name = "winapi-x86_64-pc-windows-gnu"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "zeroize"

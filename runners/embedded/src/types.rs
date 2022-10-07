@@ -111,6 +111,8 @@ pub type OathApp = oath_authenticator::Authenticator<TrussedClient>;
 pub type FidoApp = fido_authenticator::Authenticator<fido_authenticator::Conforming, TrussedClient>;
 #[cfg(feature = "ndef-app")]
 pub type NdefApp = ndef_app::App<'static>;
+#[cfg(feature = "opcard")]
+pub type OpcardApp = opcard::Card<TrussedClient>;
 #[cfg(feature = "provisioner-app")]
 pub type ProvisionerApp =
     provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
@@ -146,6 +148,20 @@ impl TrussedApp for OathApp {
     type NonPortable = ();
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
         Self::new(trussed)
+    }
+}
+
+#[cfg(feature = "opcard")]
+impl TrussedApp for OpcardApp {
+    const CLIENT_ID: &'static [u8] = b"opcard\0";
+
+    type NonPortable = ();
+    fn with_client(trussed: TrussedClient, _: ()) -> Self {
+        let uuid = <SocT as Soc>::device_uuid();
+        let mut options = opcard::Options::default();
+        options.serial = [0xa0, 0x10, uuid[0], uuid[1]];
+        // TODO: set manufacturer to Nitrokey
+        Self::new(trussed, options)
     }
 }
 
@@ -220,6 +236,8 @@ pub struct Apps {
     pub fido: FidoApp,
     #[cfg(feature = "oath-authenticator")]
     pub oath: OathApp,
+    #[cfg(feature = "opcard")]
+    pub opcard: OpcardApp,
     #[cfg(feature = "ndef-app")]
     pub ndef: NdefApp,
     #[cfg(feature = "provisioner-app")]
@@ -237,6 +255,8 @@ impl Apps {
         let fido = FidoApp::with(trussed, ());
         #[cfg(feature = "oath-authenticator")]
         let oath = OathApp::with(trussed, ());
+        #[cfg(feature = "opcard")]
+        let opcard = OpcardApp::with(trussed, ());
         #[cfg(feature = "ndef-app")]
         let ndef = NdefApp::new();
         #[cfg(feature = "provisioner-app")]
@@ -249,6 +269,8 @@ impl Apps {
             fido,
             #[cfg(feature = "oath-authenticator")]
             oath,
+            #[cfg(feature = "opcard")]
+            opcard,
             #[cfg(feature = "ndef-app")]
             ndef,
             #[cfg(feature = "provisioner-app")]
@@ -265,6 +287,8 @@ impl Apps {
             &mut self.ndef,
             #[cfg(feature = "oath-authenticator")]
             &mut self.oath,
+            #[cfg(feature = "opcard")]
+            &mut self.opcard,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
