@@ -35,6 +35,7 @@ pub use specifics::{
 
 pub mod clock_controller;
 pub mod nfc;
+pub mod spi;
 pub mod trussed;
 pub mod ui;
 

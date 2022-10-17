@@ -2,50 +2,28 @@ use crate::hal::{
     self,
     drivers::{
         pins::{self, Pin},
-        SpiMaster,
         Timer,
     },
     Enabled,
-    peripherals::flexcomm::Spi0,
-    time::RateExtensions,
-    typestates::{
-        pin::{
-            self,
-            flexcomm::NoPio,
-        },
-    },
+    typestates::pin,
 };
+use crate::spi::Spi;
 
 use fm11nc08::{
     FM11NC08, Configuration, Register,
 };
 
-pub type NfcSckPin = pins::Pio0_28;
-pub type NfcMosiPin = pins::Pio0_24;
-pub type NfcMisoPin = pins::Pio0_25;
 pub type NfcCsPin = pins::Pio1_20;
 pub type NfcIrqPin = pins::Pio0_19;
 
 pub type NfcChip = FM11NC08<
-            SpiMaster<
-                NfcSckPin,
-                NfcMosiPin,
-                NfcMisoPin,
-                NoPio,
-                Spi0,
-                (
-                    Pin<NfcSckPin, pin::state::Special<pin::function::FC0_SCK>>,
-                    Pin<NfcMosiPin, pin::state::Special<pin::function::FC0_RXD_SDA_MOSI_DATA>>,
-                    Pin<NfcMisoPin, pin::state::Special<pin::function::FC0_TXD_SCL_MISO_WS>>,
-                    pin::flexcomm::NoCs,
-                )
-                >,
+                Spi,
                 Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
                 Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
             >;
 
 pub fn try_setup(
-    spi: Spi0<Enabled>,
+    spi: Spi,
     gpio: &mut hal::Gpio<Enabled>,
     iocon: &mut hal::Iocon<Enabled>,
     nfc_irq: Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
@@ -53,20 +31,6 @@ pub fn try_setup(
     timer: &mut Timer<impl hal::peripherals::ctimer::Ctimer<hal::typestates::init_state::Enabled>>,
     always_reconfig: bool,
     ) -> Option<NfcChip> {
-
-
-    let sck = NfcSckPin::take().unwrap().into_spi0_sck_pin(iocon);
-    let mosi = NfcMosiPin::take().unwrap().into_spi0_mosi_pin(iocon);
-    let miso = NfcMisoPin::take().unwrap().into_spi0_miso_pin(iocon);
-    let spi_mode = hal::traits::wg::spi::Mode {
-        polarity: hal::traits::wg::spi::Polarity::IdleLow,
-        phase: hal::traits::wg::spi::Phase::CaptureOnSecondTransition,
-    };
-    let spi = SpiMaster::new(
-        spi,
-        (sck, mosi, miso, hal::typestates::pin::flexcomm::NoCs),
-        2_000_000u32.Hz(),
-        spi_mode);
 
     // Start unselected.
     let nfc_cs = NfcCsPin::take().unwrap().into_gpio_pin(iocon, gpio).into_output_high();
