@@ -1701,8 +1701,8 @@ dependencies = [
 
 [[package]]
 name = "webcrypt"
-version = "0.3.0"
-source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust.git?branch=main#cda9f88dbf4a9b4f623037ce1a1c5e1f484d0f24"
+version = "0.5.0"
+source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust.git?branch=main#e9c4d2912505c7d2a6d24312d8c248c93c611edb"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
