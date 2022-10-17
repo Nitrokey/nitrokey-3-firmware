@@ -899,6 +899,7 @@ impl Initializer {
         );
         let mut spi = self.setup_spi(&mut clock_stage, flexcomm0);
 
+        #[cfg(not(feature = "danger-disable-hardware-check"))]
         #[cfg(feature = "provisioner-app")]
         self.run_hardware_checks(&mut basic_stage, &mut clock_stage, _flexcomm5, &mut spi);
 

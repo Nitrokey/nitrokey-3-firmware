@@ -40,8 +40,9 @@ BINVERSION=$(shell git describe --long --always)
 WCVERSION=$(shell cargo tree | grep -Eo "webcrypt .*?\s" | tr " " -)
 webcrypt:
 	# $(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-serial,serial,log-all
-	$(MAKE) ci BOARD=nk3xn PROVISIONER=1
-	$(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-all
+	$(MAKE) ci BOARD=nk3xn PROVISIONER=1 FEATURES=board-nk3xn,no-buttons,log-all,provisioner,danger-disable-hardware-check
+	$(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-all,danger-disable-hardware-check
+	cp provisioner-nk3xn.bin webcrypt-provisioner-nk3xn-$(WCVERSION)$(BINVERSION).bin
 	cp firmware-nk3xn.bin webcrypt-nk3xn-$(WCVERSION)$(BINVERSION).bin
 
 

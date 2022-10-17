@@ -78,7 +78,11 @@ no-buttons = ["board/no-buttons"]
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
 no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 
+# Enable transparent state encryption offered by Trussed
 transparent-encryption = ["webcrypt/transparent-encryption"]
+
+# Disable self-test hardware check run on start in the provisioner mode. Useful only for development.
+danger-disable-hardware-check = []
 
 # Format filesystem anyway
 format-filesystem = []
