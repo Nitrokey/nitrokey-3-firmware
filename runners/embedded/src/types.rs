@@ -13,6 +13,8 @@ use trussed::types::{ClientContext, ClientContextBuilder, LfsResult, LfsStorage,
 use trussed::{platform, store};
 pub mod usbnfc;
 
+use trussed::types::ServiceBackend;
+
 #[derive(Clone, Copy)]
 pub struct IrqNr {
     pub i: u16,
@@ -83,6 +85,7 @@ platform!(
     R: <SocT as Soc>::Rng,
     S: RunnerStore,
     UI: <SocT as Soc>::TrussedUI,
+    trussed::types::ServiceBackends::SoftwareAuth, sw_auth, trussed::backend::SoftwareAuthBackend,
 );
 
 #[derive(Default)]
@@ -205,7 +208,6 @@ pub struct ProvisionerNonPortable {
 #[cfg(feature = "provisioner-app")]
 impl TrussedApp for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
-    const ENCRYPTED: bool = false;
 
     type NonPortable = ProvisionerNonPortable;
     fn with_client(

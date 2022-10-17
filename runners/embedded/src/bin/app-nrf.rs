@@ -191,8 +191,10 @@ mod app {
         #[cfg(not(feature = "board-nk3am"))]
         let ui = ERL::soc::board::init_ui();
 
+        use trussed::backend::SoftwareAuthBackend;
+
         let platform: ERL::types::RunnerPlatform =
-            ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
+            ERL::types::RunnerPlatform::new(chacha_rng, store, ui, SoftwareAuthBackend {rng_state: None});
 
         let mut trussed_service = trussed::service::Service::new(platform);
 
