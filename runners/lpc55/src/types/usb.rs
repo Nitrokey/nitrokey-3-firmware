@@ -7,6 +7,7 @@ pub type EnabledUsbPeripheral = hal::peripherals::usbhs::EnabledUsbhsDevice;
 pub type EnabledUsbPeripheral = hal::peripherals::usbfs::EnabledUsbfsDevice;
 
 pub type CcidClass = usbd_ccid::Ccid<
+    'static,
     UsbBus<EnabledUsbPeripheral>,
     apdu_dispatch::interchanges::Contact,
     {apdu_dispatch::interchanges::SIZE},

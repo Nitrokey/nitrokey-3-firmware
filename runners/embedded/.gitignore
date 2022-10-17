@@ -1,0 +1,8 @@
+/deny.log
+/build*.err.log
+/lpc-runner*
+/nrf-runner*
+/symbols*.txt
+custom_memory.x
+!/Cargo.lock
+/fidokeys_lfs*.ihex

@@ -1,8 +1,62 @@
-# Unreleased
+# v1.2.2 (2022-10-05)
 
+This release contains additional internal tests.
+v1.2.1 was skipped due to an incorrectly determined bugfix.
+
+### Bugfixes
+
+- change fido-authenticator version from 0.1 to 0.1.1 (not needed, to be reverted) ([#87][])
+
+### Features
+
+- add proper `Reboot::is_locked` for nRF52 ([#89][])
+- add i2c/se050 test to LPC55 (panicks in provisioner mode) ([#90][])
+
+[#89]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/89
+[#90]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
+[#87]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
+
+# v1.2.0 (2022-08-30)
+
+This release contains various bugfixes and stability improvements.
+
+### Bugfixes
+
+- fido-authenticator: Return an error instead of panicking if the credential ID is too long ([#49][])
+- Implement CCID abort handling, fixing an issue where GnuPG would stall for up to a minute on the first operation if a Nitrokey 3 is connected and recognized as a CCID device ([#22][])
+- fido-authenticator: Fix handling of U2F commands over NFC ([fido-authenticator#18][])
+- interchange: Fix unsound usage of `UnsafeCell` ([interchange#4][])
+- Improve APDU handling ([iso7816#4][], [iso7816#5][], [apdu-dispatch#5][])
+- Update all dependencies
+
+[#22]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/22
+[#49]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/49
+[apdu-dispatch#5]: https://github.com/solokeys/apdu-dispatch/pull/5
+[fido-authenticator#18]: https://github.com/solokeys/fido-authenticator/pull/18
+[interchange#4]: https://github.com/trussed-dev/interchange/pull/4
+[iso7816#4]: https://github.com/ycrypto/iso7816/pull/4
+[iso7816#5]: https://github.com/ycrypto/iso7816/pull/5
+
+# v1.1.0 (2022-08-02)
+
+This release adds support for the NRF52 MCU, changes the LED color to red on
+panics and allows the user to skip the additional user presence check for the
+first FIDO2 operation within two seconds after boot.
+
+## v1.1.0-rc.1 (2022-07-27)
+
+This is the first official nRF52 release(candidate) for the Nitrokey 3A Mini.
+
+### Features
+
+- `embedded` runner to allow building for different SoCs from within a common code-base
+- This pre-release only includes binaries for the nRF52 
+- All features from the v1.0.4 release are included 
 - Change the LED color to red on panics ([#52][])
+- Skip the additional user presence check for the first Get Assertion or Authenticate request within two seconds after boot ([#61][])
 
 [#52]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/52
+[#61]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/61
 
 # v1.0.4 (2022-07-14)
 
