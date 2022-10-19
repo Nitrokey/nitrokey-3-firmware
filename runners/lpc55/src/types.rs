@@ -235,10 +235,13 @@ pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
 pub type ProvisionerApp = provisioner_app::Provisioner<Store, FlashStorage, TrussedClient>;
 
+#[cfg(feature = "webcrypt-app")]
 pub type WebcryptApp = Webcrypt<TrussedClient>;
 
 use apdu_dispatch::{App as ApduApp, command::SIZE as CommandSize, response::SIZE as ResponseSize};
 use ctaphid_dispatch::app::{App as CtaphidApp};
+
+#[cfg(feature = "webcrypt-app")]
 use webcrypt::Webcrypt;
 
 pub type DynamicClockController = board::clock_controller::DynamicClockController;
@@ -299,6 +302,7 @@ impl TrussedApp for AdminApp {
     }
 }
 
+#[cfg(feature = "webcrypt-app")]
 impl TrussedApp for WebcryptApp {
     type NonPortable = ();
 
@@ -362,6 +366,7 @@ pub struct Apps {
     pub ndef: NdefApp,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerApp,
+    #[cfg(feature = "webcrypt-app")]
     pub webcrypt: WebcryptApp,
 }
 
@@ -381,6 +386,7 @@ impl Apps {
         let ndef = NdefApp::new();
         #[cfg(feature = "provisioner-app")]
         let provisioner = ProvisionerApp::with(trussed, provisioner);
+        #[cfg(feature = "webcrypt-app")]
         let webcrypt = WebcryptApp::with(trussed, ());
 
         Self {
@@ -394,6 +400,7 @@ impl Apps {
             ndef,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            #[cfg(feature = "webcrypt-app")]
             webcrypt,
         }
     }
@@ -406,6 +413,7 @@ impl Apps {
             ]) -> T
     {
         f(&mut [
+            #[cfg(feature = "webcrypt-app")]
             &mut self.webcrypt,
             #[cfg(feature = "ndef-app")]
             &mut self.ndef,
@@ -426,6 +434,7 @@ impl Apps {
         F: FnOnce(&mut [&mut dyn CtaphidApp ]) -> T
     {
         f(&mut [
+            #[cfg(feature = "webcrypt-app")]
             &mut self.webcrypt,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,

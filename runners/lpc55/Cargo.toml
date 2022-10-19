@@ -53,7 +53,7 @@ fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
 usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
-webcrypt = { git = "https://github.com/nitrokey/nitrokey-webcrypt-rust.git", branch="main" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-webcrypt-rust.git", branch="main", optional = true }
 
 
 # storage
@@ -80,6 +80,9 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 
 # Enable transparent state encryption offered by Trussed
 transparent-encryption = ["webcrypt/transparent-encryption"]
+
+# Activate Nitrokey WebCrypt support
+webcrypt-app = ["webcrypt"]
 
 # Disable self-test hardware check run on start in the provisioner mode. Useful only for development.
 danger-disable-hardware-check = []
