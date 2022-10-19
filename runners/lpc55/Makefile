@@ -37,7 +37,7 @@ ci-all:
 	$(MAKE) ci BOARD=nk3xn PROVISIONER=1
 
 BINVERSION=$(shell git describe --long --always)
-WCVERSION=$(shell cargo tree | grep -Eo "webcrypt .*?\s" | tr " " -)
+WCVERSION=$(shell cargo tree --features webcrypt-app | grep -Eo "webcrypt .*?\s" | tr " " -)
 webcrypt:
 	# $(MAKE) ci BOARD=nk3xn FEATURES=board-nk3xn,no-buttons,log-serial,serial,log-all
 	$(MAKE) ci BOARD=nk3xn PROVISIONER=1 FEATURES=board-nk3xn,no-buttons,log-all,provisioner,danger-disable-hardware-check
