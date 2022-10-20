@@ -55,27 +55,11 @@ build-lpc55-nk3xn:
     - cp ./runners/lpc55/firmware-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
     - cp ./runners/lpc55/provisioner-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
     - cp ./commands.bd artifacts
-    - cd artifacts ; sha256sum * | tee sha256sum ; cd ..
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
     paths:
       - artifacts
-
-build-lpc55-nk3am:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make -C runners/lpc55 ci BOARD=nk3am
-    - make -C runners/lpc55 ci BOARD=nk3am PROVISIONER=1
-  after_script:
-    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
 
 build-nrf52-nk3mini:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -95,8 +79,6 @@ build-nrf52-nk3mini:
     - cp runners/embedded/artifacts/*.ihex artifacts/provisioner-nk3am-nrf52.ihex
     - make -C runners/embedded clean-nk3am.bl FEATURES=provisioner
     - make -C runners/embedded build-nk3am.bl FEATURES=develop
-    - cp runners/embedded/artifacts/*.bin artifacts/develop-nk3am-nrf52.bin
-    - cp runners/embedded/artifacts/*.ihex artifacts/develop-nk3am-nrf52.ihex
     - make -C runners/embedded clean-nk3am.bl FEATURES=develop
     - make -C runners/embedded build-nk3am.bl FEATURES=release
     - cp runners/embedded/artifacts/*.bin artifacts/firmware-nk3am-nrf52.bin
