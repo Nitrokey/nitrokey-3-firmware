@@ -7,37 +7,9 @@ use crate::traits::{
     buttons::{Edge, Press},
     rgb_led::RgbLed,
 };
-use crate::ui::Status;
+use crate::{runtime::UserPresenceStatus, ui::Status};
 use lpc55_hal::{peripherals::rtc::Rtc, typestates::init_state};
 use trussed::platform::{consent, reboot};
-
-// translated from https://stackoverflow.com/a/2284929/2490057
-fn sin(x: f32) -> f32 {
-    let mut res = 0f32;
-    let mut pow = x;
-    let mut fact = 1f32;
-    for i in 0..5 {
-        res += pow / fact;
-        pow *= -1f32 * x * x;
-        fact *= ((2 * (i + 1)) * (2 * (i + 1) + 1)) as f32;
-    }
-
-    res
-}
-
-// Assuming there will only be one way to
-// get user presence, this should be fine.
-// Used for Ctaphid.keepalive message status.
-static mut WAITING: bool = false;
-pub struct UserPresenceStatus {}
-impl UserPresenceStatus {
-    pub(crate) fn set_waiting(waiting: bool) {
-        unsafe { WAITING = waiting };
-    }
-    pub fn waiting() -> bool {
-        unsafe { WAITING }
-    }
-}
 
 pub struct UserInterface<BUTTONS, RGB>
 where

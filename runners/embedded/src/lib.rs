@@ -9,6 +9,7 @@ use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 extern crate delog;
 delog::generate_macros!();
 
+pub mod flash;
 pub mod runtime;
 pub mod traits;
 pub mod types;
@@ -62,28 +63,28 @@ pub fn init_store(
 
     /* Step 2: try mounting each FS in turn */
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
-        let fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
-        error!("IFS Mount Error, Reformat {:?}", fmt_ext);
+        let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
+        error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
         Ok(ifs_) => {
             transcend!(types::INTERNAL_FS, ifs_)
         }
-        Err(e) => {
-            error!("IFS Mount Error {:?}", e);
+        Err(_e) => {
+            error!("IFS Mount Error {:?}", _e);
             panic!("store");
         }
     };
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
-        let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
-        error!("EFS Mount Error, Reformat {:?}", fmt_ext);
+        let _fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
+        error!("EFS Mount Error, Reformat {:?}", _fmt_ext);
     };
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
         Ok(efs_) => {
             transcend!(types::EXTERNAL_FS, efs_)
         }
-        Err(e) => {
-            error!("EFS Mount Error {:?}", e);
+        Err(_e) => {
+            error!("EFS Mount Error {:?}", _e);
             panic!("store");
         }
     };
@@ -95,8 +96,8 @@ pub fn init_store(
         Ok(vfs_) => {
             transcend!(types::VOLATILE_FS, vfs_)
         }
-        Err(e) => {
-            error!("VFS Mount Error {:?}", e);
+        Err(_e) => {
+            error!("VFS Mount Error {:?}", _e);
             panic!("store");
         }
     };
@@ -150,6 +151,7 @@ pub fn init_usb_nfc(
         ));
     }
 
+    // TODO: move up?
     let iso14443 = {
         if let Some(nfcdev) = nfcdev_opt {
             let mut iso14443 = nfc_device::Iso14443::new(nfcdev, nfc_rq);

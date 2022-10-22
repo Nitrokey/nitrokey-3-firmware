@@ -22,6 +22,7 @@ generic-array = "0.14"
 nfc-device = { path = "../../components/nfc-device" }
 rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
+spi-memory = "0.2.0"
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -57,6 +58,7 @@ lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], opti
 lpc55-pac = { version = "0.4", optional = true }
 fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"
+systick-monotonic = { version = "1.0.0", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -104,13 +106,10 @@ board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
 board-nk3am = ["soc-nrf52840" , "extflash_qspi"]
 
-board-lpcxpresso55 = ["soc-lpc55"]
-board-okdoe1 = ["soc-lpc55", "board-lpcxpresso55"]
-board-solo2 = ["soc-lpc55"]
 board-nk3xn = ["soc-lpc55"]
 
 soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20"]
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic"]
 
 extflash_qspi = []
 
@@ -142,6 +141,6 @@ required-features = ["soc-lpc55"]
 
 [patch.crates-io]
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", branch = "rtc-match" }
 trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
 #trussed = { path = "../../trussed" }

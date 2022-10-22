@@ -1,6 +1,7 @@
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::trussed::UserInterface;
 use crate::types::build_constants;
+use embedded_time::duration::Milliseconds;
 use littlefs2::const_ram_storage;
 use lpc55_hal::{
     drivers::timer,
@@ -50,7 +51,7 @@ impl crate::types::Soc for Soc {
     type UUID = [u8; 16];
 
     type Instant = ();
-    type Duration = LpcTimerDuration;
+    type Duration = Milliseconds;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
         i: raw::Interrupt::OS_EVENT as u16,
@@ -61,13 +62,6 @@ impl crate::types::Soc for Soc {
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     fn device_uuid() -> &'static [u8; 16] {
         unsafe { &DEVICE_UUID }
-    }
-}
-
-pub struct LpcTimerDuration {/* TODO: code me */}
-impl From<embedded_time::duration::units::Milliseconds> for LpcTimerDuration {
-    fn from(ms: embedded_time::duration::units::Milliseconds) -> Self {
-        Self {}
     }
 }
 

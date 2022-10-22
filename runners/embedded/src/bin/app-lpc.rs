@@ -1,228 +1,349 @@
 #![no_std]
 #![no_main]
 
-use embedded_runner_lib as ERL;
-
 #[macro_use]
 extern crate delog;
-delog::generate_macros!();
+generate_macros!();
 
-delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
+use core::arch::asm;
 
-#[rtic::app(device = lpc55_hal::raw, peripherals = true)]
+#[inline]
+pub fn msp() -> u32 {
+    let r;
+    unsafe { asm!("mrs {}, MSP", out(reg) r, options(nomem, nostack, preserves_flags)) };
+    r
+}
+
+#[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
-    use super::{Delogger, ERL, ERL::types::BootMode};
-    use embedded_hal::digital::v2::InputPin;
-    use embedded_time::rate::Megahertz;
+    use embedded_runner_lib::{runtime, soc, soc::monotonic::SystickMonotonic, types};
+    use lpc55_hal::{
+        drivers::timer::Elapsed,
+        raw::Interrupt,
+        time::{DurationExtensions, Microseconds, Milliseconds},
+        traits::wg::timer::{Cancel, CountDown},
+    };
+    use systick_monotonic::Systick;
+
+    const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
+
+    const USB_INTERRUPT: Interrupt = Interrupt::USB1;
+    const NFC_INTERRUPT: Interrupt = Interrupt::PIN_INT0;
 
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed,
-        apps: ERL::types::Apps,
-        apdu_dispatch: ERL::types::ApduDispatch,
-        ctaphid_dispatch: ERL::types::CtaphidDispatch,
-        usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
-        contactless: Option<ERL::types::Iso14443>,
-        boot_mode: BootMode,
+        /// Dispatches APDUs from contact+contactless interface to apps.
+        apdu_dispatch: types::ApduDispatch,
 
-        /* LPC55 specific elements */
-        perf_timer:
-            lpc55_hal::drivers::Timer<lpc55_hal::peripherals::ctimer::Ctimer4<lpc55_hal::Enabled>>,
-        // clock_ctrl
-        // wait_extender
+        /// Dispatches CTAPHID messages to apps.
+        ctaphid_dispatch: types::CtaphidDispatch,
+
+        /// The Trussed service, used by all applications.
+        trussed: types::Trussed,
+
+        /// All the applications that the device serves.
+        apps: types::Apps,
+
+        /// The USB driver classes
+        usb_classes: Option<types::usbnfc::UsbClasses>,
+        /// The NFC driver
+        contactless: Option<types::Iso14443>,
+
+        /// This timer is used while developing NFC, to time how long things took,
+        /// and to make sure logs are not flushed in the middle of NFC transactions.
+        ///
+        /// It could and should be behind some kind of `debug-nfc-timer` feature flag.
+        perf_timer: soc::types::PerformanceTimer,
+
+        /// When using passive power (i.e. NFC), we switch between 12MHz
+        /// and 48Mhz, trying to optimize speed while keeping power high enough.
+        ///
+        /// In principle, we could just run at 12MHz constantly, and then
+        /// there would be no need for a system-speed independent wait extender.
+        clock_ctrl: Option<soc::types::DynamicClockController>,
+
+        /// Applications must respond to NFC requests within a certain time frame (~40ms)
+        /// or send a "wait extension" to the NFC reader. This timer is responsible
+        /// for scheduling these.
+        ///
+        /// In the current version of RTIC, the built-in scheduling cannot be used, as it
+        /// is expressed in terms of cycles, and our dynamic clock control potentially changes
+        /// timing. It seems like RTIC v6 will allow using such a timer directly.
+        ///
+        /// Alternatively, we could send wait extensions as if always running at 12MHz,
+        /// which would cause more context switching and NFC exchangs though.
+        ///
+        /// NB: CCID + CTAPHID also have a sort of "wait extension" implemented, however
+        /// since the system runs at constant speed when powered over USB, there is no
+        /// need for such an independent timer.
+        wait_extender: soc::types::NfcWaitExtender,
     }
 
     #[local]
     struct LocalResources {}
 
+    // TODO: replace
+    #[monotonic(binds = SysTick, default = true)]
+    type Monotonic = SystickMonotonic;
+
     #[init()]
-    fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
-        #[cfg(feature = "log-rtt")]
-        rtt_target::rtt_init_print!();
-        Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner();
+    fn init(c: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        let soc::init::All {
+            basic,
+            usb_nfc,
+            trussed,
+            apps,
+            clock_controller,
+        } = soc::init(c.device, c.core);
+        let perf_timer = basic.perf_timer;
+        let wait_extender = basic.delay_timer;
 
-        ERL::soc::init_bootup(&mut ctx.device.IOCON);
+        // don't toggle LED in passive mode
+        if usb_nfc.usb_classes.is_some() {
+            lpc55_hal::enable_cycle_counter();
+            update_ui::spawn_after(REFRESH_MILLISECS).ok();
+        }
 
-        let mut hal = lpc55_hal::Peripherals::from((ctx.device, ctx.core));
-        let (anactrl, pmc, syscon) = (&mut hal.anactrl, &mut hal.pmc, &mut hal.syscon);
+        let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
+        let systick = Systick::new(systick, 96_000_000); // TODO: read out sysclk
 
-        let iocon = &mut hal.iocon.enabled(syscon);
-        let gpio = &mut hal.gpio.enabled(syscon);
-        let nfc_irq = lpc55_hal::drivers::pins::Pio0_19::take()
-            .unwrap()
-            .into_gpio_pin(iocon, gpio)
-            .into_input();
-        let bootmode = if nfc_irq.is_low().ok().unwrap() {
-            BootMode::NFCPassive
-        } else {
-            BootMode::Full
+        let shared = SharedResources {
+            apdu_dispatch: usb_nfc.apdu_dispatch,
+            ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
+            trussed,
+            apps,
+            usb_classes: usb_nfc.usb_classes,
+            contactless: usb_nfc.iso14443,
+            perf_timer,
+            clock_ctrl: clock_controller,
+            wait_extender,
         };
-
-        // GPIO
-
-        /* check reason for booting */
-        /* a) powered through NFC: enable NFC, keep external oscillator off, don't start USB */
-        /* b) powered through USB: start external oscillator, start USB, keep NFC off(?) */
-
-        /* initializer::initialize_all() */
-        /* -> initializer::initialize_clocks() */
-        let clockfreq = if bootmode == BootMode::NFCPassive {
-            Megahertz(4_u32)
-        } else {
-            Megahertz(96_u32)
-        };
-        let mut clocks = lpc55_hal::ClockRequirements::default()
-            .system_frequency(clockfreq)
-            .configure(anactrl, pmc, syscon)
-            .expect("LPC55 Clock Configuration Failed");
-
-        let mut delay_timer = lpc55_hal::drivers::Timer::new(
-            hal.ctimer
-                .0
-                .enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
-        );
-        let perf_timer = lpc55_hal::drivers::Timer::new(
-            hal.ctimer
-                .4
-                .enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
-        );
-        // out: { nfc_irq, clocks, iocon, gpio }
-
-        /* -> initializer::initialize_basic() */
-        let _adc = lpc55_hal::Adc::from(hal.adc)
-            .configure(ERL::soc::clock_controller::DynamicClockController::adc_configuration())
-            .enabled(pmc, syscon);
-
-        let rtc = hal.rtc.enabled(syscon, clocks.enable_32k_fro(pmc));
-        let rgb = ERL::soc::init_rgb(syscon, iocon, hal.ctimer.3, &mut clocks);
-        /* let three_buttons = {
-            // TODO this should get saved somewhere to be released later.
-            let mut dma = hal::Dma::from(_dma).enabled(syscon);
-
-            board::ThreeButtons::new (
-                adc.take().unwrap(),
-                ctimer1.enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
-                ctimer2.enabled(syscon, clocks.support_1mhz_fro_token().unwrap()),
-                &mut dma,
-                clocks.support_touch_token().unwrap(),
-                gpio,
-                iocon,
-            )
-        };*/
-
-        // check CFPA
-        // BOOTROM check
-        // out: { delay_timer, perf_timer, pfr, adc, buttons, rgb }
-
-        /* -> initializer::initialize_usb() */
-        let usbd_ref = {
-            if bootmode == BootMode::Full {
-                Some(ERL::soc::setup_usb_bus(
-                    hal.usbhs,
-                    anactrl,
-                    iocon,
-                    pmc,
-                    syscon,
-                    clocks,
-                    &mut delay_timer,
-                ))
-            } else {
-                None
-            }
-        };
-        // out: { usb_classes, contact_responder, ctaphid_responder }
-
-        /* -> initializer::initialize_nfc() */
-        let nfc_dev = {
-            if bootmode == BootMode::NFCPassive {
-                ERL::soc::setup_fm11nc08(
-                    &clocks,
-                    syscon,
-                    iocon,
-                    gpio,
-                    hal.flexcomm.0,
-                    hal.inputmux,
-                    hal.pint,
-                    nfc_irq,
-                    &mut delay_timer,
-                )
-            } else {
-                None
-            }
-        };
-        // out: { iso14443, contactless_responder }
-
-        /* -> initializer::initialize_interfaces() */
-        let usbnfcinit = ERL::init_usb_nfc(usbd_ref, nfc_dev);
-        // out: { apdu_dispatch, ctaphid_dispatch }
-
-        /* -> initializer::initialize_flash() */
-        let mut rng = hal.rng.enabled(syscon);
-        let prince = hal.prince.enabled(&mut rng);
-        prince.disable_all_region_2();
-        let flash_gordon = lpc55_hal::FlashGordon::new(hal.flash.enabled(syscon));
-        // out: { flash_gordon, prince, rng }
-
-        /* -> initializer::initialize_filesystem() */
-        // TODO: make fs encryption configurable
-        #[cfg(feature = "no-encrypted-storage")]
-        let internal_fs = ERL::soc::types::InternalFilesystem::new(flash_gordon);
-        #[cfg(not(feature = "no-encrypted-storage"))]
-        let internal_fs = ERL::soc::types::InternalFilesystem::new(flash_gordon, prince);
-
-        let external_fs = ERL::soc::types::ExternalRAMStorage::new();
-        let store: ERL::types::RunnerStore = ERL::init_store(internal_fs, external_fs);
-        // out: { store, internal_storage_fs }
-
-        /* -> initializer::initialize_trussed() */
-        let ui = <ERL::soc::types::Soc as ERL::types::Soc>::TrussedUI::new(
-            rtc, None, /* rgb */
-            None, /* three_buttons */
-            true,
-        );
-        let platform: ERL::types::RunnerPlatform = ERL::types::RunnerPlatform::new(rng, store, ui);
-        let mut trussed_service = trussed::service::Service::new(platform);
-        // out: trussed
-
-        let apps = ERL::init_apps(
-            &mut trussed_service,
-            &store,
-            bootmode == BootMode::NFCPassive,
-        );
-
-        // compose LateResources
-        (
-            SharedResources {
-                trussed: trussed_service,
-                apps,
-                apdu_dispatch: usbnfcinit.apdu_dispatch,
-                ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
-                usb_classes: usbnfcinit.usb_classes,
-                contactless: usbnfcinit.iso14443,
-                boot_mode: bootmode,
-
-                perf_timer,
-            },
-            LocalResources {},
-            init::Monotonics(),
-        )
+        (shared, LocalResources {}, init::Monotonics(systick.into()))
     }
 
-    #[idle()]
-    fn idle(_ctx: idle::Context) -> ! {
-        /*
-           Note: ARM SysTick stops in WFI. This is unfortunate as
-           - RTIC uses SysTick for its schedule() feature
-           - we would really like to use WFI in order to save power
-           In the future, we might even consider entering "System OFF".
-           In short, don't expect schedule() to work.
-        */
+    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes])]
+    fn idle(c: idle::Context) -> ! {
+        let idle::SharedResources {
+            mut apdu_dispatch,
+            mut ctaphid_dispatch,
+            mut apps,
+            mut perf_timer,
+            mut usb_classes,
+        } = c.shared;
+
+        info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
-            trace!("idle");
-            Delogger::flush();
-            cortex_m::asm::wfi();
+            let mut time = 0;
+            perf_timer.lock(|perf_timer| {
+                time = perf_timer.elapsed().0;
+                if time == 60_000_000 {
+                    perf_timer.start(60_000_000.microseconds());
+                }
+            });
+            if time > 1_200_000 {
+                soc::Delogger::flush();
+            }
+
+            let (usb_activity, nfc_activity) = apps.lock(|apps| {
+                apdu_dispatch.lock(|apdu_dispatch| {
+                    ctaphid_dispatch.lock(|ctaphid_dispatch| {
+                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
+                    })
+                })
+            });
+            if usb_activity {
+                rtic::pend(USB_INTERRUPT);
+            }
+            if nfc_activity {
+                rtic::pend(NFC_INTERRUPT);
+            }
+
+            usb_classes.lock(|usb_classes| {
+                runtime::poll_usb(
+                    usb_classes,
+                    ccid_wait_extension::spawn_after,
+                    ctaphid_keepalive::spawn_after,
+                    monotonics::now(),
+                );
+            });
+
+            // TODO: re-enable?
+            /*
+            contactless.lock(|contactless| {
+                runtime::poll_nfc(contactless, nfc_keepalive::spawn_after);
+            });
+            */
         }
-        // loop {}
+    }
+
+    #[task(binds = USB1_NEEDCLK, shared = [], priority=6)]
+    fn usb1_needclk(_c: usb1_needclk::Context) {
+        // Behavior is same as in USB1 handler
+        rtic::pend(USB_INTERRUPT);
+    }
+
+    /// Manages all traffic on the USB bus.
+    #[task(binds = USB1, shared = [usb_classes], priority=6)]
+    fn usb(mut c: usb::Context) {
+        // let remaining = super::msp() - 0x2000_0000;
+        // if remaining < 100_000 {
+        //     debug_now!("USB interrupt: remaining stack size: {} bytes", remaining);
+        // }
+        let usb = unsafe { lpc55_hal::raw::Peripherals::steal().USB1 };
+        // let before = Instant::now();
+        c.shared.usb_classes.lock(|usb_classes| {
+            runtime::poll_usb(
+                usb_classes,
+                ccid_wait_extension::spawn_after,
+                ctaphid_keepalive::spawn_after,
+                monotonics::now(),
+            );
+        });
+
+        // let after = Instant::now();
+        // let length = (after - before).as_cycles();
+        // if length > 10_000 {
+        //     // debug!("poll took {:?} cycles", length);
+        // }
+        let inten = usb.inten.read().bits();
+        let intstat = usb.intstat.read().bits();
+        let mask = inten & intstat;
+        if mask != 0 {
+            for i in 0..5 {
+                if mask & (1 << 2 * i) != 0 {
+                    // debug!("EP{}OUT", i);
+                }
+                if mask & (1 << (2 * i + 1)) != 0 {
+                    // debug!("EP{}IN", i);
+                }
+            }
+            // Serial sends a stray 0x70 ("p") to CDC-ACM "data" OUT endpoint (3)
+            // Need to fix that at the management, for now just clear that interrupt.
+            usb.intstat.write(|w| unsafe { w.bits(64) });
+            // usb.intstat.write(|w| unsafe{ w.bits( usb.intstat.read().bits() ) });
+        }
+
+        // if remaining < 60_000 {
+        //     debug_now!("USB interrupt done: {} bytes", remaining);
+        // }
+    }
+
+    /// Whenever we start waiting for an application to reply to CCID, this must be scheduled.
+    /// In case the application takes too long, this will periodically send wait extensions
+    /// until the application replied.
+    #[task(shared = [usb_classes], priority = 6)]
+    fn ccid_wait_extension(mut c: ccid_wait_extension::Context) {
+        debug_now!("CCID WAIT EXTENSION");
+        debug_now!("remaining stack size: {} bytes", super::msp() - 0x2000_0000);
+        c.shared.usb_classes.lock(|usb_classes| {
+            runtime::ccid_keepalive(usb_classes, ccid_wait_extension::spawn_after)
+        });
+    }
+
+    /// Same as with CCID, but sending ctaphid keepalive statuses.
+    #[task(shared = [usb_classes], priority = 6)]
+    fn ctaphid_keepalive(mut c: ctaphid_keepalive::Context) {
+        debug_now!("CTAPHID keepalive");
+        debug_now!("remaining stack size: {} bytes", super::msp() - 0x2000_0000);
+        c.shared.usb_classes.lock(|usb_classes| {
+            runtime::ctaphid_keepalive(usb_classes, ctaphid_keepalive::spawn_after)
+        });
+    }
+
+    #[task(binds = MAILBOX, shared = [usb_classes], priority = 5)]
+    #[allow(unused_mut, unused_variables)]
+    fn mailbox(mut c: mailbox::Context) {
+        // debug_now!("mailbox: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
+        #[cfg(feature = "log-serial")]
+        c.shared.usb_classes.lock(|usb_classes_maybe| {
+            match usb_classes_maybe.as_mut() {
+                Some(usb_classes) => {
+                    // usb_classes.serial.write(logs.as_bytes()).ok();
+                    usb_classes.serial.write(b"dummy test string\n").ok();
+                    // app::drain_log_to_serial(&mut usb_classes.serial);
+                }
+                _ => {}
+            }
+        });
+        // // let usb_classes = c.shared.usb_classes.as_mut().unwrap();
+
+        // let mailbox::Resources { usb_classes } = c.shared;
+        // let x: () = usb_classes;
+        // // if let Some(usb_classes) = usb_classes.as_mut() {
+        // //     usb_classes.serial.write(b"dummy test string\n").ok();
+        // // }
+    }
+
+    #[task(binds = OS_EVENT, shared = [trussed], priority = 5)]
+    fn os_event(mut c: os_event::Context) {
+        // debug_now!("os event: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
+        c.shared
+            .trussed
+            .lock(|trussed| runtime::run_trussed(trussed));
+    }
+
+    #[task(shared = [trussed], priority = 1)]
+    fn update_ui(mut c: update_ui::Context) {
+        // debug_now!("update UI: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
+
+        c.shared.trussed.lock(|trussed| trussed.update_ui());
+        update_ui::spawn_after(REFRESH_MILLISECS).ok();
+    }
+
+    #[task(binds = CTIMER0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
+    fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
+        c.shared.contactless.lock(|contactless| {
+            if let Some(contactless) = contactless.as_mut() {
+                c.shared.wait_extender.lock(|wait_extender| {
+                    c.shared.perf_timer.lock(|_perf_timer| {
+                        // clear the interrupt
+                        wait_extender.cancel().ok();
+
+                        info!("<{}", _perf_timer.elapsed().0 / 100);
+                        let status = contactless.poll_wait_extensions();
+                        match status {
+                            nfc_device::Iso14443Status::Idle => {}
+                            nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                                wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
+                            }
+                        }
+                        info!(" {}>", _perf_timer.elapsed().0 / 100);
+                    });
+                });
+            }
+        });
+    }
+
+    #[task(binds = PIN_INT0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
+    fn nfc_irq(mut c: nfc_irq::Context) {
+        c.shared.contactless.lock(|contactless| {
+            c.shared.perf_timer.lock(|perf_timer| {
+                c.shared.wait_extender.lock(|wait_extender| {
+                    let contactless = contactless.as_mut().unwrap();
+                    let _starttime = perf_timer.elapsed().0 / 100;
+
+                    info!("[");
+                    let status = contactless.poll();
+                    match status {
+                        nfc_device::Iso14443Status::Idle => {}
+                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                            wait_extender.cancel().ok();
+                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
+                        }
+                    }
+                    info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
+
+                    perf_timer.cancel().ok();
+                    perf_timer.start(60_000_000.microseconds());
+                });
+            });
+        });
+    }
+
+    #[task(binds = ADC0, shared = [clock_ctrl], priority = 8)]
+    fn adc_int(mut c: adc_int::Context) {
+        c.shared
+            .clock_ctrl
+            .lock(|clock_ctrl| clock_ctrl.as_mut().unwrap().handle());
     }
 }
