@@ -32,7 +32,7 @@ type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
 const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
     card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT, /* TODO  FROM PFR ??? what is PFR ?*/
+    usb_product: crate::types::build_constants::USB_PRODUCT,
     usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
     usb_serial: "00000000-0000-0000-00000000",
     usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
@@ -84,7 +84,10 @@ impl admin_app::Reboot for Lpc55Reboot {
         raw::SCB::sys_reset()
     }
     fn locked() -> bool {
-        todo!()
+        let seal = &unsafe { lpc55_hal::raw::Peripherals::steal() }
+            .FLASH_CMPA
+            .sha256_digest;
+        seal.iter().any(|word| word.read().bits() != 0)
     }
 }
 
