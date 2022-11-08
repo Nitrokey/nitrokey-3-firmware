@@ -1037,8 +1037,8 @@ dependencies = [
 
 [[package]]
 name = "oath-authenticator"
-version = "0.2.0"
-source = "git+https://github.com/Nitrokey/oath-authenticator.git?branch=reverse-hotp#7b7d6e9c537709f51eb2854abad53fd6453cb102"
+version = "0.3.0"
+source = "git+https://github.com/Nitrokey/oath-authenticator.git?rev=0.3.0#2cbcfb54eec8dfe24920054c3cdc64d5d27c2021"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -1577,7 +1577,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#9fa6c1b2af6c468911dcc4f5acc445d8587be6d2"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#06238fd8538417b3cf1080924247f51c9a575298"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",

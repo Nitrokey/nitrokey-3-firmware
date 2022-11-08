@@ -32,7 +32,7 @@ ctap-types = "0.1"
 admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
+oath-authenticator = { version = "0.3", features = ["apdu-dispatch", "ctaphid"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -144,3 +144,4 @@ littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
 #trussed = { path = "../../trussed" }
+oath-authenticator = { git = "https://github.com/Nitrokey/oath-authenticator.git",  rev = "0.3.0" }

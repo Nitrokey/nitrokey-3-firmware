@@ -283,6 +283,8 @@ impl Apps {
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
+            #[cfg(feature = "oath-authenticator")]
+            &mut self.oath,
         ])
     }
 }
