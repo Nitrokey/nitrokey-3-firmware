@@ -1037,11 +1037,11 @@ dependencies = [
 
 [[package]]
 name = "oath-authenticator"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11470bb97635a0d1943211c7b9cd473ecee002342480e8fc7347beba27f38243"
+version = "0.2.0"
+source = "git+https://github.com/Nitrokey/oath-authenticator.git?branch=reverse-hotp#7b7d6e9c537709f51eb2854abad53fd6453cb102"
 dependencies = [
  "apdu-dispatch",
+ "ctaphid-dispatch",
  "delog",
  "flexiber",
  "heapless 0.7.16",
@@ -1051,6 +1051,7 @@ dependencies = [
  "iso7816",
  "serde",
  "trussed",
+ "usbd-ctaphid 0.0.0-unreleased (git+https://github.com/Nitrokey/nitrokey-3-firmware)",
 ]
 
 [[package]]
@@ -1265,7 +1266,7 @@ dependencies = [
  "trussed",
  "usb-device",
  "usbd-ccid",
- "usbd-ctaphid",
+ "usbd-ctaphid 0.0.0-unreleased",
  "usbd-serial",
 ]
 
@@ -1561,6 +1562,22 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.0.0-unreleased"
+dependencies = [
+ "ctap-types",
+ "ctaphid-dispatch",
+ "delog",
+ "embedded-time",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "interchange",
+ "serde",
+ "usb-device",
+]
+
+[[package]]
+name = "usbd-ctaphid"
+version = "0.0.0-unreleased"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#9fa6c1b2af6c468911dcc4f5acc445d8587be6d2"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
