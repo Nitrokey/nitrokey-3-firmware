@@ -128,7 +128,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 
 	cargo build --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
-		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
+		--quiet
 
 	cp $(RAW_OUT) ./$(OUT_ELF)
 
