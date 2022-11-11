@@ -1,0 +1,3 @@
+[factory-settings.usb-id]
+vid = 0x20a0
+pid = 0x42dd

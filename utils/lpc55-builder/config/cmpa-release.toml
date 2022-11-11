@@ -1,0 +1,13 @@
+[factory-settings]
+debug-access = "Disabled"
+rot-fingerprint = "050aad3e77791a81e59c5b2ba5a158937e9460ee325d8ccba09734b8fdebb171"
+
+[factory-settings.usb-id]
+vid = 0x20a0
+pid = 0x42dd
+
+[factory-settings.secure-boot-configuration]
+puf-keycode-generation-disabled = true
+dice-computation-disabled = true
+secure-boot-enabled = true
+use-rsa4096-keys = true

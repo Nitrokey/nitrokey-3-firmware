@@ -1,0 +1,4 @@
+[[provisions]]
+cmd = "EraseFlash"
+address = 0
+length = 0x80_000
