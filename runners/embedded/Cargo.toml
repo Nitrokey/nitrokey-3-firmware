@@ -34,7 +34,7 @@ admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v0.1.0", features = ["apdu-dispatch", "delog"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs.git", rev =  "7019a57cd4de3b6c808e006b401616b8dcb2b324", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
