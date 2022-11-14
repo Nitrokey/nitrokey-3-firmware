@@ -34,7 +34,7 @@ admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs.git", rev =  "7019a57cd4de3b6c808e006b401616b8dcb2b324", features = ["apdu-dispatch", "delog"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs.git", branch =  "rsa-import", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -50,7 +50,7 @@ usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
 
 ### NRF52 specific dependencies
 chacha20 = { version = "0.7", default-features = false, features = ["rng"], optional = true }
-nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true }
+nrf52840-hal = { git = "https://github.com/nrf-rs/nrf-hal", optional = true, rev = "663008c033ad67263e4ac0c561d5d1fac28d7170"}
 nrf52840-pac = { version = "0.11", optional = true }
 
 ### LPC55 specific dependencies
@@ -61,6 +61,9 @@ fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"
 systick-monotonic = { version = "1.0.0", optional = true }
 
+### Allocator
+alloc-cortex-m = "0.4.3"
+
 [build-dependencies]
 cargo-lock = "7"
 serde = { version = "1", features = ["derive"] }
@@ -68,12 +71,7 @@ toml = "0.5"
 
 [features]
 
-<<<<<<< HEAD
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
-=======
-default = ["admin-app", "fido-authenticator", "ndef-app", "opcard", "no-encrypted-storage",
-			"trussed/clients-3"]
->>>>>>> cdd5213 (Add opcard application)
+default = ["admin-app", "fido-authenticator", "ndef-app", "opcard", "trussed/clients-3"]
 
 release = []
 
@@ -81,24 +79,15 @@ complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
 			"trussed/clients-4", "log-traceP", "log-rtt"]
 
-<<<<<<< HEAD
-develop = ["default", "no-encrypted-storage", "oath-authenticator", "trussed/clients-3",
-=======
 develop = ["default", "oath-authenticator", "trussed/clients-4",
->>>>>>> cdd5213 (Add opcard application)
 			"fido-authenticator/disable-reset-time-window",
-			"log-traceP"]
+			"log-traceP", "no-encrypted-storage"]
 
 develop-no-press = ["develop", "no-buttons"]
 
 provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
-<<<<<<< HEAD
 			"write-undefined-flash", "no-buttons",
-			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
-=======
-			"write-undefined-flash", "no-buttons", "no-encrypted-storage",
 			"no-reset-time-window", "provisioner-app", "trussed/clients-4"]
->>>>>>> cdd5213 (Add opcard application)
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
@@ -158,5 +147,5 @@ apdu-dispatch = { git = "https://github.com/robin-nitrokey/apdu-dispatch", branc
 interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
-trussed = { git = "https://github.com/trussed-dev/trussed" , rev = "6de826f3bcbef247e55fd890d80d9ed6ce9f0abc" }
+trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
 #trussed = { path = "../../trussed" }
