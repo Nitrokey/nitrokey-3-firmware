@@ -46,36 +46,20 @@ build-lpc55-nk3xn:
     - docker
   stage: build
   script:
-    - make commands.bd
-    - make -C runners/lpc55 ci BOARD=nk3xn
-    - make -C runners/lpc55 ci BOARD=nk3xn PROVISIONER=1
-  after_script:
     - mkdir -p artifacts
     - export VERSION=`git describe --always`
-    - cp ./runners/lpc55/firmware-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
-    - cp ./runners/lpc55/provisioner-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
-    - cp ./commands.bd artifacts
-    - cd artifacts ; sha256sum * | tee sha256sum ; cd ..
+    - apt-get install -y python3 python3-toml
+    - make commands.bd
+    - make -C runners/embedded build-nk3xn FEATURES=provisioner
+    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - make -C runners/embedded build-nk3xn
+    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
+  after_script:
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
     paths:
       - artifacts
-
-build-lpc55-nk3am:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make -C runners/lpc55 ci BOARD=nk3am
-    - make -C runners/lpc55 ci BOARD=nk3am PROVISIONER=1
-  after_script:
-    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
 
 build-nrf52-nk3mini:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
