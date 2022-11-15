@@ -20,8 +20,8 @@ bt: gdb_bt.cmds binary
 regs: gdb_regs.cmds binary
 	arm-none-eabi-gdb --batch -x gdb_regs.cmds
 
-it: gdb_it.cmds
-	arm-none-eabi-gdb -x gdb_it.cmds
+it: gdb.cmds
+	arm-none-eabi-gdb -x gdb.cmds
 
 rtt:
 	python ocdtool.py r
