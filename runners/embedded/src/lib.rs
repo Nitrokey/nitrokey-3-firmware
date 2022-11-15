@@ -222,6 +222,7 @@ fn oom(_: core::alloc::Layout) -> ! {
     error_now!("Failed alloc");
     soc::board::set_panic_led();
     loop {
+        soc::board::set_panic_led();
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
