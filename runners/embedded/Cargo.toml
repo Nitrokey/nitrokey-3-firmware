@@ -62,7 +62,7 @@ nb = "1"
 systick-monotonic = { version = "1.0.0", optional = true }
 
 ### Allocator
-alloc-cortex-m = "0.4.3"
+alloc-cortex-m = { version = "0.4.3", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -71,15 +71,21 @@ toml = "0.5"
 
 [features]
 
-default = ["admin-app", "fido-authenticator", "ndef-app", "opcard", "trussed/clients-3"]
+default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 
 release = []
 
 complete = ["oath-authenticator", # "provisioner-app",
+			"fido-authenticator/disable-reset-time-window", "opcard",
+			"trussed/clients-3", "log-traceP", "log-rtt"]
+
+alpha = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
 			"trussed/clients-4", "log-traceP", "log-rtt"]
 
-develop = ["default", "oath-authenticator", "trussed/clients-4",
+develop = ["develop-no-opcard", "opcard", "trussed/clients-4", "rsa2048"]
+
+develop-no-opcard = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP", "no-encrypted-storage"]
 
@@ -103,6 +109,9 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 
 # Format filesystem anyway
 format-filesystem = []
+
+alloc = ["alloc-cortex-m"]
+rsa2048 = ["alloc", "opcard/rsa2048"]
 
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]

@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(alloc_error_handler)]
+#![cfg_attr(feature = "alloc", feature(alloc_error_handler))]
 
 use interchange::Interchange;
 use littlefs2::fs::Filesystem;
@@ -217,6 +217,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
     error_now!("Failed alloc");

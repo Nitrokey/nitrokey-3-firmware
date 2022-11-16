@@ -1,11 +1,11 @@
 #![no_std]
 #![no_main]
 
-use alloc_cortex_m::CortexMHeap;
 use embedded_runner_lib as ERL;
 
+#[cfg(feature = "alloc")]
 #[global_allocator]
-static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
+static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
 #[macro_use]
 extern crate delog;
@@ -55,6 +55,7 @@ mod app {
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        #[cfg(feature = "alloc")]
         {
             use core::mem::MaybeUninit;
             const HEAP_SIZE: usize = 24 * 1024;
