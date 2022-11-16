@@ -691,7 +691,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.2.2-alpha.opcard.0.1.0"
+version = "1.2.2"
 dependencies = [
  "admin-app",
  "alloc-cortex-m",
