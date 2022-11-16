@@ -85,6 +85,10 @@ build-nrf52-nk3mini:
     - make -C runners/embedded build-nk3am.bl FEATURES=release
     - cp runners/embedded/artifacts/*.bin artifacts/firmware-nk3am-nrf52.bin
     - cp runners/embedded/artifacts/*.ihex artifacts/firmware-nk3am-nrf52.ihex
+    - make -C runners/embedded clean-nk3am.bl FEATURES=release
+    - RUSTUP_TOOLCHAIN=nightly-2022-11-13 make -C runners/embedded build-nk3am.bl FEATURES=alpha
+    - cp runners/embedded/artifacts/*.bin artifacts/firmware-alpha-nk3am-nrf52.bin
+    - cp runners/embedded/artifacts/*.ihex artifacts/firmware-alpha-nk3am-nrf52.ihex
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:

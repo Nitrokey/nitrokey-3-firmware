@@ -79,9 +79,7 @@ complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window", "opcard",
 			"trussed/clients-3", "log-traceP", "log-rtt"]
 
-alpha = ["oath-authenticator", # "provisioner-app",
-			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-4", "log-traceP", "log-rtt"]
+alpha = ["opcard", "rsa2048", "trussed/clients-3"]
 
 develop = ["develop-no-opcard", "opcard", "trussed/clients-4", "rsa2048"]
 
