@@ -79,9 +79,9 @@ complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window", "opcard",
 			"trussed/clients-3", "log-traceP", "log-rtt"]
 
-alpha = ["opcard", "rsa2048", "trussed/clients-3"]
+alpha = ["opcard", "rsa2048", "rsa4096", "trussed/clients-3"]
 
-develop = ["develop-no-opcard", "opcard", "trussed/clients-4", "rsa2048"]
+develop = ["develop-no-opcard", "opcard", "trussed/clients-4", "rsa2048", "rsa4096"]
 
 develop-no-opcard = ["default", "oath-authenticator", "trussed/clients-3",
 			"fido-authenticator/disable-reset-time-window",
@@ -110,6 +110,7 @@ format-filesystem = []
 
 alloc = ["alloc-cortex-m"]
 rsa2048 = ["alloc", "opcard/rsa2048"]
+rsa4096 = ["rsa2048", "opcard/rsa4096"]
 
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
@@ -155,4 +156,3 @@ interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "f
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
-#trussed = { path = "../../trussed" }
