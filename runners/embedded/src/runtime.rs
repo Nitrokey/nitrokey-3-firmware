@@ -23,10 +23,10 @@ impl UserPresenceStatus {
     }
 }
 
-pub fn poll_dispatchers(
+pub fn poll_dispatchers<S: Soc>(
     apdu_dispatch: &mut ApduDispatch,
     ctaphid_dispatch: &mut CtaphidDispatch,
-    apps: &mut Apps,
+    apps: &mut Apps<S>,
 ) -> (bool, bool) {
     let apdu_poll = apps.apdu_dispatch(|apps| apdu_dispatch.poll(apps));
     let ctaphid_poll = apps.ctaphid_dispatch(|apps| ctaphid_dispatch.poll(apps));

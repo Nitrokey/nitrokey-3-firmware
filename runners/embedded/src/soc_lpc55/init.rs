@@ -745,7 +745,7 @@ pub struct All {
     pub basic: Basic,
     pub usb_nfc: UsbNfc,
     pub trussed: Trussed<super::types::Soc>,
-    pub apps: Apps,
+    pub apps: Apps<super::types::Soc>,
     pub clock_controller: Option<DynamicClockController>,
 }
 

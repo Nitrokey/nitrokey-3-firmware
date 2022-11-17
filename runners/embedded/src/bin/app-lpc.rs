@@ -42,7 +42,7 @@ mod app {
         trussed: types::Trussed<soc::types::Soc>,
 
         /// All the applications that the device serves.
-        apps: types::Apps,
+        apps: types::Apps<soc::types::Soc>,
 
         /// The USB driver classes
         usb_classes: Option<types::usbnfc::UsbClasses<soc::types::Soc>>,
