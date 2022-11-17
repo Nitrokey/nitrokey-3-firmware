@@ -19,9 +19,9 @@ use crate::traits::rgb_led::Color;
 
 pub type OutPin = Pin<Output<PushPull>>;
 
-use crate::soc::types::BoardGPIO;
+use super::types::BoardGPIO;
 
-use crate::soc::trussed_ui::UserInterface;
+use super::trussed_ui::UserInterface;
 
 pub type TrussedUI = UserInterface<HardwareButtons, RgbLed>;
 

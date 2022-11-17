@@ -15,7 +15,7 @@ use crate::ui::Status;
 
 use embedded_time::duration::*;
 use rtic::Monotonic;
-type RtcMonotonic = crate::soc::rtic_monotonic::RtcMonotonic;
+type RtcMonotonic = super::rtic_monotonic::RtcMonotonic;
 
 pub struct UserInterface<BUTTONS, RGB>
 where

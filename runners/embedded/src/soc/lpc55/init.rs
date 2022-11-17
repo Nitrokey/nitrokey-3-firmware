@@ -695,7 +695,7 @@ impl Stage6 {
                 self.store,
                 trussed::types::Location::Internal,
                 &littlefs2::path::PathBuf::from("fido/x5c/00"),
-                include_bytes!("../../data/fido-cert.der"),
+                include_bytes!("../../../data/fido-cert.der"),
             );
             if res.is_err() {
                 error!("failed to replace attestation cert");

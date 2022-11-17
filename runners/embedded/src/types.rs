@@ -160,8 +160,11 @@ pub type FidoApp<S> =
 #[cfg(feature = "ndef-app")]
 pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
-pub type ProvisionerApp<S> =
-    provisioner_app::Provisioner<RunnerStore<S>, <S as Soc>::InternalFlashStorage, TrussedClient<S>>;
+pub type ProvisionerApp<S> = provisioner_app::Provisioner<
+    RunnerStore<S>,
+    <S as Soc>::InternalFlashStorage,
+    TrussedClient<S>,
+>;
 
 pub trait TrussedApp<S: Soc>: Sized {
     /// non-portable resources needed by this Trussed app

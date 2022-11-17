@@ -11,8 +11,8 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
-    use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
-    use embedded_runner_lib::soc::types::Soc;
+    use super::{Delogger, ERL};
+    use embedded_runner_lib::soc::nrf52840 as soc;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
@@ -20,6 +20,7 @@ mod app {
         timer::Timer,
     };
     use rand_core::SeedableRng;
+    use soc::{rtic_monotonic::RtcDuration, types::Soc};
 
     #[shared]
     struct SharedResources {
@@ -48,7 +49,7 @@ mod app {
     }
 
     #[monotonic(binds = RTC0, default = true)]
-    type RtcMonotonic = ERL::soc::rtic_monotonic::RtcMonotonic;
+    type RtcMonotonic = soc::rtic_monotonic::RtcMonotonic;
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
@@ -60,7 +61,7 @@ mod app {
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
         ERL::banner::<Soc>();
 
-        ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
+        soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
         let mut delay_timer = Timer::<nrf52840_pac::TIMER0>::new(ctx.device.TIMER0);
 
@@ -68,7 +69,7 @@ mod app {
         let mut board_gpio = {
             let dev_gpio_p0 = p0::Parts::new(ctx.device.P0);
             let dev_gpio_p1 = p1::Parts::new(ctx.device.P1);
-            ERL::soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
+            soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
         };
         dev_gpiote.reset_events();
 
@@ -79,7 +80,7 @@ mod app {
 
         let usbd_ref = {
             if powered_by_usb {
-                Some(ERL::soc::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
+                Some(soc::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
             } else {
                 None
             }
@@ -87,11 +88,11 @@ mod app {
         /* TODO: set up NFC chip */
         // let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 
-        let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
+        let internal_flash = soc::init_internal_flash(ctx.device.NVMC);
 
         #[cfg(feature = "extflash_qspi")]
         let extflash = {
-            let mut qspi_extflash = ERL::soc::qspiflash::QspiFlash::new(
+            let mut qspi_extflash = soc::qspiflash::QspiFlash::new(
                 ctx.device.QSPI,
                 board_gpio.flashnfc_spi.take().unwrap(),
                 board_gpio.flash_cs.take().unwrap(),
@@ -112,7 +113,7 @@ mod app {
             qspi_extflash
         };
         #[cfg(not(feature = "extflash_qspi"))]
-        let extflash = ERL::soc::types::ExternalStorage::new();
+        let extflash = soc::types::ExternalStorage::new();
 
         let store = ERL::init_store(internal_flash, extflash);
 
@@ -182,7 +183,7 @@ mod app {
         let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
 
         #[cfg(feature = "board-nk3am")]
-        let ui = ERL::soc::board::init_ui(
+        let ui = soc::board::init_ui(
             board_gpio.rgb_led,
             ctx.device.PWM0,
             ctx.device.PWM1,
@@ -191,7 +192,7 @@ mod app {
         );
 
         #[cfg(not(feature = "board-nk3am"))]
-        let ui = ERL::soc::board::init_ui();
+        let ui = soc::board::init_ui();
 
         let platform = ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 

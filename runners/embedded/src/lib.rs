@@ -10,17 +10,11 @@ delog::generate_macros!();
 
 pub mod flash;
 pub mod runtime;
+pub mod soc;
 pub mod store;
 pub mod traits;
 pub mod types;
 pub mod ui;
-
-#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52840")))]
-compile_error!("No SoC chosen!");
-
-#[cfg_attr(feature = "soc-nrf52840", path = "soc_nrf52840/mod.rs")]
-#[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
-pub mod soc;
 
 #[cfg(feature = "provisioner-app")]
 use admin_app::Reboot;
@@ -207,7 +201,7 @@ pub fn init_apps<S: Soc>(
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     error_now!("{}", _info);
-    soc::board::set_panic_led();
+    soc::set_panic_led();
     loop {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }

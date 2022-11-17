@@ -1,4 +1,5 @@
-use crate::{soc::types::pac::SCB, types::Storage};
+use super::types::pac::SCB;
+use crate::types::Storage;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
     pac, spim, twim, uarte,

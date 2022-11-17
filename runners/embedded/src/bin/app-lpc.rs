@@ -16,7 +16,11 @@ pub fn msp() -> u32 {
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
-    use embedded_runner_lib::{runtime, soc, soc::monotonic::SystickMonotonic, types};
+    use embedded_runner_lib::{
+        runtime,
+        soc::lpc55::{self as soc, monotonic::SystickMonotonic},
+        types,
+    };
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
