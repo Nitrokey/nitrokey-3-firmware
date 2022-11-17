@@ -105,11 +105,11 @@ pub fn init_store(
     types::RunnerStore::init_raw(ifs, efs, vfs)
 }
 
-pub fn init_usb_nfc(
-    usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
-    nfcdev_opt: Option<<SocT as Soc>::NfcDevice>,
-) -> types::usbnfc::UsbNfcInit {
-    let config = <SocT as Soc>::INTERFACE_CONFIG;
+pub fn init_usb_nfc<S: Soc>(
+    usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<S::UsbBus>>,
+    nfcdev_opt: Option<S::NfcDevice>,
+) -> types::usbnfc::UsbNfcInit<S> {
+    let config = S::INTERFACE_CONFIG;
 
     /* claim interchanges */
     let (ccid_rq, ccid_rp) = apdu_dispatch::interchanges::Contact::claim().unwrap();

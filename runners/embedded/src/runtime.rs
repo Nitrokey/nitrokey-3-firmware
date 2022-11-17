@@ -1,5 +1,6 @@
 use crate::types::*;
 use embedded_time::duration::units::Milliseconds;
+use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
 
 // Assuming there will only be one way to
 // get user presence, this should be fine.
@@ -38,12 +39,13 @@ pub fn poll_dispatchers(
 
 /* ************************************************************************ */
 
-pub fn poll_usb<FA, FB, TA, TB, E, D>(
-    usb_classes: &mut Option<usbnfc::UsbClasses>,
+pub fn poll_usb<S, FA, FB, TA, TB, E, D>(
+    usb_classes: &mut Option<usbnfc::UsbClasses<S>>,
     ccid_spawner: FA,
     ctaphid_spawner: FB,
     t_now: Milliseconds,
 ) where
+    S: Soc,
     FA: Fn(D) -> Result<TA, E>,
     FB: Fn(D) -> Result<TB, E>,
     D: From<Milliseconds>,
@@ -61,8 +63,9 @@ pub fn poll_usb<FA, FB, TA, TB, E, D>(
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
-pub fn poll_nfc<F, T, E, D>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn poll_nfc<N, F, T, E, D>(contactless: &mut Option<Iso14443<N>>, nfc_spawner: F)
 where
+    N: NfcDevice,
     F: Fn(D) -> Result<T, E>,
     D: From<Milliseconds>,
 {
@@ -77,8 +80,11 @@ where
 
 /* ************************************************************************ */
 
-pub fn ccid_keepalive<F, T, E, D>(usb_classes: &mut Option<usbnfc::UsbClasses>, ccid_spawner: F)
-where
+pub fn ccid_keepalive<S, F, T, E, D>(
+    usb_classes: &mut Option<usbnfc::UsbClasses<S>>,
+    ccid_spawner: F,
+) where
+    S: Soc,
     F: Fn(D) -> Result<T, E>,
     D: From<Milliseconds>,
 {
@@ -91,8 +97,11 @@ where
     maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
 }
 
-pub fn ctaphid_keepalive<F, T, E, D>(usb_classes: &mut Option<usbnfc::UsbClasses>, ctaphid_spawner: F)
-where
+pub fn ctaphid_keepalive<S, F, T, E, D>(
+    usb_classes: &mut Option<usbnfc::UsbClasses<S>>,
+    ctaphid_spawner: F,
+) where
+    S: Soc,
     F: Fn(D) -> Result<T, E>,
     D: From<Milliseconds>,
 {
@@ -109,8 +118,9 @@ where
     );
 }
 
-pub fn nfc_keepalive<F, T, E, D>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn nfc_keepalive<N, F, T, E, D>(contactless: &mut Option<Iso14443<N>>, nfc_spawner: F)
 where
+    N: NfcDevice,
     F: Fn(D) -> Result<T, E>,
     D: From<Milliseconds>,
 {

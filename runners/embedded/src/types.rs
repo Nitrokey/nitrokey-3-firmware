@@ -10,8 +10,11 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 use embedded_time::duration::units::Milliseconds;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
+use nfc_device::traits::nfc::Device as NfcDevice;
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
+use usb_device::bus::UsbBus;
+
 pub mod usbnfc;
 
 #[derive(Clone, Copy)]
@@ -38,8 +41,8 @@ pub trait Soc {
     type InternalFlashStorage;
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
-    type UsbBus;
-    type NfcDevice;
+    type UsbBus: UsbBus + 'static;
+    type NfcDevice: NfcDevice;
     type Rng;
     type TrussedUI;
     type Reboot;
@@ -98,7 +101,7 @@ impl trussed::client::Syscall for RunnerSyscall {
 pub type Trussed = trussed::Service<RunnerPlatform>;
 pub type TrussedClient = trussed::ClientImplementation<RunnerSyscall>;
 
-pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
+pub type Iso14443<S> = nfc_device::Iso14443<<S as Soc>::NfcDevice>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;

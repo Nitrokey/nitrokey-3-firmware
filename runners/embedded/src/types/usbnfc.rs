@@ -1,28 +1,32 @@
-use crate::soc::types::Soc as SocT;
 use crate::types::Soc;
 
-pub type CcidClass = usbd_ccid::Ccid<
+pub type CcidClass<S> = usbd_ccid::Ccid<
     'static,
-    <SocT as Soc>::UsbBus,
+    <S as Soc>::UsbBus,
     apdu_dispatch::interchanges::Contact,
     { apdu_dispatch::interchanges::SIZE },
 >;
-pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, <SocT as Soc>::UsbBus>;
-// pub type KeyboardClass = usbd_hid::hid_class::HIDClass<'static, <SocT as Soc>::UsbBus>;
-pub type SerialClass = usbd_serial::SerialPort<'static, <SocT as Soc>::UsbBus>;
+pub type CtapHidClass<S> = usbd_ctaphid::CtapHid<'static, <S as Soc>::UsbBus>;
+// pub type KeyboardClass<S> = usbd_hid::hid_class::HIDClass<'static, <S as Soc>::UsbBus>;
+pub type SerialClass<S> = usbd_serial::SerialPort<'static, <S as Soc>::UsbBus>;
 
-type Usbd = usb_device::device::UsbDevice<'static, <SocT as Soc>::UsbBus>;
+type Usbd<S> = usb_device::device::UsbDevice<'static, <S as Soc>::UsbBus>;
 
-pub struct UsbClasses {
-    pub usbd: Usbd,
-    pub ccid: CcidClass,
-    pub ctaphid: CtapHidClass,
+pub struct UsbClasses<S: Soc> {
+    pub usbd: Usbd<S>,
+    pub ccid: CcidClass<S>,
+    pub ctaphid: CtapHidClass<S>,
     // pub keyboard: KeyboardClass,
-    pub serial: SerialClass,
+    pub serial: SerialClass<S>,
 }
 
-impl UsbClasses {
-    pub fn new(usbd: Usbd, ccid: CcidClass, ctaphid: CtapHidClass, serial: SerialClass) -> Self {
+impl<S: Soc> UsbClasses<S> {
+    pub fn new(
+        usbd: Usbd<S>,
+        ccid: CcidClass<S>,
+        ctaphid: CtapHidClass<S>,
+        serial: SerialClass<S>,
+    ) -> Self {
         Self {
             usbd,
             ccid,
@@ -38,9 +42,9 @@ impl UsbClasses {
     }
 }
 
-pub struct UsbNfcInit {
-    pub usb_classes: Option<UsbClasses>,
+pub struct UsbNfcInit<S: Soc> {
+    pub usb_classes: Option<UsbClasses<S>>,
     pub apdu_dispatch: apdu_dispatch::dispatch::ApduDispatch,
     pub ctaphid_dispatch: ctaphid_dispatch::dispatch::Dispatch,
-    pub iso14443: Option<super::Iso14443>,
+    pub iso14443: Option<super::Iso14443<S>>,
 }

@@ -28,8 +28,10 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit, Apps, RunnerStore, Trussed},
 };
+
+type UsbNfc = UsbNfcInit<super::types::Soc>;
 
 struct Peripherals {
     syscon: hal::Syscon,

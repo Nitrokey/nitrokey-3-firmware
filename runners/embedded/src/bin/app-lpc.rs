@@ -45,9 +45,9 @@ mod app {
         apps: types::Apps,
 
         /// The USB driver classes
-        usb_classes: Option<types::usbnfc::UsbClasses>,
+        usb_classes: Option<types::usbnfc::UsbClasses<soc::types::Soc>>,
         /// The NFC driver
-        contactless: Option<types::Iso14443>,
+        contactless: Option<types::Iso14443<soc::types::Soc>>,
 
         /// This timer is used while developing NFC, to time how long things took,
         /// and to make sure logs are not flushed in the middle of NFC transactions.

@@ -12,6 +12,7 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use embedded_runner_lib::soc::types::Soc;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
@@ -26,8 +27,8 @@ mod app {
         apps: ERL::types::Apps,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
-        usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
-        contactless: Option<ERL::types::Iso14443>,
+        usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
+        contactless: Option<ERL::types::Iso14443<Soc>>,
         /* NRF specific elements */
         // (display UI)
         // (fingerprint sensor)
