@@ -1,6 +1,7 @@
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::trussed::UserInterface;
 use crate::types::build_constants;
+use embedded_time::duration::Milliseconds;
 use littlefs2::const_ram_storage;
 use lpc55_hal::{
     drivers::timer,
@@ -27,14 +28,11 @@ littlefs2_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BO
 #[cfg(not(feature = "no-encrypted-storage"))]
 littlefs2_prince_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
 
-#[cfg(feature = "usbfs-peripheral")]
-type UsbPeripheral = lpc55_hal::peripherals::usbfs::EnabledUsbfsDevice;
-#[cfg(not(feature = "usbfs-peripheral"))]
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
 const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
     card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT, /* TODO  FROM PFR ??? what is PFR ?*/
+    usb_product: crate::types::build_constants::USB_PRODUCT,
     usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
     usb_serial: "00000000-0000-0000-00000000",
     usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
@@ -53,7 +51,7 @@ impl crate::types::Soc for Soc {
     type UUID = [u8; 16];
 
     type Instant = ();
-    type Duration = LpcTimerDuration;
+    type Duration = Milliseconds;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
         i: raw::Interrupt::OS_EVENT as u16,
@@ -64,13 +62,6 @@ impl crate::types::Soc for Soc {
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     fn device_uuid() -> &'static [u8; 16] {
         unsafe { &DEVICE_UUID }
-    }
-}
-
-pub struct LpcTimerDuration {/* TODO: code me */}
-impl From<embedded_time::duration::units::Milliseconds> for LpcTimerDuration {
-    fn from(ms: embedded_time::duration::units::Milliseconds) -> Self {
-        Self {}
     }
 }
 
@@ -93,7 +84,10 @@ impl admin_app::Reboot for Lpc55Reboot {
         raw::SCB::sys_reset()
     }
     fn locked() -> bool {
-        todo!()
+        let seal = &unsafe { lpc55_hal::raw::Peripherals::steal() }
+            .FLASH_CMPA
+            .sha256_digest;
+        seal.iter().any(|word| word.read().bits() != 0)
     }
 }
 

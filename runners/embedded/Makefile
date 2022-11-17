@@ -27,9 +27,10 @@ SYMBOLS ?= symbols-$(BUILD_ID).txt
 
 # input files and outputs
 SRCS = $(shell find src -name "*.rs" )
-OUT = $(ARTIFACTS)/runner-$(BUILD_ID).bin
-OUT_IHEX = $(OUT).ihex
-RAW_OUT = $(SOC)_runner
+OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
+OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
+OUT_IHEX = $(OUT_BIN).ihex
+RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/release/$(SOC)_runner
 
 # feature definition
 FEATURES ?= release
@@ -83,15 +84,16 @@ ifneq ($(shell stat $(CFG_PATH) | head -n1),File: $(CFG_PATH))
 endif
 endif
 
-$(OUT): $(SRCS) build
-$(OUT_IHEX): $(OUT)
+$(OUT_ELF): $(SRCS) build
+$(OUT_BIN): $(OUT_ELF)
+$(OUT_IHEX): $(OUT_ELF)
 
 check-var-%:
 	@if [ -z '${${*}}' ]; then echo 'FAIL: var: $* required!!!' && exit 1; fi
 
 %-banner:
 	@echo "******************************************************************************************"
-	@echo "**** TARGET:   $(shell printf %18s $(GET_TARGET)) | BINARY:   $(OUT)(.ihex)"
+	@echo "**** TARGET:   $(shell printf %18s $(GET_TARGET)) | BINARY:   $(OUT_BIN)(.ihex)"
 	@echo "**** BOARD:    $(shell printf %18s $(BOARD)) | SOC:      $(SOC)"
 	@echo "**** PROFILE:  $(shell printf %18s $(BUILD_PROFILE)) | BUILD_ID: $(BUILD_ID)"
 	@echo "**** FEATURES: $(BUILD_FEATURES)"
@@ -106,7 +108,7 @@ list:
 	@echo "  Usage: make <target>-<something> e.g., build-nk3am, reset-proto1, ..." 
 
 clean-all: 
-	rm -f ./$(OUT) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)
+	rm -f ./$(OUT_BIN) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)
 	rm -f *.log runner-*-*.ihex runner-*-*.bin symbols-*-*.txt runner-*-*.ihex
 	rm -rf ./$(CARGO_TARGET_DIR)
 	rm -f firmware.hex mbr.hex bootloader.hex
@@ -124,21 +126,20 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
 	echo 'board = "$(BOARD)"' >> cfg.toml
 
-	rm -f $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
-
 	cargo build --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--color always 2> $(LOG) || ( cat $(LOG); exit 1 )
 
-	cp $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) ./$(OUT)
+	cp $(RAW_OUT) ./$(OUT_ELF)
 
-	$(GNU_TARGET)-nm ./$(OUT) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
+	$(GNU_TARGET)-nm ./$(OUT_ELF) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
 	
 	cat $(GNU_TARGET)-arch-symbols.txt >> $(SYMBOLS)
 
-	$(GNU_TARGET)-objcopy -O ihex ./$(OUT) ./$(OUT_IHEX)
-	$(GNU_TARGET)-readelf -l ./$(OUT) | grep LOAD
+	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
+	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
+	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
-	rm -f ./$(OUT) ./$(OUT_IHEX) $(CARGO_TARGET_DIR)/$(TARGET)/release/$(RAW_OUT) $(SYMBOLS) $(LOG)
+	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
 
