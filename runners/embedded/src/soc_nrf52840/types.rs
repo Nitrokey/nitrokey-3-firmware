@@ -49,7 +49,6 @@ impl crate::types::Soc for Soc {
     type Rng = chacha20::ChaCha8Rng;
     type TrussedUI = super::board::TrussedUI;
     type Reboot = self::Reboot;
-    type UUID = [u8; 16];
 
     type Duration = super::rtic_monotonic::RtcDuration;
 
@@ -61,8 +60,8 @@ impl crate::types::Soc for Soc {
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
 
-    fn device_uuid() -> &'static Self::UUID {
-        unsafe { &DEVICE_UUID }
+    fn device_uuid() -> [u8; 16] {
+        unsafe { DEVICE_UUID }
     }
 
     unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage> {

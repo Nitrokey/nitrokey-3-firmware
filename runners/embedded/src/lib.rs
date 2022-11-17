@@ -181,8 +181,8 @@ pub fn init_apps<S: Soc>(
 ) -> types::Apps<S> {
     let store_2 = store.clone();
     let int_flash_ref = unsafe { S::internal_storage().storage.as_mut().unwrap() };
-    let uuid: [u8; 16] = *<SocT as types::Soc>::device_uuid();
-    let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
+    let uuid: [u8; 16] = S::device_uuid();
+    let rebooter: fn() -> ! = S::Reboot::reboot_to_firmware_update;
 
     let pnp = types::ProvisionerNonPortable {
         store: store_2,

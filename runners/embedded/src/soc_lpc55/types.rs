@@ -14,8 +14,6 @@ use trussed::types::{LfsResult, LfsStorage};
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
-pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
-
 const_ram_storage!(ExternalRAMStorage, 1024);
 
 #[cfg(feature = "no-encrypted-storage")]
@@ -51,7 +49,6 @@ impl crate::types::Soc for Soc {
     type Rng = rng::Rng<lpc55_hal::Enabled>;
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
-    type UUID = [u8; 16];
 
     type Duration = Milliseconds;
 
@@ -62,8 +59,9 @@ impl crate::types::Soc for Soc {
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
-    fn device_uuid() -> &'static [u8; 16] {
-        unsafe { &DEVICE_UUID }
+
+    fn device_uuid() -> [u8; 16] {
+        lpc55_hal::uuid()
     }
 
     unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage> {

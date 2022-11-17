@@ -48,7 +48,6 @@ pub trait Soc {
     type Rng: CryptoRng + RngCore;
     type TrussedUI: UserInterface;
     type Reboot: admin_app::Reboot;
-    type UUID;
 
     type Duration: From<Milliseconds>;
 
@@ -60,7 +59,7 @@ pub trait Soc {
     const BOARD_NAME: &'static str;
     const INTERFACE_CONFIG: &'static Config;
 
-    fn device_uuid() -> &'static Self::UUID;
+    fn device_uuid() -> [u8; 16];
 
     unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage>;
     unsafe fn external_storage() -> &'static mut Storage<'static, Self::ExternalFlashStorage>;
@@ -206,12 +205,10 @@ impl<S: Soc> TrussedApp<S> for OathApp<S> {
 impl<S: Soc> TrussedApp<S> for AdminApp<S> {
     const CLIENT_ID: &'static [u8] = b"admin\0";
 
-    // TODO: declare uuid + version
     type NonPortable = ();
     fn with_client(trussed: TrussedClient<S>, _: ()) -> Self {
-        let mut buf: [u8; 16] = [0u8; 16];
-        buf.copy_from_slice(<SocT as Soc>::device_uuid());
-        Self::new(trussed, buf, build_constants::CARGO_PKG_VERSION)
+        let uuid = S::device_uuid();
+        Self::new(trussed, uuid, build_constants::CARGO_PKG_VERSION)
     }
 }
 
