@@ -50,7 +50,6 @@ impl crate::types::Soc for Soc {
     type Reboot = Lpc55Reboot;
     type UUID = [u8; 16];
 
-    type Instant = ();
     type Duration = Milliseconds;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {

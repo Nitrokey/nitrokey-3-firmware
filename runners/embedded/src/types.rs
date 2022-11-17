@@ -7,6 +7,7 @@ pub use apdu_dispatch::{
 use core::convert::TryInto;
 use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
+use embedded_time::duration::units::Milliseconds;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
@@ -44,8 +45,7 @@ pub trait Soc {
     type Reboot;
     type UUID;
 
-    type Duration;
-    type Instant;
+    type Duration: From<Milliseconds>;
 
     // cannot use dyn cortex_m::interrupt::Nr
     // cannot use actual types, those are usually Enums exported by the soc PAC

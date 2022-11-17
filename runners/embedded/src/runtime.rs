@@ -1,5 +1,5 @@
-use crate::soc::types::Soc as SocT;
 use crate::types::*;
+use embedded_time::duration::units::Milliseconds;
 
 // Assuming there will only be one way to
 // get user presence, this should be fine.
@@ -38,14 +38,15 @@ pub fn poll_dispatchers(
 
 /* ************************************************************************ */
 
-pub fn poll_usb<FA, FB, TA, TB, E>(
+pub fn poll_usb<FA, FB, TA, TB, E, D>(
     usb_classes: &mut Option<usbnfc::UsbClasses>,
     ccid_spawner: FA,
     ctaphid_spawner: FB,
-    t_now: embedded_time::duration::units::Milliseconds,
+    t_now: Milliseconds,
 ) where
-    FA: Fn(<SocT as Soc>::Duration) -> Result<TA, E>,
-    FB: Fn(<SocT as Soc>::Duration) -> Result<TB, E>,
+    FA: Fn(D) -> Result<TA, E>,
+    FB: Fn(D) -> Result<TB, E>,
+    D: From<Milliseconds>,
 {
     if usb_classes.is_none() {
         return;
@@ -60,9 +61,10 @@ pub fn poll_usb<FA, FB, TA, TB, E>(
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
-pub fn poll_nfc<F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn poll_nfc<F, T, E, D>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if contactless.is_none() {
         return;
@@ -75,9 +77,10 @@ where
 
 /* ************************************************************************ */
 
-pub fn ccid_keepalive<F, T, E>(usb_classes: &mut Option<usbnfc::UsbClasses>, ccid_spawner: F)
+pub fn ccid_keepalive<F, T, E, D>(usb_classes: &mut Option<usbnfc::UsbClasses>, ccid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if usb_classes.is_none() {
         return;
@@ -88,9 +91,10 @@ where
     maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
 }
 
-pub fn ctaphid_keepalive<F, T, E>(usb_classes: &mut Option<usbnfc::UsbClasses>, ctaphid_spawner: F)
+pub fn ctaphid_keepalive<F, T, E, D>(usb_classes: &mut Option<usbnfc::UsbClasses>, ctaphid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if usb_classes.is_none() {
         return;
@@ -105,9 +109,10 @@ where
     );
 }
 
-pub fn nfc_keepalive<F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn nfc_keepalive<F, T, E, D>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if contactless.is_none() {
         return;
@@ -120,27 +125,30 @@ where
 
 /* ************************************************************************ */
 
-fn maybe_spawn_ccid<F, T, E>(status: usbd_ccid::types::Status, ccid_spawner: F)
+fn maybe_spawn_ccid<F, T, E, D>(status: usbd_ccid::types::Status, ccid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if let usbd_ccid::types::Status::ReceivedData(ms) = status {
         ccid_spawner(ms.into()).ok();
     };
 }
 
-fn maybe_spawn_ctaphid<F, T, E>(status: usbd_ctaphid::types::Status, ctaphid_spawner: F)
+fn maybe_spawn_ctaphid<F, T, E, D>(status: usbd_ctaphid::types::Status, ctaphid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if let usbd_ctaphid::types::Status::ReceivedData(ms) = status {
         ctaphid_spawner(ms.into()).ok();
     };
 }
 
-fn maybe_spawn_nfc<F, T, E>(status: nfc_device::Iso14443Status, nfc_spawner: F)
+fn maybe_spawn_nfc<F, T, E, D>(status: nfc_device::Iso14443Status, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(D) -> Result<T, E>,
+    D: From<Milliseconds>,
 {
     if let nfc_device::Iso14443Status::ReceivedData(ms) = status {
         nfc_spawner(ms.into()).ok();
