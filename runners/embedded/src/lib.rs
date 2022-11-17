@@ -174,8 +174,8 @@ pub fn init_usb_nfc<S: Soc>(
 }
 
 #[cfg(feature = "provisioner-app")]
-pub fn init_apps(
-    trussed: &mut types::Trussed,
+pub fn init_apps<S: Soc>(
+    trussed: &mut types::Trussed<S>,
     store: &types::RunnerStore,
     on_nfc_power: bool,
 ) -> types::Apps {
@@ -195,8 +195,8 @@ pub fn init_apps(
 }
 
 #[cfg(not(feature = "provisioner-app"))]
-pub fn init_apps(
-    trussed: &mut types::Trussed,
+pub fn init_apps<S: Soc>(
+    trussed: &mut types::Trussed<S>,
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {

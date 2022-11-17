@@ -11,8 +11,9 @@ use embedded_time::duration::units::Milliseconds;
 use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use nfc_device::traits::nfc::Device as NfcDevice;
+use rand_core::{CryptoRng, RngCore};
 use trussed::types::{LfsResult, LfsStorage};
-use trussed::{platform, store};
+use trussed::{platform::UserInterface, store};
 use usb_device::bus::UsbBus;
 
 pub mod usbnfc;
@@ -43,8 +44,8 @@ pub trait Soc {
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
-    type Rng;
-    type TrussedUI;
+    type Rng: CryptoRng + RngCore;
+    type TrussedUI: UserInterface;
     type Reboot;
     type UUID;
 
@@ -92,12 +93,39 @@ impl<'a, S: LfsStorage> Storage<'a, S> {
 
 pub static mut VOLATILE_STORAGE: Storage<VolatileStorage> = Storage::new();
 
-platform!(
-    RunnerPlatform,
-    R: <SocT as Soc>::Rng,
-    S: RunnerStore,
-    UI: <SocT as Soc>::TrussedUI,
-);
+pub struct RunnerPlatform<S: Soc> {
+    rng: S::Rng,
+    store: RunnerStore,
+    user_interface: S::TrussedUI,
+}
+
+impl<S: Soc> RunnerPlatform<S> {
+    pub fn new(rng: S::Rng, store: RunnerStore, user_interface: S::TrussedUI) -> Self {
+        Self {
+            rng,
+            store,
+            user_interface,
+        }
+    }
+}
+
+unsafe impl<S: Soc> trussed::platform::Platform for RunnerPlatform<S> {
+    type R = S::Rng;
+    type S = RunnerStore;
+    type UI = S::TrussedUI;
+
+    fn user_interface(&mut self) -> &mut Self::UI {
+        &mut self.user_interface
+    }
+
+    fn rng(&mut self) -> &mut Self::R {
+        &mut self.rng
+    }
+
+    fn store(&self) -> Self::S {
+        self.store
+    }
+}
 
 #[derive(Default)]
 pub struct RunnerSyscall {}
@@ -109,7 +137,7 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed = trussed::Service<RunnerPlatform>;
+pub type Trussed<S> = trussed::Service<RunnerPlatform<S>>;
 pub type TrussedClient = trussed::ClientImplementation<RunnerSyscall>;
 
 pub type Iso14443<S> = nfc_device::Iso14443<<S as Soc>::NfcDevice>;
@@ -129,7 +157,7 @@ pub type NdefApp = ndef_app::App<'static>;
 pub type ProvisionerApp =
     provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
 
-pub trait TrussedApp: Sized {
+pub trait TrussedApp<S: Soc>: Sized {
     /// non-portable resources needed by this Trussed app
     type NonPortable;
 
@@ -138,7 +166,7 @@ pub trait TrussedApp: Sized {
 
     fn with_client(trussed: TrussedClient, non_portable: Self::NonPortable) -> Self;
 
-    fn with(trussed: &mut Trussed, non_portable: Self::NonPortable) -> Self {
+    fn with(trussed: &mut Trussed<S>, non_portable: Self::NonPortable) -> Self {
         let (trussed_requester, trussed_responder) =
             trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
 
@@ -154,7 +182,7 @@ pub trait TrussedApp: Sized {
 }
 
 #[cfg(feature = "oath-authenticator")]
-impl TrussedApp for OathApp {
+impl<S: Soc> TrussedApp<S> for OathApp {
     const CLIENT_ID: &'static [u8] = b"oath\0";
 
     type NonPortable = ();
@@ -164,7 +192,7 @@ impl TrussedApp for OathApp {
 }
 
 #[cfg(feature = "admin-app")]
-impl TrussedApp for AdminApp {
+impl<S: Soc> TrussedApp<S> for AdminApp {
     const CLIENT_ID: &'static [u8] = b"admin\0";
 
     // TODO: declare uuid + version
@@ -177,7 +205,7 @@ impl TrussedApp for AdminApp {
 }
 
 #[cfg(feature = "fido-authenticator")]
-impl TrussedApp for FidoApp {
+impl<S: Soc> TrussedApp<S> for FidoApp {
     const CLIENT_ID: &'static [u8] = b"fido\0";
 
     type NonPortable = ();
@@ -202,7 +230,7 @@ pub struct ProvisionerNonPortable {
 }
 
 #[cfg(feature = "provisioner-app")]
-impl TrussedApp for ProvisionerApp {
+impl<S: Soc> TrussedApp<S> for ProvisionerApp {
     const CLIENT_ID: &'static [u8] = b"attn\0";
 
     type NonPortable = ProvisionerNonPortable;
@@ -241,8 +269,8 @@ pub struct Apps {
 }
 
 impl Apps {
-    pub fn new(
-        trussed: &mut trussed::Service<RunnerPlatform>,
+    pub fn new<S: Soc>(
+        trussed: &mut trussed::Service<RunnerPlatform<S>>,
         #[cfg(feature = "provisioner-app")] provisioner: ProvisionerNonPortable,
     ) -> Self {
         #[cfg(feature = "admin-app")]

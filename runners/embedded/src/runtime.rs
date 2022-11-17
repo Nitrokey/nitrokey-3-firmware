@@ -167,6 +167,6 @@ where
 
 /* ************************************************************************ */
 
-pub fn run_trussed(trussed: &mut Trussed) {
+pub fn run_trussed<S: Soc>(trussed: &mut Trussed<S>) {
     trussed.process();
 }

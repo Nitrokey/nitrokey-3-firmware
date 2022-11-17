@@ -23,7 +23,7 @@ mod app {
 
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed,
+        trussed: ERL::types::Trussed<Soc>,
         apps: ERL::types::Apps,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
@@ -193,8 +193,7 @@ mod app {
         #[cfg(not(feature = "board-nk3am"))]
         let ui = ERL::soc::board::init_ui();
 
-        let platform: ERL::types::RunnerPlatform =
-            ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
+        let platform = ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 
         let mut trussed_service = trussed::service::Service::new(platform);
 

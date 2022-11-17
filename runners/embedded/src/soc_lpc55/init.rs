@@ -687,7 +687,7 @@ pub struct Stage6 {
     basic: Basic,
     usb_nfc: UsbNfc,
     store: RunnerStore,
-    trussed: Trussed,
+    trussed: Trussed<super::types::Soc>,
 }
 
 impl Stage6 {
@@ -744,7 +744,7 @@ impl Stage6 {
 pub struct All {
     pub basic: Basic,
     pub usb_nfc: UsbNfc,
-    pub trussed: Trussed,
+    pub trussed: Trussed<super::types::Soc>,
     pub apps: Apps,
     pub clock_controller: Option<DynamicClockController>,
 }

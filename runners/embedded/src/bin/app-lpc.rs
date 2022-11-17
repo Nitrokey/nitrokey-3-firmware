@@ -39,7 +39,7 @@ mod app {
         ctaphid_dispatch: types::CtaphidDispatch,
 
         /// The Trussed service, used by all applications.
-        trussed: types::Trussed,
+        trussed: types::Trussed<soc::types::Soc>,
 
         /// All the applications that the device serves.
         apps: types::Apps,
