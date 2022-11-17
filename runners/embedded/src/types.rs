@@ -1,11 +1,12 @@
 include!(concat!(env!("OUT_DIR"), "/build_constants.rs"));
 
-use crate::soc::types::Soc as SocT;
+pub use super::store::RunnerStore;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
 use core::convert::TryInto;
 use core::marker::PhantomData;
+use core::mem::MaybeUninit;
 use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use embedded_time::duration::units::Milliseconds;
@@ -14,7 +15,7 @@ use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_core::{CryptoRng, RngCore};
 use trussed::types::{LfsResult, LfsStorage};
-use trussed::{platform::UserInterface, store};
+use trussed::{platform::UserInterface, store::Fs};
 use usb_device::bus::UsbBus;
 
 pub mod usbnfc;
@@ -41,7 +42,7 @@ pub struct Config {
 
 pub trait Soc {
     type InternalFlashStorage: LfsStorage + 'static;
-    type ExternalFlashStorage: LfsStorage;
+    type ExternalFlashStorage: LfsStorage + 'static;
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
@@ -68,17 +69,11 @@ pub trait Soc {
 // 8KB of RAM
 const_ram_storage!(VolatileStorage, 8192);
 
-store!(
-    RunnerStore,
-    Internal: <SocT as Soc>::InternalFlashStorage,
-    External: <SocT as Soc>::ExternalFlashStorage,
-    Volatile: VolatileStorage
-);
-
-pub struct Storage<'a, S: LfsStorage> {
+pub struct Storage<'a, S: LfsStorage + 'static> {
     pub storage: Option<S>,
     pub alloc: Option<Allocation<S>>,
     pub fs: Option<Filesystem<'a, S>>,
+    pub ptr: MaybeUninit<Fs<S>>,
 }
 
 impl<'a, S: LfsStorage> Storage<'a, S> {
@@ -87,6 +82,7 @@ impl<'a, S: LfsStorage> Storage<'a, S> {
             storage: None,
             alloc: None,
             fs: None,
+            ptr: MaybeUninit::uninit(),
         }
     }
 }
@@ -95,12 +91,12 @@ pub static mut VOLATILE_STORAGE: Storage<VolatileStorage> = Storage::new();
 
 pub struct RunnerPlatform<S: Soc> {
     rng: S::Rng,
-    store: RunnerStore,
+    store: RunnerStore<S>,
     user_interface: S::TrussedUI,
 }
 
 impl<S: Soc> RunnerPlatform<S> {
-    pub fn new(rng: S::Rng, store: RunnerStore, user_interface: S::TrussedUI) -> Self {
+    pub fn new(rng: S::Rng, store: RunnerStore<S>, user_interface: S::TrussedUI) -> Self {
         Self {
             rng,
             store,
@@ -111,7 +107,7 @@ impl<S: Soc> RunnerPlatform<S> {
 
 unsafe impl<S: Soc> trussed::platform::Platform for RunnerPlatform<S> {
     type R = S::Rng;
-    type S = RunnerStore;
+    type S = RunnerStore<S>;
     type UI = S::TrussedUI;
 
     fn user_interface(&mut self) -> &mut Self::UI {
@@ -165,7 +161,7 @@ pub type FidoApp<S> =
 pub type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "provisioner-app")]
 pub type ProvisionerApp<S> =
-    provisioner_app::Provisioner<RunnerStore, <S as Soc>::InternalFlashStorage, TrussedClient<S>>;
+    provisioner_app::Provisioner<RunnerStore<S>, <S as Soc>::InternalFlashStorage, TrussedClient<S>>;
 
 pub trait TrussedApp<S: Soc>: Sized {
     /// non-portable resources needed by this Trussed app
@@ -230,7 +226,7 @@ impl<S: Soc> TrussedApp<S> for FidoApp<S> {
 }
 
 pub struct ProvisionerNonPortable<S: Soc> {
-    pub store: RunnerStore,
+    pub store: RunnerStore<S>,
     pub stolen_filesystem: &'static mut S::InternalFlashStorage,
     pub nfc_powered: bool,
     pub uuid: [u8; 16],

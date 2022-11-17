@@ -25,7 +25,7 @@ pub fn init(
     #[cfg(any(feature = "log-semihosting", feature = "log-serial"))]
     Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
 
-    crate::banner();
+    crate::banner::<types::Soc>();
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 

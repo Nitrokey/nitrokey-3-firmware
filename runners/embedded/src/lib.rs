@@ -2,7 +2,6 @@
 
 use interchange::Interchange;
 use littlefs2::fs::Filesystem;
-use soc::types::Soc as SocT;
 use types::Soc;
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
@@ -11,6 +10,7 @@ delog::generate_macros!();
 
 pub mod flash;
 pub mod runtime;
+pub mod store;
 pub mod traits;
 pub mod types;
 pub mod ui;
@@ -25,11 +25,11 @@ pub mod soc;
 #[cfg(feature = "provisioner-app")]
 use admin_app::Reboot;
 
-pub fn banner() {
+pub fn banner<S: Soc>() {
     info!(
         "Embedded Runner ({}:{}) using librunner {}.{}.{}",
-        <SocT as Soc>::SOC_NAME,
-        <SocT as Soc>::BOARD_NAME,
+        S::SOC_NAME,
+        S::BOARD_NAME,
         types::build_constants::CARGO_PKG_VERSION_MAJOR,
         types::build_constants::CARGO_PKG_VERSION_MINOR,
         types::build_constants::CARGO_PKG_VERSION_PATCH
@@ -41,17 +41,17 @@ fn transcend<T>(global: &'static mut Option<T>, content: T) -> &'static mut T {
     global.as_mut().unwrap()
 }
 
-pub fn init_store(
-    int_flash: <SocT as Soc>::InternalFlashStorage,
-    ext_flash: <SocT as Soc>::ExternalFlashStorage,
-) -> types::RunnerStore {
+pub fn init_store<S: Soc>(
+    int_flash: S::InternalFlashStorage,
+    ext_flash: S::ExternalFlashStorage,
+) -> types::RunnerStore<S> {
     let volatile_storage = types::VolatileStorage::new();
 
     /* Step 1: let our stack-based filesystem objects transcend into higher
     beings by blessing them with static lifetime
     */
-    let internal = unsafe { <SocT as Soc>::internal_storage() };
-    let external = unsafe { <SocT as Soc>::external_storage() };
+    let internal = unsafe { S::internal_storage() };
+    let external = unsafe { S::external_storage() };
 
     let ifs_storage = transcend(&mut internal.storage, int_flash);
     let ifs_alloc = transcend(&mut internal.alloc, Filesystem::allocate());
@@ -176,7 +176,7 @@ pub fn init_usb_nfc<S: Soc>(
 #[cfg(feature = "provisioner-app")]
 pub fn init_apps<S: Soc>(
     trussed: &mut types::Trussed<S>,
-    store: &types::RunnerStore,
+    store: &types::RunnerStore<S>,
     on_nfc_power: bool,
 ) -> types::Apps<S> {
     let store_2 = store.clone();
@@ -197,7 +197,7 @@ pub fn init_apps<S: Soc>(
 #[cfg(not(feature = "provisioner-app"))]
 pub fn init_apps<S: Soc>(
     trussed: &mut types::Trussed<S>,
-    _store: &types::RunnerStore,
+    _store: &types::RunnerStore<S>,
     _on_nfc_power: bool,
 ) -> types::Apps<S> {
     types::Apps::new(trussed)

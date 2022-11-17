@@ -58,7 +58,7 @@ mod app {
         #[cfg(feature = "log-rtt")]
         rtt_target::rtt_init_print!();
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner();
+        ERL::banner::<Soc>();
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
@@ -114,7 +114,7 @@ mod app {
         #[cfg(not(feature = "extflash_qspi"))]
         let extflash = ERL::soc::types::ExternalStorage::new();
 
-        let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
+        let store = ERL::init_store(internal_flash, extflash);
 
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
         /* TODO: set up fingerprint device */

@@ -560,7 +560,7 @@ impl Stage4 {
             self.basic.perf_timer.elapsed().0 / 1000
         );
         // TODO: poll iso14443
-        let store = crate::init_store(internal, external);
+        let store = crate::init_store::<super::types::Soc>(internal, external);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -638,7 +638,7 @@ pub struct Stage5 {
     basic: Basic,
     usb_nfc: UsbNfc,
     rng: Rng<hal::Enabled>,
-    store: RunnerStore,
+    store: RunnerStore<super::types::Soc>,
 }
 
 impl Stage5 {
@@ -682,7 +682,7 @@ pub struct Stage6 {
     clocks: Clocks,
     basic: Basic,
     usb_nfc: UsbNfc,
-    store: RunnerStore,
+    store: RunnerStore<super::types::Soc>,
     trussed: Trussed<super::types::Soc>,
 }
 
