@@ -36,6 +36,11 @@ pub fn banner() {
     );
 }
 
+fn transcend<T>(global: &'static mut Option<T>, content: T) -> &'static mut T {
+    global.replace(content);
+    global.as_mut().unwrap()
+}
+
 pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
@@ -45,21 +50,19 @@ pub fn init_store(
     /* Step 1: let our stack-based filesystem objects transcend into higher
     beings by blessing them with static lifetime
     */
-    macro_rules! transcend {
-        ($global:expr, $content:expr) => {
-            unsafe {
-                $global.replace($content);
-                $global.as_mut().unwrap()
-            }
-        };
-    }
+    let internal = unsafe { <SocT as Soc>::internal_storage() };
+    let external = unsafe { <SocT as Soc>::external_storage() };
 
-    let ifs_storage = transcend!(types::INTERNAL_STORAGE, int_flash);
-    let ifs_alloc = transcend!(types::INTERNAL_FS_ALLOC, Filesystem::allocate());
-    let efs_storage = transcend!(types::EXTERNAL_STORAGE, ext_flash);
-    let efs_alloc = transcend!(types::EXTERNAL_FS_ALLOC, Filesystem::allocate());
-    let vfs_storage = transcend!(types::VOLATILE_STORAGE, volatile_storage);
-    let vfs_alloc = transcend!(types::VOLATILE_FS_ALLOC, Filesystem::allocate());
+    let ifs_storage = transcend(&mut internal.storage, int_flash);
+    let ifs_alloc = transcend(&mut internal.alloc, Filesystem::allocate());
+    let efs_storage = transcend(&mut external.storage, ext_flash);
+    let efs_alloc = transcend(&mut external.alloc, Filesystem::allocate());
+    let (vfs_storage, vfs_alloc) = unsafe {
+        (
+            transcend(&mut types::VOLATILE_STORAGE.storage, volatile_storage),
+            transcend(&mut types::VOLATILE_STORAGE.alloc, Filesystem::allocate()),
+        )
+    };
 
     /* Step 2: try mounting each FS in turn */
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
@@ -67,9 +70,7 @@ pub fn init_store(
         error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
-        Ok(ifs_) => {
-            transcend!(types::INTERNAL_FS, ifs_)
-        }
+        Ok(ifs_) => transcend(&mut internal.fs, ifs_),
         Err(_e) => {
             error!("IFS Mount Error {:?}", _e);
             panic!("store");
@@ -80,9 +81,7 @@ pub fn init_store(
         error!("EFS Mount Error, Reformat {:?}", _fmt_ext);
     };
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
-        Ok(efs_) => {
-            transcend!(types::EXTERNAL_FS, efs_)
-        }
+        Ok(efs_) => transcend(&mut external.fs, efs_),
         Err(_e) => {
             error!("EFS Mount Error {:?}", _e);
             panic!("store");
@@ -93,9 +92,7 @@ pub fn init_store(
         littlefs2::fs::Filesystem::format(vfs_storage).ok();
     }
     let vfs = match littlefs2::fs::Filesystem::mount(vfs_alloc, vfs_storage) {
-        Ok(vfs_) => {
-            transcend!(types::VOLATILE_FS, vfs_)
-        }
+        Ok(vfs_) => unsafe { transcend(&mut types::VOLATILE_STORAGE.fs, vfs_) },
         Err(_e) => {
             error!("VFS Mount Error {:?}", _e);
             panic!("store");
@@ -183,7 +180,7 @@ pub fn init_apps(
     on_nfc_power: bool,
 ) -> types::Apps {
     let store_2 = store.clone();
-    let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
+    let int_flash_ref = unsafe { <SocT as Soc>::internal_storage().storage.as_mut().unwrap() };
     let uuid: [u8; 16] = *<SocT as types::Soc>::device_uuid();
     let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
 

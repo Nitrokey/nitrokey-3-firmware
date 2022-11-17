@@ -1,4 +1,4 @@
-use crate::soc::types::pac::SCB;
+use crate::{soc::types::pac::SCB, types::Storage};
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
     pac, spim, twim, uarte,
@@ -31,6 +31,12 @@ use trussed::types::{LfsResult, LfsStorage};
 #[cfg(not(feature = "extflash_qspi"))]
 const_ram_storage!(ExternalStorage, 8192);
 
+static mut INTERNAL_STORAGE: Storage<super::flash::FlashStorage> = Storage::new();
+#[cfg(feature = "extflash_qspi")]
+static mut EXTERNAL_STORAGE: Storage<super::qspiflash::QspiFlash> = Storage::new();
+#[cfg(not(feature = "extflash_qspi"))]
+static mut EXTERNAL_STORAGE: Storage<ExternalStorage> = Storage::new();
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = super::flash::FlashStorage;
@@ -57,6 +63,14 @@ impl crate::types::Soc for Soc {
 
     fn device_uuid() -> &'static Self::UUID {
         unsafe { &DEVICE_UUID }
+    }
+
+    unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage> {
+        &mut INTERNAL_STORAGE
+    }
+
+    unsafe fn external_storage() -> &'static mut Storage<'static, Self::ExternalFlashStorage> {
+        &mut EXTERNAL_STORAGE
     }
 }
 

@@ -38,8 +38,8 @@ pub struct Config {
 }
 
 pub trait Soc {
-    type InternalFlashStorage;
-    type ExternalFlashStorage;
+    type InternalFlashStorage: LfsStorage;
+    type ExternalFlashStorage: LfsStorage;
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
@@ -59,6 +59,9 @@ pub trait Soc {
     const INTERFACE_CONFIG: &'static Config;
 
     fn device_uuid() -> &'static Self::UUID;
+
+    unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage>;
+    unsafe fn external_storage() -> &'static mut Storage<'static, Self::ExternalFlashStorage>;
 }
 
 // 8KB of RAM
@@ -71,15 +74,23 @@ store!(
     Volatile: VolatileStorage
 );
 
-pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
-pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
-pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
+pub struct Storage<'a, S: LfsStorage> {
+    pub storage: Option<S>,
+    pub alloc: Option<Allocation<S>>,
+    pub fs: Option<Filesystem<'a, S>>,
+}
+
+impl<'a, S: LfsStorage> Storage<'a, S> {
+    pub const fn new() -> Self {
+        Self {
+            storage: None,
+            alloc: None,
+            fs: None,
+        }
+    }
+}
+
+pub static mut VOLATILE_STORAGE: Storage<VolatileStorage> = Storage::new();
 
 platform!(
     RunnerPlatform,

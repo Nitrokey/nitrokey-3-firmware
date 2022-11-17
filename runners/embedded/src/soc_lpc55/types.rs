@@ -1,6 +1,6 @@
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::trussed::UserInterface;
-use crate::types::build_constants;
+use crate::types::{build_constants, Storage};
 use embedded_time::duration::Milliseconds;
 use littlefs2::const_ram_storage;
 use lpc55_hal::{
@@ -27,6 +27,9 @@ use lpc55_hal::littlefs2_prince_filesystem;
 littlefs2_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
 #[cfg(not(feature = "no-encrypted-storage"))]
 littlefs2_prince_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
+
+static mut INTERNAL_STORAGE: Storage<InternalFilesystem> = Storage::new();
+static mut EXTERNAL_STORAGE: Storage<ExternalRAMStorage> = Storage::new();
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
@@ -61,6 +64,14 @@ impl crate::types::Soc for Soc {
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     fn device_uuid() -> &'static [u8; 16] {
         unsafe { &DEVICE_UUID }
+    }
+
+    unsafe fn internal_storage() -> &'static mut Storage<'static, Self::InternalFlashStorage> {
+        &mut INTERNAL_STORAGE
+    }
+
+    unsafe fn external_storage() -> &'static mut Storage<'static, Self::ExternalFlashStorage> {
+        &mut EXTERNAL_STORAGE
     }
 }
 
