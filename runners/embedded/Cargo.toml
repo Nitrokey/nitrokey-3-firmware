@@ -154,3 +154,13 @@ littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
 lpc55-hal = { git = "https://github.com/nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+incremental = false
+debug = true
+
+[profile.release.package.salty]
+opt-level = 2
