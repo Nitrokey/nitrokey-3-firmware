@@ -50,11 +50,10 @@ impl crate::types::Soc for Soc {
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
 
+    type Interrupt = raw::Interrupt;
     type Duration = Milliseconds;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: raw::Interrupt::OS_EVENT as u16,
-    };
+    const SYSCALL_IRQ: Self::Interrupt = Self::Interrupt::OS_EVENT;
 
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;

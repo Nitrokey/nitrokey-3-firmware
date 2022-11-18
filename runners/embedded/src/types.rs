@@ -8,6 +8,7 @@ use core::convert::TryInto;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::time::Duration;
+use cortex_m::interrupt::InterruptNumber;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use embedded_time::duration::units::Milliseconds;
 use interchange::Interchange;
@@ -19,16 +20,6 @@ use trussed::{platform::UserInterface, store::Fs};
 use usb_device::bus::UsbBus;
 
 pub mod usbnfc;
-
-#[derive(Clone, Copy)]
-pub struct IrqNr {
-    pub i: u16,
-}
-unsafe impl cortex_m::interrupt::InterruptNumber for IrqNr {
-    fn number(self) -> u16 {
-        self.i
-    }
-}
 
 pub struct Config {
     pub card_issuer: &'static [u8; 13],
@@ -50,11 +41,10 @@ pub trait Soc {
     type TrussedUI: UserInterface;
     type Reboot: admin_app::Reboot;
 
+    type Interrupt: InterruptNumber;
     type Duration: From<Milliseconds>;
 
-    // cannot use dyn cortex_m::interrupt::Nr
-    // cannot use actual types, those are usually Enums exported by the soc PAC
-    const SYSCALL_IRQ: IrqNr;
+    const SYSCALL_IRQ: Self::Interrupt;
 
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;

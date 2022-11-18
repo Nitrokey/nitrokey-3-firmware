@@ -51,11 +51,10 @@ impl crate::types::Soc for Soc {
     type TrussedUI = super::board::TrussedUI;
     type Reboot = self::Reboot;
 
+    type Interrupt = nrf52840_pac::Interrupt;
     type Duration = super::rtic_monotonic::RtcDuration;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16,
-    };
+    const SYSCALL_IRQ: Self::Interrupt = Self::Interrupt::SWI0_EGU0;
 
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
