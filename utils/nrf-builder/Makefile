@@ -60,6 +60,9 @@ SRCS = $(shell find $(FW_RUNNER)/src -name "*.rs" )
 
 TTY := $(shell ls -1rt /dev/ttyACM* | tail -n 1 | xargs)
 
+EXTRA_FEATURES :=
+
+
 ######
 
 .PHONY: build clean flash-provisioner flash-fw flash-bootloader provision-keys full-deploy
@@ -160,17 +163,17 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
 $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner
+	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
 $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop
+	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
 $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release
+	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
 
