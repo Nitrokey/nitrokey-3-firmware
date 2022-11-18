@@ -732,7 +732,7 @@ dependencies = [
  "trussed",
  "usb-device",
  "usbd-ccid",
- "usbd-ctaphid",
+ "usbd-ctaphid 0.0.0-unreleased",
  "usbd-serial",
 ]
 
@@ -1424,10 +1424,11 @@ dependencies = [
 
 [[package]]
 name = "oath-authenticator"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/oath-authenticator#4b680a3805aa9af31c24415fe39e1765638ee99a"
+version = "0.3.0"
+source = "git+https://github.com/nitrokey/oath-authenticator?rev=0.3.0#2cbcfb54eec8dfe24920054c3cdc64d5d27c2021"
 dependencies = [
  "apdu-dispatch",
+ "ctaphid-dispatch",
  "delog",
  "flexiber",
  "heapless 0.7.16",
@@ -1437,6 +1438,7 @@ dependencies = [
  "iso7816",
  "serde",
  "trussed",
+ "usbd-ctaphid 0.0.0-unreleased (git+https://github.com/Nitrokey/nitrokey-3-firmware)",
 ]
 
 [[package]]
@@ -2166,6 +2168,22 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.0.0-unreleased"
+dependencies = [
+ "ctap-types",
+ "ctaphid-dispatch",
+ "delog",
+ "embedded-time",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "interchange",
+ "serde",
+ "usb-device",
+]
+
+[[package]]
+name = "usbd-ctaphid"
+version = "0.0.0-unreleased"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#06238fd8538417b3cf1080924247f51c9a575298"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
