@@ -9,7 +9,7 @@ use nrf52840_pac;
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
-pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
+pub static mut DEVICE_UUID: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xa1, 0xfa];
 
 const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
     card_issuer: &crate::types::build_constants::CCID_ISSUER,

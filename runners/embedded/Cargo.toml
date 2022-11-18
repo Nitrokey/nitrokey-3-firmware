@@ -1,6 +1,6 @@
 [package]
 name = "embedded-runner-lib"
-version = "1.2.2"
+version = "1.2.2-alpha.opcard.0.1.0"
 authors = [
 	"Jan Nordholz <j.nordholz@tu-berlin.de",
 	"Markus Meissner <meissner@nitrokey.com>"
@@ -34,6 +34,7 @@ admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v0.1.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -67,23 +68,37 @@ toml = "0.5"
 
 [features]
 
+<<<<<<< HEAD
 default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+=======
+default = ["admin-app", "fido-authenticator", "ndef-app", "opcard", "no-encrypted-storage",
+			"trussed/clients-3"]
+>>>>>>> cdd5213 (Add opcard application)
 
 release = []
 
 complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-3", "log-traceP", "log-rtt"]
+			"trussed/clients-4", "log-traceP", "log-rtt"]
 
+<<<<<<< HEAD
 develop = ["default", "no-encrypted-storage", "oath-authenticator", "trussed/clients-3",
+=======
+develop = ["default", "oath-authenticator", "trussed/clients-4",
+>>>>>>> cdd5213 (Add opcard application)
 			"fido-authenticator/disable-reset-time-window",
 			"log-traceP"]
 
 develop-no-press = ["develop", "no-buttons"]
 
 provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
+<<<<<<< HEAD
 			"write-undefined-flash", "no-buttons",
 			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
+=======
+			"write-undefined-flash", "no-buttons", "no-encrypted-storage",
+			"no-reset-time-window", "provisioner-app", "trussed/clients-4"]
+>>>>>>> cdd5213 (Add opcard application)
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
@@ -139,7 +154,9 @@ path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
 
 [patch.crates-io]
-littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", branch = "rtc-match" }
-trussed = { git = "https://github.com/trussed-dev/trussed", branch = "main" }
+apdu-dispatch = { git = "https://github.com/robin-nitrokey/apdu-dispatch", branch = "max-response-len" }
+interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
+littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
+trussed = { git = "https://github.com/trussed-dev/trussed" , rev = "6de826f3bcbef247e55fd890d80d9ed6ce9f0abc" }
 #trussed = { path = "../../trussed" }
