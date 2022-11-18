@@ -34,6 +34,11 @@ pub fn init_bootup(
     unsafe {
         types::DEVICE_UUID[0..4].copy_from_slice(&deviceid0.to_be_bytes());
         types::DEVICE_UUID[4..8].copy_from_slice(&deviceid1.to_be_bytes());
+        #[cfg(feature = "alpha")]
+        {
+            types::DEVICE_UUID[14] = 0xa1;
+            types::DEVICE_UUID[15] = 0xfa;
+        }
     }
 
     info!("RESET Reason: {:x}", power.resetreas.read().bits());

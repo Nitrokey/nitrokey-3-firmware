@@ -104,6 +104,11 @@ impl Stage0 {
     pub fn next(mut self, iocon: hal::Iocon<Unknown>, gpio: hal::Gpio<Unknown>) -> Stage1 {
         unsafe {
             super::types::DEVICE_UUID.copy_from_slice(&hal::uuid());
+            #[cfg(feature = "alpha")]
+            {
+                super::types::DEVICE_UUID[14] = 0xa1;
+                super::types::DEVICE_UUID[15] = 0xfa;
+            }
         };
 
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
