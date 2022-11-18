@@ -545,6 +545,8 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 [[package]]
 name = "delog"
 version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cd67f90cc14e0a91cf693141453cccf2b74db9d59c40f6be18b79169fe77dfd"
 dependencies = [
  "log",
 ]
@@ -1438,7 +1440,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/opcard-rs.git?branch=rsa-import#d2a669651bfa325ad2004e79cb4887e693ef8457"
+source = "git+https://github.com/Nitrokey/opcard-rs.git?rev=0de848d39364d2784a3b8153ffe5dd1e1a3f49a6#0de848d39364d2784a3b8153ffe5dd1e1a3f49a6"
 dependencies = [
  "apdu-dispatch",
  "delog",
