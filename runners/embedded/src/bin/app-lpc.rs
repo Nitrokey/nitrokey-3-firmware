@@ -88,6 +88,9 @@ mod app {
 
     #[init()]
     fn init(c: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        #[cfg(feature = "alloc")]
+        embedded_runner_lib::init_alloc();
+
         let soc::init::All {
             basic,
             usb_nfc,
