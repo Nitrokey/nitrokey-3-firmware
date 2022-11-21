@@ -11,6 +11,11 @@ else
   SOC = nrf52
 endif
 
+ifneq ($(findstring alpha,$(FEATURES)),)
+  RUSTUP_TOOLCHAIN = nightly-2022-11-13
+  export RUSTUP_TOOLCHAIN
+endif
+
 # rust triplet
 TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
 # gnu binutils-prefix
@@ -93,10 +98,11 @@ check-var-%:
 
 %-banner:
 	@echo "******************************************************************************************"
-	@echo "**** TARGET:   $(shell printf %18s $(GET_TARGET)) | BINARY:   $(OUT_BIN)(.ihex)"
-	@echo "**** BOARD:    $(shell printf %18s $(BOARD)) | SOC:      $(SOC)"
-	@echo "**** PROFILE:  $(shell printf %18s $(BUILD_PROFILE)) | BUILD_ID: $(BUILD_ID)"
-	@echo "**** FEATURES: $(BUILD_FEATURES)"
+	@echo "**** TARGET:    $(shell printf %18s $(GET_TARGET)) | BINARY:   $(OUT_BIN)(.ihex)"
+	@echo "**** BOARD:     $(shell printf %18s $(BOARD)) | SOC:      $(SOC)"
+	@echo "**** PROFILE:   $(shell printf %18s $(BUILD_PROFILE)) | BUILD_ID: $(BUILD_ID)"
+	@echo "**** FEATURES:  $(BUILD_FEATURES)"
+	@echo "**** TOOLCHAIN: $(RUSTUP_TOOLCHAIN)"
 	@echo "******************************************************************************************"
 
 list:
@@ -119,6 +125,8 @@ clean-all:
 ###############################################################################
 
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+
+	cargo --version
 
 	cp -f $(CFG_PATH) cfg.toml
 	echo '' >> cfg.toml
