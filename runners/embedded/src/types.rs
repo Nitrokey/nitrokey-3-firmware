@@ -189,7 +189,7 @@ impl TrussedApp for OpcardApp {
     fn with_client(trussed: TrussedClient, _: ()) -> Self {
         let uuid = <SocT as Soc>::device_uuid();
         let mut options = opcard::Options::default();
-        options.serial = [0xa0, 0x10, uuid[0], uuid[1]];
+        options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
         // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
     }
