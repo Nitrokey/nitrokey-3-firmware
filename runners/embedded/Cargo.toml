@@ -33,8 +33,8 @@ ctap-types = "0.1"
 admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v0.1.0", features = ["apdu-dispatch", "delog"], optional = true }
+oath-authenticator = { git = "https://github.com/nitrokey/oath-authenticator", rev = "0.3.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -61,6 +61,9 @@ fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"
 systick-monotonic = { version = "1.0.0", optional = true }
 
+### Allocator
+alloc-cortex-m = { version = "0.4.3", optional = true }
+
 [build-dependencies]
 cargo-lock = "7"
 serde = { version = "1", features = ["derive"] }
@@ -72,7 +75,7 @@ default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 
 release = []
 
-alpha = ["opcard", "trussed/clients-3"]
+alpha = ["oath-authenticator", "opcard", "rsa2048", "rsa4096", "trussed/clients-4"]
 
 complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",
@@ -103,6 +106,9 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 # Format filesystem anyway
 format-filesystem = []
 
+alloc = ["alloc-cortex-m"]
+rsa2048 = ["alloc", "opcard/rsa2048"]
+rsa4096 = ["rsa2048", "opcard/rsa4096"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
@@ -146,5 +152,15 @@ apdu-dispatch = { git = "https://github.com/robin-nitrokey/apdu-dispatch", branc
 interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", branch = "rtc-match" }
-trussed = { git = "https://github.com/trussed-dev/trussed" , rev = "6de826f3bcbef247e55fd890d80d9ed6ce9f0abc" }
+lpc55-hal = { git = "https://github.com/nitrokey/lpc55-hal" }
+trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+incremental = false
+debug = true
+
+[profile.release.package.salty]
+opt-level = 2
