@@ -84,7 +84,7 @@ impl rtic::Monotonic for Monotonic {
     fn set_compare(&mut self, instant: Self::Instant) {
         debug_now!("set_compare: {}, {}", instant, self.now());
         let timeout = instant.0.saturating_sub(self.now().0);
-        self.rtc.set_wake(Duration::from_millis(timeout.into()));
+        // self.rtc.set_wake(Duration::from_millis(timeout.into()));
     }
 
     fn clear_compare_flag(&mut self) {

@@ -146,5 +146,5 @@ apdu-dispatch = { git = "https://github.com/robin-nitrokey/apdu-dispatch", branc
 interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", branch = "rtc-match" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal" }
 trussed = { git = "https://github.com/trussed-dev/trussed" , rev = "6de826f3bcbef247e55fd890d80d9ed6ce9f0abc" }

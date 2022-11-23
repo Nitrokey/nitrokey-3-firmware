@@ -1016,7 +1016,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/lpc55-hal?branch=rtc-match#a7d1ebe260dd65dd854559aa221256a445d46d36"
+source = "git+https://github.com/Nitrokey/lpc55-hal#6ae4070f5a06cfa20f256a262f4ada1cb1bc64fa"
 dependencies = [
  "block-buffer",
  "cipher",
