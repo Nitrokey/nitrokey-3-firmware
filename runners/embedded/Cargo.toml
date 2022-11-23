@@ -75,7 +75,7 @@ default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 
 release = []
 
-alpha = ["opcard", "alloc", "trussed/clients-3"]
+alpha = ["opcard", "rsa2048", "rsa4096", "trussed/clients-3"]
 
 complete = ["oath-authenticator", # "provisioner-app",
 			"fido-authenticator/disable-reset-time-window",

@@ -1356,9 +1356,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint-dig"
-version = "0.8.2"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2399c9463abc5f909349d8aa9ba080e0b88b3ce2885389b60b993f39b1a56905"
+checksum = "566d173b2f9406afbc5510a90925d5a2cd80cae4605631f1212303df265de011"
 dependencies = [
  "byteorder",
  "lazy_static",
