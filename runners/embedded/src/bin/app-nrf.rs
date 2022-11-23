@@ -51,6 +51,9 @@ mod app {
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        #[cfg(feature = "alloc")]
+        embedded_runner_lib::init_alloc();
+
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
 
