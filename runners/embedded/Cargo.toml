@@ -34,7 +34,7 @@ admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../../components/ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/trussed-dev/oath-authenticator", features = ["apdu-dispatch"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v0.1.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
@@ -102,6 +102,7 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 
 # Format filesystem anyway
 format-filesystem = []
+
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
