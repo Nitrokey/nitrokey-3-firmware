@@ -61,6 +61,9 @@ fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"
 systick-monotonic = { version = "1.0.0", optional = true }
 
+### Allocator
+alloc-cortex-m = { version = "0.4.3", optional = true }
+
 [build-dependencies]
 cargo-lock = "7"
 serde = { version = "1", features = ["derive"] }
@@ -102,6 +105,10 @@ no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
 
 # Format filesystem anyway
 format-filesystem = []
+
+alloc = ["alloc-cortex-m"]
+rsa2048 = ["alloc", "opcard/rsa2048"]
+rsa4096 = ["rsa2048", "opcard/rsa4096"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
