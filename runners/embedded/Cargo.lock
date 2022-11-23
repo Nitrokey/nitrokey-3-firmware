@@ -1372,7 +1372,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v0.1.0#59f1e968b1a76915f3a6c0ebbab43bf3a09b07f8"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=v0.2.0#0de848d39364d2784a3b8153ffe5dd1e1a3f49a6"
 dependencies = [
  "apdu-dispatch",
  "delog",
