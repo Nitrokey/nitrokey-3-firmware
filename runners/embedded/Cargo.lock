@@ -276,6 +276,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cobs"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67ba02a97a2bd10f4b59b25c7973101c79642302776489e030cd13cdab09ed15"
+
+[[package]]
 name = "cortex-m"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1380,20 +1386,14 @@ dependencies = [
 
 [[package]]
 name = "postcard"
-version = "0.7.3"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a25c0b0ae06fcffe600ad392aabfa535696c8973f2253d9ac83171924c58a858"
+checksum = "1c2b180dc0bade59f03fd005cb967d3f1e5f69b13922dad0cd6e047cb8af2363"
 dependencies = [
+ "cobs",
  "heapless 0.7.16",
- "postcard-cobs",
  "serde",
 ]
-
-[[package]]
-name = "postcard-cobs"
-version = "0.1.5-pre"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c68cb38ed13fd7bc9dd5db8f165b7c8d9c1a315104083a2b10f11354c2af97f"
 
 [[package]]
 name = "proc-macro-error"
@@ -1804,7 +1804,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?rev=6de826f3bcbef247e55fd890d80d9ed6ce9f0abc#6de826f3bcbef247e55fd890d80d9ed6ce9f0abc"
+source = "git+https://github.com/nitrokey/trussed?rev=29096438b67a44533b787eafd5aa168571c5e599#29096438b67a44533b787eafd5aa168571c5e599"
 dependencies = [
  "aes",
  "bitflags",
