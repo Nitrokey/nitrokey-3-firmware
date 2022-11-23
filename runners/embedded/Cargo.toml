@@ -147,4 +147,4 @@ interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "f
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
 littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
 lpc55-hal = { git = "https://github.com/nitrokey/lpc55-hal" }
-trussed = { git = "https://github.com/nitrokey/trussed" , rev = "ccbcf68e9b6cf52126232e477e475a47a43bbd1f" }
+trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
