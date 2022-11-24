@@ -58,7 +58,7 @@ dependencies = [
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/robin-nitrokey/apdu-dispatch?branch=max-response-len#47c65f20f93e9215ad0afd6d960487f58676c2ea"
+source = "git+https://github.com/Nitrokey/apdu-dispatch?tag=v0.1.1-nitrokey-1#47c65f20f93e9215ad0afd6d960487f58676c2ea"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -1047,7 +1047,7 @@ dependencies = [
 [[package]]
 name = "interchange"
 version = "0.2.2"
-source = "git+https://github.com/trussed-dev/interchange.git?rev=fe5633466640e1e9a8c06d9b5dd1d0af08c272af#fe5633466640e1e9a8c06d9b5dd1d0af08c272af"
+source = "git+https://github.com/trussed-dev/interchange?rev=fe5633466640e1e9a8c06d9b5dd1d0af08c272af#fe5633466640e1e9a8c06d9b5dd1d0af08c272af"
 
 [[package]]
 name = "iso7816"
@@ -1105,7 +1105,7 @@ checksum = "e322f259d225fbae43a1b053b2dc6a5968a6bdf8b205f5de684dab485b95030e"
 [[package]]
 name = "littlefs2"
 version = "0.3.2"
-source = "git+https://github.com/Nitrokey/littlefs2#23b9e5028ce0b2ff77c78545c44ac75da9a79acb"
+source = "git+https://github.com/Nitrokey/littlefs2?tag=v0.3.2-nitrokey-1#23b9e5028ce0b2ff77c78545c44ac75da9a79acb"
 dependencies = [
  "bitflags",
  "cstr_core",
@@ -1120,7 +1120,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.1.6"
-source = "git+https://github.com/sosthene-nitrokey/littlefs2-sys.git?branch=bindgen-runtime-feature#8ebb88edc59c0cf9503a9b9377065a0f74440448"
+source = "git+https://github.com/Nitrokey/littlefs2-sys?tag=v0.1.6-nitrokey-1#8ebb88edc59c0cf9503a9b9377065a0f74440448"
 dependencies = [
  "bindgen",
  "cc",
@@ -1149,7 +1149,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
-source = "git+https://github.com/nitrokey/lpc55-hal#6ae4070f5a06cfa20f256a262f4ada1cb1bc64fa"
+source = "git+https://github.com/Nitrokey/lpc55-hal?tag=v0.3.0-nitrokey-1#6ae4070f5a06cfa20f256a262f4ada1cb1bc64fa"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
@@ -2050,7 +2050,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed?branch=rsa-import#67b9b43aedd4ea66422a228a2c18f0ea8e4e5682"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-1#67b9b43aedd4ea66422a228a2c18f0ea8e4e5682"
 dependencies = [
  "aes",
  "bitflags",
