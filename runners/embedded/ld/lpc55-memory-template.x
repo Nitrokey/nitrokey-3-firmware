@@ -6,7 +6,7 @@ MEMORY
     FILESYSTEM : ORIGIN = 0x##FS_BASE##, LENGTH = ##FS_LENGTH##K
 
     /* for use with standard link.x */
-    RAM : ORIGIN = 0x20000000, LENGTH = 256K
+    RAM : ORIGIN = 0x20000000, LENGTH = 272K
 
     /* would be used with proper link.x */
     /* needs changes to r0 (initialization code) */
