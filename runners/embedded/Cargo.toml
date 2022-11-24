@@ -148,12 +148,12 @@ path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
 
 [patch.crates-io]
-apdu-dispatch = { git = "https://github.com/robin-nitrokey/apdu-dispatch", branch = "max-response-len" }
-interchange = { git = "https://github.com/trussed-dev/interchange.git", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
-littlefs2 = { git = "https://github.com/Nitrokey/littlefs2" }
-littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys.git", branch = "bindgen-runtime-feature" }
-lpc55-hal = { git = "https://github.com/nitrokey/lpc55-hal" }
-trussed = { git = "https://github.com/nitrokey/trussed" , branch = "rsa-import" }
+apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.1-nitrokey-1" }
+interchange = { git = "https://github.com/trussed-dev/interchange", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
+littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-1" }
+littlefs2-sys = { git = "https://github.com/Nitrokey/littlefs2-sys", tag = "v0.1.6-nitrokey-1" }
+lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-1" }
+trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-1" }
 
 [profile.release]
 codegen-units = 1
