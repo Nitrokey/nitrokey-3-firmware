@@ -1291,7 +1291,8 @@ dependencies = [
 [[package]]
 name = "nrf-hal-common"
 version = "0.15.1"
-source = "git+https://github.com/nrf-rs/nrf-hal#663008c033ad67263e4ac0c561d5d1fac28d7170"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "089242b8b729622099054dcb5518e9eac80bcf6a7e30091c7cfa043383e9998c"
 dependencies = [
  "cast",
  "cfg-if",
@@ -1323,7 +1324,8 @@ dependencies = [
 [[package]]
 name = "nrf52840-hal"
 version = "0.15.1"
-source = "git+https://github.com/nrf-rs/nrf-hal#663008c033ad67263e4ac0c561d5d1fac28d7170"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71c090616930ef132c1f7e9f9a964f6c8c5aa8962e402cc5abbbde7ce16ce9a0"
 dependencies = [
  "embedded-hal",
  "nrf-hal-common",
