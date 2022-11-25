@@ -101,6 +101,7 @@ impl Stage0 {
             .expect("Clock configuration failed")
     }
 
+    #[inline(never)]
     pub fn next(mut self, iocon: hal::Iocon<Unknown>, gpio: hal::Gpio<Unknown>) -> Stage1 {
         unsafe {
             super::types::DEVICE_UUID.copy_from_slice(&hal::uuid());
@@ -223,6 +224,7 @@ impl Stage1 {
         }
     }
 
+    #[inline(never)]
     pub fn next(
         mut self,
         adc: hal::Adc<Unknown>,
@@ -450,6 +452,7 @@ impl Stage2 {
         info_now!("hardware checks successful");
     }
 
+    #[inline(never)]
     pub fn next(
         mut self,
         flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
@@ -495,6 +498,7 @@ pub struct Stage3 {
 }
 
 impl Stage3 {
+    #[inline(never)]
     pub fn next(
         mut self,
         rng: hal::peripherals::rng::Rng<Unknown>,
@@ -536,6 +540,7 @@ pub struct Stage4 {
 }
 
 impl Stage4 {
+    #[inline(never)]
     pub fn next(mut self) -> Stage5 {
         let syscon = &mut self.peripherals.syscon;
         let pmc = &mut self.peripherals.pmc;
@@ -649,6 +654,7 @@ pub struct Stage5 {
 }
 
 impl Stage5 {
+    #[inline(never)]
     pub fn next(mut self, rtc: hal::peripherals::rtc::Rtc<Unknown>) -> Stage6 {
         let syscon = &mut self.peripherals.syscon;
         let pmc = &mut self.peripherals.pmc;
@@ -710,6 +716,7 @@ impl Stage6 {
         }
     }
 
+    #[inline(never)]
     pub fn next(mut self) -> All {
         self.perform_data_migrations();
         let apps = crate::init_apps(&mut self.trussed, &self.store, self.clocks.is_nfc_passive);
@@ -752,6 +759,7 @@ pub struct All {
     pub clock_controller: Option<DynamicClockController>,
 }
 
+#[inline(never)]
 pub fn start(syscon: hal::Syscon, pmc: hal::Pmc, anactrl: hal::Anactrl) -> Stage0 {
     let peripherals = Peripherals {
         syscon,
