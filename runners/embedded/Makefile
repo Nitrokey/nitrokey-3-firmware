@@ -1,4 +1,4 @@
-
+export RUSTFLAGS=--remap-path-prefix $(shell pwd)=. --remap-path-prefix ${CARGO_HOME}=cargo_home
 
 BUILD_ID ?= $(BUILD_PROFILE)-$(BOARD)
 CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
@@ -126,6 +126,7 @@ clean-all:
 
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
+	echo ${RUSTFLAGS}
 	cargo --version
 
 	cp -f $(CFG_PATH) cfg.toml
