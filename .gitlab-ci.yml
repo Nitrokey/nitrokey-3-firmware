@@ -54,11 +54,11 @@ build-lpc55-nk3xn:
     - make commands.bd
     - cp commands.bd nk3xn
     - make -C runners/embedded build-nk3xn FEATURES=provisioner
-    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/firmware-nk3xn-lpc55-$VERSION.bin
+    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/provisioner-nk3xn-lpc55-$VERSION.bin
     - make -C runners/embedded build-nk3xn FEATURES=alpha
     - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/alpha-nk3xn-lpc55-$VERSION.bin
     - make -C runners/embedded build-nk3xn
-    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/provisioner-nk3xn-lpc55-$VERSION.bin
+    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/firmware-nk3xn-lpc55-$VERSION.bin
     - zip nk3xn-raw.zip nk3xn/*
     - cp nk3xn-raw.zip artifacts
   after_script:
