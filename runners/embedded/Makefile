@@ -121,11 +121,14 @@ clean-all:
 	rm -f firmware.hex mbr.hex bootloader.hex
 	rm -rf artifacts cfg.toml
 
+elf-size-analyze.py:
+	wget https://raw.githubusercontent.com/jedrzejboczar/elf-size-analyze/master/elf-size-analyze.py
+
 ###############################################################################
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC elf-size-analyze.py
 
 	cargo --version
 
@@ -149,6 +152,8 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 
 	cp $(RAW_OUT) ./$(OUT_ELF)
 
+	python3 ./elf-size-analyze.py -t arm-none-eabi- ./$(OUT_ELF) -R -H -m 50 -w 0 > $(EXTRA)-sizes-detailed
+	python3 ./elf-size-analyze.py -t arm-none-eabi- ./$(OUT_ELF) -F -H -m 100 -w 0 >> $(EXTRA)-sizes-detailed
 	$(GNU_TARGET)-nm ./$(OUT_ELF) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS)
 	$(GNU_TARGET)-nm -B -l -r --size-sort --print-size -t d ./$(OUT_ELF)  | grep ' [ABbDdRrTt] ' | sort -k2rn | c++filt > $(EXTRA)-sizes
 	arm-none-eabi-objdump -t ./$(OUT_ELF) | grep -Fv ".text" | sort -k5rn | c++filt > $(EXTRA)-objdump-sizes
