@@ -142,7 +142,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 		--features $(COMMA_FEATURES) \
 		--quiet
 
-	# cargo install cargo-bloat
+	cargo install cargo-bloat
 	cargo bloat --release --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		 -n 50 > $(EXTRA)-cargo-bloat
