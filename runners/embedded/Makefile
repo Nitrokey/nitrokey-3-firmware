@@ -164,5 +164,5 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD | tee $(EXTRA)-load
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
-	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
+	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG) $(EXTRA)*
 
