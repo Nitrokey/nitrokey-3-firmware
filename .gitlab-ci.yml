@@ -61,7 +61,7 @@ build-lpc55-nk3xn:
     - make -C runners/embedded build-nk3xn
     - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/firmware-nk3xn-lpc55-$VERSION.bin
     - zip nk3xn-raw.zip nk3xn/*
-    - zip nk3xn-report.zip ./runners/embedded/artifacts/extra* ./runners/embedded/artifacts/symbols*
+    - zip artifacts/nk3xn-report.zip ./runners/embedded/artifacts/extra* ./runners/embedded/artifacts/symbols*
     - cp nk3xn-raw.zip artifacts
   after_script:
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
