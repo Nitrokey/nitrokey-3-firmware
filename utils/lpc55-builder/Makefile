@@ -3,7 +3,8 @@
 .NOTPARALLEL:
 
 RUNNER ?= ../../runners/embedded/
-BINARY ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.bin
+OUTPUT_BIN ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.bin
+OUTPUT_ELF ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.elf
 
 .PHONY: build
 build:
@@ -15,7 +16,7 @@ jlink:
 
 .PHONY: run
 run: build
-	arm-none-eabi-gdb -q -x ./jlink.gdb "$(BINARY)"
+	arm-none-eabi-gdb -q -x ./jlink.gdb "$(OUTPUT_ELF)"
 
 .PHONY: provision-develop
 provision-develop:
@@ -52,7 +53,7 @@ reset:
 
 .PHONY: bl-flash
 bl-flash:
-	lpc55 write-flash "$(BINARY)"
+	lpc55 write-flash "$(OUTPUT_BIN)"
 
 .PHONY: bl-erase-all
 bl-erase-all:
