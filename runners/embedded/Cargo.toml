@@ -93,6 +93,7 @@ soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic"]
 
 extflash_qspi = []
+lpc55-hardware-checks = []
 
 log-all = []
 log-trace = []
