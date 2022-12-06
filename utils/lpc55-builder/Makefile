@@ -50,6 +50,7 @@ flash: build
 	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
 	$(MAKE) bl-erase-firmware
 	$(MAKE) bl-flash
+	lpc55 reboot
 
 .PHONY: reset
 reset:

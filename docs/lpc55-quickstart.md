@@ -1,120 +1,132 @@
 # LPC55 Quickstart Guide
 
-This guide explains how to compile and flash the firmware on a LPC55 prototype device.
+This guide explains how to compile and flash the firmware on a LPC55 Nitrokey 3 Hacker device using a Linux system.
 
-*See also: [Solo 2 Getting Started](https://hackmd.io/@solokeys/solo2-getting-started)*
+*Note:*  This guide and the building tools are work in progress and may change frequently.
 
 ## Requirements
 
-* A Nitrokey 3 prototype
-* Python
-* A current Rust installation and rustup, see [rustup.rs](https://rustup.rs)
-  * Every six weeks (for every new Rust release): `rustup update`
+* Hardware
+  * Nitrokey 3A NFC Hacker (NK3ANH) or a similar device with a LPC55 MCU
+  * optional: [LPC-Link2](https://www.embeddedartists.com/products/lpc-link2/)
+* Software
+  * Python 3 with the `toml` package
+  * [rustup](https://rustup.rs)
+  * GNU Make
+  * Git
+  * LLVM, Clang, GCC
+    * On Debian-based distributions, you need to install these packages: `llvm clang libclang-dev gcc-arm-none-eabi libc6-dev-i386`
+  * [`nitropy`](https://github.com/nitrokey/pynitrokey)
+  * [`solo2`](https://github.com/solokeys/solo2-cli) with the `dev-pki` feature
+  * [`lpc55`](https://github.com/lpc55/lpc55-host)
+  * [`flip-link`](https://github.com/knurling-rs/flip-link)
 
-## Clone Firmware Repository
+You can order a NK3ANH at [shop@nitrokey.com](mailto:shop@nitrokey.com).
 
-Clone the firmware repository [nitrokey/nitrokey-3-firmware](https://github.com/nitrokey/nitrokey-3-firmware) (upstream: [solokeys/solo2](https://github.com/solokeys/solo2)):
+## Introduction
+
+The LPC55 MCU has two operation modes:  a bootloader mode that can be used to configure the device and to write, read and erase the internal flash; and a firmware mode that executes the firmware stored in the internal flash.  If no firmware has been flashed, it boots into bootloader mode.  The Nitrokey 3 firmware also provides a command to boot into the bootloader mode.  In case the firmware is broken, you can boot into bootloader mode by physically activating a special pin.
+
+For the Nitrokey 3, we use two configuration sets:  A simple development configuration, and a release configuration using hardware encryption and secure boot.  This guide currently only describes the development configuration.
+
+To get started with the NK3ANH, you have to perform the following steps:
+
+1. Reset the device
+2. Apply the development configuration
+3. Flash a provisioning firmware
+4. Generate and provision FIDO attestation key and certificate
+5. Flash the final firmware
+
+For a regular Nitrokey 3 device, we would also perform these steps that are currently not covered by this guide:
+
+- Apply the release configuration and generate device secrets
+- Generate, sign and provision a Trussed device key and certificate
+- Seal the device configuration (not reversible)
+
+## Getting Started
+
+### Compiling the Firmware
+
+Clone the firmware repository [nitrokey/nitrokey-3-firmware](https://github.com/nitrokey/nitrokey-3-firmware):
 
 ```
 $ git clone https://github.com/nitrokey/nitrokey-3-firmware
 $ cd nitrokey-3-firmware
 ```
 
-## Install Dependencies
-
-Install the required dependencies as described in the [readme](./README.md) and in the [Solo 2 Getting Started guide](https://solo2.dev), for example on Debian:
+Install the required Rust toolchain:
 
 ```
-$ sudo apt-get install llvm clang libclang-dev gcc-arm-none-eabi libc6-dev-i386
-$ cargo install flip-link
 $ rustup target add thumbv8m.main-none-eabi
 ```
 
-Also install these dependencies for building the firmware image:
+Make sure that you can compile the firmware:
 
 ```
-$ cargo install cargo-binutils
-$ rustup component add llvm-tools-preview
+$ make -C runners/embedded build-nk3xn
 ```
 
-And install [mboot](https://github.com/molejar/pyMBoot) for flashing the firmware (if you don’t use a debugger):
+### Preparing the Device
 
+Disconnect all Nitrokey 3 devices.  It is recommended to also disconnect other FIDO and smartcard devices.  Connect your NK3ANH device while monitoring your system log, for example with `dmesg --follow`.  You should see one of the following USB devices appear:
+- NXP SEMICONDUCTOR INC. USB COMPOSITE DEVICE (idVendor=1fc9, idProduct=0021)
+- NXP SEMICONDUCTOR INC. USB COMPOSITE DEVICE (idVendor=20a0, idProduct=42dd)
+- Nitrokey Nitrokey 3 (idVendor=20a0, idProduct=42b2)
+
+Now make sure that the device is listed in the output of `lpc55 ls` (first and second case) and/or `nitropy nk3 list` (second and third case).  If it is not listed, you have to install
+the [NXP](https://spsdk.readthedocs.io/en/latest/usage/installation.html#usb-under-linux) (first case) and/or [Nitrokey](https://docs.nitrokey.com/software/nitropy/linux/udev) udev rules (second and third case).
+
+To make sure that that the device is in a clean state, reset it:
 ```
-$ pip install mboot
-```
-
-Optionally, add and activate the mboot udev roles so that you don’t need root privileges for flashing:
-
-```
-$ curl https://raw.githubusercontent.com/molejar/pyIMX/master/udev/90-imx-sdp.rules > /etc/udev/rules.d/90-imx-sdp.rules
-$ sudo udevadm control --reload-rules
-```
-
-## Updating Dependencies
-
-If you already have some of the dependencies installed, you might have to update them.  To update the software installed through `rustup`, use `rustup update`.  To automatically update the software installed through `cargo install`, you can use the [`cargo-update`](https://github.com/nabijaczleweli/cargo-update) crate:
-
-```
-$ cargo install cargo-update
-$ cargo install-update -a
+$ make -C utils/lpc55-builder reset
 ```
 
-## Compile Firmware
+### Flashing and Provisioning the Device
 
-Compile the firmware and create the firmware image:
-
+Build the firmware, configure the device and flash the firmware by running:
 ```
-cd runners/lpc55
-make objcopy
-cargo objcopy --release --features board-nk3xn,develop -- -O binary firmware-nk3xn.bin
+$ make -C utils/lpc55-builder provision-develop
 ```
 
-You can use these variables when calling `make`:
-
-* `BOARD`: board selection
-  * `nk3xn` for NK3AN and NK3CN (Nitrokey 3 A NFC and C NFC)
-  * `nk3am` for NK3AM (Nitrokey 3 A Mini)
-* `PROVISIONER`: provisioner feature selection
-  * default: standard firmware build
-  * `1` for a provisioner build (includes the provisioner app, initializes empty flash areas, disables the touch button)
-* `DEVELOP`: development feature selection
-  * default: no development features
-  * `1` for a development build (disables encrypted storage and the touch button)
-
-## Flash Firmware
-
-Insert the Nitrokey 3 prototype (or activate the reset button) while holding the bootloader button (or otherwise connecting the BL and GND pads). You should see information about the device when running `mboot info`:
+Now check that everything worked by running `nitropy nk3 test --exclude provisioner`.  The `uuid` and `version` checks should be successful.  The `fido2` test will fail with a message about an unexpected certificate hash.  This is expected because you don’t have access to the real FIDO2 batch keys and certificates.  If it fails with a different error message, something went wrong.
 
 ```
-$ mboot info
+[1/3]   uuid            UUID query                      SUCCESS         223FE5E2AE287150AD9DAD9E34B7F989
+[2/3]   version         Firmware version query          SUCCESS         v1.2.2
+Please press the touch button on the device ...
+[3/3]   fido2           FIDO2                           FAILURE         Unexpected FIDO2 cert hash for version v1.2.2: c7fbd9ee89f3a32408ce6cc4adb23da940cc1515c741237ef4b8718e24515ac6
 ```
 
-Flash the firmware using `mboot write`:
+### Updating the Firmware
 
+After the initial provisioning, you can re-build and update the firmware with:
 ```
-$ mboot erase --mass
-$ mboot write firmware-nk3xn.bin
+$ make -C utils/lpc55-builder flash FEATURES=develop
+```
+You might have to press the touch button during the command to confirm a reboot.
+
+## Using the Alpha Firmware
+
+The alpha firmware can be built by activating the `alpha` feature.  It requires the nightly Rust compiler – check the `Makefile` in `runners/embedded` for the current nightly version:
+```
+$ grep RUSTUP_TOOLCHAIN runners/embedded/Makefile | head -1
+  RUSTUP_TOOLCHAIN = nightly-2022-11-13
+$ rustup +nightly-2022-11-13 target add thumbv8m.main-none-eabi
 ```
 
-(If you did not install the udev rules, these commands require root privilges.)
+Make sure that you can compile the alpha firmware:
+```
+$ make -C runners/embedded build-nk3xn FEATURES=alpha
+```
 
-You can also compile and flash the firmware in one go by running `make flash`.
-
-## Provision Device
-
-TODO: explain fido2 and trussed provisioning, see the [Solo2 guide](https://hackmd.io/@solokeys/solo2-getting-started#fido-authenticator)
-
-## Test Firmware
-
-* FIDO2
-  * `nitropy fido2 list` and `nitrop2 fido2 verify`
-  * <https://webauthn.bin.coffee/>
-    * Create Credential + Get Assertion
-  * `pip install 'fido2~=0.9' && python tests/basic.py`
+If you have followed the provisioning steps in the Getting Started section, you should now be able to update to the alpha firmware:
+```
+$ make -C utils/lpc55-builder flash FEATURES=develop,alpha
+```
 
 ## Debugging
 
-The Nitrokey 3 board can be debugged using SWD. The SWD interface is exposed over the GND, (SW)DIO and (SW)CLK pins. An external debugger is required, for example [LPC-Link2](https://www.embeddedartists.com/products/lpc-link2/).
+The NK3ANH can be debugged using SWD. The SWD interface is exposed over the GND, (SW)DIO and (SW)CLK pins. An external debugger is required, for example [LPC-Link2](https://www.embeddedartists.com/products/lpc-link2/).
 
 ### Preparing the Connection
 
@@ -139,24 +151,19 @@ Alternatively, use a [breakout connector](https://www.adafruit.com/product/2743)
 * Check the [Segger LPC-Link2 site](https://www.segger.com/lpc-link-2.html) for updated firmware images.
 * Disconnect the board, open JP1 and reconnect the board to the computer.
 * Run `/usr/local/lpcscrypt/scripts/program_JLINK`.
-* Disconnect the board, close JP1 reconnect the board to the computer. Now the device should appear in the `lsusb` output.
+* Disconnect the board, close JP1 and reconnect the board to the computer. Now the device should appear in the `lsusb` output.
 
 #### Running the Debugger
 
 * Close JP2.
 * Install the [JLink Software and Documentation pack](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack).
-* Run `JLinkGDBServer -strict -device LPC55S69 -if SWD -vd`.
+* Execute `make -C utils/lpc55-builder jlink`.
+* Execute `make -C utils/lpc55-builder run` to flash the firmware and execute it with gdb.
 
-### CMSIS
+## Troubleshooting
 
-(Untested.)
+### Force Bootloader Mode
 
-Install the CMSIS firmware image instead of the J-Link firmware image and then:
+If your device is unresponsive, you can force it to boot into bootloader mode by activating the bootloader pin while you connect the device as described in [this comment](https://github.com/Nitrokey/nitrokey-3-firmware/issues/112#issuecomment-1323828805).
 
-* Install `pyocd`.
-* Run `pyocd gdb -u 1042163622 -t lpc55s69`.
-
-### Troubleshooting
-
-* Probe is detected but not target:
-  * Make sure that JP2 is closed.
+TODO: include guide and photos
