@@ -39,6 +39,6 @@ TODO: document
 
 TODO: document
 
-## Reseeting the device
+## Resetting the device
 
 TODO: document
