@@ -62,26 +62,12 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
 [features]
-
 default = []
 
-release = []
-
 alpha = ["apps/alpha", "alloc"]
-
-complete = ["apps/oath-authenticator", # "apps/provisioner-app",
-			"apps/no-reset-time-window",
-			"trussed/clients-3", "log-traceP", "log-rtt"]
-
-develop = ["no-encrypted-storage", "apps/oath-authenticator", "trussed/clients-4",
-			"apps/no-reset-time-window",
-			"log-traceP"]
-
+develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
-
-provisioner = ["apps/provisioner", "log-all", "log-rtt",
-			"write-undefined-flash", "no-buttons",
-			"apps/no-reset-time-window"]
+provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []

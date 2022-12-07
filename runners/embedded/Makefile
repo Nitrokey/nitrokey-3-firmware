@@ -38,7 +38,6 @@ OUT_IHEX = $(OUT_BIN).ihex
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/release/$(SOC)_runner
 
 # feature definition
-FEATURES ?= release
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
 # assemble comma-seperated list to pass to `cargo build`
 delim = ,

@@ -93,7 +93,7 @@ build-nrf52-nk3mini:
     - make -C runners/embedded clean-nk3am.bl FEATURES=alpha
     - make -C runners/embedded build-nk3am.bl FEATURES=develop
     - make -C runners/embedded clean-nk3am.bl FEATURES=develop
-    - make -C runners/embedded build-nk3am.bl FEATURES=release
+    - make -C runners/embedded build-nk3am.bl
     - cp runners/embedded/artifacts/*.bin nk3am/firmware-nk3am-nrf52-$VERSION.bin
     - cp runners/embedded/artifacts/*.ihex nk3am/firmware-nk3am-nrf52-$VERSION.ihex
     - zip nk3am-raw.zip nk3am/*
