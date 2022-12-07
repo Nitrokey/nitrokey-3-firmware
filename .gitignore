@@ -1,5 +1,4 @@
-**/target
-**/Cargo.lock
+target
 **/.gdb_history
 ctap-2-1-pre.pdf
 solo-bee.code-workspace
@@ -7,6 +6,8 @@ ref/
 memory.x
 solo-state.bin
 bee.littlefs2
+Cargo.lock
 !runners/lpc55/Cargo.lock
+!Cargo.lock
 /license.txt
 /commands.bd

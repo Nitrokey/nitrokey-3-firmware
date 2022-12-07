@@ -7,7 +7,6 @@ authors = [
 ]
 edition = "2021"
 license = "MIT"
-resolver = "2"
 
 [dependencies]
 ### base dependencies
@@ -146,21 +145,3 @@ required-features = ["soc-nrf52840"]
 name = "lpc55_runner"
 path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
-
-[patch.crates-io]
-apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.1-nitrokey-1" }
-interchange = { git = "https://github.com/trussed-dev/interchange", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
-littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-1" }
-littlefs2-sys = { git = "https://github.com/Nitrokey/littlefs2-sys", tag = "v0.1.6-nitrokey-1" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-1" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-3" }
-
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = "z"
-incremental = false
-debug = true
-
-[profile.release.package.salty]
-opt-level = 2

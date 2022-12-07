@@ -3,7 +3,7 @@
 BUILD_ID ?= $(BUILD_PROFILE)-$(BOARD)
 CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 
-CARGO_TARGET_DIR ?= target
+CARGO_TARGET_DIR ?= ../../target
 
 ifeq ($(filter nk3am proto1 nrfdk,$(BOARD)), )
   SOC = lpc55
