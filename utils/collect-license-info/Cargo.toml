@@ -10,5 +10,4 @@ askama = "0.11.1"
 cargo-license = "0.4.2"
 cargo_metadata = "0.14.0"
 gumdrop = "0.8.1"
-spdx = "0.8.1"
-ureq = "2.4.0"
+spdx = { version = "0.9.0", features = ["text"] }
