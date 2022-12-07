@@ -23,9 +23,6 @@ compile_error!("No SoC chosen!");
 #[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
 pub mod soc;
 
-#[cfg(feature = "provisioner-app")]
-use admin_app::Reboot;
-
 #[cfg(feature = "alloc")]
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
@@ -189,34 +186,32 @@ pub fn init_usb_nfc(
     }
 }
 
-#[cfg(feature = "provisioner-app")]
-pub fn init_apps(
-    trussed: &mut types::Trussed,
-    store: &types::RunnerStore,
-    on_nfc_power: bool,
-) -> types::Apps {
-    let store_2 = store.clone();
-    let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
-    let uuid: [u8; 16] = *<SocT as types::Soc>::device_uuid();
-    let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
-
-    let pnp = types::ProvisionerNonPortable {
-        store: store_2,
-        stolen_filesystem: int_flash_ref,
-        nfc_powered: on_nfc_power,
-        uuid,
-        rebooter,
-    };
-    types::Apps::new(trussed, pnp)
-}
-
-#[cfg(not(feature = "provisioner-app"))]
 pub fn init_apps(
     trussed: &mut types::Trussed,
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {
-    types::Apps::new(trussed)
+    #[cfg(feature = "provisioner")]
+    let provisioner_non_portable = {
+        use apps::Reboot;
+
+        let store = _store.clone();
+        let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
+        let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
+
+        apps::ProvisionerNonPortable {
+            store,
+            stolen_filesystem: int_flash_ref,
+            nfc_powered: _on_nfc_power,
+            rebooter,
+        }
+    };
+    types::Apps::new(
+        &types::Runner,
+        trussed,
+        #[cfg(feature = "provisioner")]
+        provisioner_non_portable,
+    )
 }
 
 #[inline(never)]

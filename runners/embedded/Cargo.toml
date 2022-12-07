@@ -10,6 +10,7 @@ license = "MIT"
 
 [dependencies]
 ### base dependencies
+apps = { path = "../../components/apps" }
 cfg-if = "*"
 delog = "0.1"
 cortex-m = "0.7"
@@ -27,14 +28,6 @@ spi-memory = "0.2.0"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 ctap-types = "0.1"
-
-### client apps
-admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
-fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
-ndef-app = { path = "../../components/ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/nitrokey/oath-authenticator", rev = "0.3.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
-provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
 trussed = "0.1"
@@ -70,25 +63,25 @@ toml = "0.5"
 
 [features]
 
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+default = []
 
 release = []
 
-alpha = ["oath-authenticator", "opcard", "rsa2048", "rsa4096", "trussed/clients-4"]
+alpha = ["apps/alpha", "alloc"]
 
-complete = ["oath-authenticator", # "provisioner-app",
-			"fido-authenticator/disable-reset-time-window",
+complete = ["apps/oath-authenticator", # "apps/provisioner-app",
+			"apps/no-reset-time-window",
 			"trussed/clients-3", "log-traceP", "log-rtt"]
 
-develop = ["default", "no-encrypted-storage", "oath-authenticator", "trussed/clients-4",
-			"fido-authenticator/disable-reset-time-window",
+develop = ["no-encrypted-storage", "apps/oath-authenticator", "trussed/clients-4",
+			"apps/no-reset-time-window",
 			"log-traceP"]
 
 develop-no-press = ["develop", "no-buttons"]
 
-provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
+provisioner = ["apps/provisioner", "log-all", "log-rtt",
 			"write-undefined-flash", "no-buttons",
-			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
+			"apps/no-reset-time-window"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
@@ -99,15 +92,10 @@ write-undefined-flash = []
 # Use to auto-succeed every user presence check
 no-buttons = []
 
-# Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
-no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
-
 # Format filesystem anyway
 format-filesystem = []
 
 alloc = ["alloc-cortex-m"]
-rsa2048 = ["alloc", "opcard/rsa2048"]
-rsa4096 = ["rsa2048", "opcard/rsa4096"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]

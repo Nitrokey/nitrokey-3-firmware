@@ -79,8 +79,7 @@ impl nfc_device::traits::nfc::Device for DummyNfc {
 
 pub struct Reboot {}
 
-#[cfg(feature = "admin-app")]
-impl admin_app::Reboot for Reboot {
+impl apps::Reboot for Reboot {
     fn reboot() -> ! {
         SCB::sys_reset()
     }

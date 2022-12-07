@@ -88,6 +88,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "apps"
+version = "0.1.0"
+dependencies = [
+ "admin-app",
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "fido-authenticator",
+ "ndef-app",
+ "oath-authenticator",
+ "opcard",
+ "provisioner-app",
+ "trussed",
+ "usbd-ctaphid 0.0.0-unreleased",
+]
+
+[[package]]
 name = "as-slice"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -906,9 +922,9 @@ dependencies = [
 name = "embedded-runner-lib"
 version = "1.2.2"
 dependencies = [
- "admin-app",
  "alloc-cortex-m",
  "apdu-dispatch",
+ "apps",
  "cargo-lock",
  "cfg-if",
  "chacha20 0.7.3",
@@ -921,7 +937,6 @@ dependencies = [
  "embedded-hal",
  "embedded-storage",
  "embedded-time",
- "fido-authenticator",
  "fm11nc08",
  "generic-array 0.14.6",
  "interchange",
@@ -929,13 +944,9 @@ dependencies = [
  "lpc55-hal",
  "lpc55-pac",
  "nb 1.0.0",
- "ndef-app",
  "nfc-device",
  "nrf52840-hal",
  "nrf52840-pac",
- "oath-authenticator",
- "opcard",
- "provisioner-app",
  "rand_core",
  "rtt-target",
  "serde",
