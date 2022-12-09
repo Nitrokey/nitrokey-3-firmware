@@ -1,6 +1,6 @@
 [package]
 name = "usbip-runner"
-version = "1.2.2"
+version = { workspace = true }
 edition = "2021"
 
 [dependencies]
