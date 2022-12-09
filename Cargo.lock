@@ -94,6 +94,7 @@ dependencies = [
  "opcard",
  "provisioner-app",
  "trussed",
+ "trussed-usbip",
  "usbd-ctaphid 0.0.0-unreleased",
 ]
 
@@ -2428,7 +2429,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-3#ccdbf9929a538ebb6c48a785a76ea91a1b17b707"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-4#238b7b26b3d97575aa1293c75b9d02388a574ede"
 dependencies = [
  "aes",
  "bitflags",
@@ -2462,6 +2463,20 @@ dependencies = [
  "sha-1",
  "sha2 0.10.6",
  "zeroize",
+]
+
+[[package]]
+name = "trussed-usbip"
+version = "0.0.1"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner#8de2f9f3439647cacbdbd4a6e426385846adcd4b"
+dependencies = [
+ "ctaphid-dispatch",
+ "interchange",
+ "log",
+ "trussed",
+ "usb-device",
+ "usbd-ctaphid 0.0.0-unreleased (git+https://github.com/Nitrokey/nitrokey-3-firmware)",
+ "usbip-device",
 ]
 
 [[package]]
@@ -2582,7 +2597,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#06238fd8538417b3cf1080924247f51c9a575298"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#2b499dbe4b68b010d61c657092dbdcf6fc71b308"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
@@ -2603,6 +2618,17 @@ checksum = "db75519b86287f12dcf0d171c7cf4ecc839149fe9f3b720ac4cfce52959e1dfe"
 dependencies = [
  "embedded-hal",
  "nb 0.1.3",
+ "usb-device",
+]
+
+[[package]]
+name = "usbip-device"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
+dependencies = [
+ "bitflags",
+ "log",
  "usb-device",
 ]
 

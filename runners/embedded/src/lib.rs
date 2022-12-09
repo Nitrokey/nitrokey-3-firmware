@@ -211,7 +211,7 @@ pub fn init_apps(
         provisioner,
         _marker: Default::default(),
     };
-    types::Apps::new(&types::Runner, trussed, non_portable)
+    types::Apps::with_service(&types::Runner, trussed, non_portable)
 }
 
 #[inline(never)]
