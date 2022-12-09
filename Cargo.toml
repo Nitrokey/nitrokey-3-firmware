@@ -2,6 +2,7 @@
 members = [
     "components/*",
     "runners/embedded",
+    "runners/usbip",
     "utils/collect-license-info",
     "utils/gen-commands-bd",
 ]
