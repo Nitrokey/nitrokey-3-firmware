@@ -29,6 +29,7 @@ CFG_VAL_SOC = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["p
 ARTIFACTS = artifacts
 LOG ?= build-$(BUILD_ID).err.log
 SYMBOLS ?= symbols-$(BUILD_ID).txt
+EXTRA ?= extra-$(BUILD_ID).txt
 
 # input files and outputs
 SRCS = $(shell find src -name "*.rs" )
@@ -120,11 +121,14 @@ clean-all:
 	rm -f firmware.hex mbr.hex bootloader.hex
 	rm -rf artifacts cfg.toml
 
+elf-size-analyze.py:
+	wget https://raw.githubusercontent.com/jedrzejboczar/elf-size-analyze/master/elf-size-analyze.py
+
 ###############################################################################
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC elf-size-analyze.py
 
 	cargo --version
 
@@ -138,16 +142,27 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 		--features $(COMMA_FEATURES) \
 		--quiet
 
+	cargo install cargo-bloat
+	cargo bloat --release --target $(TARGET) \
+		--features $(COMMA_FEATURES) \
+		 -n 50 > $(EXTRA)-cargo-bloat
+	cargo bloat --release --target $(TARGET) \
+		--features $(COMMA_FEATURES) \
+		--crates -n 50 >> $(EXTRA)-cargo-bloat
+
 	cp $(RAW_OUT) ./$(OUT_ELF)
 
-	$(GNU_TARGET)-nm ./$(OUT_ELF) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
-	
+	python3 ./elf-size-analyze.py -t arm-none-eabi- ./$(OUT_ELF) -R -H -m 50 -w 0 > $(EXTRA)-sizes-detailed
+	python3 ./elf-size-analyze.py -t arm-none-eabi- ./$(OUT_ELF) -F -H -m 100 -w 0 >> $(EXTRA)-sizes-detailed
+	$(GNU_TARGET)-nm ./$(OUT_ELF) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS)
+	$(GNU_TARGET)-nm -B -l -r --size-sort --print-size -t d ./$(OUT_ELF)  | grep ' [ABbDdRrTt] ' | sort -k2rn | c++filt > $(EXTRA)-sizes
+	arm-none-eabi-objdump -t ./$(OUT_ELF) | grep -Fv ".text" | sort -k5rn | c++filt > $(EXTRA)-objdump-sizes
 	cat $(GNU_TARGET)-arch-symbols.txt >> $(SYMBOLS)
 
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
-	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
+	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD | tee $(EXTRA)-load
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
-	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
+	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG) $(EXTRA)*
 

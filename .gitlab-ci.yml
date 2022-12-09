@@ -46,6 +46,7 @@ build-lpc55-nk3xn:
     - docker
   stage: build
   script:
+    - echo "This script should not be that long. These commands should be kept in Makefile or other runner"
     - rustup target add thumbv8m.main-none-eabi
     - rustup +nightly-2022-11-13 target add thumbv8m.main-none-eabi
     - mkdir -p artifacts nk3xn
@@ -60,6 +61,7 @@ build-lpc55-nk3xn:
     - make -C runners/embedded build-nk3xn
     - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/firmware-nk3xn-lpc55-$VERSION.bin
     - zip nk3xn-raw.zip nk3xn/*
+    - zip artifacts/nk3xn-report.zip ./runners/embedded/artifacts/*extra* ./runners/embedded/artifacts/*symbols*
     - cp nk3xn-raw.zip artifacts
   after_script:
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
@@ -78,6 +80,7 @@ build-nrf52-nk3mini:
     - docker
   stage: build
   script:
+    - echo "This script should not be that long. These commands should be kept in Makefile or other runner"
     - apt-get install -y python3 python3-toml zip
     - rustup target add thumbv7em-none-eabihf
     - rustup +nightly-2022-11-13 target add thumbv7em-none-eabihf
