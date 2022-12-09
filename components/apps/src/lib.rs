@@ -3,6 +3,7 @@
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
+use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
     pipe::TrussedInterchange, platform::Syscall, types::PathBuf, ClientImplementation,
@@ -24,6 +25,12 @@ pub trait Runner {
 
     fn uuid(&self) -> [u8; 16];
     fn version(&self) -> u32;
+}
+
+pub struct NonPortable<R: Runner> {
+    #[cfg(feature = "provisioner-app")]
+    pub provisioner: ProvisionerNonPortable<R>,
+    pub _marker: PhantomData<R>,
 }
 
 type Client<R> = ClientImplementation<<R as Runner>::Syscall>;
@@ -61,8 +68,13 @@ impl<R: Runner> Apps<R> {
     pub fn new<P: Platform>(
         runner: &R,
         trussed: &mut Service<P>,
-        #[cfg(feature = "provisioner-app")] provisioner: ProvisionerNonPortable<R>,
+        non_portable: NonPortable<R>,
     ) -> Self {
+        let NonPortable {
+            #[cfg(feature = "provisioner-app")]
+            provisioner,
+            ..
+        } = non_portable;
         Self {
             #[cfg(feature = "admin-app")]
             admin: App::with(runner, trussed, ()),
