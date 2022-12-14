@@ -270,7 +270,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     );
 
     let lockfile =
-        cargo_lock::Lockfile::load(Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.lock"))?;
+        cargo_lock::Lockfile::load(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.lock"))?;
     let pkg_cortex_m_rt = lockfile
         .packages
         .iter()

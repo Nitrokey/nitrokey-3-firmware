@@ -20,7 +20,7 @@ umount-fs:
 	scripts/defuse-bee
 
 license.txt:
-	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/lpc55/Cargo.toml > license.txt
+	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/embedded/Cargo.toml > license.txt
 
 commands.bd:
 	cargo run --release --manifest-path utils/gen-commands-bd/Cargo.toml -- \

@@ -1,0 +1,28 @@
+[package]
+name = "apps"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+apdu-dispatch = "0.1"
+ctaphid-dispatch = "0.1"
+trussed = "0.1"
+usbd-ctaphid = { path = "../usbd-ctaphid", optional = true }
+
+# apps
+admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
+fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
+ndef-app = { path = "../ndef-app", optional = true }
+oath-authenticator = { git = "https://github.com/nitrokey/oath-authenticator", rev = "0.3.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
+provisioner-app = { path = "../provisioner-app", optional = true }
+
+[features]
+default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+alpha = ["oath-authenticator", "opcard", "trussed/clients-4"]
+provisioner = ["provisioner-app", "trussed/clients-3"]
+
+# Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
+no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
+
+fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]

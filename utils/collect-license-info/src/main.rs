@@ -9,8 +9,6 @@ use cargo_metadata::{CargoOpt, MetadataCommand, Package};
 use gumdrop::Options;
 use spdx::{Expression, LicenseId};
 
-const SPDX_BASE_URL: &str = "https://raw.githubusercontent.com/spdx/license-list-data/master/text/";
-
 /// Collects license information for the Nitrokey 3 firmware and its dependencies and prints a
 /// document with the license details to stdout.
 #[derive(Debug, Options)]
@@ -105,16 +103,7 @@ impl From<Package> for Dependency {
 struct LicenseTemplate<'a> {
     firmware: &'a Dependency,
     dependencies: &'a BTreeSet<Dependency>,
-    licenses: &'a BTreeMap<LicenseId, String>,
-}
-
-fn fetch_license(id: LicenseId) -> String {
-    let url = SPDX_BASE_URL.to_owned() + id.name + ".txt";
-    ureq::get(&url)
-        .call()
-        .expect("failed to retrieve license text")
-        .into_string()
-        .expect("failed to read license text")
+    licenses: &'a BTreeMap<LicenseId, &'a str>,
 }
 
 fn main() {
@@ -126,7 +115,7 @@ fn main() {
     licenses.extend(&firmware.licenses);
     let licenses: BTreeMap<_, _> = licenses
         .into_iter()
-        .map(|license| (*license, fetch_license(*license)))
+        .map(|license| (*license, license.text()))
         .collect();
     let template = LicenseTemplate {
         firmware: &firmware,

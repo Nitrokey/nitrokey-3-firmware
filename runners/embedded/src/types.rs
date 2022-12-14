@@ -4,10 +4,7 @@ use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use core::convert::TryInto;
-use core::time::Duration;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
-use interchange::Interchange;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
@@ -58,6 +55,25 @@ pub trait Soc {
     fn device_uuid() -> &'static Self::UUID;
 }
 
+pub struct Runner;
+
+impl apps::Runner for Runner {
+    type Syscall = RunnerSyscall;
+    type Reboot = <SocT as Soc>::Reboot;
+    #[cfg(feature = "provisioner")]
+    type Store = RunnerStore;
+    #[cfg(feature = "provisioner")]
+    type Filesystem = <SocT as Soc>::InternalFlashStorage;
+
+    fn uuid(&self) -> [u8; 16] {
+        *<SocT as Soc>::device_uuid()
+    }
+
+    fn version(&self) -> u32 {
+        build_constants::CARGO_PKG_VERSION
+    }
+}
+
 // 8KB of RAM
 const_ram_storage!(VolatileStorage, 8192);
 
@@ -96,223 +112,13 @@ impl trussed::client::Syscall for RunnerSyscall {
 }
 
 pub type Trussed = trussed::Service<RunnerPlatform>;
-pub type TrussedClient = trussed::ClientImplementation<RunnerSyscall>;
 
 pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
 
-#[cfg(feature = "admin-app")]
-pub type AdminApp = admin_app::App<TrussedClient, <SocT as Soc>::Reboot>;
-#[cfg(feature = "oath-authenticator")]
-pub type OathApp = oath_authenticator::Authenticator<TrussedClient>;
-#[cfg(feature = "fido-authenticator")]
-pub type FidoApp = fido_authenticator::Authenticator<fido_authenticator::Conforming, TrussedClient>;
-#[cfg(feature = "ndef-app")]
-pub type NdefApp = ndef_app::App<'static>;
-#[cfg(feature = "opcard")]
-pub type OpcardApp = opcard::Card<TrussedClient>;
-#[cfg(feature = "provisioner-app")]
-pub type ProvisionerApp =
-    provisioner_app::Provisioner<RunnerStore, <SocT as Soc>::InternalFlashStorage, TrussedClient>;
-
-pub trait TrussedApp: Sized {
-    /// non-portable resources needed by this Trussed app
-    type NonPortable;
-
-    /// the desired client ID
-    const CLIENT_ID: &'static [u8];
-
-    fn with_client(trussed: TrussedClient, non_portable: Self::NonPortable) -> Self;
-
-    fn with(trussed: &mut Trussed, non_portable: Self::NonPortable) -> Self {
-        let (trussed_requester, trussed_responder) =
-            trussed::pipe::TrussedInterchange::claim().expect("could not setup TrussedInterchange");
-
-        let mut client_id = littlefs2::path::PathBuf::new();
-        client_id.push(Self::CLIENT_ID.try_into().unwrap());
-        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
-
-        let syscaller = RunnerSyscall::default();
-        let trussed_client = TrussedClient::new(trussed_requester, syscaller);
-
-        Self::with_client(trussed_client, non_portable)
-    }
-}
-
-#[cfg(feature = "oath-authenticator")]
-impl TrussedApp for OathApp {
-    const CLIENT_ID: &'static [u8] = b"oath\0";
-
-    type NonPortable = ();
-    fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        Self::new(trussed)
-    }
-}
-
-#[cfg(feature = "admin-app")]
-impl TrussedApp for AdminApp {
-    const CLIENT_ID: &'static [u8] = b"admin\0";
-
-    // TODO: declare uuid + version
-    type NonPortable = ();
-    fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        let mut buf: [u8; 16] = [0u8; 16];
-        buf.copy_from_slice(<SocT as Soc>::device_uuid());
-        Self::new(trussed, buf, build_constants::CARGO_PKG_VERSION)
-    }
-}
-
-#[cfg(feature = "fido-authenticator")]
-impl TrussedApp for FidoApp {
-    const CLIENT_ID: &'static [u8] = b"fido\0";
-
-    type NonPortable = ();
-    fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        fido_authenticator::Authenticator::new(
-            trussed,
-            fido_authenticator::Conforming {},
-            fido_authenticator::Config {
-                max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
-                skip_up_timeout: Some(Duration::from_secs(2)),
-            },
-        )
-    }
-}
-
-#[cfg(feature = "opcard")]
-impl TrussedApp for OpcardApp {
-    const CLIENT_ID: &'static [u8] = b"opcard\0";
-
-    type NonPortable = ();
-    fn with_client(trussed: TrussedClient, _: ()) -> Self {
-        let uuid = <SocT as Soc>::device_uuid();
-        let mut options = opcard::Options::default();
-        options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
-        // TODO: set manufacturer to Nitrokey
-        Self::new(trussed, options)
-    }
-}
-
-
-pub struct ProvisionerNonPortable {
-    pub store: RunnerStore,
-    pub stolen_filesystem: &'static mut <SocT as Soc>::InternalFlashStorage,
-    pub nfc_powered: bool,
-    pub uuid: [u8; 16],
-    pub rebooter: fn() -> !,
-}
-
-#[cfg(feature = "provisioner-app")]
-impl TrussedApp for ProvisionerApp {
-    const CLIENT_ID: &'static [u8] = b"attn\0";
-
-    type NonPortable = ProvisionerNonPortable;
-    fn with_client(
-        trussed: TrussedClient,
-        ProvisionerNonPortable {
-            store,
-            stolen_filesystem,
-            nfc_powered,
-            uuid,
-            rebooter,
-        }: Self::NonPortable,
-    ) -> Self {
-        Self::new(
-            trussed,
-            store,
-            stolen_filesystem,
-            nfc_powered,
-            uuid,
-            rebooter,
-        )
-    }
-}
-
-pub struct Apps {
-    #[cfg(feature = "admin-app")]
-    pub admin: AdminApp,
-    #[cfg(feature = "fido-authenticator")]
-    pub fido: FidoApp,
-    #[cfg(feature = "oath-authenticator")]
-    pub oath: OathApp,
-    #[cfg(feature = "opcard")]
-    pub opcard: OpcardApp,
-    #[cfg(feature = "ndef-app")]
-    pub ndef: NdefApp,
-    #[cfg(feature = "provisioner-app")]
-    pub provisioner: ProvisionerApp,
-}
-
-impl Apps {
-    pub fn new(
-        trussed: &mut trussed::Service<RunnerPlatform>,
-        #[cfg(feature = "provisioner-app")] provisioner: ProvisionerNonPortable,
-    ) -> Self {
-        #[cfg(feature = "admin-app")]
-        let admin = AdminApp::with(trussed, ());
-        #[cfg(feature = "fido-authenticator")]
-        let fido = FidoApp::with(trussed, ());
-        #[cfg(feature = "oath-authenticator")]
-        let oath = OathApp::with(trussed, ());
-        #[cfg(feature = "opcard")]
-        let opcard = OpcardApp::with(trussed, ());
-        #[cfg(feature = "ndef-app")]
-        let ndef = NdefApp::new();
-        #[cfg(feature = "provisioner-app")]
-        let provisioner = ProvisionerApp::with(trussed, provisioner);
-
-        Self {
-            #[cfg(feature = "admin-app")]
-            admin,
-            #[cfg(feature = "fido-authenticator")]
-            fido,
-            #[cfg(feature = "oath-authenticator")]
-            oath,
-            #[cfg(feature = "opcard")]
-            opcard,
-            #[cfg(feature = "ndef-app")]
-            ndef,
-            #[cfg(feature = "provisioner-app")]
-            provisioner,
-        }
-    }
-
-    pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
-    where
-        F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T,
-    {
-        f(&mut [
-            #[cfg(feature = "ndef-app")]
-            &mut self.ndef,
-            #[cfg(feature = "oath-authenticator")]
-            &mut self.oath,
-            #[cfg(feature = "opcard")]
-            &mut self.opcard,
-            #[cfg(feature = "fido-authenticator")]
-            &mut self.fido,
-            #[cfg(feature = "admin-app")]
-            &mut self.admin,
-            #[cfg(feature = "provisioner-app")]
-            &mut self.provisioner,
-        ])
-    }
-
-    pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
-    where
-        F: FnOnce(&mut [&mut dyn CtaphidApp]) -> T,
-    {
-        f(&mut [
-            #[cfg(feature = "fido-authenticator")]
-            &mut self.fido,
-            #[cfg(feature = "admin-app")]
-            &mut self.admin,
-            #[cfg(feature = "oath-authenticator")]
-            &mut self.oath,
-        ])
-    }
-}
+pub type Apps = apps::Apps<Runner>;
 
 #[derive(Debug)]
 pub struct DelogFlusher {}

@@ -7,10 +7,10 @@ authors = [
 ]
 edition = "2021"
 license = "MIT"
-resolver = "2"
 
 [dependencies]
 ### base dependencies
+apps = { path = "../../components/apps" }
 cfg-if = "*"
 delog = "0.1"
 cortex-m = "0.7"
@@ -28,14 +28,6 @@ spi-memory = "0.2.0"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 ctap-types = "0.1"
-
-### client apps
-admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
-fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
-ndef-app = { path = "../../components/ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/nitrokey/oath-authenticator", rev = "0.3.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
-provisioner-app = { path = "../../components/provisioner-app", optional = true }
 
 ### trussed core
 trussed = "0.1"
@@ -70,26 +62,12 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
 [features]
+default = []
 
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
-
-release = []
-
-alpha = ["oath-authenticator", "opcard", "rsa2048", "rsa4096", "trussed/clients-4"]
-
-complete = ["oath-authenticator", # "provisioner-app",
-			"fido-authenticator/disable-reset-time-window",
-			"trussed/clients-3", "log-traceP", "log-rtt"]
-
-develop = ["default", "no-encrypted-storage", "oath-authenticator", "trussed/clients-4",
-			"fido-authenticator/disable-reset-time-window",
-			"log-traceP"]
-
+alpha = ["apps/alpha", "alloc"]
+develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
-
-provisioner = ["log-all", "log-rtt", "provisioner-app/log-all",
-			"write-undefined-flash", "no-buttons",
-			"no-reset-time-window", "provisioner-app", "trussed/clients-3"]
+provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
@@ -100,15 +78,10 @@ write-undefined-flash = []
 # Use to auto-succeed every user presence check
 no-buttons = []
 
-# Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
-no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
-
 # Format filesystem anyway
 format-filesystem = []
 
 alloc = ["alloc-cortex-m"]
-rsa2048 = ["alloc", "opcard/rsa2048"]
-rsa4096 = ["rsa2048", "opcard/rsa4096"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
@@ -146,21 +119,3 @@ required-features = ["soc-nrf52840"]
 name = "lpc55_runner"
 path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
-
-[patch.crates-io]
-apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.1-nitrokey-1" }
-interchange = { git = "https://github.com/trussed-dev/interchange", rev = "fe5633466640e1e9a8c06d9b5dd1d0af08c272af" }
-littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-1" }
-littlefs2-sys = { git = "https://github.com/Nitrokey/littlefs2-sys", tag = "v0.1.6-nitrokey-1" }
-lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-1" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-3" }
-
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = "z"
-incremental = false
-debug = true
-
-[profile.release.package.salty]
-opt-level = 2

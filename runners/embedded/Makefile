@@ -3,7 +3,7 @@
 BUILD_ID ?= $(BUILD_PROFILE)-$(BOARD)
 CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 
-CARGO_TARGET_DIR ?= target
+CARGO_TARGET_DIR ?= ../../target
 
 ifeq ($(filter nk3am proto1 nrfdk,$(BOARD)), )
   SOC = lpc55
@@ -38,7 +38,6 @@ OUT_IHEX = $(OUT_BIN).ihex
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/release/$(SOC)_runner
 
 # feature definition
-FEATURES ?= release
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
 # assemble comma-seperated list to pass to `cargo build`
 delim = ,

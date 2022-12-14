@@ -66,7 +66,7 @@ impl crate::types::Soc for Soc {
 }
 
 pub struct Lpc55Reboot {}
-impl admin_app::Reboot for Lpc55Reboot {
+impl apps::Reboot for Lpc55Reboot {
     fn reboot() -> ! {
         raw::SCB::sys_reset()
     }
