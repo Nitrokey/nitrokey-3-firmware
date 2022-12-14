@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 apdu-dispatch = "0.1"
+ctaphid-dispatch = "0.1"
 delog = "0.1"
 heapless = "0.7"
 heapless-bytes = "0.3"
