@@ -56,9 +56,6 @@ pub enum Instructions {
     SaveX255AttestationCertificate = 0xb6,
 
     SaveT1IntermediatePublicKey = 0xb5,
-
-    #[cfg(feature = "test-attestation")]
-    TestAttestation = 0xb8,
 }
 
 impl TryFrom<u8> for Instructions {
@@ -81,24 +78,9 @@ impl TryFrom<u8> for Instructions {
             0xb6 => SaveX255AttestationCertificate,
 
             0xb5 => SaveT1IntermediatePublicKey,
-
-            #[cfg(feature = "test-attestation")]
-            0xb8 => TestAttestation,
             _ => return Err(()),
         })
     }
-}
-
-#[cfg(feature = "test-attestation")]
-#[derive(Copy,Clone)]
-enum TestAttestationP1 {
-    P256Sign = 0,
-    P256Cert = 1,
-    Ed255Sign= 2,
-    Ed255Cert= 3,
-    X255Agree = 4,
-    X255Cert = 5,
-    T1Key = 6,
 }
 
 type UUID = [u8; 16];
@@ -390,137 +372,6 @@ where S: Store,
                                 ).map_err(|_| Status::NotEnoughMemory)
                             }
                         },
-
-                        #[cfg(feature = "test-attestation")]
-                        TestAttestation => {
-                            // This is only exposed for development and testing.
-
-                            use trussed::{
-                                types::Mechanism,
-                                types::SignatureSerialization,
-                                types::KeyId,
-                                types::Message,
-                                types::StorageAttributes,
-                                types::Location,
-                                types::KeySerialization,
-
-                            };
-                            use trussed::config::MAX_SIGNATURE_LENGTH;
-
-
-                            let p1 = command.p1;
-                            let mut challenge = [0u8; 32];
-                            challenge.copy_from_slice(
-                                &syscall!(self.trussed.random_bytes(32)).bytes.as_slice()
-                            );
-
-                            match p1 {
-                                _x if p1 == TestAttestationP1::P256Sign as u8 => {
-                                    let sig: trussed::Bytes<MAX_SIGNATURE_LENGTH> = syscall!(self.trussed.sign(
-                                        Mechanism::P256,
-                                        KeyId::from_special(1),
-                                        &challenge,
-                                        SignatureSerialization::Asn1Der
-                                    )).signature;
-
-                                    // let sig = Bytes::try_from_slice(&sig);
-
-                                    reply.extend_from_slice(&challenge).unwrap();
-                                    reply.extend_from_slice(&sig).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::P256Cert as u8 => {
-                                    let cert: Message = store::read(self.store,
-                                        trussed::types::Location::Internal,
-                                        &PathBuf::from(FILENAME_P256_CERT),
-                                    ).map_err(|_| Status::NotFound)?;
-                                    reply.extend_from_slice(&cert).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::Ed255Sign as u8 => {
-
-                                    let sig: trussed::Bytes<MAX_SIGNATURE_LENGTH> = syscall!(self.trussed.sign(
-                                        Mechanism::Ed255,
-                                        KeyId::from_special(2),
-                                        &challenge,
-                                        SignatureSerialization::Asn1Der
-                                    )).signature;
-
-                                    // let sig = Bytes::try_from_slice(&sig);
-
-                                    reply.extend_from_slice(&challenge).unwrap();
-                                    reply.extend_from_slice(&sig).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::Ed255Cert as u8 => {
-                                    let cert:Message = store::read(self.store,
-                                        trussed::types::Location::Internal,
-                                        &PathBuf::from(FILENAME_ED255_CERT),
-                                    ).map_err(|_| Status::NotFound)?;
-                                    reply.extend_from_slice(&cert).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::X255Agree as u8 => {
-
-                                    syscall!(self.trussed.debug_dump_store());
-
-                                    let mut platform_pk_bytes = [0u8; 32];
-                                    for i in 0 .. 32 {
-                                        platform_pk_bytes[i] = command.data()[i]
-                                    }
-
-                                    info_now!("1");
-
-                                    let platform_kak = syscall!(self.trussed.deserialize_key(
-                                        Mechanism::X255,
-                                        // platform sends it's pk as 32 bytes
-                                        &platform_pk_bytes,
-                                        KeySerialization::Raw,
-                                        StorageAttributes::new().set_persistence(Location::Volatile)
-                                    )).key;
-                                    info_now!("3");
-
-                                    let shared_secret = syscall!(self.trussed.agree_x255(
-                                        KeyId::from_special(3),
-                                        platform_kak,
-                                        Location::Volatile
-                                    )).shared_secret;
-                                    info_now!("4");
-
-                                    let sig = syscall!(self.trussed.sign_hmacsha256(
-                                        shared_secret,
-                                        &challenge,
-                                    )).signature;
-
-                                    info_now!("5");
-                                    reply.extend_from_slice(&challenge).unwrap();
-                                    reply.extend_from_slice(&sig).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::X255Cert as u8 => {
-                                    let cert: Message = store::read(self.store,
-                                        trussed::types::Location::Internal,
-                                        &PathBuf::from(FILENAME_X255_CERT),
-                                    ).map_err(|_| Status::NotFound)?;
-                                    reply.extend_from_slice(&cert).unwrap();
-                                    Ok(())
-                                }
-                                _x if p1 == TestAttestationP1::T1Key as u8 => {
-                                    let key: Message = store::read(self.store,
-                                        trussed::types::Location::Internal,
-                                        &PathBuf::from(FILENAME_T1_PUBLIC),
-                                    ).map_err(|_| Status::NotFound)?;
-                                     let key = Key::try_deserialize(&key[..])
-                                         .map_err(|_| Status::WrongLength)?;
-                                    reply.extend_from_slice(&key.material).unwrap();
-                                    Ok(())
-                                }
-                                _ => Err(Status::FunctionNotSupported)
-
-                            }
-
-                        }
-
                         GetUuid => {
                             // Get UUID
                             reply.extend_from_slice(&self.uuid).expect("failed copying UUID");
