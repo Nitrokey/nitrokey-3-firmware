@@ -1914,6 +1914,7 @@ name = "provisioner-app"
 version = "0.1.0"
 dependencies = [
  "apdu-dispatch",
+ "ctaphid-dispatch",
  "delog",
  "heapless 0.7.16",
  "heapless-bytes 0.3.0",

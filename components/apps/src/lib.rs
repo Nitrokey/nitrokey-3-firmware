@@ -110,6 +110,8 @@ impl<R: Runner> Apps<R> {
             &mut self.admin,
             #[cfg(feature = "oath-authenticator")]
             &mut self.oath,
+            #[cfg(feature = "provisioner-app")]
+            &mut self.provisioner,
         ])
     }
 }
