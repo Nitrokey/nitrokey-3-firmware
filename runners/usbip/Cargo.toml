@@ -4,7 +4,7 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
-apps = { path = "../../components/apps", features = ["trussed-usbip"] }
+apps = { path = "../../components/apps", features = ["log-all", "trussed-usbip"] }
 cfg-if = { version = "1.0.0" }
 clap = { version = "3.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
