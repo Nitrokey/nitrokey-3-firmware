@@ -3,7 +3,8 @@
 .NOTPARALLEL:
 
 RUNNER ?= ../../runners/embedded/
-BINARY ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.bin
+OUTPUT_BIN ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.bin
+OUTPUT_ELF ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.elf
 
 .PHONY: build
 build:
@@ -15,15 +16,25 @@ jlink:
 
 .PHONY: run
 run: build
-	arm-none-eabi-gdb -q -x ./jlink.gdb "$(BINARY)"
+	arm-none-eabi-gdb -q -x ./jlink.gdb "$(OUTPUT_ELF)"
 
 .PHONY: provision-develop
 provision-develop:
-	# TODO: provision FIDO etc.
-	$(MAKE) build FEATURES=develop
+	# Step 1: build & flash provisioner, configure device
+	$(MAKE) build FEATURES=develop,provisioner,$(FEATUERS)
 	./scripts/boot-to-bootrom.sh
 	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
 	$(MAKE) bl-config-cmpa-develop
+	$(MAKE) bl-erase-firmware
+	$(MAKE) bl-flash
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42b2
+	# Step 2: provision certs
+	$(MAKE) fw-provision-certs
+	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 20a0:42dd
+	# Step 3: build & flash final firmware
+	$(MAKE) build FEATURES=develop,$(FEATURES)
 	$(MAKE) bl-erase-firmware
 	$(MAKE) bl-flash
 	lpc55 reboot
@@ -39,6 +50,7 @@ flash: build
 	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
 	$(MAKE) bl-erase-firmware
 	$(MAKE) bl-flash
+	lpc55 reboot
 
 .PHONY: reset
 reset:
@@ -52,7 +64,7 @@ reset:
 
 .PHONY: bl-flash
 bl-flash:
-	lpc55 write-flash "$(BINARY)"
+	lpc55 write-flash "$(OUTPUT_BIN)"
 
 .PHONY: bl-erase-all
 bl-erase-all:
@@ -89,5 +101,13 @@ bl-provision-keystore:
 # The following targets prefixed with fw- require that the device is in firmware mode.
 
 .PHONY: fw-provision-certs
-bl-provision-certs:
-	# TODO: implement
+fw-provision-certs: data/fido.key data/fido.cert
+	# TODO: add Trussed key & cert
+	solo2 app provision store-fido-batch-cert data/fido.cert
+	solo2 app provision store-fido-batch-key data/fido.key
+
+data/fido.key: data/fido.cert
+
+data/fido.cert:
+	mkdir -p data
+	solo2 pki dev fido data/fido.key data/fido.cert

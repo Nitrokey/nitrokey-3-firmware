@@ -373,7 +373,7 @@ impl Stage2 {
         )
     }
 
-    #[cfg(feature = "provisioner-app")]
+    #[cfg(feature = "lpc55-hardware-checks")]
     pub fn run_hardware_checks(
         &mut self,
         flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
@@ -464,7 +464,7 @@ impl Stage2 {
     ) -> Stage3 {
         #[allow(unused_mut)]
         let mut spi = self.setup_spi(flexcomm0);
-        #[cfg(feature = "provisioner-app")]
+        #[cfg(feature = "lpc55-hardware-checks")]
         self.run_hardware_checks(_flexcomm5, &mut spi);
         let spi = spi::reconfigure(spi);
 

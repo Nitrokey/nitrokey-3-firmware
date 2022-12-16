@@ -1,0 +1,4 @@
+erase
+r
+go
+exit
