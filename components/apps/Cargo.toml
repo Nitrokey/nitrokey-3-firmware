@@ -7,6 +7,7 @@ edition = "2021"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 trussed = "0.1"
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", features = ["ctaphid"], optional = true }
 usbd-ctaphid = { path = "../usbd-ctaphid", optional = true }
 
 # apps
@@ -22,7 +23,15 @@ default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 alpha = ["oath-authenticator", "opcard", "trussed/clients-4"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
 
+log-all = [
+    "admin-app?/log-all",
+    "fido-authenticator?/log-all",
+    "oath-authenticator?/log-all",
+    "opcard?/log-all",
+    "provisioner-app?/log-all",
+]
+
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
-no-reset-time-window = ["fido-authenticator/disable-reset-time-window"]
+no-reset-time-window = ["fido-authenticator?/disable-reset-time-window"]
 
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]

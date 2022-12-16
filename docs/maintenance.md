@@ -17,8 +17,8 @@ As we have a `Cargo.lock` file with fixed dependency versions, we don’t automa
 ### Creating Releases
 
 To release a new version of the firmware, perform the following steps:
-1. Update the version counter in `runners/lpc55/Cargo.toml` and `runners/embedded/Cargo.toml`.
-2. Run the firmware build for both runners and add the updated `Cargo.lock`.
+1. Update the version counter in `Cargo.toml`.
+2. Run the firmware build for the embedded runner and add the updated `Cargo.lock`.
 3. Update the changelog.
 4. Commit all changed files and create a signed tag with a `v` prefix and the version number, for example `v1.0.0`.
 5. Create a release on GitHub and copy the relevant section from the changelog to the release description.

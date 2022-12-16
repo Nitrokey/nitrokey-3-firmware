@@ -192,7 +192,7 @@ pub fn init_apps(
     _on_nfc_power: bool,
 ) -> types::Apps {
     #[cfg(feature = "provisioner")]
-    let provisioner_non_portable = {
+    let provisioner = {
         use apps::Reboot;
 
         let store = _store.clone();
@@ -206,12 +206,12 @@ pub fn init_apps(
             rebooter,
         }
     };
-    types::Apps::new(
-        &types::Runner,
-        trussed,
+    let non_portable = apps::NonPortable {
         #[cfg(feature = "provisioner")]
-        provisioner_non_portable,
-    )
+        provisioner,
+        _marker: Default::default(),
+    };
+    types::Apps::with_service(&types::Runner, trussed, non_portable)
 }
 
 #[inline(never)]

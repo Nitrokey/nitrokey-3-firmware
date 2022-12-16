@@ -3,6 +3,7 @@
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
+use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
     pipe::TrussedInterchange, platform::Syscall, types::PathBuf, ClientImplementation,
@@ -13,7 +14,7 @@ use trussed::{
 pub use admin_app::Reboot;
 
 pub trait Runner {
-    type Syscall: Syscall + Default;
+    type Syscall: Syscall;
 
     #[cfg(feature = "admin-app")]
     type Reboot: Reboot;
@@ -24,6 +25,12 @@ pub trait Runner {
 
     fn uuid(&self) -> [u8; 16];
     fn version(&self) -> u32;
+}
+
+pub struct NonPortable<R: Runner> {
+    #[cfg(feature = "provisioner-app")]
+    pub provisioner: ProvisionerNonPortable<R>,
+    pub _marker: PhantomData<R>,
 }
 
 type Client<R> = ClientImplementation<<R as Runner>::Syscall>;
@@ -58,25 +65,55 @@ pub struct Apps<R: Runner> {
 }
 
 impl<R: Runner> Apps<R> {
-    pub fn new<P: Platform>(
+    pub fn new(
         runner: &R,
-        trussed: &mut Service<P>,
-        #[cfg(feature = "provisioner-app")] provisioner: ProvisionerNonPortable<R>,
+        mut make_client: impl FnMut(&[u8]) -> Client<R>,
+        non_portable: NonPortable<R>,
     ) -> Self {
+        let NonPortable {
+            #[cfg(feature = "provisioner-app")]
+            provisioner,
+            ..
+        } = non_portable;
         Self {
             #[cfg(feature = "admin-app")]
-            admin: App::with(runner, trussed, ()),
+            admin: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "fido-authenticator")]
-            fido: App::with(runner, trussed, ()),
+            fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
             #[cfg(feature = "oath-authenticator")]
-            oath: App::with(runner, trussed, ()),
+            oath: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "opcard")]
-            opcard: App::with(runner, trussed, ()),
+            opcard: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
-            provisioner: App::with(runner, trussed, provisioner),
+            provisioner: App::new(runner, &mut make_client, provisioner),
         }
+    }
+
+    pub fn with_service<P: Platform>(
+        runner: &R,
+        trussed: &mut Service<P>,
+        non_portable: NonPortable<R>,
+    ) -> Self
+    where
+        R::Syscall: Default,
+    {
+        Self::new(
+            runner,
+            |id| {
+                let (trussed_requester, trussed_responder) =
+                    TrussedInterchange::claim().expect("could not setup TrussedInterchange");
+
+                let mut client_id = PathBuf::new();
+                client_id.push(id.try_into().unwrap());
+                assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
+
+                let syscaller = R::Syscall::default();
+                ClientImplementation::new(trussed_requester, syscaller)
+            },
+            non_portable,
+        )
     }
 
     pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
@@ -116,6 +153,24 @@ impl<R: Runner> Apps<R> {
     }
 }
 
+#[cfg(feature = "trussed-usbip")]
+impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, NonPortable<R>)> for Apps<R> {
+    fn new(make_client: impl Fn(&str) -> Client<R>, (runner, data): (&R, NonPortable<R>)) -> Self {
+        Self::new(
+            runner,
+            move |id| {
+                let id = core::str::from_utf8(id).expect("invalid client id");
+                make_client(id)
+            },
+            data,
+        )
+    }
+
+    fn with_ctaphid_apps<T>(&mut self, f: impl FnOnce(&mut [&mut dyn CtaphidApp]) -> T) -> T {
+        self.ctaphid_dispatch(f)
+    }
+}
+
 trait App<R: Runner>: Sized {
     /// non-portable resources needed by this Trussed app
     type NonPortable;
@@ -123,21 +178,15 @@ trait App<R: Runner>: Sized {
     /// the desired client ID
     const CLIENT_ID: &'static [u8];
 
-    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self;
-
-    fn with<P: Platform>(runner: &R, trussed: &mut Service<P>, non_portable: Self::NonPortable) -> Self {
-        let (trussed_requester, trussed_responder) =
-            TrussedInterchange::claim().expect("could not setup TrussedInterchange");
-
-        let mut client_id = PathBuf::new();
-        client_id.push(Self::CLIENT_ID.try_into().unwrap());
-        assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
-
-        let syscaller = R::Syscall::default();
-        let trussed_client = ClientImplementation::new(trussed_requester, syscaller);
-
-        Self::with_client(runner, trussed_client, non_portable)
+    fn new(
+        runner: &R,
+        make_client: impl FnOnce(&[u8]) -> Client<R>,
+        non_portable: Self::NonPortable,
+    ) -> Self {
+        Self::with_client(runner, make_client(Self::CLIENT_ID), non_portable)
     }
+
+    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self;
 }
 
 #[cfg(feature = "admin-app")]

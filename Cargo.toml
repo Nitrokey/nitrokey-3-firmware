@@ -2,11 +2,15 @@
 members = [
     "components/*",
     "runners/embedded",
+    "runners/usbip",
     "utils/collect-license-info",
     "utils/gen-commands-bd",
 ]
 exclude = ["runners/lpc55"]
 resolver = "2"
+
+[workspace.package]
+version = "1.2.2"
 
 [patch.crates-io]
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.1-nitrokey-1" }
@@ -14,7 +18,7 @@ interchange = { git = "https://github.com/trussed-dev/interchange", rev = "fe563
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-1" }
 littlefs2-sys = { git = "https://github.com/Nitrokey/littlefs2-sys", tag = "v0.1.6-nitrokey-1" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-1" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-3" }
+trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-4" }
 
 [profile.release]
 codegen-units = 1
