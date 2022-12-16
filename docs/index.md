@@ -7,3 +7,4 @@ This documentation is available for developers and testers:
 - [Maintenance Guide](./maintenance.md): Maintaining this repository
 - [Testing Guide](./testing.md): Testing beta firmware versions
 - [Identifiers List](./identifiers.md): List of identifiers used by firmware
+- [CTAPHID Command List](./ctaphid-commands.md): List of CTAPHID vendor commands
