@@ -1,16 +1,15 @@
-RUNNER := runners/lpc55
+TAG := registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3
+RUNNER ?= runners/embedded
+DOCKER ?= docker
 
-build-docker-toolchain:
-	docker build . -t nitrokey3
+.PHONY: push
+push:
+	docker push $(TAG)
 
+.PHONY: build
+build:
+	docker build . --tag $(TAG)
+
+.PHONY: docker-build
 docker-build:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) build BOARD=$(BOARD)
-
-docker-objcopy:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) objcopy BOARD=$(BOARD)
-
-docker-size:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) size BOARD=$(BOARD)
-
-docker-ci:
-	docker run -i --rm -v $(PWD):/app nitrokey3 make -C $(RUNNER) ci BOARD=$(BOARD)
+	docker run --interactive --rm --volume $(PWD):/app $(TAG) make -C $(RUNNER)
