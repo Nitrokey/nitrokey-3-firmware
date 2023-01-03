@@ -44,10 +44,12 @@ delim = ,
 space := $(null) #
 COMMA_FEATURES = $(subst $(space),$(delim),$(BUILD_FEATURES))
 
-.PHONY: list build reset program clean clean-all check-env set-vars
+.PHONY: list build reset program check check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
 all: build-nrfdk build-nk3am build-proto1 build-nk3xn $(ARTIFACTS)
+
+check-all: check-nrfdk check-nk3am check-proto1 check-nk3xn
 
 $(ARTIFACTS):
 	mkdir -p $@
@@ -146,6 +148,20 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
 	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
+
+check: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+
+	cargo --version
+
+	cp -f $(CFG_PATH) cfg.toml
+	echo '' >> cfg.toml
+	echo '[build]' >> cfg.toml
+	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
+	echo 'board = "$(BOARD)"' >> cfg.toml
+
+	cargo check --release --target $(TARGET) \
+		--features $(COMMA_FEATURES) \
+		--quiet
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
 	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
