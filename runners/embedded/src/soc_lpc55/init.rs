@@ -1,4 +1,7 @@
-use embedded_hal::timer::{Cancel, CountDown};
+use embedded_hal::{
+    blocking::i2c::{Read, Write},
+    timer::{Cancel, CountDown},
+};
 use hal::{
     drivers::{
         clocks,
@@ -8,22 +11,31 @@ use hal::{
     },
     peripherals::{
         ctimer::{self, Ctimer},
+        flexcomm::{Flexcomm0, Flexcomm5},
+        inputmux::InputMux,
         pfr::Pfr,
+        pint::Pint,
         prince::Prince,
         rng::Rng,
+        usbhs::Usbhs,
     },
     time::{DurationExtensions as _, RateExtensions as _},
     traits::wg::digital::v2::InputPin,
     typestates::init_state::Unknown,
     typestates::pin::state::Gpio,
 };
+use littlefs2::fs::Filesystem;
 use lpc55_hal as hal;
-#[allow(unused)]
-use lpc55_hal::drivers::timer::Elapsed;
 use trussed::platform::UserInterface;
 
-use super::{board, clock_controller::DynamicClockController, nfc, spi};
+use super::{
+    board,
+    clock_controller::DynamicClockController,
+    nfc,
+    spi::{self, Spi, SpiConfig, SpiMut},
+};
 use crate::{
+    flash::ExtFlashStorage,
     traits::{
         buttons::{self, Press},
         rgb_led::RgbLed,
@@ -307,20 +319,18 @@ pub struct Stage2 {
     basic: Basic,
 }
 
-type UsbPeripheralType = lpc55_hal::peripherals::usbhs::Usbhs;
-
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
 
 static mut USBD: Option<UsbBusType> = None;
 
 impl Stage2 {
-    fn setup_spi(&mut self, flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>) -> spi::Spi {
+    fn setup_spi(&mut self, flexcomm0: Flexcomm0<Unknown>, config: SpiConfig) -> Spi {
         let token = self.clocks.clocks.support_flexcomm_token().unwrap();
         let spi = flexcomm0.enabled_as_spi(&mut self.peripherals.syscon, &token);
-        spi::init(spi, &mut self.clocks.iocon)
+        spi::init(spi, &mut self.clocks.iocon, config)
     }
 
-    fn setup_usb_bus(&mut self, usbp: UsbPeripheralType) -> &'static UsbBusType {
+    fn setup_usb_bus(&mut self, usbp: Usbhs) -> &'static UsbBusType {
         let vbus_pin = pins::Pio0_22::take()
             .unwrap()
             .into_usb0_vbus_pin(&mut self.clocks.iocon);
@@ -345,9 +355,9 @@ impl Stage2 {
 
     fn setup_fm11nc08(
         &mut self,
-        spi: spi::Spi,
-        inputmux: lpc55_hal::peripherals::inputmux::InputMux<Unknown>,
-        pint: lpc55_hal::peripherals::pint::Pint<Unknown>,
+        spi: Spi,
+        inputmux: InputMux<Unknown>,
+        pint: Pint<Unknown>,
     ) -> Option<nfc::NfcChip> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
@@ -373,16 +383,7 @@ impl Stage2 {
         )
     }
 
-    #[cfg(feature = "lpc55-hardware-checks")]
-    pub fn run_hardware_checks(
-        &mut self,
-        flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
-        spi: &mut spi::Spi,
-    ) {
-        use crate::flash::ExtFlashStorage;
-        use embedded_hal::blocking::i2c::{Read, Write};
-        use littlefs2::fs::Filesystem;
-
+    pub fn run_hardware_checks(&mut self, flexcomm5: Flexcomm5<Unknown>, spi: &mut Spi) {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
             .unwrap()
@@ -427,7 +428,7 @@ impl Stage2 {
         }
 
         // External Flash checks
-        let spi = spi::SpiMut(spi);
+        let spi = SpiMut(spi);
         let flash_cs = pins::Pio0_13::take()
             .unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
@@ -455,20 +456,19 @@ impl Stage2 {
     #[inline(never)]
     pub fn next(
         mut self,
-        flexcomm0: hal::peripherals::flexcomm::Flexcomm0<Unknown>,
-        _flexcomm5: hal::peripherals::flexcomm::Flexcomm5<Unknown>,
-        mux: hal::peripherals::inputmux::InputMux<Unknown>,
-        pint: hal::peripherals::pint::Pint<Unknown>,
-        usbhs: hal::peripherals::usbhs::Usbhs<Unknown>,
+        flexcomm0: Flexcomm0<Unknown>,
+        flexcomm5: Flexcomm5<Unknown>,
+        mux: InputMux<Unknown>,
+        pint: Pint<Unknown>,
+        usbhs: Usbhs<Unknown>,
         nfc_enabled: bool,
     ) -> Stage3 {
-        #[allow(unused_mut)]
-        let mut spi = self.setup_spi(flexcomm0);
-        #[cfg(feature = "lpc55-hardware-checks")]
-        self.run_hardware_checks(_flexcomm5, &mut spi);
-        let spi = spi::reconfigure(spi);
-
-        let nfc_chip = if nfc_enabled {
+        let nfc_chip = if cfg!(feature = "lpc55-hardware-checks") {
+            let mut spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
+            self.run_hardware_checks(flexcomm5, &mut spi);
+            None
+        } else if nfc_enabled {
+            let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
             self.setup_fm11nc08(spi, mux, pint)
         } else {
             None

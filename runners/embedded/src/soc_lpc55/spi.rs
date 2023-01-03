@@ -49,16 +49,11 @@ impl SpiConfig {
     }
 }
 
-pub fn init(spi: Spi0<Enabled>, iocon: &mut Iocon<Enabled>) -> Spi {
+pub fn init(spi: Spi0<Enabled>, iocon: &mut Iocon<Enabled>, config: SpiConfig) -> Spi {
     let sck = SckPin::take().unwrap().into_spi0_sck_pin(iocon);
     let mosi = MosiPin::take().unwrap().into_spi0_mosi_pin(iocon);
     let miso = MisoPin::take().unwrap().into_spi0_miso_pin(iocon);
-    configure(spi, (sck, mosi, miso, NoCs), SpiConfig::ExternalFlash)
-}
-
-pub fn reconfigure(spi: Spi) -> Spi {
-    let (spi, pins) = spi.release();
-    configure(spi, pins, SpiConfig::Nfc)
+    configure(spi, (sck, mosi, miso, NoCs), config)
 }
 
 pub fn configure(spi: Spi0<Enabled>, pins: (Sck, Mosi, Miso, NoCs), config: SpiConfig) -> Spi {
