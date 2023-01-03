@@ -67,7 +67,7 @@ default = []
 alpha = ["apps/alpha", "alloc"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
-provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window"]
+provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
