@@ -238,6 +238,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
+        options.button_available = true;
         options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
         // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
