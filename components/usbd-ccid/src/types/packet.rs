@@ -2,7 +2,6 @@ use core::convert::TryInto;
 
 use crate::constants::*;
 
-
 pub type RawPacket = heapless::Vec<u8, PACKET_SIZE>;
 pub type ExtPacket = heapless::Vec<u8, MAX_MSG_LENGTH>;
 
@@ -27,7 +26,6 @@ pub enum Message {
 }
 
 pub trait Packet: core::ops::Deref<Target = ExtPacket> {
-
     #[inline]
     fn slot(&self) -> u8 {
         // we have only one slot
@@ -36,17 +34,16 @@ pub trait Packet: core::ops::Deref<Target = ExtPacket> {
     }
 
     #[inline]
-    fn seq(&self) -> u8 { *&self[6] }
-
+    fn seq(&self) -> u8 {
+        *&self[6]
+    }
 }
 
 pub trait PacketWithData: Packet {
-
     #[inline]
     fn data(&self) -> &[u8] {
         // let len = u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize;
-        let declared_len =
-            u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize;
+        let declared_len = u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize;
         let len = core::cmp::min(MAX_MSG_LENGTH - 10, declared_len);
         // hprintln!("delcared = {}, len = {}", declared_len, len).ok();
         &self[10..][..len]
@@ -54,7 +51,6 @@ pub trait PacketWithData: Packet {
 }
 
 pub trait ChainedPacket: Packet {
-
     #[inline(always)]
     fn chain(&self) -> Chain {
         let level_parameter = u16::from_le_bytes(self[8..10].try_into().unwrap());
@@ -85,19 +81,18 @@ impl<'a> DataBlock<'a> {
 }
 
 impl core::fmt::Debug for DataBlock<'_> {
-
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut debug_struct = f.debug_struct("DataBlock");
 
-        debug_struct
-            .field("seq", &self.seq)
-        ;
+        debug_struct.field("seq", &self.seq);
 
-            let l = core::cmp::min(self.data.len(), 16);
-        let escaped_bytes: heapless::Vec<u8, 64> =
-            self.data.iter().take(l)
-                .flat_map(|byte| core::ascii::escape_default(*byte))
-                .collect();
+        let l = core::cmp::min(self.data.len(), 16);
+        let escaped_bytes: heapless::Vec<u8, 64> = self
+            .data
+            .iter()
+            .take(l)
+            .flat_map(|byte| core::ascii::escape_default(*byte))
+            .collect();
         let data_as_str = &core::str::from_utf8(&escaped_bytes).unwrap();
 
         debug_struct
@@ -107,7 +102,6 @@ impl core::fmt::Debug for DataBlock<'_> {
             .finish()
     }
 }
-
 
 // WELL. DataBlock does not deref to RawPacket
 // impl Deref for DataBlock<_> {
@@ -143,7 +137,6 @@ impl Into<RawPacket> for DataBlock<'_> {
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum CommandType {
-
     // REQUESTS
 
     // supported
@@ -157,7 +150,7 @@ pub enum CommandType {
     // unsupported
     ResetParameters = 0x6d,
     SetParameters = 0x61,
-    Escape = 0x6b,//  for vendor commands
+    Escape = 0x6b, //  for vendor commands
     IccClock = 0x7e,
     T0Apdu = 0x6a,
     Secure = 0x69,
@@ -314,9 +307,7 @@ pub enum Chain {
 impl Chain {
     pub fn transfer_ongoing(&self) -> bool {
         match self {
-            Chain::BeginsAndEnds |
-            Chain::Ends |
-            Chain::ExpectingMore => true,
+            Chain::BeginsAndEnds | Chain::Ends | Chain::ExpectingMore => true,
             _ => false,
         }
     }
@@ -328,37 +319,35 @@ pub enum Response {
 }
 
 impl core::fmt::Debug for Command {
-
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut debug_struct = f.debug_struct("Command");
-            // write!("Command({:?})", &self.command_type()));
-            // // "Command");
+        // write!("Command({:?})", &self.command_type()));
+        // // "Command");
 
         debug_struct
             .field("cmd", &self.command_type())
-            .field("seq", &self.seq())
-        ;
+            .field("seq", &self.seq());
 
         match self {
             Command::XfrBlock(block) => {
                 let l = core::cmp::min(self.len(), 8);
-                let escaped_bytes: heapless::Vec<u8, 64> =
-                    block.data().iter().take(l)
-                        .flat_map(|byte| core::ascii::escape_default(*byte))
-                        .collect();
+                let escaped_bytes: heapless::Vec<u8, 64> = block
+                    .data()
+                    .iter()
+                    .take(l)
+                    .flat_map(|byte| core::ascii::escape_default(*byte))
+                    .collect();
                 let data_as_str = &core::str::from_utf8(&escaped_bytes).unwrap();
 
                 debug_struct
                     .field("chain", &block.chain())
-                    .field("len", &block.data().len())
-                ;
+                    .field("len", &block.data().len());
 
                 if l < self.len() {
                     debug_struct.field("data[..8]", &format_args!("b'{}'", data_as_str))
                 } else {
                     debug_struct.field("data", &format_args!("b'{}'", data_as_str))
-                }
-                ;
+                };
             }
             _ => {}
         }
@@ -369,8 +358,6 @@ impl core::fmt::Debug for Command {
         // };
 
         // let has_data = self.len() > 0;
-        debug_struct
-            .finish()
+        debug_struct.finish()
     }
 }
-

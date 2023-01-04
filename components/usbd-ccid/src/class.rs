@@ -6,12 +6,8 @@ use interchange::{Interchange, Requester};
 
 use crate::{
     constants::*,
-    types::{
-        ClassRequest,
-        packet::RawPacket,
-        Status,
-    },
     pipe::Pipe,
+    types::{packet::RawPacket, ClassRequest, Status},
 };
 
 use usb_device::class_prelude::*;
@@ -55,7 +51,12 @@ where
         let pipe = Pipe::new(write, request_pipe, card_issuers_data);
         let interface_number = allocator.interface();
         let string_index = allocator.string();
-        Self { interface_number, string_index, read, /* interrupt, */ pipe }
+        Self {
+            interface_number,
+            string_index,
+            read,
+            /* interrupt, */ pipe,
+        }
     }
 
     /// Read response from application (if any) and start writing it to
@@ -73,7 +74,7 @@ where
         }
     }
 
-    pub fn send_wait_extension (&mut self) -> Status {
+    pub fn send_wait_extension(&mut self) -> Status {
         if self.pipe.send_wait_extension() {
             // We should send another wait extension later
             Status::ReceivedData(1_000.milliseconds())
@@ -88,9 +89,7 @@ where
     Bus: 'static + UsbBus,
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
 {
-    fn get_configuration_descriptors(&self, writer: &mut DescriptorWriter)
-        -> Result<()>
-    {
+    fn get_configuration_descriptors(&self, writer: &mut DescriptorWriter) -> Result<()> {
         writer.interface_alt(
             self.interface_number,
             0,
@@ -99,10 +98,7 @@ where
             TransferMode::Bulk as u8,
             Some(self.string_index),
         )?;
-        writer.write(
-            FUNCTIONAL_INTERFACE,
-            &FUNCTIONAL_INTERFACE_DESCRIPTOR,
-        )?;
+        writer.write(FUNCTIONAL_INTERFACE, &FUNCTIONAL_INTERFACE_DESCRIPTOR)?;
         writer.endpoint(&self.pipe.write).unwrap();
         writer.endpoint(&self.read).unwrap();
         // writer.endpoint(&self.interrupt).unwrap();
@@ -110,8 +106,7 @@ where
     }
 
     fn get_string(&self, index: StringIndex, _lang_id: u16) -> Option<&str> {
-        (self.string_index == index)
-            .then(|| FUNCTIONAL_INTERFACE_STRING)
+        (self.string_index == index).then(|| FUNCTIONAL_INTERFACE_STRING)
     }
 
     #[inline(never)]
@@ -122,13 +117,17 @@ where
     }
 
     fn endpoint_in_complete(&mut self, addr: EndpointAddress) {
-        if addr != self.pipe.write.address() { return; }
+        if addr != self.pipe.write.address() {
+            return;
+        }
 
         self.pipe.maybe_send_packet();
     }
 
     fn endpoint_out(&mut self, addr: EndpointAddress) {
-        if addr != self.read.address() { return; }
+        if addr != self.read.address() {
+            return;
+        }
 
         // let maybe_packet = RawPacket::try_from(
         //     |packet| self.read.read(packet));
@@ -148,12 +147,17 @@ where
         if let Ok(packet) = maybe_packet {
             self.pipe.handle_packet(packet);
         }
-
     }
 
     fn control_in(&mut self, transfer: ControlIn<Bus>) {
         use usb_device::control::*;
-        let Request { request_type, recipient, index, request, .. } = *transfer.request();
+        let Request {
+            request_type,
+            recipient,
+            index,
+            request,
+            ..
+        } = *transfer.request();
         if index != u8::from(self.interface_number) as u16 {
             return;
         }
@@ -165,12 +169,12 @@ where
                         // not strictly needed, as our bNumClockSupported = 0
                         ClassRequest::GetClockFrequencies => {
                             transfer.accept_with(&CLOCK_FREQUENCY_KHZ).ok();
-                        },
+                        }
 
                         // not strictly needed, as our bNumDataRatesSupported = 0
                         ClassRequest::GetDataRates => {
                             transfer.accept_with_static(&DATA_RATE_BPS).ok();
-                        },
+                        }
                         _ => panic!("unexpected direction for {:?}", &request),
                     }
                 }
@@ -185,8 +189,14 @@ where
 
     fn control_out(&mut self, transfer: ControlOut<Bus>) {
         use usb_device::control::*;
-        let Request { request_type, recipient, index, request, value, .. }
-            = *transfer.request();
+        let Request {
+            request_type,
+            recipient,
+            index,
+            request,
+            value,
+            ..
+        } = *transfer.request();
         if index as u8 != u8::from(self.interface_number) {
             return;
         }
@@ -215,5 +225,4 @@ where
             }
         }
     }
-
 }

@@ -5,16 +5,8 @@ use interchange::{Interchange, Requester};
 use crate::{
     constants::*,
     types::packet::{
-        Chain,
-        Command as PacketCommand,
-        DataBlock,
-        Error as PacketError,
-        ExtPacket,
-        RawPacket,
-        XfrBlock,
-
-        ChainedPacket as _,
-        PacketWithData as _,
+        Chain, ChainedPacket as _, Command as PacketCommand, DataBlock, Error as PacketError,
+        ExtPacket, PacketWithData as _, RawPacket, XfrBlock,
     },
 };
 
@@ -77,7 +69,6 @@ where
         request_pipe: Requester<I>,
         card_issuers_data: Option<&[u8]>,
     ) -> Self {
-
         assert!(MAX_MSG_LENGTH >= PACKET_SIZE);
 
         Self {
@@ -141,7 +132,6 @@ where
         self.outbox.is_some()
     }
 }
-
 
 impl<'alloc, Bus, I, const N: usize> Pipe<'alloc, Bus, I, N>
 where
@@ -252,7 +242,6 @@ where
     }
 
     fn handle_transfer(&mut self, command: XfrBlock) {
-
         // state: Idle, Receiving, Processing, Sending,
         //
         // conts: BeginsAndEnds, Begins, Ends, Continues, ExpectDataBlock,
@@ -260,7 +249,6 @@ where
         // info!("handle xfrblock").ok();
         // info!("{:X?}", &command);
         match self.state {
-
             State::Idle => {
                 // invariant: BUFFER_SIZE >= PACKET_SIZE
                 match command.chain() {
@@ -283,49 +271,48 @@ where
                         self.state = State::Receiving;
                         self.send_empty_datablock(Chain::ExpectingMore);
                     }
-                    _ =>  panic!("unexpectedly in idle state"),
+                    _ => panic!("unexpectedly in idle state"),
                 }
             }
 
-            State::Receiving => {
-                match command.chain() {
-                    Chain::Continues => {
-                        info!("continues");
-                        let message = self.interchange.request_mut().unwrap();
-                        assert!(command.data().len() + message.len() <= MAX_MSG_LENGTH);
-                        message.extend_from_slice(command.data()).unwrap();
-                        self.send_empty_datablock(Chain::ExpectingMore);
-                    }
-                    Chain::Ends => {
-                        info!("ends");
-                        let message = self.interchange.request_mut().unwrap();
-                        assert!(command.data().len() + message.len() <= MAX_MSG_LENGTH);
-                        message.extend_from_slice(command.data()).unwrap();
-                        self.call_app();
-                        self.state = State::Processing;
-                    }
-                    _ =>  panic!("unexpectedly in receiving state"),
+            State::Receiving => match command.chain() {
+                Chain::Continues => {
+                    info!("continues");
+                    let message = self.interchange.request_mut().unwrap();
+                    assert!(command.data().len() + message.len() <= MAX_MSG_LENGTH);
+                    message.extend_from_slice(command.data()).unwrap();
+                    self.send_empty_datablock(Chain::ExpectingMore);
                 }
-            }
+                Chain::Ends => {
+                    info!("ends");
+                    let message = self.interchange.request_mut().unwrap();
+                    assert!(command.data().len() + message.len() <= MAX_MSG_LENGTH);
+                    message.extend_from_slice(command.data()).unwrap();
+                    self.call_app();
+                    self.state = State::Processing;
+                }
+                _ => panic!("unexpectedly in receiving state"),
+            },
 
             State::Processing => {
                 // info!("handle xfrblock").ok();
                 // info!("{:X?}", &command).ok();
-                panic!("ccid pipe unexpectedly received command while in processing state: {:?}", &command);
+                panic!(
+                    "ccid pipe unexpectedly received command while in processing state: {:?}",
+                    &command
+                );
             }
 
             State::ReadyToSend => {
                 panic!("unexpectedly in ready-to-send state")
             }
 
-            State::Sending => {
-                match command.chain() {
-                    Chain::ExpectingMore => {
-                        self.prime_outbox();
-                    }
-                    _ =>  panic!("unexpectedly in receiving state"),
+            State::Sending => match command.chain() {
+                Chain::ExpectingMore => {
+                    self.prime_outbox();
                 }
-            }
+                _ => panic!("unexpectedly in receiving state"),
+            },
         }
     }
 
@@ -363,7 +350,9 @@ where
 
     #[inline(never)]
     fn call_app(&mut self) {
-        self.interchange.send_request().expect("could not deposit command");
+        self.interchange
+            .send_request()
+            .expect("could not deposit command");
         self.started_processing = true;
         self.state = State::Processing;
     }
@@ -375,7 +364,6 @@ where
             //           self.interchange.state()).ok();
 
             if interchange::State::Responded == self.interchange.state() {
-
                 // we should have an open XfrBlock allowance
                 self.state = State::ReadyToSend;
                 self.sent = 0;
@@ -389,31 +377,45 @@ where
             return;
         }
 
-        if self.outbox.is_some() { panic!(); }
+        if self.outbox.is_some() {
+            panic!();
+        }
 
         // if let Some(message) = self.interchange.response() {
-            let message: &mut Vec<u8, N> = unsafe { (&mut *self.interchange.interchange.get()).rp_mut() };
+        let message: &mut Vec<u8, N> =
+            unsafe { (&mut *self.interchange.interchange.get()).rp_mut() };
 
-            let chunk_size = core::cmp::min(PACKET_SIZE - 10, message.len() - self.sent);
-            let chunk = &message[self.sent..][..chunk_size];
-            self.sent += chunk_size;
-            let more = self.sent < message.len();
+        let chunk_size = core::cmp::min(PACKET_SIZE - 10, message.len() - self.sent);
+        let chunk = &message[self.sent..][..chunk_size];
+        self.sent += chunk_size;
+        let more = self.sent < message.len();
 
-            let chain = match (self.state, more) {
-                (State::ReadyToSend, true) => { self.state = State::Sending; Chain::Begins }
-                (State::ReadyToSend, false) => { self.state = State::Idle; Chain::BeginsAndEnds }
-                (State::Sending, true) => Chain::Continues,
-                (State::Sending, false) => { self.state = State::Idle; Chain::Ends }
-                // logically impossible
-                _ => { return; }
-            };
+        let chain = match (self.state, more) {
+            (State::ReadyToSend, true) => {
+                self.state = State::Sending;
+                Chain::Begins
+            }
+            (State::ReadyToSend, false) => {
+                self.state = State::Idle;
+                Chain::BeginsAndEnds
+            }
+            (State::Sending, true) => Chain::Continues,
+            (State::Sending, false) => {
+                self.state = State::Idle;
+                Chain::Ends
+            }
+            // logically impossible
+            _ => {
+                return;
+            }
+        };
 
-            let primed_packet = DataBlock::new(self.seq, chain, chunk);
-            // info!("priming {:?}", &primed_packet).ok();
-            self.outbox = Some(primed_packet.into());
+        let primed_packet = DataBlock::new(self.seq, chain, chunk);
+        // info!("priming {:?}", &primed_packet).ok();
+        self.outbox = Some(primed_packet.into());
 
-            // fast-lane response attempt
-            self.maybe_send_packet();
+        // fast-lane response attempt
+        self.maybe_send_packet();
         // }
     }
 
@@ -435,7 +437,7 @@ where
         packet.resize_default(10).ok();
         packet[0] = 0x6c;
         packet[6] = self.seq;
-        packet[7] = 1<<6;
+        packet[7] = 1 << 6;
         packet[8] = error as u8;
         self.send_packet_assuming_possible(packet);
     }
@@ -467,7 +469,6 @@ where
             self.seq,
             Chain::BeginsAndEnds,
             &atr,
-
             // T=0, T=1, command chaining/extended Lc+Le/no logical channels, card issuer's data "Solo 2"
             // 3B 8C 80 01 80 73 C0 21 C0 56 53 6F 6C 6F 20 32 A4
             // https://smartcard-atr.apdu.fr/parse?ATR=3B+8C+80+01+80+73+C0+21+C0+56+53+6F+6C+6F+20+32+A4
@@ -480,7 +481,6 @@ where
         );
         self.send_packet_assuming_possible(packet.into());
     }
-
 
     fn send_packet_assuming_possible(&mut self, packet: RawPacket) {
         if !self.outbox.is_none() {
@@ -511,7 +511,6 @@ where
                     } else {
                         self.outbox = None;
                     }
-
                 }
                 Ok(_) => panic!("short write"),
 
@@ -519,7 +518,7 @@ where
                     // fine, can't write try later
                     // this shouldn't happen probably
                     info!("waiting to send");
-                },
+                }
 
                 Err(_) => panic!("unexpected send error"),
             }
@@ -564,5 +563,4 @@ where
         // send response for successful abort
         self.send_slot_status_ok();
     }
-
 }

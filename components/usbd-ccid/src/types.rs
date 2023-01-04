@@ -29,4 +29,3 @@ impl core::convert::TryFrom<u8> for ClassRequest {
         })
     }
 }
-
