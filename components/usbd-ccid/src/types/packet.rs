@@ -1,4 +1,4 @@
-use core::convert::TryInto;
+use core::convert::{TryFrom, TryInto};
 
 use crate::constants::*;
 
@@ -118,7 +118,11 @@ impl Into<RawPacket> for DataBlock<'_> {
         let len = self.data.len();
         packet.resize_default(10 + len).ok();
         packet[0] = 0x80;
-        packet[1..][..4].copy_from_slice(&len.to_le_bytes());
+        packet[1..][..4].copy_from_slice(
+            &u32::try_from(len)
+                .expect("Packets should not be more than 4GiB")
+                .to_le_bytes(),
+        );
         packet[5] = 0;
         packet[6] = self.seq;
 
