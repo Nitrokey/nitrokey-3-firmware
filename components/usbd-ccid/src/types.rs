@@ -2,7 +2,6 @@ use embedded_time::duration::Milliseconds;
 
 // pub mod apdu;
 pub mod packet;
-pub mod tlv;
 
 // pub type MessageBuffer = apdu_dispatch::interchanges::Data;
 
@@ -29,4 +28,3 @@ impl core::convert::TryFrom<u8> for ClassRequest {
         })
     }
 }
-

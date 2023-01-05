@@ -7,8 +7,8 @@
 extern crate delog;
 generate_macros!();
 
-pub mod constants;
 pub mod class;
+pub mod constants;
 pub mod pipe;
 pub mod types;
 

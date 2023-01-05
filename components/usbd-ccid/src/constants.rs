@@ -49,7 +49,8 @@ pub const PIN_SUPPORT: u8 = 0;
 // cf. Sec. 5.1 in: https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf
 pub const FUNCTIONAL_INTERFACE_DESCRIPTOR: [u8; 52] = [
     // bcdCCID rev1.10
-    0x10, 0x01,
+    0x10,
+    0x01,
     // bMaxSlotIndex
     // NUM_SLOTS - 1,
     // "An USB-ICC is regarded as a single slot CCID."
@@ -57,8 +58,10 @@ pub const FUNCTIONAL_INTERFACE_DESCRIPTOR: [u8; 52] = [
     // bVoltageSupport (5.0V)
     0x01,
     // dwProtocols: APDU level, T=1 only (0 = T=0, 3 = T0+T1)
-    0x02, 0x00, 0x00, 0x00,
-
+    0x02,
+    0x00,
+    0x00,
+    0x00,
     // dwDefaultClock (3.58 MHz)
     CLOCK_FREQUENCY_KHZ[0],
     CLOCK_FREQUENCY_KHZ[1],
@@ -71,7 +74,6 @@ pub const FUNCTIONAL_INTERFACE_DESCRIPTOR: [u8; 52] = [
     CLOCK_FREQUENCY_KHZ[3],
     // bNumClockSupported
     0x00,
-
     // dwDataRate (9600 bps)
     DATA_RATE_BPS[0],
     DATA_RATE_BPS[1],
@@ -84,17 +86,21 @@ pub const FUNCTIONAL_INTERFACE_DESCRIPTOR: [u8; 52] = [
     DATA_RATE_BPS[3],
     // bNumDataRatesSupported
     0x00,
-
     // dwMaxIFSD (254)
     MAX_IFSD[0],
     MAX_IFSD[1],
     MAX_IFSD[2],
     MAX_IFSD[3],
     // dwSyncProtocols: none
-    0x00, 0x00, 0x00, 0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
     // dwMechanical: no special characteristics
-    0x00, 0x00, 0x00, 0x00,
-
+    0x00,
+    0x00,
+    0x00,
+    0x00,
     // dwFeatures, see following comments
     // Auto configuration based on ATR
     // Auto activation on insert
@@ -106,21 +112,23 @@ pub const FUNCTIONAL_INTERFACE_DESCRIPTOR: [u8; 52] = [
     // 0xFE, 0x00, 0x04, 0x00,
     // ICCD: lower word (=0840): only requests valid for USB-ICC
     // upper word: 0000 = char level, 0002 = short APDU, 0004 = short+exteded APDU
-    0x40, 0x08, 0x04, 0x00,
-
+    0x40,
+    0x08,
+    0x04,
+    0x00,
     // dwMaxCCIDMsgLen (3072)
     // gnuk: 271
     MAX_MSG_LENGTH_LE[0],
     MAX_MSG_LENGTH_LE[1],
     MAX_MSG_LENGTH_LE[2],
     MAX_MSG_LENGTH_LE[3],
-
     // bClassGetResponse ("echo"), as per ICCD spec
     0xFF,
     // bClassEnvelope ("echo"), as per ICCD spec, gnuk: 0
     0xFF,
     // wlcdLayout (none)
-    0x00, 0x00,
+    0x00,
+    0x00,
     // bPinSupport
     // ICCD: "No PIN pad, not relevant, fixed for legacy reasons"
     PIN_SUPPORT,
