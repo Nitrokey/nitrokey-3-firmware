@@ -10,6 +10,17 @@ use crate::{
     },
 };
 
+/// Taken from [const_assertions](https://docs.rs/static_assertions/1.1.0/static_assertions/macro.const_assert.html)
+macro_rules! const_assert {
+    ($x:expr $(,)?) => {
+        const _: [(); 0 - !{
+            const ASSERT: bool = $x;
+            ASSERT
+        } as usize] = [];
+    };
+}
+const_assert!(MAX_MSG_LENGTH >= PACKET_SIZE);
+
 use usb_device::class_prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -69,8 +80,6 @@ where
         request_pipe: Requester<I>,
         card_issuers_data: Option<&[u8]>,
     ) -> Self {
-        assert!(MAX_MSG_LENGTH >= PACKET_SIZE);
-
         Self {
             write,
             seq: 0,
