@@ -348,7 +348,7 @@ where
     }
 
     /// Turns false on read.  Intended for checking to see if a wait extension request needs to be started.
-    pub fn did_started_processing(&mut self) -> bool {
+    pub fn did_start_processing(&mut self) -> bool {
         if self.started_processing {
             self.started_processing = false;
             true
@@ -368,7 +368,7 @@ where
 
     #[inline(never)]
     pub fn poll_app(&mut self) {
-        if let State::Processing = self.state {
+        if State::Processing == self.state {
             // info!("processing, checking for response, interchange state {:?}",
             //           self.interchange.state()).ok();
 

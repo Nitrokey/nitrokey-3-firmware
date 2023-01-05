@@ -66,7 +66,7 @@ where
     }
 
     pub fn did_start_processing(&mut self) -> Status {
-        if self.pipe.did_started_processing() {
+        if self.pipe.did_start_processing() {
             // We should send a wait extension later
             Status::ReceivedData(1_000.milliseconds())
         } else {
