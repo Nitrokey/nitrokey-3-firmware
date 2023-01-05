@@ -26,7 +26,7 @@ pub enum State {
 enum Error {
     CmdAborted = 0xff,
     IccMute = 0xfe,
-    XfrParityError = 0xfd,
+    XfrParity = 0xfd,
     //..
     CmdSlotBusy = 0xE0,
     CommandNotSupported = 0x00,
