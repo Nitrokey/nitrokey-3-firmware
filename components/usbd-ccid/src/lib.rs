@@ -1,7 +1,8 @@
 #![no_std]
 
-//! https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf
-//! https://www.usb.org/sites/default/files/DWG_Smart-Card_USB-ICC_ICCD_rev10.pdf
+//! [CCID Specification for Integrated Circuit(s) Cards Interface Devices](https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf)
+//!
+//! [CCID SpecificationUSB Integrated Circuit(s) Card Devices](https://www.usb.org/sites/default/files/DWG_Smart-Card_USB-ICC_ICCD_rev10.pdf)
 
 #[macro_use]
 extern crate delog;
