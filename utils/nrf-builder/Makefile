@@ -20,7 +20,7 @@ BL_OUTPUT := mbr.hex bootloader.hex
 FW_RUNNER := $(NK3_FW_DIR)/runners/embedded
 FW_ARTIFACTS := $(FW_RUNNER)/artifacts
 
-CARGO_TOML_PATH := $(FW_RUNNER)/Cargo.toml
+CARGO_TOML_PATH := $(NK3_FW_DIR)/Cargo.toml
 
 FW_IHEX := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin.ihex
 FW_BIN := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin
