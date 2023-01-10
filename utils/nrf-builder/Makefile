@@ -5,9 +5,7 @@ TEST_FIDO_CERTS_DIR := $(TEST_CERTS_DIR)/nk3/fido
 TEST_FIDO_CERT := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-cert.der
 TEST_FIDO_KEY := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-key.trussed
 
-NK3_FW_REPO := git@github.com:Nitrokey/nitrokey-3-firmware.git
 NK3_FW_DIR := nk3-fw
-NK3_FW_BRANCH := embedded-pr
 
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key

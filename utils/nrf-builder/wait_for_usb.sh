@@ -4,7 +4,7 @@ VID=$1
 PID=$2
 
 sleep 1
-for i in `seq 1 10`
+for i in `seq 1 30`
 do
 	lsusb -d $VID:$PID >/dev/null || (echo -ne "." && sleep 1)
 done
