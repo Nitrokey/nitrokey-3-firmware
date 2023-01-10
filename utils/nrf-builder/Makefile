@@ -126,6 +126,12 @@ full-deploy:
 	$(MAKE) provision-keys
 	$(MAKE) flash-release
 
+dev-deploy:
+	$(MAKE) flash-bootloader
+	$(MAKE) flash-provisioner
+	$(MAKE) provision-keys
+	$(MAKE) flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
+
 fast-deploy:
 	$(MAKE) flash-bootloader
 	$(MAKE) flash-release
