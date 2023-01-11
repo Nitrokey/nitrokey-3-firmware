@@ -7,7 +7,7 @@ edition = "2021"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 trussed = "0.1"
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", features = ["ctaphid"], optional = true }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"], optional = true }
 usbd-ctaphid = { path = "../usbd-ctaphid", optional = true }
 
 # apps

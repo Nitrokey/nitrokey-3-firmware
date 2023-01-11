@@ -169,6 +169,13 @@ impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, NonPortable<R>)> for Apps<R>
     fn with_ctaphid_apps<T>(&mut self, f: impl FnOnce(&mut [&mut dyn CtaphidApp]) -> T) -> T {
         self.ctaphid_dispatch(f)
     }
+
+    fn with_ccid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<7609, 7609>]) -> T,
+    ) -> T {
+        self.apdu_dispatch(f)
+    }
 }
 
 trait App<R: Runner>: Sized {
