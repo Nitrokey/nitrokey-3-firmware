@@ -1,4 +1,7 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use cargo_metadata::{CargoOpt, MetadataCommand};
 use gumdrop::Options;
@@ -54,7 +57,11 @@ fn firmware_version(path: PathBuf) -> Version {
     cmd.features(CargoOpt::AllFeatures);
     cmd.manifest_path(&path);
     let metadata = cmd.exec().expect("failed to parse manifest");
-    metadata.root_package().expect("missing root package").version.clone()
+    metadata
+        .root_package()
+        .expect("missing root package")
+        .version
+        .clone()
 }
 
 fn version_to_check(version: &Version) -> u32 {

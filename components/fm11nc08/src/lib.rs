@@ -6,8 +6,4 @@ generate_macros!();
 
 pub mod device;
 
-pub use device::{
-    FM11NC08,
-    Configuration,
-    Register,
-};
+pub use device::{Configuration, Register, FM11NC08};

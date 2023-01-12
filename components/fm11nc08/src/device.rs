@@ -1,11 +1,11 @@
 use nb::block;
 
-use embedded_time::duration::{Extensions, Microseconds};
 use embedded_hal as hal;
+use embedded_time::duration::{Extensions, Microseconds};
 
 use hal::{
-    spi::FullDuplex,
     digital::v2::{InputPin, OutputPin},
+    spi::FullDuplex,
     timer::CountDown,
 };
 
@@ -59,19 +59,15 @@ pub enum FifoInterrupt {
     WaterLevel = 1 << 3,
 }
 
-
-
 macro_rules! FM11_CMD {
     ($mode:expr, $addr:expr) => {
         match $mode {
-            Mode::WriteEeprom | Mode::ReadEeprom=> {
-                (( ($mode as u8) & 0x07) << 5) | (((($addr as u16) & 0x300) >> 8) as u8)
+            Mode::WriteEeprom | Mode::ReadEeprom => {
+                ((($mode as u8) & 0x07) << 5) | (((($addr as u16) & 0x300) >> 8) as u8)
             }
-            _ => {
-                (( ($mode as u8) & 0x07) << 5) | (($addr as u8) & 0x0f)
-            }
+            _ => ((($mode as u8) & 0x07) << 5) | (($addr as u8) & 0x0f),
         }
-    }
+    };
 }
 
 pub struct Configuration {
@@ -87,7 +83,7 @@ pub struct Configuration {
     pub nfc: u8,
 }
 
-pub struct FM11NC08 <SPI, CS, INT>
+pub struct FM11NC08<SPI, CS, INT>
 where
     SPI: FullDuplex<u8>,
     CS: OutputPin,
@@ -115,8 +111,7 @@ fn fsdi_to_frame_size(fsdi: u8) -> usize {
     }
 }
 
-
-impl<SPI, CS, INT> FM11NC08 <SPI, CS, INT>
+impl<SPI, CS, INT> FM11NC08<SPI, CS, INT>
 where
     SPI: FullDuplex<u8>,
     CS: OutputPin,
@@ -136,11 +131,11 @@ where
     pub fn write_reg(&mut self, addr: Register, data: u8) {
         self.cs.set_low().ok();
 
-        block!( self.spi.send(FM11_CMD!(Mode::Write, addr)) ).ok();
-        block!( self.spi.send(data) ).ok();
+        block!(self.spi.send(FM11_CMD!(Mode::Write, addr))).ok();
+        block!(self.spi.send(data)).ok();
 
-        block!( self.spi.read() ).ok();
-        block!( self.spi.read() ).ok();
+        block!(self.spi.read()).ok();
+        block!(self.spi.read()).ok();
 
         self.cs.set_high().ok();
     }
@@ -148,11 +143,11 @@ where
     pub fn read_reg(&mut self, addr: Register) -> u8 {
         self.cs.set_low().ok();
 
-        block!( self.spi.send(FM11_CMD!(Mode::Read, addr)) ).ok();
-        block!( self.spi.send(0) ).ok();
+        block!(self.spi.send(FM11_CMD!(Mode::Read, addr))).ok();
+        block!(self.spi.send(0)).ok();
 
-        block!( self.spi.read() ).ok();
-        let data = block!( self.spi.read() ).ok().unwrap();
+        block!(self.spi.read()).ok();
+        let data = block!(self.spi.read()).ok().unwrap();
 
         self.cs.set_high().ok();
 
@@ -162,45 +157,47 @@ where
     pub fn read_reg_raw(&mut self, addr: u8) -> u8 {
         self.cs.set_low().ok();
 
-        block!( self.spi.send(FM11_CMD!(Mode::Read, addr)) ).ok();
-        block!( self.spi.send(0) ).ok();
+        block!(self.spi.send(FM11_CMD!(Mode::Read, addr))).ok();
+        block!(self.spi.send(0)).ok();
 
-        block!( self.spi.read() ).ok();
-        let data = block!( self.spi.read() ).ok().unwrap();
+        block!(self.spi.read()).ok();
+        let data = block!(self.spi.read()).ok().unwrap();
 
         self.cs.set_high().ok();
 
         data
     }
 
-
-
-    fn start_write(&mut self, addr: u16){
-
-        let cmd : u8  = FM11_CMD!(Mode::WriteEeprom, addr);
+    fn start_write(&mut self, addr: u16) {
+        let cmd: u8 = FM11_CMD!(Mode::WriteEeprom, addr);
 
         self.cs.set_low().ok();
 
         // Write EEPROM magic enable sequence
-        block!( self.spi.send( 0b11001110u8 )).ok();
-        block!( self.spi.send( 0b01010101u8 )).ok();
+        block!(self.spi.send(0b11001110u8)).ok();
+        block!(self.spi.send(0b01010101u8)).ok();
 
-        for _ in 0 .. 2 { block!( self.spi.read(  )).ok().unwrap(); }
+        for _ in 0..2 {
+            block!(self.spi.read()).ok().unwrap();
+        }
 
         self.cs.set_high().ok();
         self.cs.set_low().ok();
 
-        block!( self.spi.send( cmd )).ok();
-        block!( self.spi.send( addr as u8)).ok();
+        block!(self.spi.send(cmd)).ok();
+        block!(self.spi.send(addr as u8)).ok();
 
-        for _ in 0 .. 2 { block!( self.spi.read(  )).ok().unwrap(); }
+        for _ in 0..2 {
+            block!(self.spi.read()).ok().unwrap();
+        }
     }
 
-    fn end_write(&mut self, timer: &mut impl CountDown<Time=Microseconds>) -> Result<(),()> {
+    fn end_write(&mut self, timer: &mut impl CountDown<Time = Microseconds>) -> Result<(), ()> {
         self.cs.set_high().ok();
 
         // Need to give ~10ms of unactivity for eeprom block to write
-        timer.start(10_000.microseconds()); block!(timer.wait()).ok();
+        timer.start(10_000.microseconds());
+        block!(timer.wait()).ok();
 
         let aux_irq = self.read_reg(Register::AuxIrq);
         if (aux_irq & (1 << 6)) != 0 {
@@ -217,48 +214,57 @@ where
     }
 
     /// Configure the eeprom in FM11 chip.  Should only need to do this once per device.
-    pub fn configure(&mut self, config: Configuration, timer: &mut impl CountDown<Time = Microseconds>)
-        -> Result<(),()> {
-
+    pub fn configure(
+        &mut self,
+        config: Configuration,
+        timer: &mut impl CountDown<Time = Microseconds>,
+    ) -> Result<(), ()> {
         // Clear all aux interrupts
         self.write_reg(Register::AuxIrq, 0);
 
         self.start_write(0x390 + 1);
 
-        block!( self.spi.send( config.regu )).ok();
-        block!( self.spi.send( config.regu )).ok();
-        for _ in 0 .. 2 { block!( self.spi.read(  )).ok().unwrap(); }
+        block!(self.spi.send(config.regu)).ok();
+        block!(self.spi.send(config.regu)).ok();
+        for _ in 0..2 {
+            block!(self.spi.read()).ok().unwrap();
+        }
 
         self.end_write(timer)?;
 
         self.start_write(0x3A0);
 
-        block!( self.spi.send( config.ataq.to_be_bytes()[0] )).ok();
-        block!( self.spi.send( config.ataq.to_be_bytes()[1] )).ok();
-        block!( self.spi.send( config.sak1)).ok();
-        block!( self.spi.send( config.sak2)).ok();
+        block!(self.spi.send(config.ataq.to_be_bytes()[0])).ok();
+        block!(self.spi.send(config.ataq.to_be_bytes()[1])).ok();
+        block!(self.spi.send(config.sak1)).ok();
+        block!(self.spi.send(config.sak2)).ok();
 
-        for _ in 0 .. 4 { block!( self.spi.read(  )).ok().unwrap(); }
+        for _ in 0..4 {
+            block!(self.spi.read()).ok().unwrap();
+        }
 
         self.end_write(timer)?;
 
         self.start_write(0x3b0);
 
-        block!( self.spi.send( config.tl )).ok();
-        block!( self.spi.send( config.t0 )).ok();
-        block!( self.spi.send( config.nfc )).ok();
-        block!( self.spi.send( 0xA8 )).ok();          // use I2C addr as magic marker
+        block!(self.spi.send(config.tl)).ok();
+        block!(self.spi.send(config.t0)).ok();
+        block!(self.spi.send(config.nfc)).ok();
+        block!(self.spi.send(0xA8)).ok(); // use I2C addr as magic marker
 
-        for _ in 0 .. 4 { block!( self.spi.read(  )).ok().unwrap(); }
+        for _ in 0..4 {
+            block!(self.spi.read()).ok().unwrap();
+        }
 
-        block!( self.spi.send( config.ta )).ok();
-        block!( self.spi.send( config.tb )).ok();
-        block!( self.spi.send( config.tc )).ok();
+        block!(self.spi.send(config.ta)).ok();
+        block!(self.spi.send(config.tb)).ok();
+        block!(self.spi.send(config.tc)).ok();
 
-        for _ in 0 .. 3 { block!( self.spi.read(  )).ok().unwrap(); }
+        for _ in 0..3 {
+            block!(self.spi.read()).ok().unwrap();
+        }
 
         self.end_write(timer)
-
     }
 
     pub fn read_eeprom(&mut self, addr: u16, array: &mut [u8]) {
@@ -267,24 +273,24 @@ where
         let cmd = FM11_CMD!(Mode::ReadEeprom, addr);
         let addr = (addr & 0xff) as u8;
         self.cs.set_low().ok();
-        block!( self.spi.send( cmd )).ok();
-        block!( self.spi.send( addr )).ok();
+        block!(self.spi.send(cmd)).ok();
+        block!(self.spi.send(addr)).ok();
 
-        block!( self.spi.read(  )).ok().unwrap();
-        block!( self.spi.read(  )).ok().unwrap();
+        block!(self.spi.read()).ok().unwrap();
+        block!(self.spi.read()).ok().unwrap();
 
-        for i in 0 .. array.len() {
-            block!( self.spi.send( 0 )  ).ok();
-            array[i] = block!( self.spi.read(  )).ok().unwrap();
+        for i in 0..array.len() {
+            block!(self.spi.send(0)).ok();
+            array[i] = block!(self.spi.read()).ok().unwrap();
         }
         self.cs.set_high().ok();
     }
 
-    pub fn enabled(self,) -> Self {
+    pub fn enabled(self) -> Self {
         self
     }
 
-    pub fn has_interrupt(&mut self, ) -> nb::Result<(), nfc::Error> {
+    pub fn has_interrupt(&mut self) -> nb::Result<(), nfc::Error> {
         if self.int.is_low().ok().unwrap() {
             Ok(())
         } else {
@@ -293,57 +299,56 @@ where
     }
 
     /// Write data to NFC FIFO as fast as possible.
-    fn write_fifo(&mut self, buf: &[u8]){
+    fn write_fifo(&mut self, buf: &[u8]) {
         if buf.len() == 0 {
             return;
         }
         self.cs.set_low().ok();
 
-        block!( self.spi.send(FM11_CMD!(Mode::WriteFifo, 0)) ).ok();
+        block!(self.spi.send(FM11_CMD!(Mode::WriteFifo, 0))).ok();
 
         // Put extra byte in to ensure spi RX fifo operates continuously.
         // (assumes count >= 1)
-        block!( self.spi.send(buf[0]) ).ok();
+        block!(self.spi.send(buf[0])).ok();
 
-        for i in 1 .. buf.len() {
-            block!( self.spi.send(buf[i as usize]) ).ok();
-            block!( self.spi.read() ).ok().unwrap();
+        for i in 1..buf.len() {
+            block!(self.spi.send(buf[i as usize])).ok();
+            block!(self.spi.read()).ok().unwrap();
         }
 
         // for header + that extra byte.
-        block!( self.spi.read() ).ok().unwrap();
-        block!( self.spi.read() ).ok().unwrap();
+        block!(self.spi.read()).ok().unwrap();
+        block!(self.spi.read()).ok().unwrap();
 
         self.cs.set_high().ok();
     }
 
     /// Read data from NFC FIFO as fast as possible.
-    fn read_fifo(&mut self, /*buf: &mut [u8],*/ count: u8){
+    fn read_fifo(&mut self, /*buf: &mut [u8],*/ count: u8) {
         let buf: &mut [u8] = &mut self.packet[self.offset..];
         self.cs.set_low().ok();
 
-        block!( self.spi.send(FM11_CMD!(Mode::ReadFifo, 0)) ).ok();
+        block!(self.spi.send(FM11_CMD!(Mode::ReadFifo, 0))).ok();
 
         // Put extra byte in to ensure spi RX fifo operates continuously.
         // (assumes count >= 1)
-        block!( self.spi.send(0) ).ok();
+        block!(self.spi.send(0)).ok();
 
         // Skip first byte
-        block!( self.spi.read() ).ok().unwrap();
+        block!(self.spi.read()).ok().unwrap();
 
-        for i in 0 .. (count-1) {
-            block!( self.spi.send(0) ).ok();
-            buf[i as usize] = block!( self.spi.read() ).ok().unwrap();
+        for i in 0..(count - 1) {
+            block!(self.spi.send(0)).ok();
+            buf[i as usize] = block!(self.spi.read()).ok().unwrap();
         }
 
         // for that extra byte.
-        buf[(count-1) as usize] = block!( self.spi.read() ).ok().unwrap();
+        buf[(count - 1) as usize] = block!(self.spi.read()).ok().unwrap();
 
         self.cs.set_high().ok();
     }
 
-    pub fn read_packet(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error>{
-
+    pub fn read_packet(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error> {
         let main_irq = self.read_reg(Register::MainIrq);
         let mut new_session = false;
 
@@ -367,12 +372,12 @@ where
 
         // check for overflow
         if (fifo_irq & (1 << 2)) != 0 {
-            info!("!OF! {} @{}", self.read_reg(Register::FifoCount), hal::get_cycle_count()/96_00);
-            info!("{} {} {}",
-                    main_irq,
-                    fifo_irq,
-                    _aux_irq,
-                );
+            info!(
+                "!OF! {} @{}",
+                self.read_reg(Register::FifoCount),
+                hal::get_cycle_count() / 96_00
+            );
+            info!("{} {} {}", main_irq, fifo_irq, _aux_irq,);
 
             // self.write_reg(Register::FifoFlush, 0xff);
         }
@@ -382,7 +387,7 @@ where
             new_session = true;
         }
 
-        if main_irq & (Interrupt::RxStart as u8) != 0{
+        if main_irq & (Interrupt::RxStart as u8) != 0 {
             self.offset = 0;
             let rf_rats = self.read_reg(Register::RfRats);
             self.current_frame_size = fsdi_to_frame_size((rf_rats >> 4) & 0xf);
@@ -398,13 +403,12 @@ where
 
             if self.offset <= 2 {
                 // too few bytes, ignore..
-                info!("RxDone read too few ({})", hex_str!(&buf[.. self.offset]));
+                info!("RxDone read too few ({})", hex_str!(&buf[..self.offset]));
                 self.offset = 0;
-            }
-            else {
+            } else {
                 info!("RxDone");
                 let l = self.offset - 2;
-                for i in 0 .. l {
+                for i in 0..l {
                     buf[i] = self.packet[i];
                 }
                 self.offset = 0;
@@ -416,34 +420,32 @@ where
             }
         }
 
-            /* water level */
+        /* water level */
         let rf_status = self.read_reg(Register::RfStatus);
         if (fifo_irq & (1 << 3) != 0) && (rf_status & (1 << 0)) == 0 {
             let count = self.read_reg(Register::FifoCount);
             info!("WL {}", count);
             self.read_fifo(count);
-            info!("{}", hex_str!(&self.packet[self.offset ..][..count as usize]));
+            info!(
+                "{}",
+                hex_str!(&self.packet[self.offset..][..count as usize])
+            );
             self.offset += count as usize;
             if count == 32 {
                 info!("warning: potential ovflw");
             }
         }
 
-        info!(". {},{},{}",
-            main_irq,
-            fifo_irq,
-            _aux_irq,
-        );
+        info!(". {},{},{}", main_irq, fifo_irq, _aux_irq,);
 
         if new_session {
             Err(nfc::Error::NewSession)
         } else {
             Err(nfc::Error::NoActivity)
         }
-
     }
 
-    fn wait_for_transmission(&mut self) -> Result<(), ()>{
+    fn wait_for_transmission(&mut self) -> Result<(), ()> {
         let mut i = 0;
 
         self.write_reg(Register::RfTxEn, 0x55);
@@ -459,10 +461,8 @@ where
         let initial_count = self.read_reg(Register::FifoCount);
         let mut current_count = initial_count;
         if current_count >= 8 {
-
             let mut fifo_irq = self.read_reg(Register::FifoIrq);
             if (rf_status & 1) == 1 {
-
                 while (fifo_irq & (FifoInterrupt::WaterLevel as u8)) == 0 {
                     i += 1;
                     if i > 300 {
@@ -475,72 +475,67 @@ where
                     current_count = self.read_reg(Register::FifoCount);
                     if current_count <= 7 {
                         info!("curr count <= 7 and no INT");
-                        return Ok(())
+                        return Ok(());
                     }
                     fifo_irq = self.read_reg(Register::FifoIrq);
                 }
             }
 
-            #[allow(unused_assignments)] {
+            #[allow(unused_assignments)]
+            {
                 current_count = self.read_reg(Register::FifoCount);
             }
             let _aux_irq = self.read_reg(Register::AuxIrq);
             let _rf_status = self.read_reg(Register::RfStatus);
-            info!("tx {}->{}. {:02x} {:02x} {:02x}",
-                initial_count,
-                current_count,
-                _rf_status,
-                _aux_irq,
-                fifo_irq,
+            info!(
+                "tx {}->{}. {:02x} {:02x} {:02x}",
+                initial_count, current_count, _rf_status, _aux_irq, fifo_irq,
             );
 
             if (fifo_irq & (FifoInterrupt::WaterLevel as u8)) != 0 {
-                return Ok(())
+                return Ok(());
             } else {
-                return Err(())
+                return Err(());
             }
         }
         Ok(())
     }
 
-    pub fn send_packet(&mut self, buf: &[u8]) -> Result<(), nfc::Error>{
-
+    pub fn send_packet(&mut self, buf: &[u8]) -> Result<(), nfc::Error> {
         // Write in chunks of 24
-        for i in 0 .. buf.len()/24 {
+        for i in 0..buf.len() / 24 {
             info!("24 chunk");
-            self.write_fifo(&buf[i * 24 .. i * 24 + 24]);
+            self.write_fifo(&buf[i * 24..i * 24 + 24]);
 
-            if ! self.wait_for_transmission().is_ok() {
+            if !self.wait_for_transmission().is_ok() {
                 return Err(nfc::Error::NoActivity);
             }
         }
 
         // Write remainder
-        self.write_fifo(&buf[ (buf.len()/24) * 24 .. buf.len() ]);
+        self.write_fifo(&buf[(buf.len() / 24) * 24..buf.len()]);
 
         self.wait_for_transmission().ok();
 
         Ok(())
-
     }
 
     pub fn release(self) -> (SPI, CS, INT) {
         (self.spi, self.cs, self.int)
     }
-
 }
 
-impl<SPI, CS, INT> nfc::Device for FM11NC08 <SPI, CS, INT>
+impl<SPI, CS, INT> nfc::Device for FM11NC08<SPI, CS, INT>
 where
     SPI: FullDuplex<u8>,
     CS: OutputPin,
     INT: InputPin,
 {
-    fn read(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error>{
+    fn read(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error> {
         self.read_packet(buf)
     }
 
-    fn send(&mut self,buf: &[u8]) -> Result<(), nfc::Error>{
+    fn send(&mut self, buf: &[u8]) -> Result<(), nfc::Error> {
         self.send_packet(buf)
     }
 
@@ -549,20 +544,18 @@ where
     }
 
     // fn wait(&mut self) -> nb::Result<(), NfcError> {
-        // self.wait_for_transmission_completion();
-        // Ok(())
-        // let main_irq = self.read_reg(Register::MainIrq);
-        // if (main_irq & (Interrupt::TxDone as u8)) != 0 {
-        //     // info!("wait is over. {}", logging::hex_str!(main_irq));
-        //     self.write_reg(Register::RfTxEn, 0x00);
-        //     Ok(())
-        // } else {
-        //     Err(nb::Error::WouldBlock)
-        // }
+    // self.wait_for_transmission_completion();
+    // Ok(())
+    // let main_irq = self.read_reg(Register::MainIrq);
+    // if (main_irq & (Interrupt::TxDone as u8)) != 0 {
+    //     // info!("wait is over. {}", logging::hex_str!(main_irq));
+    //     self.write_reg(Register::RfTxEn, 0x00);
+    //     Ok(())
+    // } else {
+    //     Err(nb::Error::WouldBlock)
     // }
-
+    // }
 }
-
 
 /// For logging
 #[derive(Debug)]
@@ -607,8 +600,6 @@ pub struct RegisterBlock {
     pub regu_cfg: u8,
 }
 
-
-
 // impl ufmt::uDisplay for Eeprom {
 //     fn fmt<W: ?Sized>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
 //     where
@@ -651,9 +642,6 @@ pub struct RegisterBlock {
 //     }
 // }
 
-
-
-
 // impl ufmt::uDisplay for InterruptState {
 //     fn fmt<W: ?Sized>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
 //     where
@@ -678,7 +666,6 @@ pub struct RegisterBlock {
 //             if (self.main & (Interrupt::Active as u8)) != 0 { uwriteln!(f,"  active").ok(); }
 //             if (self.main & (Interrupt::RfPower as u8)) != 0 { uwriteln!(f,"  rf_pwon").ok(); }
 
-
 //         }
 
 //         if self.fifo != 0 {
@@ -702,17 +689,16 @@ pub struct RegisterBlock {
 //     }
 // }
 
-impl<SPI, CS, INT> FM11NC08 <SPI, CS, INT>
+impl<SPI, CS, INT> FM11NC08<SPI, CS, INT>
 where
     SPI: FullDuplex<u8>,
     CS: OutputPin,
     INT: InputPin,
 {
     pub fn dump_registers(&mut self) -> RegisterBlock {
-
         let mut regs = [0u8; 15];
 
-        for i in 2 .. 15 {
+        for i in 2..15 {
             regs[i] = self.read_reg_raw(i as u8);
         }
 
@@ -743,28 +729,24 @@ where
         self.write_reg(Register::FifoIrq, 0);
         self.write_reg(Register::AuxIrq, 0);
 
-        InterruptState{
-            main:main,
-            fifo:fifo,
+        InterruptState {
+            main: main,
+            fifo: fifo,
             aux: aux,
-            count:count,
+            count: count,
         }
     }
 
-
-
     pub fn dump_eeprom(&mut self) -> Eeprom {
-
-
         let mut arr = [0u8; 16];
-        let mut double_byte = [0u8 ; 2];
+        let mut double_byte = [0u8; 2];
         self.read_eeprom(0x390, &mut arr);
 
         let regu_cfg = arr[1];
 
         self.read_eeprom(0x3a0 + 0, &mut arr);
 
-        double_byte.clone_from_slice(&arr[0 .. 2]);
+        double_byte.clone_from_slice(&arr[0..2]);
         let atqa = u16::from_be_bytes(double_byte);
         let sak1 = arr[2];
         let sak2 = arr[3];
@@ -782,8 +764,8 @@ where
         let rblock_nack = arr[11];
 
         Eeprom {
-            regu_cfg:regu_cfg,
-            atqa:atqa,
+            regu_cfg: regu_cfg,
+            atqa: atqa,
             sak1: sak1,
             sak2: sak2,
             tl: tl,
@@ -798,4 +780,3 @@ where
         }
     }
 }
-

@@ -12,13 +12,13 @@ receive busy errors).
 No state is maintained between transactions.
 */
 
-use core::convert::TryInto;
 use core::convert::TryFrom;
+use core::convert::TryInto;
 // pub type ContactInterchange = usbd_ccid::types::ApduInterchange;
 // pub type ContactlessInterchange = iso14443::types::ApduInterchange;
 
-use ctaphid_dispatch::types::HidInterchange;
 use ctaphid_dispatch::command::Command;
+use ctaphid_dispatch::types::HidInterchange;
 
 use ctap_types::Error as AuthenticatorError;
 
@@ -26,7 +26,7 @@ use interchange::Requester;
 
 // use serde::Serialize;
 use usb_device::{
-    bus::{UsbBus},
+    bus::UsbBus,
     endpoint::{EndpointAddress, EndpointIn, EndpointOut},
     UsbError,
     // Result as UsbResult,
@@ -43,7 +43,7 @@ use crate::{
 };
 
 /// The actual payload of given length is dealt with separately
-#[derive(Copy,Clone,Debug,Eq,PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Request {
     channel: u32,
     command: Command,
@@ -52,7 +52,7 @@ pub struct Request {
 }
 
 /// The actual payload of given length is dealt with separately
-#[derive(Copy,Clone,Debug,Eq,PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Response {
     channel: u32,
     command: Command,
@@ -77,7 +77,7 @@ impl Response {
     }
 }
 
-#[derive(Copy,Clone,Debug,Eq,PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct MessageState {
     // sequence number of next continuation packet
     next_sequence: u8,
@@ -124,7 +124,6 @@ pub enum State {
 }
 
 pub struct Pipe<'alloc, Bus: UsbBus> {
-
     read_endpoint: EndpointOut<'alloc, Bus>,
     write_endpoint: EndpointIn<'alloc, Bus>,
     state: State,
@@ -153,7 +152,6 @@ pub struct Pipe<'alloc, Bus: UsbBus> {
 }
 
 impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
-
     // pub fn borrow_mut_authenticator(&mut self) -> &mut Authenticator {
     //     &mut self.authenticator
     // }
@@ -163,8 +161,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
         write_endpoint: EndpointIn<'alloc, Bus>,
         interchange: Requester<HidInterchange>,
         initial_milliseconds: u32,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             read_endpoint,
             write_endpoint,
@@ -209,8 +206,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
         } else {
             // Cancel if there's a request or processing
             match self.interchange.state() {
-                interchange::State::Requested |
-                interchange::State::BuildingResponse => {
+                interchange::State::Requested | interchange::State::BuildingResponse => {
                     self.interchange.cancel().expect("canceled");
                 }
                 _ => {}
@@ -228,7 +224,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
         // info_now!("got a packet!");
         let mut packet = [0u8; PACKET_SIZE];
         match self.read_endpoint.read(&mut packet) {
-            Ok(PACKET_SIZE) => {},
+            Ok(PACKET_SIZE) => {}
             Ok(_size) => {
                 // error handling?
                 // from spec: "Packets are always fixed size (defined by the endpoint and
@@ -238,7 +234,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 // !("OK but size {}", size);
                 info!("error unexpected size {}", _size);
                 return;
-            },
+            }
             // usb-device lists WouldBlock or BufferOverflow as possible errors.
             // both should not occur here, and we can't do anything anyway.
             // Err(UsbError::WouldBlock) => { return; },
@@ -246,7 +242,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
             Err(_error) => {
                 info!("error no {}", _error as i32);
                 return;
-            },
+            }
         };
         info!(">> ");
         info!("{}", hex_str!(&packet[..16]));
@@ -270,27 +266,29 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 // `solo ls` crashes here as it uses command 0x86
                 Err(_) => {
                     info!("Ignoring invalid command.");
-                    return; },
+                    return;
+                }
             };
 
             // can't actually fail
             let length = u16::from_be_bytes(packet[5..][..2].try_into().unwrap());
 
             let timestamp = self.last_milliseconds;
-            let current_request = Request { channel, command, length, timestamp};
+            let current_request = Request {
+                channel,
+                command,
+                length,
+                timestamp,
+            };
 
             if !(self.state == State::Idle) {
                 let request = match self.state {
-                    State::WaitingOnAuthenticator(request) => {
-                        request
-                    },
-                    State::Receiving((request, _message_state)) => {
-                        request
-                    },
+                    State::WaitingOnAuthenticator(request) => request,
+                    State::Receiving((request, _message_state)) => request,
                     _ => {
                         info!("Ignoring transaction as we're already transmitting.");
                         return;
-                    },
+                    }
                 };
                 if packet[4] == 0x86 {
                     info!("Resyncing!");
@@ -308,7 +306,6 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 }
             }
 
-
             if length > MESSAGE_SIZE as u16 {
                 info!("Error message too big.");
                 self.send_error_now(current_request, AuthenticatorError::InvalidLength);
@@ -318,8 +315,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
             if length > PACKET_SIZE as u16 - 7 {
                 // store received part of payload,
                 // prepare for continuation packets
-                self.buffer[..PACKET_SIZE - 7]
-                    .copy_from_slice(&packet[7..]);
+                self.buffer[..PACKET_SIZE - 7].copy_from_slice(&packet[7..]);
                 self.state = State::Receiving((current_request, {
                     let state = MessageState::default();
                     // info_now!("got {} so far", state.transmitted);
@@ -329,8 +325,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 return;
             } else {
                 // request fits in one packet
-                self.buffer[..length as usize]
-                    .copy_from_slice(&packet[7..][..length as usize]);
+                self.buffer[..length as usize].copy_from_slice(&packet[7..][..length as usize]);
                 self.dispatch_request(current_request);
                 return;
             }
@@ -373,12 +368,12 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                             .copy_from_slice(&packet[5..][..missing]);
                         self.dispatch_request(request);
                     }
-                },
+                }
                 _ => {
                     // unexpected continuation packet
                     info!("Ignore unexpected cont pkt");
                     return;
-                },
+                }
             }
         }
     }
@@ -394,24 +389,30 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                     // If there's a lapse in `check_timeout(...)` getting called (e.g. due to logging),
                     // this could lead to inaccurate timestamps on requests.  So we'll
                     // just "forgive" requests temporarily if this happens.
-                    debug!("lapse in hid check.. {} {} {}", request.timestamp, milliseconds, last);
+                    debug!(
+                        "lapse in hid check.. {} {} {}",
+                        request.timestamp, milliseconds, last
+                    );
                     request.timestamp = milliseconds;
                 }
                 // compare keeping in mind of possible overflow in timestamp.
-                else if (milliseconds > request.timestamp && (milliseconds - request.timestamp) > 550)
-                || (milliseconds < request.timestamp && milliseconds > 550)
+                else if (milliseconds > request.timestamp
+                    && (milliseconds - request.timestamp) > 550)
+                    || (milliseconds < request.timestamp && milliseconds > 550)
                 {
-                    debug!("Channel timeout. {}, {}, {}", request.timestamp, milliseconds, last);
+                    debug!(
+                        "Channel timeout. {}, {}, {}",
+                        request.timestamp, milliseconds, last
+                    );
                     let req = *request;
                     self.start_sending_error(req, AuthenticatorError::Timeout);
                 }
             }
-            _ => { }
+            _ => {}
         };
     }
 
     fn dispatch_request(&mut self, request: Request) {
-
         match request.command {
             Command::Init => {}
             _ => {
@@ -430,7 +431,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                     0 => {
                         // this is an error / reserved number
                         self.start_sending_error(request, AuthenticatorError::InvalidChannel);
-                    },
+                    }
 
                     // broadcast channel ID - request for assignment
                     cid => {
@@ -465,14 +466,14 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                             self.buffer[16] = self.implements;
                             self.start_sending(response);
                         }
-                    },
+                    }
                 }
-            },
+            }
 
             Command::Ping => {
                 let response = Response::from_request_and_size(request, request.length as usize);
                 self.start_sending(response);
-            },
+            }
 
             _ => {
                 if request.command == Command::Cbor {
@@ -484,13 +485,14 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                     info!("dumping stale response");
                     self.interchange.take_response();
                 }
-                match self.interchange.request(
-                    &(request.command, heapless::Vec::from_slice(&self.buffer[..request.length as usize]).unwrap())
-                ) {
+                match self.interchange.request(&(
+                    request.command,
+                    heapless::Vec::from_slice(&self.buffer[..request.length as usize]).unwrap(),
+                )) {
                     Ok(_) => {
                         self.state = State::WaitingOnAuthenticator(request);
                         self.started_processing = true;
-                    },
+                    }
                     Err(_) => {
                         // busy
                         info_now!("STATE: {:?}", self.interchange.state());
@@ -498,11 +500,11 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                         self.send_error_now(request, AuthenticatorError::ChannelBusy);
                     }
                 }
-            },
+            }
         }
     }
 
-    pub fn did_start_processing(&mut self) -> bool{
+    pub fn did_start_processing(&mut self) -> bool {
         if self.started_processing {
             self.started_processing = false;
             true
@@ -518,7 +520,6 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 info!("cmd does not need keepalive messages");
                 false
             } else {
-
                 info!("keepalive");
 
                 let mut packet = [0u8; PACKET_SIZE];
@@ -546,15 +547,11 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
     #[inline(never)]
     pub fn handle_response(&mut self) {
         if let State::WaitingOnAuthenticator(request) = self.state {
-
-
             if let Some(response) = self.interchange.take_response() {
                 match response {
-
                     Err(ctaphid_dispatch::app::Error::InvalidCommand) => {
                         info!("Got waiting reply from authenticator??");
                         self.start_sending_error(request, AuthenticatorError::InvalidCommand);
-
                     }
                     Err(ctaphid_dispatch::app::Error::InvalidLength) => {
                         info!("Error, payload needed app command.");
@@ -565,16 +562,17 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                     }
 
                     Ok(message) => {
-                        info!("Got {} bytes response from authenticator, starting send", message.len());
+                        info!(
+                            "Got {} bytes response from authenticator, starting send",
+                            message.len()
+                        );
                         let response = Response::from_request_and_size(request, message.len());
-                        self.buffer[..message.len()]
-                            .copy_from_slice(&message);
+                        self.buffer[..message.len()].copy_from_slice(&message);
                         self.start_sending(response);
                     }
                 }
             }
         }
-
     }
 
     fn start_sending(&mut self, response: Response) {
@@ -582,13 +580,13 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
         self.maybe_write_packet();
     }
 
-    fn start_sending_error(&mut self, request: Request, error: AuthenticatorError){
+    fn start_sending_error(&mut self, request: Request, error: AuthenticatorError) {
         self.buffer[0] = error as u8;
         let response = Response::error_from_request(request);
         self.start_sending(response);
     }
 
-    fn send_error_now(&mut self, request: Request, error: AuthenticatorError){
+    fn send_error_now(&mut self, request: Request, error: AuthenticatorError) {
         let last_state = core::mem::replace(&mut self.state, State::Idle);
         let last_first_byte = self.buffer[0];
 
@@ -604,10 +602,8 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
     // called from poll, and when a packet has been sent
     #[inline(never)]
     pub(crate) fn maybe_write_packet(&mut self) {
-
         match self.state {
             State::WaitingToSend(response) => {
-
                 // zeros leftover bytes
                 let mut packet = [0u8; PACKET_SIZE];
                 packet[..4].copy_from_slice(&response.channel.to_be_bytes());
@@ -618,7 +614,7 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 let fits_in_one_packet = 7 + response.length as usize <= PACKET_SIZE;
                 if fits_in_one_packet {
                     packet[7..][..response.length as usize]
-                        .copy_from_slice( &self.buffer[..response.length as usize]);
+                        .copy_from_slice(&self.buffer[..response.length as usize]);
                     self.state = State::Idle;
                 } else {
                     packet[7..].copy_from_slice(&self.buffer[..PACKET_SIZE - 7]);
@@ -634,11 +630,11 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                         // fine, can't write try later
                         // this shouldn't happen probably
                         info!("hid usb WouldBlock");
-                    },
+                    }
                     Err(_) => {
                         // info_now!("weird USB errrorrr");
                         panic!("unexpected error writing packet!");
-                    },
+                    }
                     Ok(PACKET_SIZE) => {
                         // goodie, this worked
                         if fits_in_one_packet {
@@ -652,13 +648,13 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                             //     PACKET_SIZE - 7, response.length);
                             // info_now!("State: {:?}", &self.state);
                         }
-                    },
+                    }
                     Ok(_) => {
                         // info_now!("short write");
                         panic!("unexpected size writing packet!");
-                    },
+                    }
                 };
-            },
+            }
 
             State::Sending((response, mut message_state)) => {
                 // info_now!("in StillSending");
@@ -670,11 +666,12 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                 let remaining = response.length as usize - sent;
                 let last_packet = 5 + remaining <= PACKET_SIZE;
                 if last_packet {
-                    packet[5..][..remaining].copy_from_slice(
-                        &self.buffer[message_state.transmitted..][..remaining]);
+                    packet[5..][..remaining]
+                        .copy_from_slice(&self.buffer[message_state.transmitted..][..remaining]);
                 } else {
                     packet[5..].copy_from_slice(
-                        &self.buffer[message_state.transmitted..][..PACKET_SIZE - 5]);
+                        &self.buffer[message_state.transmitted..][..PACKET_SIZE - 5],
+                    );
                 }
 
                 // try actually sending
@@ -688,11 +685,11 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                         // this shouldn't happen probably
                         // info_now!("can't send seq {}, write endpoint busy",
                         //           message_state.next_sequence);
-                    },
+                    }
                     Err(_) => {
                         // info_now!("weird USB error");
                         panic!("unexpected error writing packet!");
-                    },
+                    }
                     Ok(PACKET_SIZE) => {
                         // goodie, this worked
                         if last_packet {
@@ -705,19 +702,16 @@ impl<'alloc, Bus: UsbBus> Pipe<'alloc, Bus> {
                             // info_now!("sent one more, now {:?}", &message_state);
                             self.state = State::Sending((response, message_state));
                         }
-                    },
+                    }
                     Ok(_) => {
                         debug!("short write");
                         panic!("unexpected size writing packet!");
-                    },
+                    }
                 };
-            },
+            }
 
             // nothing to send
-            _ => {
-            },
+            _ => {}
         }
     }
 }
-
-

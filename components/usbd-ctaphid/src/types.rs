@@ -1,4 +1,3 @@
-
 use embedded_time::duration::Milliseconds;
 
 // Status to indicate Whether or not to send keepalive messages
