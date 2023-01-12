@@ -90,19 +90,26 @@ where
     I: 'static + Interchange<REQUEST = Vec<u8, N>, RESPONSE = Vec<u8, N>>,
 {
     fn get_configuration_descriptors(&self, writer: &mut DescriptorWriter) -> Result<()> {
-        writer.interface_alt(
-            self.interface_number,
-            0,
-            CLASS_CCID,
-            SUBCLASS_NONE,
-            TransferMode::Bulk as u8,
-            Some(self.string_index),
-        )?;
-        writer.write(FUNCTIONAL_INTERFACE, &FUNCTIONAL_INTERFACE_DESCRIPTOR)?;
-        writer.endpoint(&self.pipe.write).unwrap();
-        writer.endpoint(&self.read).unwrap();
-        // writer.endpoint(&self.interrupt).unwrap();
-        Ok(())
+        // Wrapp in closure to be able to use `?` and inspect the error
+        (|| {
+            writer.interface_alt(
+                self.interface_number,
+                0,
+                CLASS_CCID,
+                SUBCLASS_NONE,
+                TransferMode::Bulk as u8,
+                Some(self.string_index),
+            )?;
+            writer.write(FUNCTIONAL_INTERFACE, &FUNCTIONAL_INTERFACE_DESCRIPTOR)?;
+            writer.endpoint(&self.pipe.write)?;
+            writer.endpoint(&self.read)?;
+            // writer.endpoint(&self.interrupt).unwrap();
+            Ok(())
+        })()
+        .map_err(|err| {
+            warn!("Failed to write descriptors: {err:?}");
+            err
+        })
     }
 
     fn get_string(&self, index: StringIndex, _lang_id: u16) -> Option<&str> {
