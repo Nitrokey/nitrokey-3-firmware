@@ -387,7 +387,7 @@ where
         }
 
         if self.outbox.is_some() {
-            panic!();
+            panic!("Outbox is already primed");
         }
 
         // if let Some(message) = self.interchange.response() {
