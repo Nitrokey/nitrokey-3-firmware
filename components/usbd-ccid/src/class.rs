@@ -144,15 +144,17 @@ where
             packet.resize_default(packet.capacity()).unwrap();
             let result = self.read.read(&mut packet);
             result.map(|count| {
-                packet.resize_default(count).unwrap();
+                assert!(count <= packet.capacity());
+                packet.truncate(count);
                 packet
             })
         };
 
-        // should we return an error message
-        // if the raw packet is invalid?
-        if let Ok(packet) = maybe_packet {
-            self.pipe.handle_packet(packet);
+        match maybe_packet {
+            Ok(packet) => self.pipe.handle_packet(packet),
+            Err(_err) => {
+                error!("Failed to read packet: {_err:?}");
+            }
         }
     }
 
