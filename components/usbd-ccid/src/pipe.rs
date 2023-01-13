@@ -391,7 +391,8 @@ where
         }
 
         // if let Some(message) = self.interchange.response() {
-        let message: &mut Vec<u8, N> = unsafe { (*self.interchange.interchange.get()).rp_mut() };
+        let message = self.interchange.response().unwrap();
+        // let message: &mut Vec<u8, N> = unsafe { (*self.interchange.interchange.get()).rp_mut() };
 
         let chunk_size = core::cmp::min(PACKET_SIZE - 10, message.len() - self.sent);
         let chunk = &message[self.sent..][..chunk_size];
@@ -532,14 +533,6 @@ where
             }
         }
     }
-
-    // pub fn read_address(&self) -> EndpointAddress {
-    //     self.read.address()
-    // }
-
-    // pub fn write_address(&self) -> EndpointAddress {
-    //     self.write.address()
-    // }
 
     // Called if we receive an ABORT request on the control pipe.
     pub fn expect_abort(&mut self, slot: u8, seq: u8) {
