@@ -166,7 +166,7 @@ where
             // TODO check
             self.ext_packet.extend_from_slice(&packet).unwrap();
 
-            let pl = packet.packet_len();
+            let pl = packet.data_len();
             if pl > 54 {
                 self.receiving_long = true;
                 self.in_chain = 1;
@@ -180,7 +180,12 @@ where
             // TODO check
             self.ext_packet.extend_from_slice(&packet).ok();
             self.in_chain += 1;
-            assert!(packet.len() <= self.long_packet_missing);
+            assert!(
+                packet.len() <= self.long_packet_missing,
+                "Got packet of length {}, expected max {}",
+                packet.len(),
+                self.long_packet_missing
+            );
             self.long_packet_missing -= packet.len();
             if self.long_packet_missing > 0 {
                 return;

@@ -6,11 +6,11 @@ pub type RawPacket = heapless::Vec<u8, PACKET_SIZE>;
 pub type ExtPacket = heapless::Vec<u8, MAX_MSG_LENGTH>;
 
 pub trait RawPacketExt {
-    fn packet_len(&self) -> usize;
+    fn data_len(&self) -> usize;
 }
 
 impl RawPacketExt for RawPacket {
-    fn packet_len(&self) -> usize {
+    fn data_len(&self) -> usize {
         u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize
     }
 }
