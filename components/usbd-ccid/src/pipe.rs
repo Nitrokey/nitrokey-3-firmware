@@ -160,7 +160,7 @@ where
         // only (can we fix this), so 255B is the maximum)
         if !self.receiving_long {
             if packet.len() < 10 {
-                panic!("unexpected short packet");
+                panic!("unexpected short packet. Len: {}", packet.len());
             }
             self.ext_packet.clear();
             // TODO check
@@ -280,7 +280,7 @@ where
                         self.state = State::Receiving;
                         self.send_empty_datablock(Chain::ExpectingMore);
                     }
-                    _ => panic!("unexpectedly in idle state"),
+                    chain => panic!("unexpectedly in idle state. Got chain: {chain:?}",),
                 }
             }
 
@@ -300,7 +300,7 @@ where
                     self.call_app();
                     self.state = State::Processing;
                 }
-                _ => panic!("unexpectedly in receiving state"),
+                chain => panic!("unexpectedly in receiving state. Got chain: {chain:?}",),
             },
 
             State::Processing => {
@@ -320,7 +320,7 @@ where
                 Chain::ExpectingMore => {
                     self.prime_outbox();
                 }
-                _ => panic!("unexpectedly in receiving state"),
+                chain => panic!("unexpectedly in receiving state. Got chain: {chain:?}"),
             },
         }
     }
@@ -368,12 +368,14 @@ where
 
     #[inline(never)]
     pub fn poll_app(&mut self) {
+        info!("Poll_app");
         if State::Processing == self.state {
             // info!("processing, checking for response, interchange state {:?}",
             //           self.interchange.state()).ok();
-
+            info!("State: processing");
             if interchange::State::Responded == self.interchange.state() {
                 // we should have an open XfrBlock allowance
+                info!("Has response");
                 self.state = State::ReadyToSend;
                 self.sent = 0;
                 self.prime_outbox();
@@ -529,7 +531,7 @@ where
                     info!("waiting to send");
                 }
 
-                Err(_) => panic!("unexpected send error"),
+                Err(err) => panic!("unexpected send error {err:?}"),
             }
         }
     }

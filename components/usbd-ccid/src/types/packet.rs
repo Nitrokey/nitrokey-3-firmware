@@ -61,7 +61,7 @@ pub trait ChainedPacket: Packet {
             2 => Chain::Ends,
             3 => Chain::Continues,
             0x10 => Chain::ExpectingMore,
-            _ => panic!("invalid power select parameter"),
+            _ => panic!("invalid power select parameter {level_parameter:x}"),
         }
     }
 }
@@ -294,7 +294,7 @@ impl PowerOn {
             1 => PowerSelection::V5,
             2 => PowerSelection::V3_3,
             3 => PowerSelection::V1_8,
-            _ => panic!("invalid power select parameter"),
+            _ => panic!("invalid power select parameter {:x}", &self[7]),
         }
     }
 }
