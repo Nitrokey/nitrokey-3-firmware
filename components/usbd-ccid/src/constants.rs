@@ -4,6 +4,8 @@ pub const PACKET_SIZE: usize = 512;
 #[cfg(not(feature = "highspeed-usb"))]
 pub const PACKET_SIZE: usize = 64;
 
+pub const CCID_HEADER_LEN: usize = 10;
+
 pub const CLASS_CCID: u8 = 0x0B;
 pub const SUBCLASS_NONE: u8 = 0x0;
 

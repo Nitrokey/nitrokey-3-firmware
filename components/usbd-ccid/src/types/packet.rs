@@ -45,9 +45,9 @@ pub trait PacketWithData: Packet {
     fn data(&self) -> &[u8] {
         // let len = u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize;
         let declared_len = u32::from_le_bytes(self[1..5].try_into().unwrap()) as usize;
-        let len = core::cmp::min(MAX_MSG_LENGTH - 10, declared_len);
+        let len = core::cmp::min(MAX_MSG_LENGTH - CCID_HEADER_LEN, declared_len);
         // hprintln!("delcared = {}, len = {}", declared_len, len).ok();
-        &self[10..][..len]
+        &self[CCID_HEADER_LEN..][..len]
     }
 }
 
@@ -76,7 +76,7 @@ pub struct DataBlock<'a> {
 
 impl<'a> DataBlock<'a> {
     pub fn new(seq: u8, chain: Chain, data: &'a [u8]) -> Self {
-        assert!(data.len() + 10 <= PACKET_SIZE);
+        assert!(data.len() + CCID_HEADER_LEN <= PACKET_SIZE);
         Self { seq, chain, data }
     }
 }
@@ -117,7 +117,7 @@ impl From<DataBlock<'_>> for RawPacket {
     fn from(v: DataBlock<'_>) -> RawPacket {
         let mut packet = RawPacket::new();
         let len = v.data.len();
-        packet.resize_default(10 + len).ok();
+        packet.resize_default(CCID_HEADER_LEN + len).ok();
         packet[0] = 0x80;
         packet[1..][..4].copy_from_slice(
             &u32::try_from(len)
@@ -133,7 +133,7 @@ impl From<DataBlock<'_>> for RawPacket {
         packet[8] = 0;
         // chain parameter
         packet[9] = v.chain as u8;
-        packet[10..][..len].copy_from_slice(v.data);
+        packet[CCID_HEADER_LEN..][..len].copy_from_slice(v.data);
 
         packet
     }
@@ -224,7 +224,7 @@ macro_rules! command_message {
             fn try_from(packet: ExtPacket)
                 -> core::result::Result<Self, Self::Error>
             {
-                if packet.len() < 10 {
+                if packet.len() < CCID_HEADER_LEN {
                     return Err(Error::ShortPacket);
                 }
                 if packet[5] != 0 {
