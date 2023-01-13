@@ -167,10 +167,10 @@ where
             self.ext_packet.extend_from_slice(&packet).unwrap();
 
             let pl = packet.data_len();
-            if pl > 54 {
+            if pl > MAX_CCID_DATA_LEN {
                 self.receiving_long = true;
                 self.in_chain = 1;
-                self.long_packet_missing = pl - 54;
+                self.long_packet_missing = pl - MAX_CCID_DATA_LEN;
                 self.packet_len = pl;
                 return;
             } else {

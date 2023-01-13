@@ -6,6 +6,8 @@ pub const PACKET_SIZE: usize = 64;
 
 pub const CCID_HEADER_LEN: usize = 10;
 
+pub const MAX_CCID_DATA_LEN: usize = PACKET_SIZE - CCID_HEADER_LEN;
+
 pub const CLASS_CCID: u8 = 0x0B;
 pub const SUBCLASS_NONE: u8 = 0x0;
 
