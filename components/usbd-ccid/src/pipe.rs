@@ -325,7 +325,7 @@ where
                 Chain::ExpectingMore => {
                     self.prime_outbox();
                 }
-                chain => panic!("unexpectedly in receiving state. Got chain: {chain:?}"),
+                chain => panic!("unexpectedly in sending state. Got chain: {chain:?}"),
             },
         }
     }
