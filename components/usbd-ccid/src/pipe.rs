@@ -397,9 +397,7 @@ where
             panic!("Outbox is already primed");
         }
 
-        // if let Some(message) = self.interchange.response() {
         let message = self.interchange.response().unwrap();
-        // let message: &mut Vec<u8, N> = unsafe { (*self.interchange.interchange.get()).rp_mut() };
 
         let chunk_size = core::cmp::min(PACKET_SIZE - CCID_HEADER_LEN, message.len() - self.sent);
         let chunk = &message[self.sent..][..chunk_size];
@@ -432,7 +430,6 @@ where
 
         // fast-lane response attempt
         self.maybe_send_packet();
-        // }
     }
 
     fn send_empty_datablock(&mut self, chain: Chain) {

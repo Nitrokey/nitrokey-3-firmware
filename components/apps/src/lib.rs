@@ -172,7 +172,7 @@ impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, NonPortable<R>)> for Apps<R>
 
     fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<7609, 7609>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<ApduCommandSize, ApduResponseSize>]) -> T,
     ) -> T {
         self.apdu_dispatch(f)
     }
