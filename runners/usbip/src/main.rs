@@ -145,18 +145,7 @@ fn main() {
 
     let args = Args::parse();
     if args.version {
-        print!("{} {}", clap::crate_name!(), clap::crate_version!());
-        let features: &[&str] = &[
-            #[cfg(feature = "alpha")]
-            "alpha",
-            #[cfg(feature = "provisioner")]
-            "provisioner",
-        ];
-        if features.is_empty() {
-            println!();
-        } else {
-            println!(" ({})", features.join(", "));
-        }
+        print_version();
         return;
     }
 
@@ -173,6 +162,23 @@ fn main() {
     } else {
         exec(virt::Ram::default(), options, args.serial);
     }
+}
+
+fn print_version() {
+    let crate_name = clap::crate_name!();
+    let crate_version = clap::crate_version!();
+    let enabled_features: &[&str] = &[
+        #[cfg(feature = "alpha")]
+        "alpha",
+        #[cfg(feature = "provisioner")]
+        "provisioner",
+    ];
+
+    print!("{} {}", crate_name, crate_version);
+    if !enabled_features.is_empty() {
+        print!(" ({})", enabled_features.join(", "));
+    }
+    println!();
 }
 
 fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, serial: Option<u128>) {
