@@ -188,16 +188,15 @@ where
         )?;
 
         // little-endian integers
+        #[rustfmt::skip]
         writer.write(
             HID_DESCRIPTOR,
             &[
-                0x11,
-                0x01,                  // bcdHID (le)
-                0x00,                  // country code: universal
-                0x01,                  // number of HID report descriptors
+                0x11, 0x01, // bcdHID (le)
+                0x00, // country code: universal
+                0x01, // number of HID report descriptors
                 HID_REPORT_DESCRIPTOR, // 1st HID report descriptor type
-                FIDO_HID_REPORT_DESCRIPTOR_LENGTH as u8,
-                0x00, // 1st HID report descriptor length in bytes as u16-be
+                FIDO_HID_REPORT_DESCRIPTOR_LENGTH as u8, 0x00, // 1st HID report descriptor length in bytes as u16-be
             ],
         )?;
 
