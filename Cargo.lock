@@ -972,6 +972,7 @@ dependencies = [
  "usbd-ccid 0.1.0",
  "usbd-ctaphid 0.1.0",
  "usbd-serial",
+ "utils",
 ]
 
 [[package]]
@@ -1453,7 +1454,7 @@ checksum = "e322f259d225fbae43a1b053b2dc6a5968a6bdf8b205f5de684dab485b95030e"
 [[package]]
 name = "littlefs2"
 version = "0.3.2"
-source = "git+https://github.com/Nitrokey/littlefs2?tag=v0.3.2-nitrokey-1#23b9e5028ce0b2ff77c78545c44ac75da9a79acb"
+source = "git+https://github.com/Nitrokey/littlefs2?tag=v0.3.2-nitrokey-2#c2d2605baa1bbe9341dba349e4bc3ef42299b5fa"
 dependencies = [
  "bitflags",
  "cstr_core",
@@ -2764,6 +2765,14 @@ dependencies = [
  "rand_core",
  "trussed",
  "trussed-usbip",
+]
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "delog",
+ "littlefs2",
 ]
 
 [[package]]

@@ -116,7 +116,7 @@ mod app {
         #[cfg(not(feature = "extflash_qspi"))]
         let extflash = ERL::soc::types::ExternalStorage::new();
 
-        let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash);
+        let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash, false);
 
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
         /* TODO: set up fingerprint device */

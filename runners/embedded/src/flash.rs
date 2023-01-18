@@ -1,6 +1,7 @@
 use core::cell::RefCell;
 
 use embedded_hal::{blocking::spi::Transfer, digital::v2::OutputPin};
+use littlefs2::{driver::Storage, io::Error};
 use spi_memory::{BlockDevice, Read};
 
 struct FlashProperties {
@@ -23,7 +24,7 @@ where
     s25flash: RefCell<spi_memory::series25::Flash<SPI, CS>>,
 }
 
-impl<SPI, CS> littlefs2::driver::Storage for ExtFlashStorage<SPI, CS>
+impl<SPI, CS> Storage for ExtFlashStorage<SPI, CS>
 where
     SPI: Transfer<u8>,
     CS: OutputPin,
@@ -35,13 +36,13 @@ where
     type CACHE_SIZE = generic_array::typenum::U256;
     type LOOKAHEADWORDS_SIZE = generic_array::typenum::U1;
 
-    fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
+    fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         trace!("EFr {:x} {:x}", off, buf.len());
         if buf.len() == 0 {
             return Ok(0);
         }
         if buf.len() > FLASH_PROPERTIES.size || off > FLASH_PROPERTIES.size - buf.len() {
-            return Err(littlefs2::io::Error::Unknown(0x6578_7046));
+            return Err(Error::Unknown(0x6578_7046));
         }
         let mut flash = self.s25flash.borrow_mut();
         let r = flash.read(off as u32, buf);
@@ -51,7 +52,7 @@ where
         map_result(r, buf.len())
     }
 
-    fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, littlefs2::io::Error> {
+    fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
         trace!("EFw {:x} {:x}", off, data.len());
         trace!("w >>> {}", delog::hex_str!(&data[0..4]));
         const CHUNK_SIZE: usize = 256;
@@ -63,16 +64,16 @@ where
             buf.copy_from_slice(chunk);
             flash
                 .write_bytes(off, buf)
-                .map_err(|_| littlefs2::io::Error::Unknown(0x6565_6565))?;
+                .map_err(|_| Error::Unknown(0x6565_6565))?;
             off += CHUNK_SIZE as u32;
         }
         Ok(data.len())
     }
 
-    fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {
+    fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
         trace!("EFe {:x} {:x}", off, len);
         if len > FLASH_PROPERTIES.size || off > FLASH_PROPERTIES.size - len {
-            return Err(littlefs2::io::Error::Unknown(0x6578_7046));
+            return Err(Error::Unknown(0x6578_7046));
         }
         let result = self
             .s25flash
@@ -85,14 +86,14 @@ where
 fn map_result<SPI, CS>(
     r: Result<(), spi_memory::Error<SPI, CS>>,
     len: usize,
-) -> Result<usize, littlefs2::io::Error>
+) -> Result<usize, Error>
 where
     SPI: Transfer<u8>,
     CS: OutputPin,
 {
     match r {
         Ok(()) => Ok(len),
-        Err(_) => Err(littlefs2::io::Error::Unknown(0x6565_6565)),
+        Err(_) => Err(Error::Unknown(0x6565_6565)),
     }
 }
 
@@ -141,7 +142,7 @@ where
         FLASH_PROPERTIES.size
     }
 
-    pub fn erase_chip(&mut self) -> Result<usize, littlefs2::io::Error> {
+    pub fn erase_chip(&mut self) -> Result<usize, Error> {
         map_result(
             self.s25flash.borrow_mut().erase_all(),
             FLASH_PROPERTIES.size,
