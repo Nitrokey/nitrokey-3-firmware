@@ -1,4 +1,3 @@
-
 pub mod nfc {
     #[derive(Copy, Clone, Debug, PartialEq)]
     pub enum State {
@@ -14,7 +13,7 @@ pub mod nfc {
     pub trait Device {
         fn read(&mut self, buf: &mut [u8]) -> Result<State, Error>;
 
-        fn send(&mut self,buf: &[u8]) -> Result<(), Error>;
+        fn send(&mut self, buf: &[u8]) -> Result<(), Error>;
 
         fn frame_size(&self) -> usize;
         //  { 128 }

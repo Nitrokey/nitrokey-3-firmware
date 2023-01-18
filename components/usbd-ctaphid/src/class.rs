@@ -1,13 +1,13 @@
 // use core::convert::TryInto as _;
 // use core::convert::TryFrom as _;
 
-use interchange::Requester;
 use embedded_time::duration::Extensions;
+use interchange::Requester;
 
 use crate::{
-    types::Status,
     constants::{INTERRUPT_POLL_MILLISECONDS, PACKET_SIZE},
     pipe::Pipe,
+    types::Status,
 };
 
 use ctaphid_dispatch::types::HidInterchange;
@@ -16,7 +16,7 @@ use usb_device::{
     bus::{InterfaceNumber, UsbBus, UsbBusAllocator},
     class::{ControlIn, ControlOut, UsbClass},
     control,
-    descriptor::{DescriptorWriter},
+    descriptor::DescriptorWriter,
     endpoint::{EndpointAddress, EndpointIn, EndpointOut},
     Result as UsbResult,
 };
@@ -29,11 +29,13 @@ pub struct CtapHid<'alloc, Bus: UsbBus> {
 
 impl<'alloc, Bus> CtapHid<'alloc, Bus>
 where
-	Bus: UsbBus
+    Bus: UsbBus,
 {
-	pub fn new(allocate: &'alloc UsbBusAllocator<Bus>, interchange: Requester<HidInterchange>, initial_milliseconds: u32)
-        -> Self
-    {
+    pub fn new(
+        allocate: &'alloc UsbBusAllocator<Bus>,
+        interchange: Requester<HidInterchange>,
+        initial_milliseconds: u32,
+    ) -> Self {
         // 64 bytes, interrupt endpoint polled every 5 milliseconds
         let read_endpoint: EndpointOut<'alloc, Bus> =
             allocate.interrupt(PACKET_SIZE as u16, INTERRUPT_POLL_MILLISECONDS);
@@ -41,7 +43,12 @@ where
         let write_endpoint: EndpointIn<'alloc, Bus> =
             allocate.interrupt(PACKET_SIZE as u16, INTERRUPT_POLL_MILLISECONDS);
 
-        let pipe = Pipe::new(read_endpoint, write_endpoint, interchange, initial_milliseconds);
+        let pipe = Pipe::new(
+            read_endpoint,
+            write_endpoint,
+            interchange,
+            initial_milliseconds,
+        );
 
         Self {
             interface: allocate.interface(),
@@ -104,7 +111,6 @@ where
             Status::Idle
         }
     }
-
 }
 
 const HID_INTERFACE_CLASS: u8 = 0x03;
@@ -122,37 +128,40 @@ const HID_REPORT_DESCRIPTOR: u8 = 0x22;
 // cf. https://git.io/Jebh8
 // integers are little-endian
 const FIDO_HID_REPORT_DESCRIPTOR_LENGTH: usize = 34;
+#[rustfmt::skip]
 const FIDO_HID_REPORT_DESCRIPTOR: [u8; FIDO_HID_REPORT_DESCRIPTOR_LENGTH] = [
     // Usage page (vendor defined): 0xF1D0 (FIDO_USAGE_PAGE)
-    0x06, 0xD0, 0xF1,
+    0x06,
+    0xD0,
+    0xF1,
     // Usage ID (vendor defined): 0x1 (FIDO_USAGE_CTAPHID)
-    0x09, 0x01,
-
+    0x09,
+    0x01,
     // Collection (application)
-    0xA1, 0x01,
+    0xA1,
+    0x01,
+    // The Input report
+    0x09, 0x03,                 // Usage ID - vendor defined: FIDO_USAGE_DATA_IN
+    0x15, 0x00,                 // Logical Minimum (0)
+    0x26, 0xFF, 0x00,           // Logical Maximum (255)
+    0x75, 0x08,                 // Report Size (8 bits)
+    0x95, PACKET_SIZE as u8,    // Report Count (64 fields)
+    0x81, 0x08,                 // Input (Data, Variable, Absolute)
 
-        // The Input report
-        0x09, 0x03,        // Usage ID - vendor defined: FIDO_USAGE_DATA_IN
-        0x15, 0x00,        // Logical Minimum (0)
-        0x26, 0xFF, 0x00,  // Logical Maximum (255)
-        0x75, 0x08,        // Report Size (8 bits)
-        0x95, PACKET_SIZE as u8, // Report Count (64 fields)
-        0x81, 0x08,        // Input (Data, Variable, Absolute)
-
-        // The Output report
-        0x09, 0x04,        // Usage ID - vendor defined: FIDO_USAGE_DATA_OUT
-        0x15, 0x00,        // Logical Minimum (0)
-        0x26, 0xFF, 0x00,  // Logical Maximum (255)
-        0x75, 0x08,        // Report Size (8 bits)
-        0x95, PACKET_SIZE as u8, // Report Count (64 fields)
-        0x91, 0x08,        // Output (Data, Variable, Absolute)
+    // The Output report
+    0x09, 0x04,                 // Usage ID - vendor defined: FIDO_USAGE_DATA_OUT
+    0x15, 0x00,                 // Logical Minimum (0)
+    0x26, 0xFF, 0x00,           // Logical Maximum (255)
+    0x75, 0x08,                 // Report Size (8 bits)
+    0x95, PACKET_SIZE as u8,    // Report Count (64 fields)
+    0x91, 0x08,                 // Output (Data, Variable, Absolute)
 
     // EndCollection
     0xC0,
 ];
 
 // see hid1_11.pdf, section 7.2, p. 50
-#[derive(Copy,Clone,Eq,Debug,PartialEq)]
+#[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub enum ClassRequests {
     /// mandatory, allow host to receive report via control pipe.
     /// intention: initialization
@@ -167,10 +176,10 @@ pub enum ClassRequests {
 }
 
 impl<'alloc, Bus> UsbClass<Bus> for CtapHid<'alloc, Bus>
-where Bus: UsbBus
+where
+    Bus: UsbBus,
 {
     fn get_configuration_descriptors(&self, writer: &mut DescriptorWriter) -> UsbResult<()> {
-
         writer.interface(
             self.interface,
             HID_INTERFACE_CLASS,
@@ -179,13 +188,17 @@ where Bus: UsbBus
         )?;
 
         // little-endian integers
-        writer.write(HID_DESCRIPTOR, &[
-            0x11, 0x01, // bcdHID (le)
-            0x00, // country code: universal
-            0x01, // number of HID report descriptors
-            HID_REPORT_DESCRIPTOR, // 1st HID report descriptor type
-            FIDO_HID_REPORT_DESCRIPTOR_LENGTH as u8, 0x00, // 1st HID report descriptor length in bytes as u16-be
-        ])?;
+        #[rustfmt::skip]
+        writer.write(
+            HID_DESCRIPTOR,
+            &[
+                0x11, 0x01, // bcdHID (le)
+                0x00, // country code: universal
+                0x01, // number of HID report descriptors
+                HID_REPORT_DESCRIPTOR, // 1st HID report descriptor type
+                FIDO_HID_REPORT_DESCRIPTOR_LENGTH as u8, 0x00, // 1st HID report descriptor length in bytes as u16-be
+            ],
+        )?;
 
         writer.endpoint(&self.pipe.read_endpoint())?;
         writer.endpoint(&self.pipe.write_endpoint())?;
@@ -232,7 +245,7 @@ where Bus: UsbBus
                 // while its current report remains unchanged
                 r if r == ClassRequests::SetIdle as u8 => {
                     xfer.accept().ok();
-                },
+                }
                 _ => (),
             };
         }
@@ -256,11 +269,11 @@ where Bus: UsbBus
                         data[..FIDO_HID_REPORT_DESCRIPTOR_LENGTH]
                             .copy_from_slice(&FIDO_HID_REPORT_DESCRIPTOR);
                         Ok(FIDO_HID_REPORT_DESCRIPTOR_LENGTH)
-                    }).ok();
-                },
+                    })
+                    .ok();
+                }
                 _ => (),
             }
         }
     }
-
 }
