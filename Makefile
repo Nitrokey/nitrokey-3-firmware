@@ -1,23 +1,11 @@
-RUNNER := runners/lpc55
+.PHONY: check
+check:
+	$(MAKE) -C runners/embedded check-all
+	$(MAKE) -C runners/usbip check
 
-build:
-	make -C $(RUNNER) build
-
-bacon:
-	make -C $(RUNNER) bacon
-
-run:
-	make -C $(RUNNER) run
-
-jlink:
-	scripts/bump-jlink
-	JLinkGDBServer -strict -device LPC55S69 -if SWD -vd
-
-mount-fs:
-	scripts/fuse-bee
-
-umount-fs:
-	scripts/defuse-bee
+.PHONY: lint
+lint:
+	cargo fmt -- --check
 
 license.txt:
 	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/embedded/Cargo.toml > license.txt
