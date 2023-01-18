@@ -5,9 +5,7 @@ TEST_FIDO_CERTS_DIR := $(TEST_CERTS_DIR)/nk3/fido
 TEST_FIDO_CERT := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-cert.der
 TEST_FIDO_KEY := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-key.trussed
 
-NK3_FW_REPO := git@github.com:Nitrokey/nitrokey-3-firmware.git
 NK3_FW_DIR := nk3-fw
-NK3_FW_BRANCH := embedded-pr
 
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
@@ -20,7 +18,7 @@ BL_OUTPUT := mbr.hex bootloader.hex
 FW_RUNNER := $(NK3_FW_DIR)/runners/embedded
 FW_ARTIFACTS := $(FW_RUNNER)/artifacts
 
-CARGO_TOML_PATH := $(FW_RUNNER)/Cargo.toml
+CARGO_TOML_PATH := $(NK3_FW_DIR)/Cargo.toml
 
 FW_IHEX := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin.ihex
 FW_BIN := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin
@@ -126,6 +124,12 @@ full-deploy:
 	$(MAKE) provision-keys
 	$(MAKE) flash-release
 
+dev-deploy:
+	$(MAKE) flash-bootloader
+	$(MAKE) flash-provisioner
+	$(MAKE) provision-keys
+	$(MAKE) flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
+
 fast-deploy:
 	$(MAKE) flash-bootloader
 	$(MAKE) flash-release
@@ -173,7 +177,7 @@ $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
 $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=release,$(EXTRA_FEATURES)
+	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
 
