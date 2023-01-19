@@ -2760,11 +2760,13 @@ dependencies = [
  "clap 3.2.23",
  "clap-num",
  "delog",
+ "littlefs2",
  "log",
  "pretty_env_logger",
  "rand_core",
  "trussed",
  "trussed-usbip",
+ "utils",
 ]
 
 [[package]]

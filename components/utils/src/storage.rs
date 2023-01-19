@@ -32,17 +32,21 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
         for to in buf.iter_mut().skip(self.buf.len().saturating_sub(off)) {
             *to = ERASED;
         }
+        info!("{}: {:?}", buf.len(), buf);
         Ok(buf.len())
     }
 
     fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
-        // TODO: return error if out of range?
+        if off + data.len() > SIZE {
+            return Err(Error::NoSpace);
+        }
         let write_size: usize = Self::WRITE_SIZE;
         debug_assert!(off % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
         for (from, to) in data.iter().zip(self.buf.iter_mut().skip(off)) {
             *to = *from;
         }
+        info!("{}: {:?}", data.len(), data);
         Ok(data.len())
     }
 
