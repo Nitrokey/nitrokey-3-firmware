@@ -8,3 +8,4 @@ This documentation is available for developers and testers:
 - [Testing Guide](./testing.md): Testing beta firmware versions
 - [Identifiers List](./identifiers.md): List of identifiers used by firmware
 - [CTAPHID Command List](./ctaphid-commands.md): List of CTAPHID vendor commands
+- [Storage Overview](./storage.md): Information on the data stored on the device
