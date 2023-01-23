@@ -1,24 +1,21 @@
 use crate::soc::types::Soc as SocT;
 use crate::types::*;
 
-// Assuming there will only be one way to
-// get user presence, this should be fine.
-// Used for Ctaphid.keepalive message status.
-// ...
-// ...
+use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
+
 // I am pretty sure this does not belong here,
 // anyways better than having this both UIs:
 // dummy_ui.rs, trussed_ui.rs
 // so how about a `base_ui.rs` ?
 // -> also the whole RGB stuff and its "ecosystem" is widely hw-independant and could fit there....
-static mut WAITING: bool = false;
+static WAITING: AtomicBool = AtomicBool::new(false);
 pub struct UserPresenceStatus {}
 impl UserPresenceStatus {
     pub(crate) fn set_waiting(waiting: bool) {
-        unsafe { WAITING = waiting };
+        WAITING.store(waiting, Relaxed);
     }
     pub fn waiting() -> bool {
-        unsafe { WAITING }
+        WAITING.load(Relaxed)
     }
 }
 
