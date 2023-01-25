@@ -22,7 +22,7 @@ trussed = { version = "0.1", features = ["clients-3"] }
 
 # components
 usbd-ccid = { path = "../../components/usbd-ccid" }
-usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+usbd-ctaphid = "0.1"
 nfc-device = {path = "./../../components/nfc-device"}
 ndef-app = {path = "./../../components/ndef-app"}
 
