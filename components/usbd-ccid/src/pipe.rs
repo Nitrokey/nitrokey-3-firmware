@@ -159,18 +159,18 @@ where
         // when certificates are transmitted, because PIV somehow uses short APDUs
         // only (can we fix this), so 255B is the maximum)
         if !self.receiving_long {
-            if packet.len() < 10 {
-                panic!("unexpected short packet");
+            if packet.len() < CCID_HEADER_LEN {
+                panic!("unexpected short packet. Len: {}", packet.len());
             }
             self.ext_packet.clear();
             // TODO check
             self.ext_packet.extend_from_slice(&packet).unwrap();
 
-            let pl = packet.packet_len();
-            if pl > 54 {
+            let pl = packet.data_len();
+            if pl > MAX_CCID_DATA_LEN {
                 self.receiving_long = true;
                 self.in_chain = 1;
-                self.long_packet_missing = pl - 54;
+                self.long_packet_missing = pl - MAX_CCID_DATA_LEN;
                 self.packet_len = pl;
                 return;
             } else {
@@ -180,7 +180,12 @@ where
             // TODO check
             self.ext_packet.extend_from_slice(&packet).ok();
             self.in_chain += 1;
-            assert!(packet.len() <= self.long_packet_missing);
+            assert!(
+                packet.len() <= self.long_packet_missing,
+                "Got packet of length {}, expected max {}",
+                packet.len(),
+                self.long_packet_missing
+            );
             self.long_packet_missing -= packet.len();
             if self.long_packet_missing > 0 {
                 return;
@@ -280,7 +285,7 @@ where
                         self.state = State::Receiving;
                         self.send_empty_datablock(Chain::ExpectingMore);
                     }
-                    _ => panic!("unexpectedly in idle state"),
+                    chain => panic!("unexpectedly in idle state. Got chain: {chain:?}",),
                 }
             }
 
@@ -300,7 +305,7 @@ where
                     self.call_app();
                     self.state = State::Processing;
                 }
-                _ => panic!("unexpectedly in receiving state"),
+                chain => panic!("unexpectedly in receiving state. Got chain: {chain:?}",),
             },
 
             State::Processing => {
@@ -320,7 +325,7 @@ where
                 Chain::ExpectingMore => {
                     self.prime_outbox();
                 }
-                _ => panic!("unexpectedly in receiving state"),
+                chain => panic!("unexpectedly in sending state. Got chain: {chain:?}"),
             },
         }
     }
@@ -329,7 +334,7 @@ where
         if self.state == State::Processing {
             // Need to send a wait extension request.
             let mut packet = RawPacket::new();
-            packet.resize_default(10).ok();
+            packet.resize_default(CCID_HEADER_LEN).ok();
             packet[0] = 0x80;
             packet[6] = self.seq;
 
@@ -348,7 +353,7 @@ where
     }
 
     /// Turns false on read.  Intended for checking to see if a wait extension request needs to be started.
-    pub fn did_started_processing(&mut self) -> bool {
+    pub fn did_start_processing(&mut self) -> bool {
         if self.started_processing {
             self.started_processing = false;
             true
@@ -368,12 +373,14 @@ where
 
     #[inline(never)]
     pub fn poll_app(&mut self) {
-        if let State::Processing = self.state {
+        info!("Poll_app");
+        if State::Processing == self.state {
             // info!("processing, checking for response, interchange state {:?}",
             //           self.interchange.state()).ok();
-
+            info!("State: processing");
             if interchange::State::Responded == self.interchange.state() {
                 // we should have an open XfrBlock allowance
+                info!("Has response");
                 self.state = State::ReadyToSend;
                 self.sent = 0;
                 self.prime_outbox();
@@ -387,13 +394,12 @@ where
         }
 
         if self.outbox.is_some() {
-            panic!();
+            panic!("Outbox is already primed");
         }
 
-        // if let Some(message) = self.interchange.response() {
-        let message: &mut Vec<u8, N> = unsafe { (*self.interchange.interchange.get()).rp_mut() };
+        let message = self.interchange.response().unwrap();
 
-        let chunk_size = core::cmp::min(PACKET_SIZE - 10, message.len() - self.sent);
+        let chunk_size = core::cmp::min(PACKET_SIZE - CCID_HEADER_LEN, message.len() - self.sent);
         let chunk = &message[self.sent..][..chunk_size];
         self.sent += chunk_size;
         let more = self.sent < message.len();
@@ -424,7 +430,6 @@ where
 
         // fast-lane response attempt
         self.maybe_send_packet();
-        // }
     }
 
     fn send_empty_datablock(&mut self, chain: Chain) {
@@ -434,7 +439,7 @@ where
 
     fn send_slot_status_ok(&mut self) {
         let mut packet = RawPacket::new();
-        packet.resize_default(10).ok();
+        packet.resize_default(CCID_HEADER_LEN).ok();
         packet[0] = 0x81;
         packet[6] = self.seq;
         self.send_packet_assuming_possible(packet);
@@ -442,7 +447,7 @@ where
 
     fn send_slot_status_error(&mut self, error: Error) {
         let mut packet = RawPacket::new();
-        packet.resize_default(10).ok();
+        packet.resize_default(CCID_HEADER_LEN).ok();
         packet[0] = 0x6c;
         packet[6] = self.seq;
         packet[7] = 1 << 6;
@@ -528,18 +533,10 @@ where
                     info!("waiting to send");
                 }
 
-                Err(_) => panic!("unexpected send error"),
+                Err(err) => panic!("unexpected send error {err:?}"),
             }
         }
     }
-
-    // pub fn read_address(&self) -> EndpointAddress {
-    //     self.read.address()
-    // }
-
-    // pub fn write_address(&self) -> EndpointAddress {
-    //     self.write.address()
-    // }
 
     // Called if we receive an ABORT request on the control pipe.
     pub fn expect_abort(&mut self, slot: u8, seq: u8) {

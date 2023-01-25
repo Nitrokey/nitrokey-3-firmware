@@ -4,6 +4,10 @@ pub const PACKET_SIZE: usize = 512;
 #[cfg(not(feature = "highspeed-usb"))]
 pub const PACKET_SIZE: usize = 64;
 
+pub const CCID_HEADER_LEN: usize = 10;
+
+pub const MAX_CCID_DATA_LEN: usize = PACKET_SIZE - CCID_HEADER_LEN;
+
 pub const CLASS_CCID: u8 = 0x0B;
 pub const SUBCLASS_NONE: u8 = 0x0;
 
@@ -39,7 +43,7 @@ pub const MAX_IFSD: [u8; 4] = [0xfe, 0x00, 0x00, 0x00];
 // "The value shall be between 261 + 10 and 65544 + 10
 // dwMaxCCIDMsgLen 3072
 pub const MAX_MSG_LENGTH: usize = 3072;
-pub const MAX_MSG_LENGTH_LE: [u8; 4] = [0x00, 0x0C, 0x00, 0x00];
+pub const MAX_MSG_LENGTH_LE: [u8; 4] = (MAX_MSG_LENGTH as u32).to_le_bytes();
 
 pub const NUM_SLOTS: u8 = 1;
 pub const MAX_BUSY_SLOTS: u8 = 1;
