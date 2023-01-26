@@ -37,7 +37,7 @@ littlefs2 = { version = "0.3", features = ["c-stubs"] }
 ### usb machinery
 usb-device = "0.2"
 usbd-serial = "0.1"
-usbd-ccid = { path = "../../components/usbd-ccid" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid" }
 usbd-ctaphid = "0.1"
 
 ### NRF52 specific dependencies
