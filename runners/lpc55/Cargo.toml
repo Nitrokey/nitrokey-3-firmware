@@ -52,7 +52,7 @@ provisioner-app = { path = "../../components/provisioner-app", optional = true, 
 fm11nc08 = {path = "../../components/fm11nc08"}
 nfc-device = {path = "../../components/nfc-device"}
 usbd-ccid = { path = "../../components/usbd-ccid" }
-usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+usbd-ctaphid = "0.1"
 
 # storage
 littlefs2 = { version = "0.3.2", features = ["c-stubs"] }
