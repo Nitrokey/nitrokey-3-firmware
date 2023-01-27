@@ -16,6 +16,9 @@ const FLASH_PROPERTIES: FlashProperties = FlashProperties {
     _cont: 0, /* should be 6, but device doesn't report those */
 };
 
+// defines how much space we leave untouched at the end
+pub const SPARE_LEN: usize = 4096 * 32; // 128kb
+
 pub struct ExtFlashStorage<SPI, CS>
 where
     SPI: Transfer<u8>,
@@ -32,9 +35,10 @@ where
     const BLOCK_SIZE: usize = 4096;
     const READ_SIZE: usize = 4;
     const WRITE_SIZE: usize = 256;
-    const BLOCK_COUNT: usize = FLASH_PROPERTIES.size / Self::BLOCK_SIZE;
+    const BLOCK_COUNT: usize =
+        (FLASH_PROPERTIES.size / Self::BLOCK_SIZE) - (SPARE_LEN / Self::BLOCK_SIZE);
     type CACHE_SIZE = generic_array::typenum::U256;
-    type LOOKAHEADWORDS_SIZE = generic_array::typenum::U1;
+    type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         trace!("EFr {:x} {:x}", off, buf.len());
@@ -46,15 +50,11 @@ where
         }
         let mut flash = self.s25flash.borrow_mut();
         let r = flash.read(off as u32, buf);
-        if r.is_ok() {
-            trace!("r >>> {}", delog::hex_str!(&buf[0..4]));
-        }
         map_result(r, buf.len())
     }
 
     fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
         trace!("EFw {:x} {:x}", off, data.len());
-        trace!("w >>> {}", delog::hex_str!(&data[0..4]));
         const CHUNK_SIZE: usize = 256;
         let mut buf = [0; CHUNK_SIZE];
         let mut off = off as u32;
