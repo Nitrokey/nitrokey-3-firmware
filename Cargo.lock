@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "interchange"
 version = "0.2.2"
-source = "git+https://github.com/trussed-dev/interchange?rev=fe5633466640e1e9a8c06d9b5dd1d0af08c272af#fe5633466640e1e9a8c06d9b5dd1d0af08c272af"
+source = "git+https://github.com/trussed-dev/interchange#8c986d84577ab5d374c9c85d2d44b246c0fdc840"
 
 [[package]]
 name = "iso7816"
@@ -1468,7 +1468,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.1.6"
-source = "git+https://github.com/Nitrokey/littlefs2-sys?tag=v0.1.6-nitrokey-1#8ebb88edc59c0cf9503a9b9377065a0f74440448"
+source = "git+https://github.com/trussed-dev/littlefs2-sys#a2cc6720e2a36dd1af17aadd0d4f2c55ec79ebd2"
 dependencies = [
  "bindgen",
  "cc",
