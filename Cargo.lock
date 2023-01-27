@@ -969,7 +969,7 @@ dependencies = [
  "toml",
  "trussed",
  "usb-device",
- "usbd-ccid 0.0.0-unreleased",
+ "usbd-ccid 0.1.0",
  "usbd-ctaphid 0.1.0",
  "usbd-serial",
 ]
@@ -2576,7 +2576,7 @@ dependencies = [
  "log",
  "trussed",
  "usb-device",
- "usbd-ccid 0.0.0-unreleased (git+https://github.com/Nitrokey/nitrokey-3-firmware)",
+ "usbd-ccid 0.0.0-unreleased",
  "usbd-ctaphid 0.0.0-unreleased",
  "usbip-device",
 ]
@@ -2671,6 +2671,7 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 [[package]]
 name = "usbd-ccid"
 version = "0.0.0-unreleased"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#168011629dbea851fb9433f5b9a06f38f76cb07b"
 dependencies = [
  "delog",
  "embedded-time",
@@ -2682,8 +2683,8 @@ dependencies = [
 
 [[package]]
 name = "usbd-ccid"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#168011629dbea851fb9433f5b9a06f38f76cb07b"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/usbd-ccid#84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9"
 dependencies = [
  "delog",
  "embedded-time",

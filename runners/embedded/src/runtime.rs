@@ -117,11 +117,11 @@ where
 
 /* ************************************************************************ */
 
-fn maybe_spawn_ccid<F, T, E>(status: usbd_ccid::types::Status, ccid_spawner: F)
+fn maybe_spawn_ccid<F, T, E>(status: usbd_ccid::Status, ccid_spawner: F)
 where
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
-    if let usbd_ccid::types::Status::ReceivedData(ms) = status {
+    if let usbd_ccid::Status::ReceivedData(ms) = status {
         ccid_spawner(ms.into()).ok();
     };
 }
