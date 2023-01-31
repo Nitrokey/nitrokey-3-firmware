@@ -27,6 +27,7 @@ pub enum FSBackupError {
     PathAssemblyErr,
     BackendWriteErr,
     BackendReadErr,
+    BackendEraseErr,
     SerializeErr,
     DeserializeErr,
     PathStackFullErr,
