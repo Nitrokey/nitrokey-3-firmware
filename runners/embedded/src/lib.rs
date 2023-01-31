@@ -73,8 +73,16 @@ pub fn init_store(
 
     /* Step 2: try mounting each FS in turn */
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
+        #[cfg(feature = "provisioner")]
         let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
-        error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
+        //error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
+        //panic!("FAILED TRYING TO MOUNT IFS");
+
+        #[cfg(all(feature = "board-nk3am", not(feature = "provisioner")))]
+        {
+            // recover on failed mount
+            ifs_storage.recover_from_journal();
+        }
         status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
