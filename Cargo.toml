@@ -21,7 +21,6 @@ trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-
 
 # unreleased
 interchange = { git = "https://github.com/trussed-dev/interchange" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys" }
 
 [profile.release]
 codegen-units = 1
