@@ -72,6 +72,10 @@ impl apps::Runner for Runner {
     fn version(&self) -> u32 {
         build_constants::CARGO_PKG_VERSION
     }
+
+    fn full_version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
 }
 
 // 8KB of RAM
@@ -119,6 +123,33 @@ pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
 
 pub type Apps = apps::Apps<Runner>;
+
+#[derive(Default)]
+pub struct InitStatus {
+    pub nfc_error: bool,
+    pub int_flash_error: bool,
+    pub ext_flash_error: bool,
+    pub migration_error: bool,
+}
+
+impl From<InitStatus> for u8 {
+    fn from(status: InitStatus) -> u8 {
+        let mut i = 0;
+        if status.nfc_error {
+            i += 0b1;
+        }
+        if status.int_flash_error {
+            i += 0b10;
+        }
+        if status.ext_flash_error {
+            i += 0b100;
+        }
+        if status.migration_error {
+            i += 0b1000;
+        }
+        i
+    }
+}
 
 #[derive(Debug)]
 pub struct DelogFlusher {}

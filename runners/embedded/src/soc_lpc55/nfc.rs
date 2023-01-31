@@ -28,6 +28,7 @@ pub fn try_setup(
     // fm: &mut NfcChip,
     timer: &mut Timer<impl lpc55_hal::peripherals::ctimer::Ctimer<Enabled>>,
     always_reconfig: bool,
+    error: &mut bool,
 ) -> Option<NfcChip> {
     // Start unselected.
     let nfc_cs = NfcCsPin::take()
@@ -48,6 +49,7 @@ pub fn try_setup(
 
     if current_regu_config == 0xff {
         // No nfc chip connected
+        *error = true;
         info!("No NFC chip connected");
         return None;
     }
@@ -82,6 +84,7 @@ pub fn try_setup(
             timer,
         );
         if r.is_err() {
+            *error = true;
             info!("Eeprom failed.  No NFC chip connected?");
             return None;
         }

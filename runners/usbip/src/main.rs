@@ -138,6 +138,10 @@ impl<S: StoreProvider> apps::Runner for Runner<S> {
     fn version(&self) -> u32 {
         self.version
     }
+
+    fn full_version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
 }
 
 fn main() {
@@ -192,6 +196,7 @@ fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, ser
         })
         .exec::<apps::Apps<Runner<S>>, _, _>(|_platform| {
             let non_portable = apps::NonPortable {
+                admin: Default::default(),
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerNonPortable {
                     store: unsafe { S::store() },

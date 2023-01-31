@@ -11,7 +11,7 @@ trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", defaul
 usbd-ctaphid = { version = "0.1", optional = true }
 
 # apps
-admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }
+admin-app = { git = "https://github.com/nitrokey/admin-app", branch = "version-status", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/nitrokey/oath-authenticator", rev = "0.3.0", features = ["apdu-dispatch", "ctaphid"], optional = true }

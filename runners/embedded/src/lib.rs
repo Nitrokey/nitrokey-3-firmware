@@ -49,6 +49,7 @@ pub fn init_alloc() {
 pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
+    status: &mut types::InitStatus,
 ) -> types::RunnerStore {
     let volatile_storage = types::VolatileStorage::new();
 
@@ -75,6 +76,7 @@ pub fn init_store(
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
         let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
         error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
+        status.int_flash_error = true;
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
         Ok(ifs_) => {
@@ -88,6 +90,7 @@ pub fn init_store(
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
         let _fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
         error!("EFS Mount Error, Reformat {:?}", _fmt_ext);
+        status.ext_flash_error = true;
     };
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
         Ok(efs_) => {
@@ -188,9 +191,13 @@ pub fn init_usb_nfc(
 
 pub fn init_apps(
     trussed: &mut types::Trussed,
+    init_status: types::InitStatus,
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {
+    let admin = apps::AdminAppNonPortable {
+        init_status: init_status.into(),
+    };
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot;
@@ -207,6 +214,7 @@ pub fn init_apps(
         }
     };
     let non_portable = apps::NonPortable {
+        admin,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),

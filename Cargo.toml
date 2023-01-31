@@ -10,7 +10,7 @@ exclude = ["runners/lpc55"]
 resolver = "2"
 
 [workspace.package]
-version = "1.2.2"
+version = "1.2.2-alpha.2023-01-31"
 
 [patch.crates-io]
 # forked

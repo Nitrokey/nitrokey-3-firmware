@@ -40,7 +40,7 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, InitStatus, RunnerStore, Trussed},
 };
 
 struct Peripherals {
@@ -74,6 +74,7 @@ struct Flash {
 }
 
 pub struct Stage0 {
+    status: InitStatus,
     peripherals: Peripherals,
 }
 
@@ -141,6 +142,7 @@ impl Stage0 {
             gpio,
         };
         Stage1 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks,
         }
@@ -148,6 +150,7 @@ impl Stage0 {
 }
 
 pub struct Stage1 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
 }
@@ -306,6 +309,7 @@ impl Stage1 {
             old_firmware_version,
         };
         Stage2 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic,
@@ -314,6 +318,7 @@ impl Stage1 {
 }
 
 pub struct Stage2 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
@@ -380,6 +385,7 @@ impl Stage2 {
             nfc_irq,
             &mut self.basic.delay_timer,
             force_nfc_reconfig,
+            &mut self.status.nfc_error,
         )
     }
 
@@ -482,6 +488,7 @@ impl Stage2 {
 
         let usb_nfc = crate::init_usb_nfc(usb_bus, nfc_chip);
         Stage3 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
@@ -491,6 +498,7 @@ impl Stage2 {
 }
 
 pub struct Stage3 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
@@ -522,6 +530,7 @@ impl Stage3 {
             rng,
         };
         Stage4 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
@@ -532,6 +541,7 @@ impl Stage3 {
 }
 
 pub struct Stage4 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
@@ -572,7 +582,7 @@ impl Stage4 {
             self.basic.perf_timer.elapsed().0 / 1000
         );
         // TODO: poll iso14443
-        let store = crate::init_store(internal, external);
+        let store = crate::init_store(internal, external, &mut self.status);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -592,6 +602,7 @@ impl Stage4 {
         self.basic.delay_timer.cancel().ok();
 
         Stage5 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
@@ -645,6 +656,7 @@ fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<hal::
 }
 
 pub struct Stage5 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
@@ -680,6 +692,7 @@ impl Stage5 {
         let trussed = trussed::service::Service::new(board);
 
         Stage6 {
+            status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
@@ -691,6 +704,7 @@ impl Stage5 {
 }
 
 pub struct Stage6 {
+    status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
@@ -700,7 +714,7 @@ pub struct Stage6 {
 }
 
 impl Stage6 {
-    fn perform_data_migrations(&self) {
+    fn perform_data_migrations(&mut self) {
         // FIDO2 attestation cert (<= 1.0.2)
         if self.basic.old_firmware_version <= 4194306 {
             debug!("data migration: updating FIDO2 attestation cert");
@@ -711,6 +725,7 @@ impl Stage6 {
                 include_bytes!("../../data/fido-cert.der"),
             );
             if res.is_err() {
+                self.status.migration_error = true;
                 error!("failed to replace attestation cert");
             }
         }
@@ -719,7 +734,8 @@ impl Stage6 {
     #[inline(never)]
     pub fn next(mut self) -> All {
         self.perform_data_migrations();
-        let apps = crate::init_apps(&mut self.trussed, &self.store, self.clocks.is_nfc_passive);
+        let apps =
+            crate::init_apps(&mut self.trussed, self.status, &self.store, self.clocks.is_nfc_passive);
         let clock_controller = if self.clocks.is_nfc_passive {
             let adc = self.basic.adc.take();
             let clocks = self.clocks.clocks;
@@ -761,10 +777,11 @@ pub struct All {
 
 #[inline(never)]
 pub fn start(syscon: hal::Syscon, pmc: hal::Pmc, anactrl: hal::Anactrl) -> Stage0 {
+    let status = Default::default();
     let peripherals = Peripherals {
         syscon,
         pmc,
         anactrl,
     };
-    Stage0 { peripherals }
+    Stage0 { status, peripherals }
 }

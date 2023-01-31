@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/solokeys/admin-app#efcd26bfb9c4b746de1ae6caca085dc5c26eccc4"
+source = "git+https://github.com/nitrokey/admin-app?branch=version-status#82e0489d7b19a334dd21016c63795398123e301c"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -934,7 +934,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.2.2"
+version = "1.2.2-alpha.2023-01-31"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -2752,7 +2752,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.2.2"
+version = "1.2.2-alpha.2023-01-31"
 dependencies = [
  "apps",
  "cfg-if",
