@@ -2684,7 +2684,7 @@ dependencies = [
 [[package]]
 name = "usbd-ccid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ccid#84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9"
+source = "git+https://github.com/trussed-dev/usbd-ccid#7de7b416b7d751bc6d3389971721d1394b0ec58a"
 dependencies = [
  "delog",
  "embedded-time",
