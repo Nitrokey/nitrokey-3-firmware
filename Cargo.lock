@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/solokeys/admin-app#efcd26bfb9c4b746de1ae6caca085dc5c26eccc4"
+source = "git+https://github.com/nitrokey/admin-app?rev=v0.1.0-nitrokey.1#70fd0b22284c49fea79b2e617e07d4239f4983c2"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -940,6 +940,7 @@ dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
+ "bitflags",
  "cargo-lock",
  "cfg-if",
  "chacha20 0.7.3",

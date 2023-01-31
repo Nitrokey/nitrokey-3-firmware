@@ -4,6 +4,7 @@ use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
+use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
@@ -115,6 +116,16 @@ pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch;
 
 pub type Apps = apps::Apps<Runner>;
+
+bitflags! {
+    #[derive(Default)]
+    pub struct InitStatus: u8 {
+        const NFC_ERROR = 0b00000001;
+        const INTERNAL_FLASH_ERROR = 0b00000010;
+        const EXTERNAL_FLASH_ERROR = 0b00000100;
+        const MIGRATION_ERROR = 0b00001000;
+    }
+}
 
 #[derive(Debug)]
 pub struct DelogFlusher {}

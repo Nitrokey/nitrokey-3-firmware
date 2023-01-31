@@ -27,6 +27,8 @@ pub trait Runner {
 }
 
 pub struct NonPortable<R: Runner> {
+    #[cfg(feature = "admin-app")]
+    pub admin: AdminAppNonPortable,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerNonPortable<R>,
     pub _marker: PhantomData<R>,
@@ -70,13 +72,15 @@ impl<R: Runner> Apps<R> {
         non_portable: NonPortable<R>,
     ) -> Self {
         let NonPortable {
+            #[cfg(feature = "admin-app")]
+            admin,
             #[cfg(feature = "provisioner-app")]
             provisioner,
             ..
         } = non_portable;
         Self {
             #[cfg(feature = "admin-app")]
-            admin: App::new(runner, &mut make_client, ()),
+            admin: App::new(runner, &mut make_client, admin),
             #[cfg(feature = "fido-authenticator")]
             fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
@@ -196,14 +200,26 @@ trait App<R: Runner>: Sized {
 }
 
 #[cfg(feature = "admin-app")]
+#[derive(Default)]
+pub struct AdminAppNonPortable {
+    pub init_status: u8,
+}
+
+#[cfg(feature = "admin-app")]
 impl<R: Runner> App<R> for AdminApp<R> {
     const CLIENT_ID: &'static [u8] = b"admin\0";
 
-    type NonPortable = ();
+    type NonPortable = AdminAppNonPortable;
 
-    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self {
         const VERSION: u32 = utils::VERSION.encode();
-        Self::new(trussed, runner.uuid(), VERSION)
+        Self::new(
+            trussed,
+            runner.uuid(),
+            VERSION,
+            utils::VERSION_STRING,
+            non_portable.init_status,
+        )
     }
 }
 

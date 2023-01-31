@@ -48,6 +48,7 @@ pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
     simulated_efs: bool,
+    status: &mut types::InitStatus,
 ) -> types::RunnerStore {
     let volatile_storage = types::VolatileStorage::new();
 
@@ -74,6 +75,7 @@ pub fn init_store(
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
         let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
         error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
+        status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
         Ok(ifs_) => {
@@ -84,17 +86,15 @@ pub fn init_store(
             panic!("store");
         }
     };
-    info_now!("-- is mountable");
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
-        info_now!("-- format");
         let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {
             info_now!("Formatting simulated EFS failed as expected");
         } else {
             error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
+            status.insert(types::InitStatus::EXTERNAL_FLASH_ERROR);
         }
     };
-    info_now!("-- mount");
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
         Ok(efs_) => {
             transcend!(types::EXTERNAL_FS, efs_)
@@ -104,7 +104,6 @@ pub fn init_store(
             panic!("store");
         }
     };
-    info_now!("-- done");
 
     if !littlefs2::fs::Filesystem::is_mountable(vfs_storage) {
         littlefs2::fs::Filesystem::format(vfs_storage).ok();
@@ -195,9 +194,13 @@ pub fn init_usb_nfc(
 
 pub fn init_apps(
     trussed: &mut types::Trussed,
+    init_status: types::InitStatus,
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {
+    let admin = apps::AdminAppNonPortable {
+        init_status: init_status.bits(),
+    };
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot;
@@ -214,6 +217,7 @@ pub fn init_apps(
         }
     };
     let non_portable = apps::NonPortable {
+        admin,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),
