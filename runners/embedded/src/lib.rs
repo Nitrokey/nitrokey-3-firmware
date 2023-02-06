@@ -49,6 +49,7 @@ pub fn init_alloc() {
 pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
+    simulated_efs: bool,
 ) -> types::RunnerStore {
     let volatile_storage = types::VolatileStorage::new();
 
@@ -85,10 +86,17 @@ pub fn init_store(
             panic!("store");
         }
     };
+    info_now!("-- is mountable");
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
-        let _fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
-        error!("EFS Mount Error, Reformat {:?}", _fmt_ext);
+        info_now!("-- format");
+        let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
+        if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {
+            info_now!("Formatting simulated EFS failed as expected");
+        } else {
+            error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
+        }
     };
+    info_now!("-- mount");
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
         Ok(efs_) => {
             transcend!(types::EXTERNAL_FS, efs_)
@@ -98,6 +106,7 @@ pub fn init_store(
             panic!("store");
         }
     };
+    info_now!("-- done");
 
     if !littlefs2::fs::Filesystem::is_mountable(vfs_storage) {
         littlefs2::fs::Filesystem::format(vfs_storage).ok();

@@ -20,10 +20,12 @@ use lpc55_hal::{
 pub type SckPin = pins::Pio0_28;
 pub type MosiPin = pins::Pio0_24;
 pub type MisoPin = pins::Pio0_25;
+pub type FlashCsPin = pins::Pio0_13;
 
 pub type Sck = Pin<SckPin, pin::state::Special<pin::function::FC0_SCK>>;
 pub type Mosi = Pin<MosiPin, pin::state::Special<pin::function::FC0_RXD_SDA_MOSI_DATA>>;
 pub type Miso = Pin<MisoPin, pin::state::Special<pin::function::FC0_TXD_SCL_MISO_WS>>;
+pub type FlashCs = Pin<FlashCsPin, pin::state::Gpio<pin::gpio::direction::Output>>;
 
 pub type Spi = SpiMaster<SckPin, MosiPin, MisoPin, NoPio, Spi0, (Sck, Mosi, Miso, NoCs)>;
 

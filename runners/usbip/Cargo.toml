@@ -9,11 +9,13 @@ cfg-if = { version = "1.0.0" }
 clap = { version = "3.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
 delog = { version = "0.1.6", features = ["std-log"] }
+littlefs2 = { version = "0.3" }
 log = { version = "0.4.14", default-features = false }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 pretty_env_logger = "0.4.0"
 trussed = { version = "0.1", features = ["clients-3"] }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"] }
+utils = { path = "../../components/utils", features = ["log-all"] }
 
 [features]
 alpha = ["apps/alpha"]

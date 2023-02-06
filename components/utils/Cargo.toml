@@ -1,0 +1,16 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+delog = "0.1"
+littlefs2 = "0.3"
+
+[features]
+log-all = []
+log-none = []
+log-info = []
+log-debug = []
+log-warn = []
+log-error = []

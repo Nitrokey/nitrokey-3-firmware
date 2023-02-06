@@ -1,22 +1,21 @@
 use super::board::{button::ThreeButtons, led::RgbLed};
+use super::spi::{FlashCs, Spi};
 use super::trussed::UserInterface;
-use crate::types::build_constants;
+use crate::{flash::ExtFlashStorage, types::build_constants};
 use embedded_time::duration::Milliseconds;
-use littlefs2::const_ram_storage;
 use lpc55_hal::{
     drivers::timer,
     peripherals::{ctimer, flash, rng, syscon},
     raw,
     traits::flash::WriteErase,
 };
-use trussed::types::{LfsResult, LfsStorage};
+use trussed::types::LfsResult;
+use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
-
-const_ram_storage!(ExternalRAMStorage, 1024);
 
 #[cfg(feature = "no-encrypted-storage")]
 use lpc55_hal::littlefs2_filesystem;
@@ -42,7 +41,7 @@ const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = InternalFilesystem;
-    type ExternalFlashStorage = ExternalRAMStorage;
+    type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
     type Rng = rng::Rng<lpc55_hal::Enabled>;

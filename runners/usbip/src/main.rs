@@ -1,3 +1,5 @@
+mod store;
+
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -9,6 +11,8 @@ use trussed::{
     virt::{self, StoreProvider},
     Platform,
 };
+
+use store::Ram;
 
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
@@ -160,7 +164,7 @@ fn main() {
     if let Some(ifs) = args.ifs {
         exec(virt::Filesystem::new(ifs), options, args.serial);
     } else {
-        exec(virt::Ram::default(), options, args.serial);
+        exec(Ram::default(), options, args.serial);
     }
 }
 

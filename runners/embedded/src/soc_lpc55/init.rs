@@ -24,15 +24,16 @@ use hal::{
     typestates::init_state::Unknown,
     typestates::pin::state::Gpio,
 };
-use littlefs2::fs::Filesystem;
 use lpc55_hal as hal;
+use lpc55_hal::drivers::timer::Elapsed as _;
 use trussed::platform::UserInterface;
+use utils::OptionalStorage;
 
 use super::{
     board,
     clock_controller::DynamicClockController,
     nfc,
-    spi::{self, Spi, SpiConfig, SpiMut},
+    spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
 };
 use crate::{
     flash::ExtFlashStorage,
@@ -383,7 +384,7 @@ impl Stage2 {
         )
     }
 
-    pub fn run_hardware_checks(&mut self, flexcomm5: Flexcomm5<Unknown>, spi: &mut Spi) {
+    fn run_hardware_checks(&mut self, flexcomm5: Flexcomm5<Unknown>) {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
             .unwrap()
@@ -427,29 +428,6 @@ impl Stage2 {
             panic!("Unexpected RESYNC response: {:?}", response);
         }
 
-        // External Flash checks
-        let spi = SpiMut(spi);
-        let flash_cs = pins::Pio0_13::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
-        let _power = pins::Pio0_21::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
-
-        self.basic.delay_timer.start(200_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
-
-        let mut flash = ExtFlashStorage::new(spi, flash_cs);
-        if !Filesystem::is_mountable(&mut flash) {
-            debug_now!("external filesystem not mountable, trying to format");
-            Filesystem::format(&mut flash).expect("failed to format external filesystem");
-        }
-        if !Filesystem::is_mountable(&mut flash) {
-            panic!("filesystem not mountable after format");
-        }
-
         info_now!("hardware checks successful");
     }
 
@@ -463,15 +441,18 @@ impl Stage2 {
         usbhs: Usbhs<Unknown>,
         nfc_enabled: bool,
     ) -> Stage3 {
-        let nfc_chip = if cfg!(feature = "lpc55-hardware-checks") {
-            let mut spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
-            self.run_hardware_checks(flexcomm5, &mut spi);
-            None
-        } else if nfc_enabled {
+        if cfg!(feature = "lpc55-hardware-checks") {
+            self.run_hardware_checks(flexcomm5);
+        }
+
+        let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
+        let (nfc_chip, spi) = if use_nfc {
             let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-            self.setup_fm11nc08(spi, mux, pint)
+            let nfc = self.setup_fm11nc08(spi, mux, pint);
+            (nfc, None)
         } else {
-            None
+            let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
+            (None, Some(spi))
         };
 
         let usb_bus = if !self.clocks.is_nfc_passive {
@@ -486,6 +467,7 @@ impl Stage2 {
             clocks: self.clocks,
             basic: self.basic,
             usb_nfc,
+            spi,
         }
     }
 }
@@ -495,6 +477,7 @@ pub struct Stage3 {
     clocks: Clocks,
     basic: Basic,
     usb_nfc: UsbNfc,
+    spi: Option<Spi>,
 }
 
 impl Stage3 {
@@ -526,6 +509,7 @@ impl Stage3 {
             clocks: self.clocks,
             basic: self.basic,
             usb_nfc: self.usb_nfc,
+            spi: self.spi,
             flash,
         }
     }
@@ -536,15 +520,39 @@ pub struct Stage4 {
     clocks: Clocks,
     basic: Basic,
     usb_nfc: UsbNfc,
+    spi: Option<Spi>,
     flash: Flash,
 }
 
 impl Stage4 {
+    fn setup_external_flash(&mut self, spi: Spi) -> ExtFlashStorage<Spi, FlashCs> {
+        let flash_cs = FlashCsPin::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+        let _power = pins::Pio0_21::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+
+        self.basic.delay_timer.start(200_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
+
+        ExtFlashStorage::new(spi, flash_cs)
+    }
+
     #[inline(never)]
     pub fn next(mut self) -> Stage5 {
-        let syscon = &mut self.peripherals.syscon;
-        let pmc = &mut self.peripherals.pmc;
         info_now!("making fs");
+
+        let external = if let Some(spi) = self.spi.take() {
+            info_now!("using external flash");
+            let external_flash = self.setup_external_flash(spi);
+            OptionalStorage::from(external_flash)
+        } else {
+            info_now!("simulating external flash with RAM");
+            OptionalStorage::default()
+        };
 
         #[cfg(not(feature = "no-encrypted-storage"))]
         let internal = {
@@ -556,14 +564,17 @@ impl Stage4 {
 
         #[cfg(feature = "no-encrypted-storage")]
         let internal = super::types::InternalFilesystem::new(self.flash.flash_gordon);
-        let external = super::types::ExternalRAMStorage::new();
 
         // temporarily increase clock for the storage mounting or else it takes a long time.
         if self.clocks.is_nfc_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
                     .system_frequency(48.MHz())
-                    .reconfigure(self.clocks.clocks, pmc, syscon)
+                    .reconfigure(
+                        self.clocks.clocks,
+                        &mut self.peripherals.pmc,
+                        &mut self.peripherals.syscon,
+                    )
             };
         }
 
@@ -572,7 +583,8 @@ impl Stage4 {
             self.basic.perf_timer.elapsed().0 / 1000
         );
         // TODO: poll iso14443
-        let store = crate::init_store(internal, external);
+        let simulated_efs = external.is_ram();
+        let store = crate::init_store(internal, external, simulated_efs);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -580,7 +592,11 @@ impl Stage4 {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
                     .system_frequency(12.MHz())
-                    .reconfigure(self.clocks.clocks, pmc, syscon)
+                    .reconfigure(
+                        self.clocks.clocks,
+                        &mut self.peripherals.pmc,
+                        &mut self.peripherals.syscon,
+                    )
             };
         }
 
