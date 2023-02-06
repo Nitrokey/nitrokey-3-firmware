@@ -3,6 +3,8 @@ use nrf52840_hal::gpio::{Floating, Input, Output, Pin, PushPull};
 use nrf52840_hal::prelude::OutputPin;
 use nrf52840_hal::spim::Pins as SpimPins;
 
+use crate::flash::SPARE_LEN;
+
 pub struct QspiFlash {
     qspi: nrf52840_pac::QSPI,
     clk_pin: Pin<Output<PushPull>>,
@@ -127,10 +129,11 @@ impl QspiFlash {
 }
 
 impl littlefs2::driver::Storage for QspiFlash {
-    const BLOCK_SIZE: usize = 0x1000;
+    const BLOCK_SIZE: usize = 4096;
     const READ_SIZE: usize = 4;
     const WRITE_SIZE: usize = 256;
-    const BLOCK_COUNT: usize = Self::FLASH_SIZE / Self::BLOCK_SIZE;
+    const BLOCK_COUNT: usize =
+        (Self::FLASH_SIZE / Self::BLOCK_SIZE) - (SPARE_LEN / Self::BLOCK_SIZE);
     type CACHE_SIZE = generic_array::typenum::U256;
     type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 

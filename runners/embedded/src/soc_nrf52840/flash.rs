@@ -36,7 +36,7 @@ impl littlefs2::driver::Storage for FlashStorage {
     }
 
     fn erase(&mut self, off: usize, len: usize) -> Result<usize, littlefs2::io::Error> {
-        trace!("EE {:x} {:x}", off, len);
+        trace!("IFe {:x} {:x}", off, len);
 
         const REAL_BLOCK_SIZE: usize = 4 * 1024;
 

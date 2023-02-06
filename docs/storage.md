@@ -10,6 +10,12 @@ The Nitrokey 3 has three storage types: internal, external and volatile.  The in
 | Internal (nrf52) | 80 KiB |
 | External         | 2 MiB  |
 
+### External Flash
+
+The external flash is not entirely under littlefs2's control. At the end
+128KiB are left free for any potential future use-cases. This leaves 
+1920KiB for littlefs2 usage. 
+
 ## Usage
 
 This section describes how the storage is used in the current stable firmware.
