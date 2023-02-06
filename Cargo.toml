@@ -17,7 +17,7 @@ version = "1.2.2"
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.1-nitrokey-1" }
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", branch = "lookahead" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", branch = "lfs2-lookahead" } 
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-4" }
+trussed = { git = "https://github.com/Nitrokey/trussed", branch = "lfs2-lookahead" }
 
 # unreleased
 interchange = { git = "https://github.com/trussed-dev/interchange" }
