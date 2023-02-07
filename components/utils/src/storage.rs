@@ -126,4 +126,3 @@ impl<S, const RAM_SIZE: usize> From<S> for OptionalStorage<S, RAM_SIZE> {
         Self::Storage(storage)
     }
 }
-
