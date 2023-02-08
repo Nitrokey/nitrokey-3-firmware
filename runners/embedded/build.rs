@@ -174,17 +174,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // write 'build_constants.rs' header
     writeln!(&mut f, "pub mod build_constants {{").expect("Could not write build_constants.rs.");
 
-    add_build_variable!(&mut f, "CARGO_PKG_VERSION_MAJOR", u8);
-    add_build_variable!(&mut f, "CARGO_PKG_VERSION_MINOR", u8);
-    add_build_variable!(&mut f, "CARGO_PKG_VERSION_PATCH", u8);
-
     add_build_variable!(&mut f, "CARGO_PKG_HASH", hash_long);
     add_build_variable!(&mut f, "CARGO_PKG_HASH_SHORT", hash_short);
-
-    // Add integer version of the version number
-    let major: u32 = str::parse(env!("CARGO_PKG_VERSION_MAJOR")).unwrap();
-    let minor: u32 = str::parse(env!("CARGO_PKG_VERSION_MINOR")).unwrap();
-    let patch: u32 = str::parse(env!("CARGO_PKG_VERSION_PATCH")).unwrap();
 
     // USB Identifiers
     add_build_variable!(
@@ -211,18 +202,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let raw_issuer = config.identifier.ccid_issuer.as_bytes();
     ccid_bytes[..raw_issuer.len()].clone_from_slice(raw_issuer);
     add_build_variable!(&mut f, "CCID_ISSUER", ccid_bytes, [u8; 13]);
-
-    if major >= 1024 || minor > 9999 || patch >= 64 {
-        panic!("config.firmware.product can at most be 1023.9999.63 for versions in customer data");
-    } else if major >= 256 || minor >= 256 {
-        panic!("USB release version number overflow (maximum: major 255, minor 255)");
-    }
-
-    let version_to_check: u32 = (major << 22) | (minor << 6) | patch;
-    add_build_variable!(&mut f, "CARGO_PKG_VERSION", version_to_check, u32);
-
-    let usb_release_version: u16 = ((major as u16) << 8) | (minor as u16);
-    add_build_variable!(&mut f, "USB_RELEASE", usb_release_version, u16);
 
     add_build_variable!(
         &mut f,

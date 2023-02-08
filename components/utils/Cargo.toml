@@ -1,6 +1,6 @@
 [package]
 name = "utils"
-version = "0.1.0"
+version = { workspace = true }
 edition = "2021"
 
 [dependencies]
@@ -14,3 +14,6 @@ log-info = []
 log-debug = []
 log-warn = []
 log-error = []
+
+[dev-dependencies]
+quickcheck = "1.0.3"

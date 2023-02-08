@@ -1,6 +1,6 @@
 [package]
 name = "apps"
-version = "0.1.0"
+version = { workspace = true }
 edition = "2021"
 
 [dependencies]
@@ -9,6 +9,7 @@ ctaphid-dispatch = "0.1"
 trussed = "0.1"
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
+utils = { path = "../utils" }
 
 # apps
 admin-app = { git = "https://github.com/solokeys/admin-app", optional = true }

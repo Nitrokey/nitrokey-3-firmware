@@ -101,7 +101,6 @@ impl trussed::platform::UserInterface for UserInterface {
 
 struct Runner<S: StoreProvider> {
     serial: [u8; 16],
-    version: u32,
     _marker: std::marker::PhantomData<S>,
 }
 
@@ -112,13 +111,8 @@ impl<S: StoreProvider> Runner<S> {
             OsRng.fill_bytes(&mut uuid);
             uuid
         });
-        let major: u32 = env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap();
-        let minor: u32 = env!("CARGO_PKG_VERSION_MINOR").parse().unwrap();
-        let patch: u32 = env!("CARGO_PKG_VERSION_PATCH").parse().unwrap();
-        let version = (major << 22) | (minor << 6) | patch;
         Runner {
             serial,
-            version,
             _marker: Default::default(),
         }
     }
@@ -137,10 +131,6 @@ impl<S: StoreProvider> apps::Runner for Runner<S> {
 
     fn uuid(&self) -> [u8; 16] {
         self.serial
-    }
-
-    fn version(&self) -> u32 {
-        self.version
     }
 }
 

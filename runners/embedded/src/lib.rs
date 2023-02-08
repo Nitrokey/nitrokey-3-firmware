@@ -29,12 +29,10 @@ static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::emp
 
 pub fn banner() {
     info!(
-        "Embedded Runner ({}:{}) using librunner {}.{}.{}",
+        "Embedded Runner ({}:{}) using librunner {}",
         <SocT as Soc>::SOC_NAME,
         <SocT as Soc>::BOARD_NAME,
-        types::build_constants::CARGO_PKG_VERSION_MAJOR,
-        types::build_constants::CARGO_PKG_VERSION_MINOR,
-        types::build_constants::CARGO_PKG_VERSION_PATCH
+        utils::VERSION,
     );
 }
 
@@ -160,7 +158,7 @@ pub fn init_usb_nfc(
 			.product(config.usb_product)
 			.manufacturer(config.usb_manufacturer)
 			/*.serial_number(config.usb_serial)  <---- don't configure serial to not be identifiable */
-			.device_release(crate::types::build_constants::USB_RELEASE)
+			.device_release(utils::VERSION.usb_release())
 			.max_packet_size_0(64)
 			.composite_with_iads()
 			.build();

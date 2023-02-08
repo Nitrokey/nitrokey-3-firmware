@@ -25,7 +25,7 @@ pub struct Config {
     pub usb_product: &'static str,
     pub usb_manufacturer: &'static str,
     pub usb_serial: &'static str,
-    // pub usb_release: u16 --> taken from build_constants::USB_RELEASE
+    // pub usb_release: u16 --> taken from utils::VERSION::usb_release()
     pub usb_id_vendor: u16,
     pub usb_id_product: u16,
 }
@@ -67,10 +67,6 @@ impl apps::Runner for Runner {
 
     fn uuid(&self) -> [u8; 16] {
         *<SocT as Soc>::device_uuid()
-    }
-
-    fn version(&self) -> u32 {
-        build_constants::CARGO_PKG_VERSION
     }
 }
 

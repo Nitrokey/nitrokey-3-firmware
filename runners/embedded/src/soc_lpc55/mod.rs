@@ -15,6 +15,8 @@ use delog::delog;
 
 delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
+const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
+
 pub fn init(
     device_peripherals: lpc55_hal::raw::Peripherals,
     core_peripherals: rtic::export::Peripherals,
@@ -30,7 +32,7 @@ pub fn init(
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 
     let require_prince = cfg!(not(feature = "no-encrypted-storage"));
-    let secure_firmware_version = Some(crate::types::build_constants::CARGO_PKG_VERSION);
+    let secure_firmware_version = Some(SECURE_FIRMWARE_VERSION);
     let nfc_enabled = true;
     let boot_to_bootrom = true;
 

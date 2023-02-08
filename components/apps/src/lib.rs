@@ -24,7 +24,6 @@ pub trait Runner {
     type Filesystem: trussed::types::LfsStorage + 'static;
 
     fn uuid(&self) -> [u8; 16];
-    fn version(&self) -> u32;
 }
 
 pub struct NonPortable<R: Runner> {
@@ -203,7 +202,8 @@ impl<R: Runner> App<R> for AdminApp<R> {
     type NonPortable = ();
 
     fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
-        Self::new(trussed, runner.uuid(), runner.version())
+        const VERSION: u32 = utils::VERSION.encode();
+        Self::new(trussed, runner.uuid(), VERSION)
     }
 }
 
