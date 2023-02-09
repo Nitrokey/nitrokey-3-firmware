@@ -108,20 +108,21 @@ where
         cs.set_high().ok().unwrap();
     }
 
-    pub fn new(mut spim: SPI, mut cs: CS) -> Self {
+    pub fn try_new(mut spim: SPI, mut cs: CS) -> Option<Self> {
         Self::selftest(&mut spim, &mut cs);
 
-        let mut flash = spi_memory::series25::Flash::init(spim, cs).ok().unwrap();
-        let jedec_id = flash.read_jedec_id().ok().unwrap();
+        let mut flash = spi_memory::series25::Flash::init(spim, cs).ok()?;
+        let jedec_id = flash.read_jedec_id().ok()?;
         info!("Ext. Flash: {:?}", jedec_id);
         if jedec_id.mfr_code() != FLASH_PROPERTIES.jedec[0]
             || jedec_id.device_id() != &FLASH_PROPERTIES.jedec[1..]
         {
-            panic!("Unknown Ext. Flash!");
+            error_now!("Unknown Ext. Flash: {:?}", jedec_id);
+            None
+        } else {
+            let s25flash = RefCell::new(flash);
+            Some(Self { s25flash })
         }
-        let s25flash = RefCell::new(flash);
-
-        Self { s25flash }
     }
 
     pub fn selftest(spim: &mut SPI, cs: &mut CS) {
