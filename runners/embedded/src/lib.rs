@@ -198,7 +198,7 @@ pub fn init_apps(
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {
-    let admin = apps::AdminAppNonPortable {
+    let admin = apps::AdminData {
         init_status: init_status.bits(),
     };
     #[cfg(feature = "provisioner")]
@@ -209,20 +209,20 @@ pub fn init_apps(
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
         let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
 
-        apps::ProvisionerNonPortable {
+        apps::ProvisionerData {
             store,
             stolen_filesystem: int_flash_ref,
             nfc_powered: _on_nfc_power,
             rebooter,
         }
     };
-    let non_portable = apps::NonPortable {
+    let data = apps::Data {
         admin,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),
     };
-    types::Apps::with_service(&types::Runner, trussed, non_portable)
+    types::Apps::with_service(&types::Runner, trussed, data)
 }
 
 #[inline(never)]

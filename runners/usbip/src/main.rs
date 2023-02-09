@@ -185,10 +185,10 @@ fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, ser
             platform.user_interface().set_inner(ui);
         })
         .exec::<apps::Apps<Runner<S>>, _, _>(|_platform| {
-            let non_portable = apps::NonPortable {
+            let data = apps::Data {
                 admin: Default::default(),
                 #[cfg(feature = "provisioner")]
-                provisioner: apps::ProvisionerNonPortable {
+                provisioner: apps::ProvisionerData {
                     store: unsafe { S::store() },
                     stolen_filesystem: unsafe { S::ifs() },
                     nfc_powered: false,
@@ -196,6 +196,6 @@ fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, ser
                 },
                 _marker: Default::default(),
             };
-            (&runner, non_portable)
+            (&runner, data)
         });
 }

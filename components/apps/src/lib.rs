@@ -26,11 +26,11 @@ pub trait Runner {
     fn uuid(&self) -> [u8; 16];
 }
 
-pub struct NonPortable<R: Runner> {
+pub struct Data<R: Runner> {
     #[cfg(feature = "admin-app")]
-    pub admin: AdminAppNonPortable,
+    pub admin: AdminData,
     #[cfg(feature = "provisioner-app")]
-    pub provisioner: ProvisionerNonPortable<R>,
+    pub provisioner: ProvisionerData<R>,
     pub _marker: PhantomData<R>,
 }
 
@@ -66,18 +66,14 @@ pub struct Apps<R: Runner> {
 }
 
 impl<R: Runner> Apps<R> {
-    pub fn new(
-        runner: &R,
-        mut make_client: impl FnMut(&[u8]) -> Client<R>,
-        non_portable: NonPortable<R>,
-    ) -> Self {
-        let NonPortable {
+    pub fn new(runner: &R, mut make_client: impl FnMut(&[u8]) -> Client<R>, data: Data<R>) -> Self {
+        let Data {
             #[cfg(feature = "admin-app")]
             admin,
             #[cfg(feature = "provisioner-app")]
             provisioner,
             ..
-        } = non_portable;
+        } = data;
         Self {
             #[cfg(feature = "admin-app")]
             admin: App::new(runner, &mut make_client, admin),
@@ -94,11 +90,7 @@ impl<R: Runner> Apps<R> {
         }
     }
 
-    pub fn with_service<P: Platform>(
-        runner: &R,
-        trussed: &mut Service<P>,
-        non_portable: NonPortable<R>,
-    ) -> Self
+    pub fn with_service<P: Platform>(runner: &R, trussed: &mut Service<P>, data: Data<R>) -> Self
     where
         R::Syscall: Default,
     {
@@ -115,7 +107,7 @@ impl<R: Runner> Apps<R> {
                 let syscaller = R::Syscall::default();
                 ClientImplementation::new(trussed_requester, syscaller)
             },
-            non_portable,
+            data,
         )
     }
 
@@ -157,8 +149,8 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, NonPortable<R>)> for Apps<R> {
-    fn new(make_client: impl Fn(&str) -> Client<R>, (runner, data): (&R, NonPortable<R>)) -> Self {
+impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, Data<R>)> for Apps<R> {
+    fn new(make_client: impl Fn(&str) -> Client<R>, (runner, data): (&R, Data<R>)) -> Self {
         Self::new(
             runner,
             move |id| {
@@ -182,26 +174,22 @@ impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, NonPortable<R>)> for Apps<R>
 }
 
 trait App<R: Runner>: Sized {
-    /// non-portable resources needed by this Trussed app
-    type NonPortable;
+    /// additional data needed by this Trussed app
+    type Data;
 
     /// the desired client ID
     const CLIENT_ID: &'static [u8];
 
-    fn new(
-        runner: &R,
-        make_client: impl FnOnce(&[u8]) -> Client<R>,
-        non_portable: Self::NonPortable,
-    ) -> Self {
-        Self::with_client(runner, make_client(Self::CLIENT_ID), non_portable)
+    fn new(runner: &R, make_client: impl FnOnce(&[u8]) -> Client<R>, data: Self::Data) -> Self {
+        Self::with_client(runner, make_client(Self::CLIENT_ID), data)
     }
 
-    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self;
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self;
 }
 
 #[cfg(feature = "admin-app")]
 #[derive(Default)]
-pub struct AdminAppNonPortable {
+pub struct AdminData {
     pub init_status: u8,
 }
 
@@ -209,16 +197,16 @@ pub struct AdminAppNonPortable {
 impl<R: Runner> App<R> for AdminApp<R> {
     const CLIENT_ID: &'static [u8] = b"admin\0";
 
-    type NonPortable = AdminAppNonPortable;
+    type Data = AdminData;
 
-    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self {
         const VERSION: u32 = utils::VERSION.encode();
         Self::new(
             trussed,
             runner.uuid(),
             VERSION,
             utils::VERSION_STRING,
-            non_portable.init_status,
+            data.init_status,
         )
     }
 }
@@ -227,7 +215,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
 impl<R: Runner> App<R> for FidoApp<R> {
     const CLIENT_ID: &'static [u8] = b"fido\0";
 
-    type NonPortable = ();
+    type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
         fido_authenticator::Authenticator::new(
@@ -245,7 +233,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
 impl<R: Runner> App<R> for OathApp<R> {
     const CLIENT_ID: &'static [u8] = b"oath\0";
 
-    type NonPortable = ();
+    type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
         Self::new(trussed)
@@ -256,7 +244,7 @@ impl<R: Runner> App<R> for OathApp<R> {
 impl<R: Runner> App<R> for OpcardApp<R> {
     const CLIENT_ID: &'static [u8] = b"opcard\0";
 
-    type NonPortable = ();
+    type Data = ();
 
     fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
         let uuid = runner.uuid();
@@ -269,7 +257,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
 }
 
 #[cfg(feature = "provisioner-app")]
-pub struct ProvisionerNonPortable<R: Runner> {
+pub struct ProvisionerData<R: Runner> {
     pub store: R::Store,
     pub stolen_filesystem: &'static mut R::Filesystem,
     pub nfc_powered: bool,
@@ -280,17 +268,17 @@ pub struct ProvisionerNonPortable<R: Runner> {
 impl<R: Runner> App<R> for ProvisionerApp<R> {
     const CLIENT_ID: &'static [u8] = b"attn\0";
 
-    type NonPortable = ProvisionerNonPortable<R>;
+    type Data = ProvisionerData<R>;
 
-    fn with_client(runner: &R, trussed: Client<R>, non_portable: Self::NonPortable) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self {
         let uuid = runner.uuid();
         Self::new(
             trussed,
-            non_portable.store,
-            non_portable.stolen_filesystem,
-            non_portable.nfc_powered,
+            data.store,
+            data.stolen_filesystem,
+            data.nfc_powered,
             uuid,
-            non_portable.rebooter,
+            data.rebooter,
         )
     }
 }
