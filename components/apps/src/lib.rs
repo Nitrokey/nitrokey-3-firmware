@@ -141,13 +141,18 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, Data<R>)> for Apps<R> {
-    fn new(make_client: impl Fn(&str) -> Client<R>, (runner, data): (&R, Data<R>)) -> Self {
+impl<R: Runner, D: trussed::backend::Dispatch> trussed_usbip::Apps<Client<R>, D> for Apps<R> {
+    type Data = (R, Data<R>);
+
+    fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
+    where
+        B: trussed_usbip::ClientBuilder<Client<R>, D>,
+    {
         Self::new(
-            runner,
+            &runner,
             move |id| {
                 let id = core::str::from_utf8(id).expect("invalid client id");
-                make_client(id)
+                builder.build(id, &[])
             },
             data,
         )
