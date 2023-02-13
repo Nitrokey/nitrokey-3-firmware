@@ -6,9 +6,13 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
+    api::{Reply, Request},
     backend::{self, BackendId},
     client::ClientBuilder,
+    error::Error,
     platform::Syscall,
+    service::ServiceResources,
+    types::Context,
     ClientImplementation, Platform, Service,
 };
 
@@ -52,17 +56,59 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
 
-#[derive(Debug, Default)]
-pub struct Dispatch;
+pub struct Dispatch {
+    #[cfg(feature = "backend-rsa")]
+    rsa: trussed_rsa_alloc::SoftwareRsa,
+}
+
+// Deriving Default is not possible if the backend-rsa feature is enabled.
+#[allow(clippy::derivable_impls)]
+impl Default for Dispatch {
+    fn default() -> Self {
+        Self {
+            #[cfg(feature = "backend-rsa")]
+            rsa: trussed_rsa_alloc::SoftwareRsa,
+        }
+    }
+}
 
 impl backend::Dispatch for Dispatch {
     type Context = ();
     type BackendId = Backend;
+
+    fn request<P: Platform>(
+        &mut self,
+        backend: &Self::BackendId,
+        ctx: &mut Context<Self::Context>,
+        request: &Request,
+        resources: &mut ServiceResources<P>,
+    ) -> Result<Reply, Error> {
+        match backend {
+            #[cfg(feature = "backend-rsa")]
+            Backend::Rsa => {
+                use backend::Backend as _;
+                self.rsa
+                    .request(&mut ctx.core, &mut ctx.backends, request, resources)
+            }
+
+            // Allow this wildcard in case no backend feature is acticated.
+            #[allow(unreachable_patterns)]
+            _ => {
+                let _ = (ctx, request, resources);
+                Err(Error::RequestNotAvailable)
+            }
+        }
+    }
 }
 
-pub enum Backend {}
+pub enum Backend {
+    #[cfg(feature = "backend-rsa")]
+    Rsa,
+}
 
 const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
+#[cfg(feature = "backend-rsa")]
+const BACKENDS_RSA: &[BackendId<Backend>] = &[BackendId::Custom(Backend::Rsa), BackendId::Core];
 
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
@@ -283,6 +329,10 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
         // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
+    }
+
+    fn backends(_runner: &R) -> &'static [BackendId<Backend>] {
+        BACKENDS_RSA
     }
 }
 

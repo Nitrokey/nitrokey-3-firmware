@@ -19,6 +19,9 @@ trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-
 # unreleased
 interchange = { git = "https://github.com/trussed-dev/interchange" }
 
+[patch."https://github.com/trussed-dev/trussed.git"]
+trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-5" }
+
 [profile.release]
 codegen-units = 1
 lto = true

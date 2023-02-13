@@ -16,13 +16,23 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitro
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/Nitrokey/oath-authenticator", rev = "8bbaece4c4fc24dcac3b4a7c2104e72bd8dd43af", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.2.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", branch = "rsa-backend", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
+# backends
+trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend", rev = "a39ceceeb6c5faecec567d6b1b2ed3d456951c07", optional = true }
+
 [features]
+# app selection
 default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 alpha = ["oath-authenticator", "opcard", "trussed/clients-4"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
+
+# apps
+opcard = ["dep:opcard", "backend-rsa"]
+
+# backends
+backend-rsa = ["trussed-rsa-alloc"]
 
 log-all = [
     "admin-app?/log-all",
