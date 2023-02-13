@@ -5,7 +5,12 @@ use apdu_dispatch::{
 };
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
-use trussed::{client::ClientBuilder, platform::Syscall, ClientImplementation, Platform, Service};
+use trussed::{
+    backend::{self, BackendId},
+    client::ClientBuilder,
+    platform::Syscall,
+    ClientImplementation, Platform, Service,
+};
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
@@ -31,7 +36,7 @@ pub struct Data<R: Runner> {
     pub _marker: PhantomData<R>,
 }
 
-type Client<R> = ClientImplementation<<R as Runner>::Syscall>;
+type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
 
 #[cfg(feature = "admin-app")]
 type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot>;
@@ -46,6 +51,18 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "provisioner-app")]
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
+
+#[derive(Debug, Default)]
+pub struct Dispatch;
+
+impl backend::Dispatch for Dispatch {
+    type Context = ();
+    type BackendId = Backend;
+}
+
+pub enum Backend {}
+
+const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
 
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
@@ -63,7 +80,11 @@ pub struct Apps<R: Runner> {
 }
 
 impl<R: Runner> Apps<R> {
-    pub fn new(runner: &R, mut make_client: impl FnMut(&[u8]) -> Client<R>, data: Data<R>) -> Self {
+    pub fn new(
+        runner: &R,
+        mut make_client: impl FnMut(&str, &'static [BackendId<Backend>]) -> Client<R>,
+        data: Data<R>,
+    ) -> Self {
         let Data {
             #[cfg(feature = "admin-app")]
             admin,
@@ -87,14 +108,19 @@ impl<R: Runner> Apps<R> {
         }
     }
 
-    pub fn with_service<P: Platform>(runner: &R, trussed: &mut Service<P>, data: Data<R>) -> Self
+    pub fn with_service<P: Platform>(
+        runner: &R,
+        trussed: &mut Service<P, Dispatch>,
+        data: Data<R>,
+    ) -> Self
     where
         R::Syscall: Default,
     {
         Self::new(
             runner,
-            |id| {
+            |id, backends| {
                 ClientBuilder::new(id)
+                    .backends(backends)
                     .prepare(trussed)
                     .unwrap()
                     .build(R::Syscall::default())
@@ -141,19 +167,16 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner, D: trussed::backend::Dispatch> trussed_usbip::Apps<Client<R>, D> for Apps<R> {
+impl<R: Runner> trussed_usbip::Apps<Client<R>, Dispatch> for Apps<R> {
     type Data = (R, Data<R>);
 
     fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
     where
-        B: trussed_usbip::ClientBuilder<Client<R>, D>,
+        B: trussed_usbip::ClientBuilder<Client<R>, Dispatch>,
     {
         Self::new(
             &runner,
-            move |id| {
-                let id = core::str::from_utf8(id).expect("invalid client id");
-                builder.build(id, &[])
-            },
+            move |id, backends| builder.build(id, backends),
             data,
         )
     }
@@ -175,13 +198,23 @@ trait App<R: Runner>: Sized {
     type Data;
 
     /// the desired client ID
-    const CLIENT_ID: &'static [u8];
+    const CLIENT_ID: &'static str;
 
-    fn new(runner: &R, make_client: impl FnOnce(&[u8]) -> Client<R>, data: Self::Data) -> Self {
-        Self::with_client(runner, make_client(Self::CLIENT_ID), data)
+    fn new(
+        runner: &R,
+        make_client: impl FnOnce(&str, &'static [BackendId<Backend>]) -> Client<R>,
+        data: Self::Data,
+    ) -> Self {
+        let backends = Self::backends(runner);
+        Self::with_client(runner, make_client(Self::CLIENT_ID, backends), data)
     }
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self;
+
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        let _ = runner;
+        BACKENDS_DEFAULT
+    }
 }
 
 #[cfg(feature = "admin-app")]
@@ -192,7 +225,7 @@ pub struct AdminData {
 
 #[cfg(feature = "admin-app")]
 impl<R: Runner> App<R> for AdminApp<R> {
-    const CLIENT_ID: &'static [u8] = b"admin\0";
+    const CLIENT_ID: &'static str = "admin";
 
     type Data = AdminData;
 
@@ -210,7 +243,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
 
 #[cfg(feature = "fido-authenticator")]
 impl<R: Runner> App<R> for FidoApp<R> {
-    const CLIENT_ID: &'static [u8] = b"fido\0";
+    const CLIENT_ID: &'static str = "fido";
 
     type Data = ();
 
@@ -228,7 +261,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
 #[cfg(feature = "oath-authenticator")]
 impl<R: Runner> App<R> for OathApp<R> {
-    const CLIENT_ID: &'static [u8] = b"oath\0";
+    const CLIENT_ID: &'static str = "oath";
 
     type Data = ();
 
@@ -239,7 +272,7 @@ impl<R: Runner> App<R> for OathApp<R> {
 
 #[cfg(feature = "opcard")]
 impl<R: Runner> App<R> for OpcardApp<R> {
-    const CLIENT_ID: &'static [u8] = b"opcard\0";
+    const CLIENT_ID: &'static str = "opcard";
 
     type Data = ();
 
@@ -263,7 +296,7 @@ pub struct ProvisionerData<R: Runner> {
 
 #[cfg(feature = "provisioner-app")]
 impl<R: Runner> App<R> for ProvisionerApp<R> {
-    const CLIENT_ID: &'static [u8] = b"attn\0";
+    const CLIENT_ID: &'static str = "attn";
 
     type Data = ProvisionerData<R>;
 

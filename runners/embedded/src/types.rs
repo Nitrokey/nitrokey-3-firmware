@@ -4,6 +4,7 @@ use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
+use apps::Dispatch;
 use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
@@ -108,7 +109,7 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed = trussed::Service<RunnerPlatform>;
+pub type Trussed = trussed::Service<RunnerPlatform, Dispatch>;
 
 pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 

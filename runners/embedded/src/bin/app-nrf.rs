@@ -201,7 +201,8 @@ mod app {
         let platform: ERL::types::RunnerPlatform =
             ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 
-        let mut trussed_service = trussed::service::Service::new(platform);
+        let mut trussed_service =
+            trussed::service::Service::with_dispatch(platform, apps::Dispatch::default());
 
         let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 
