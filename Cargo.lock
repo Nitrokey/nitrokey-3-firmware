@@ -2554,7 +2554,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-4#238b7b26b3d97575aa1293c75b9d02388a574ede"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-5#c15214355e4ca40e8b83dc9705292a5e64966f8f"
 dependencies = [
  "aes",
  "bitflags",
