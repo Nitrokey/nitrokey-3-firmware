@@ -7,10 +7,12 @@ use clap_num::maybe_hex;
 use log::info;
 use rand_core::{OsRng, RngCore};
 use trussed::{
+    backend::CoreOnly,
     platform::{consent, reboot, ui},
     virt::{self, StoreProvider},
     Platform,
 };
+use trussed_usbip::Service;
 
 use store::Ram;
 
@@ -119,7 +121,7 @@ impl<S: StoreProvider> Runner<S> {
 }
 
 impl<S: StoreProvider> apps::Runner for Runner<S> {
-    type Syscall = trussed_usbip::Syscall<virt::Platform<S>>;
+    type Syscall = Service<S, CoreOnly>;
 
     type Reboot = Reboot;
 
@@ -176,15 +178,15 @@ fn print_version() {
 }
 
 fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, serial: Option<u128>) {
-    let runner = Runner::new(serial);
     log::info!("Initializing Trussed");
-    trussed_usbip::Runner::new(store, options)
+    trussed_usbip::Builder::new(store, options)
         .init_platform(move |platform| {
             let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
                 Box::new(UserInterface::new());
             platform.user_interface().set_inner(ui);
         })
-        .exec::<apps::Apps<Runner<S>>, _, _>(|_platform| {
+        .build::<apps::Apps<Runner<S>>>()
+        .exec(move |_platform| {
             let data = apps::Data {
                 admin: Default::default(),
                 #[cfg(feature = "provisioner")]
@@ -196,6 +198,6 @@ fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, ser
                 },
                 _marker: Default::default(),
             };
-            (&runner, data)
+            (Runner::new(serial), data)
         });
 }

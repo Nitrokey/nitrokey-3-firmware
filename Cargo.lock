@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/admin-app?rev=v0.1.0-nitrokey.1#70fd0b22284c49fea79b2e617e07d4239f4983c2"
+source = "git+https://github.com/Nitrokey/admin-app?rev=v0.1.0-nitrokey.1#70fd0b22284c49fea79b2e617e07d4239f4983c2"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -72,8 +72,9 @@ checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.1.1"
-source = "git+https://github.com/Nitrokey/apdu-dispatch?tag=v0.1.1-nitrokey-1#47c65f20f93e9215ad0afd6d960487f58676c2ea"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "898c4ae30eeab17a209d5576cf7b312fdbee4d1cb739333c1308908fc841a5fb"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -95,7 +96,7 @@ dependencies = [
  "provisioner-app",
  "trussed",
  "trussed-usbip",
- "usbd-ctaphid 0.1.0",
+ "usbd-ctaphid",
  "utils",
 ]
 
@@ -971,8 +972,8 @@ dependencies = [
  "toml",
  "trussed",
  "usb-device",
- "usbd-ccid 0.1.0",
- "usbd-ctaphid 0.1.0",
+ "usbd-ccid",
+ "usbd-ctaphid",
  "usbd-serial",
  "utils",
 ]
@@ -1814,8 +1815,8 @@ dependencies = [
 
 [[package]]
 name = "oath-authenticator"
-version = "0.3.0"
-source = "git+https://github.com/nitrokey/oath-authenticator?rev=0.3.0#2cbcfb54eec8dfe24920054c3cdc64d5d27c2021"
+version = "0.6.0"
+source = "git+https://github.com/Nitrokey/oath-authenticator?rev=8bbaece4c4fc24dcac3b4a7c2104e72bd8dd43af#8bbaece4c4fc24dcac3b4a7c2104e72bd8dd43af"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -1828,7 +1829,6 @@ dependencies = [
  "iso7816",
  "serde",
  "trussed",
- "usbd-ctaphid 0.0.0-unreleased",
 ]
 
 [[package]]
@@ -2554,7 +2554,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-4#238b7b26b3d97575aa1293c75b9d02388a574ede"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-5#c15214355e4ca40e8b83dc9705292a5e64966f8f"
 dependencies = [
  "aes",
  "bitflags",
@@ -2593,7 +2593,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner#7e3dfcd327cde008a03dd32f1c6572e1a7d2ba4f"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner#f3a680ca4c9a1411838ae0774f1713f79d4c2979"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -2601,8 +2601,8 @@ dependencies = [
  "log",
  "trussed",
  "usb-device",
- "usbd-ccid 0.0.0-unreleased",
- "usbd-ctaphid 0.0.0-unreleased",
+ "usbd-ccid",
+ "usbd-ctaphid",
  "usbip-device",
 ]
 
@@ -2695,43 +2695,15 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ccid"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#168011629dbea851fb9433f5b9a06f38f76cb07b"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "855caab212e6d9358cd924b1fc2f7d3d14fe0762bf3ccb052f2b00e2e3954084"
 dependencies = [
  "delog",
  "embedded-time",
  "heapless 0.7.16",
  "interchange",
  "iso7816",
- "usb-device",
-]
-
-[[package]]
-name = "usbd-ccid"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ccid#7de7b416b7d751bc6d3389971721d1394b0ec58a"
-dependencies = [
- "delog",
- "embedded-time",
- "heapless 0.7.16",
- "interchange",
- "iso7816",
- "usb-device",
-]
-
-[[package]]
-name = "usbd-ctaphid"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#168011629dbea851fb9433f5b9a06f38f76cb07b"
-dependencies = [
- "ctap-types",
- "ctaphid-dispatch",
- "delog",
- "embedded-time",
- "heapless 0.7.16",
- "heapless-bytes 0.3.0",
- "interchange",
- "serde",
  "usb-device",
 ]
 

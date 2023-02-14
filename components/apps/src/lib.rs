@@ -5,10 +5,7 @@ use apdu_dispatch::{
 };
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
-use trussed::{
-    pipe::TrussedInterchange, platform::Syscall, types::PathBuf, ClientImplementation,
-    Interchange as _, Platform, Service,
-};
+use trussed::{client::ClientBuilder, platform::Syscall, ClientImplementation, Platform, Service};
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
@@ -97,15 +94,10 @@ impl<R: Runner> Apps<R> {
         Self::new(
             runner,
             |id| {
-                let (trussed_requester, trussed_responder) =
-                    TrussedInterchange::claim().expect("could not setup TrussedInterchange");
-
-                let mut client_id = PathBuf::new();
-                client_id.push(id.try_into().unwrap());
-                assert!(trussed.add_endpoint(trussed_responder, client_id).is_ok());
-
-                let syscaller = R::Syscall::default();
-                ClientImplementation::new(trussed_requester, syscaller)
+                ClientBuilder::new(id)
+                    .prepare(trussed)
+                    .unwrap()
+                    .build(R::Syscall::default())
             },
             data,
         )
@@ -149,13 +141,18 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<Client<R>, (&R, Data<R>)> for Apps<R> {
-    fn new(make_client: impl Fn(&str) -> Client<R>, (runner, data): (&R, Data<R>)) -> Self {
+impl<R: Runner, D: trussed::backend::Dispatch> trussed_usbip::Apps<Client<R>, D> for Apps<R> {
+    type Data = (R, Data<R>);
+
+    fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
+    where
+        B: trussed_usbip::ClientBuilder<Client<R>, D>,
+    {
         Self::new(
-            runner,
+            &runner,
             move |id| {
                 let id = core::str::from_utf8(id).expect("invalid client id");
-                make_client(id)
+                builder.build(id, &[])
             },
             data,
         )
