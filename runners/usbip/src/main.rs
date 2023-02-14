@@ -2,12 +2,12 @@ mod store;
 
 use std::path::PathBuf;
 
+use apps::{Apps, Dispatch};
 use clap::Parser;
 use clap_num::maybe_hex;
 use log::info;
 use rand_core::{OsRng, RngCore};
 use trussed::{
-    backend::CoreOnly,
     platform::{consent, reboot, ui},
     virt::{self, StoreProvider},
     Platform,
@@ -121,7 +121,7 @@ impl<S: StoreProvider> Runner<S> {
 }
 
 impl<S: StoreProvider> apps::Runner for Runner<S> {
-    type Syscall = Service<S, CoreOnly>;
+    type Syscall = Service<S, Dispatch>;
 
     type Reboot = Reboot;
 
@@ -180,12 +180,13 @@ fn print_version() {
 fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, serial: Option<u128>) {
     log::info!("Initializing Trussed");
     trussed_usbip::Builder::new(store, options)
+        .dispatch(Dispatch::default())
         .init_platform(move |platform| {
             let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
                 Box::new(UserInterface::new());
             platform.user_interface().set_inner(ui);
         })
-        .build::<apps::Apps<Runner<S>>>()
+        .build::<Apps<Runner<S>>>()
         .exec(move |_platform| {
             let data = apps::Data {
                 admin: Default::default(),

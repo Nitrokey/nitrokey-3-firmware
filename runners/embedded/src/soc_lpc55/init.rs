@@ -1,3 +1,4 @@
+use apps::Dispatch;
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -26,7 +27,7 @@ use hal::{
 };
 use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
-use trussed::platform::UserInterface;
+use trussed::{platform::UserInterface, service::Service};
 use utils::OptionalStorage;
 
 use super::{
@@ -705,7 +706,7 @@ impl Stage5 {
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
-        let trussed = trussed::service::Service::new(board);
+        let trussed = Service::with_dispatch(board, Dispatch::default());
 
         Stage6 {
             status: self.status,
