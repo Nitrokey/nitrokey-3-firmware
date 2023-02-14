@@ -1,12 +1,10 @@
 [workspace]
 members = [
     "components/*",
-    "runners/embedded",
-    "runners/usbip",
+    "runners/*",
     "utils/collect-license-info",
     "utils/gen-commands-bd",
 ]
-exclude = ["runners/lpc55"]
 resolver = "2"
 
 [workspace.package]

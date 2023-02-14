@@ -1,5 +1,0 @@
-probes:
-  14028042:
-    target_override: lpc55s69
-packs:
-  - ./lpc55s69.pack
