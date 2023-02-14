@@ -29,12 +29,10 @@ static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::emp
 
 pub fn banner() {
     info!(
-        "Embedded Runner ({}:{}) using librunner {}.{}.{}",
+        "Embedded Runner ({}:{}) using librunner {}",
         <SocT as Soc>::SOC_NAME,
         <SocT as Soc>::BOARD_NAME,
-        types::build_constants::CARGO_PKG_VERSION_MAJOR,
-        types::build_constants::CARGO_PKG_VERSION_MINOR,
-        types::build_constants::CARGO_PKG_VERSION_PATCH
+        utils::VERSION,
     );
 }
 
@@ -50,6 +48,7 @@ pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
     simulated_efs: bool,
+    status: &mut types::InitStatus,
 ) -> types::RunnerStore {
     let volatile_storage = types::VolatileStorage::new();
 
@@ -76,6 +75,7 @@ pub fn init_store(
     if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
         let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
         error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
+        status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
     };
     let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
         Ok(ifs_) => {
@@ -86,17 +86,15 @@ pub fn init_store(
             panic!("store");
         }
     };
-    info_now!("-- is mountable");
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
-        info_now!("-- format");
         let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {
             info_now!("Formatting simulated EFS failed as expected");
         } else {
             error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
+            status.insert(types::InitStatus::EXTERNAL_FLASH_ERROR);
         }
     };
-    info_now!("-- mount");
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
         Ok(efs_) => {
             transcend!(types::EXTERNAL_FS, efs_)
@@ -106,7 +104,6 @@ pub fn init_store(
             panic!("store");
         }
     };
-    info_now!("-- done");
 
     if !littlefs2::fs::Filesystem::is_mountable(vfs_storage) {
         littlefs2::fs::Filesystem::format(vfs_storage).ok();
@@ -160,7 +157,7 @@ pub fn init_usb_nfc(
 			.product(config.usb_product)
 			.manufacturer(config.usb_manufacturer)
 			/*.serial_number(config.usb_serial)  <---- don't configure serial to not be identifiable */
-			.device_release(crate::types::build_constants::USB_RELEASE)
+			.device_release(utils::VERSION.usb_release())
 			.max_packet_size_0(64)
 			.composite_with_iads()
 			.build();
@@ -197,9 +194,13 @@ pub fn init_usb_nfc(
 
 pub fn init_apps(
     trussed: &mut types::Trussed,
+    init_status: types::InitStatus,
     _store: &types::RunnerStore,
     _on_nfc_power: bool,
 ) -> types::Apps {
+    let admin = apps::AdminData {
+        init_status: init_status.bits(),
+    };
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot;
@@ -208,19 +209,20 @@ pub fn init_apps(
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
         let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
 
-        apps::ProvisionerNonPortable {
+        apps::ProvisionerData {
             store,
             stolen_filesystem: int_flash_ref,
             nfc_powered: _on_nfc_power,
             rebooter,
         }
     };
-    let non_portable = apps::NonPortable {
+    let data = apps::Data {
+        admin,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),
     };
-    types::Apps::with_service(&types::Runner, trussed, non_portable)
+    types::Apps::with_service(&types::Runner, trussed, data)
 }
 
 #[inline(never)]

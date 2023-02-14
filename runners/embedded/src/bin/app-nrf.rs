@@ -51,6 +51,8 @@ mod app {
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        let mut init_status = ERL::types::InitStatus::default();
+
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
 
@@ -116,7 +118,8 @@ mod app {
         #[cfg(not(feature = "extflash_qspi"))]
         let extflash = ERL::soc::types::ExternalStorage::new();
 
-        let store: ERL::types::RunnerStore = ERL::init_store(internal_flash, extflash, false);
+        let store: ERL::types::RunnerStore =
+            ERL::init_store(internal_flash, extflash, false, &mut init_status);
 
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
         /* TODO: set up fingerprint device */
@@ -200,7 +203,7 @@ mod app {
 
         let mut trussed_service = trussed::service::Service::new(platform);
 
-        let apps = ERL::init_apps(&mut trussed_service, &store, !powered_by_usb);
+        let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 

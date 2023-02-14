@@ -1,4 +1,5 @@
 use super::spi::Spi;
+use crate::types::InitStatus;
 use lpc55_hal::{
     self,
     drivers::{
@@ -28,6 +29,7 @@ pub fn try_setup(
     // fm: &mut NfcChip,
     timer: &mut Timer<impl lpc55_hal::peripherals::ctimer::Ctimer<Enabled>>,
     always_reconfig: bool,
+    status: &mut InitStatus,
 ) -> Option<NfcChip> {
     // Start unselected.
     let nfc_cs = NfcCsPin::take()
@@ -48,6 +50,7 @@ pub fn try_setup(
 
     if current_regu_config == 0xff {
         // No nfc chip connected
+        status.insert(InitStatus::NFC_ERROR);
         info!("No NFC chip connected");
         return None;
     }
@@ -82,6 +85,7 @@ pub fn try_setup(
             timer,
         );
         if r.is_err() {
+            status.insert(InitStatus::NFC_ERROR);
             info!("Eeprom failed.  No NFC chip connected?");
             return None;
         }

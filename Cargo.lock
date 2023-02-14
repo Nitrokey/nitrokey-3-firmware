@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/solokeys/admin-app#efcd26bfb9c4b746de1ae6caca085dc5c26eccc4"
+source = "git+https://github.com/nitrokey/admin-app?rev=v0.1.0-nitrokey.1#70fd0b22284c49fea79b2e617e07d4239f4983c2"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "0.1.0"
+version = "1.2.2"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -96,6 +96,7 @@ dependencies = [
  "trussed",
  "trussed-usbip",
  "usbd-ctaphid 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -939,6 +940,7 @@ dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
+ "bitflags",
  "cargo-lock",
  "cfg-if",
  "chacha20 0.7.3",
@@ -1001,6 +1003,16 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a19187fea3ac7e84da7dacf48de0c45d63c6a76f9490dae389aead16c243fce3"
+dependencies = [
+ "log",
+ "regex",
 ]
 
 [[package]]
@@ -1966,7 +1978,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "926d36b9553851b8b0005f1275891b392ee4d2d833852c417ed025477350fb9d"
 dependencies = [
- "env_logger",
+ "env_logger 0.7.1",
  "log",
 ]
 
@@ -2023,6 +2035,17 @@ name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
+
+[[package]]
+name = "quickcheck"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "588f6378e4dd99458b60ec275b4477add41ce4fa9f64dcba6f15adccb19b50d6"
+dependencies = [
+ "env_logger 0.8.4",
+ "log",
+ "rand",
+]
 
 [[package]]
 name = "quote"
@@ -2771,10 +2794,11 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "0.1.0"
+version = "1.2.2"
 dependencies = [
  "delog",
  "littlefs2",
+ "quickcheck",
 ]
 
 [[package]]
