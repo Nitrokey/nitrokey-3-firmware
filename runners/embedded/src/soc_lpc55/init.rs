@@ -536,7 +536,7 @@ pub struct Stage4 {
 }
 
 impl Stage4 {
-    fn setup_external_flash(&mut self, spi: Spi) -> ExtFlashStorage<Spi, FlashCs> {
+    fn setup_external_flash(&mut self, spi: Spi) -> OptionalStorage<ExtFlashStorage<Spi, FlashCs>> {
         let flash_cs = FlashCsPin::take()
             .unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
@@ -549,7 +549,13 @@ impl Stage4 {
         self.basic.delay_timer.start(200_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
 
-        ExtFlashStorage::new(spi, flash_cs)
+        if let Some(storage) = ExtFlashStorage::try_new(spi, flash_cs) {
+            storage.into()
+        } else {
+            self.status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
+            info!("failed to initialize external flash, using fallback");
+            OptionalStorage::default()
+        }
     }
 
     #[inline(never)]
