@@ -8,13 +8,13 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.2.2"
+version = "1.2.2-alpha.20230224"
 
 [patch.crates-io]
 # forked
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-2" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-1" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey-5" }
+trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.6" }
 
 # unreleased
 interchange = { git = "https://github.com/trussed-dev/interchange" }

@@ -266,7 +266,9 @@ impl<R: Runner> App<R> for OathApp<R> {
     type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        Self::new(trussed)
+        let mut options = oath_authenticator::Options::default();
+        options.location = trussed::types::Location::Internal;
+        Self::with_options(trussed, options)
     }
 }
 
@@ -281,6 +283,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         let mut options = opcard::Options::default();
         options.button_available = true;
         options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
+        options.storage = trussed::types::Location::Internal;
         // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
     }

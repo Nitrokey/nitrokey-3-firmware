@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.2.2"
+version = "1.2.2-alpha.20230224"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -936,7 +936,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.2.2"
+version = "1.2.2-alpha.20230224"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -991,6 +991,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7a4b4d10ac48d08bfe3db7688c402baadb244721f30a77ce360bd24c3dffe58"
 dependencies = [
  "num",
+]
+
+[[package]]
+name = "encrypted_container"
+version = "0.1.0"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.6.0#cae0d089f5932fc3c20ce697c4c21e4ff5c65011"
+dependencies = [
+ "delog",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "serde",
+ "trussed",
 ]
 
 [[package]]
@@ -1816,11 +1828,12 @@ dependencies = [
 [[package]]
 name = "oath-authenticator"
 version = "0.6.0"
-source = "git+https://github.com/Nitrokey/oath-authenticator?rev=8bbaece4c4fc24dcac3b4a7c2104e72bd8dd43af#8bbaece4c4fc24dcac3b4a7c2104e72bd8dd43af"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.6.0#cae0d089f5932fc3c20ce697c4c21e4ff5c65011"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
  "delog",
+ "encrypted_container",
  "flexiber",
  "heapless 0.7.16",
  "heapless-bytes 0.3.0",
@@ -1846,7 +1859,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=v0.2.0#0de848d39364d2784a3b8153ffe5dd1e1a3f49a6"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=v0.3.0#22ea95f28a3344100c31b389006ca80254e03caf"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2554,7 +2567,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey-5#c15214355e4ca40e8b83dc9705292a5e64966f8f"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey.6#2f8a7db995cd88b705c6cd4047aead813fb6bf3e"
 dependencies = [
  "aes",
  "bitflags",
@@ -2748,7 +2761,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.2.2"
+version = "1.2.2-alpha.20230224"
 dependencies = [
  "apps",
  "cfg-if",
@@ -2766,7 +2779,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.2.2"
+version = "1.2.2-alpha.20230224"
 dependencies = [
  "delog",
  "littlefs2",
