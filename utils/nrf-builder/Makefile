@@ -63,6 +63,8 @@ EXTRA_FEATURES :=
 
 ######
 
+.NOTPARALLEL:
+
 .PHONY: build clean flash-provisioner flash-fw flash-bootloader provision-keys full-deploy
 
 build: $(ALL_ARTIFACTS)
