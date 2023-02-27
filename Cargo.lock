@@ -753,8 +753,7 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e4fa005ff525537460e1fd70a1ff4f417ae4a6ed14887f3e4720221e20f7562"
+source = "git+https://github.com/Nitrokey/ctap-types?tag=v0.1.2-nitrokey.1#d6cc1f56ab6ea45e041b3bd04df6a991cb96a8c8"
 dependencies = [
  "bitflags",
  "cbor-smol",
