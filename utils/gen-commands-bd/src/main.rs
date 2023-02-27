@@ -15,6 +15,8 @@ struct Args {
     help: bool,
     /// Only print out the firmware version
     only_version: bool,
+    /// Only print out the version-to-check
+    only_version_check: bool,
     /// The path of the Cargo manifest to use.
     #[options(free)]
     manifest: PathBuf,
@@ -26,13 +28,17 @@ struct Args {
 fn main() {
     let args = Args::parse_args_default_or_exit();
     let firmware_version = firmware_version(args.manifest);
-
     if args.only_version {
         println!("{firmware_version}");
         return;
     }
 
     let version_to_check = version_to_check(&firmware_version);
+    if args.only_version_check {
+        println!("{version_to_check}");
+        return;
+    }
+
     let filesystem_boundary = filesystem_boundary(&args.profile);
     println!(
         "\
