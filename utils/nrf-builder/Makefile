@@ -29,10 +29,10 @@ SH_BL_SIGN := $(NK3_BL_DIR)/sign-bootloader.sh
 
 REPOS := $(TEST_CERTS_DIR)-update
 
-FW_VERSION := $(shell grep 'version' $(CARGO_TOML_PATH) | head -n1 | grep -o '[0-9\.]*')
-FW_VERSION_MAJOR := $(shell echo $(FW_VERSION) | cut -d "." -f 1)
-FW_VERSION_MINOR := $(shell echo $(FW_VERSION) | cut -d "." -f 2)
-FW_VERSION_PATCH := $(shell echo $(FW_VERSION) | cut -d "." -f 3)
+FW_VERSION := $(shell cd ../gen-commands-bd && cargo run -- ../../runners/embedded/Cargo.toml ../../runners/embedded/profiles/nrf52-bootloader.toml -o)
+FW_VERSION_MAJOR := $(shell echo $(FW_VERSION) | cut -d "-" -f 1 | cut -d "." -f 1)
+FW_VERSION_MINOR := $(shell echo $(FW_VERSION) | cut -d "-" -f 1 | cut -d "." -f 2)
+FW_VERSION_PATCH := $(shell echo $(FW_VERSION) | cut -d "-" -f 1 | cut -d "." -f 3)
 SIGN_VERSION := $(shell python -c "print( ($(FW_VERSION_MAJOR) << 22) | ($(FW_VERSION_MINOR) << 6) | ($(FW_VERSION_PATCH)) )")
 
 FW_NAME_PROVISIONER_HEX := provisioner-nk3am-nrf52-$(FW_VERSION).hex
