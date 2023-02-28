@@ -39,7 +39,7 @@ pub struct Data<R: Runner> {
 type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
 
 #[cfg(feature = "admin-app")]
-type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot>;
+type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
@@ -218,9 +218,37 @@ trait App<R: Runner>: Sized {
 }
 
 #[cfg(feature = "admin-app")]
-#[derive(Default)]
 pub struct AdminData {
     pub init_status: u8,
+    pub ifs_blocks: u8,
+    pub efs_blocks: u16,
+}
+
+#[cfg(feature = "admin-app")]
+impl Default for AdminData {
+    fn default() -> Self {
+        Self {
+            init_status: 0,
+            ifs_blocks: u8::MAX,
+            efs_blocks: u16::MAX,
+        }
+    }
+}
+
+#[cfg(feature = "admin-app")]
+pub type AdminStatus = [u8; 4];
+
+#[cfg(feature = "admin-app")]
+impl AdminData {
+    fn encode(&self) -> AdminStatus {
+        let efs_blocks = self.efs_blocks.to_be_bytes();
+        [
+            self.init_status,
+            self.ifs_blocks,
+            efs_blocks[0],
+            efs_blocks[1],
+        ]
+    }
 }
 
 #[cfg(feature = "admin-app")]
@@ -236,7 +264,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
             runner.uuid(),
             VERSION,
             utils::VERSION_STRING,
-            data.init_status,
+            data.encode(),
         )
     }
 }

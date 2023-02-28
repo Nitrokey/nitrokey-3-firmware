@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app?rev=v0.1.0-nitrokey.1#70fd0b22284c49fea79b2e617e07d4239f4983c2"
+source = "git+https://github.com/Nitrokey/admin-app?rev=v0.1.0-nitrokey.2#398f9b258d8cfab57a9353fcb61818f162db41c8"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",

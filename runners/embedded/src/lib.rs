@@ -195,27 +195,44 @@ pub fn init_usb_nfc(
 pub fn init_apps(
     trussed: &mut types::Trussed,
     init_status: types::InitStatus,
-    _store: &types::RunnerStore,
-    _on_nfc_power: bool,
+    store: &types::RunnerStore,
+    nfc_powered: bool,
 ) -> types::Apps {
-    let admin = apps::AdminData {
+    use trussed::platform::Store as _;
+
+    let mut admin = apps::AdminData {
         init_status: init_status.bits(),
+        ..Default::default()
     };
+    if !nfc_powered {
+        if let Ok(ifs_blocks) = store.ifs().available_blocks() {
+            if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
+                admin.ifs_blocks = ifs_blocks;
+            }
+        }
+        if let Ok(efs_blocks) = store.efs().available_blocks() {
+            if let Ok(efs_blocks) = u16::try_from(efs_blocks) {
+                admin.efs_blocks = efs_blocks;
+            }
+        }
+    }
+
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot;
 
-        let store = _store.clone();
+        let store = store.clone();
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
         let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,
             stolen_filesystem: int_flash_ref,
-            nfc_powered: _on_nfc_power,
+            nfc_powered,
             rebooter,
         }
     };
+
     let data = apps::Data {
         admin,
         #[cfg(feature = "provisioner")]
