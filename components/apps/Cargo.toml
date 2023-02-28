@@ -12,7 +12,7 @@ usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
 
 # apps
-admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.1", optional = true }
+admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.6.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
