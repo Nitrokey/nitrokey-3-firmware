@@ -29,11 +29,10 @@ SH_BL_SIGN := $(NK3_BL_DIR)/sign-bootloader.sh
 
 REPOS := $(TEST_CERTS_DIR)-update
 
-FW_VERSION := $(shell grep 'version' $(CARGO_TOML_PATH) | head -n1 | grep -o '[0-9\.]*')
-FW_VERSION_MAJOR := $(shell echo $(FW_VERSION) | cut -d "." -f 1)
-FW_VERSION_MINOR := $(shell echo $(FW_VERSION) | cut -d "." -f 2)
-FW_VERSION_PATCH := $(shell echo $(FW_VERSION) | cut -d "." -f 3)
-SIGN_VERSION := $(shell python -c "print( ($(FW_VERSION_MAJOR) << 22) | ($(FW_VERSION_MINOR) << 6) | ($(FW_VERSION_PATCH)) )")
+GEN_COMMANDS_RUN := cd ../gen-commands-bd && cargo run -- ../../runners/embedded/Cargo.toml ../../runners/embedded/profiles/nrf52-bootloader.toml
+
+FW_VERSION := $(shell $(GEN_COMMANDS_RUN) -o)
+SIGN_VERSION := $(shell $(GEN_COMMANDS_RUN) -O)
 
 FW_NAME_PROVISIONER_HEX := provisioner-nk3am-nrf52-$(FW_VERSION).hex
 FW_NAME_PROVISIONER_BIN := provisioner-nk3am-nrf52-$(FW_VERSION).bin
@@ -62,6 +61,8 @@ EXTRA_FEATURES :=
 
 
 ######
+
+.NOTPARALLEL:
 
 .PHONY: build clean flash-provisioner flash-fw flash-bootloader provision-keys full-deploy
 
@@ -166,16 +167,19 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 %.zip: %.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
+.PHONY: $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN) 
 $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
+.PHONY: $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN)
 $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
+.PHONY: $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN)
 $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
