@@ -1,0 +1,4 @@
+*.bin
+*.zip
+*.hex
+test-certs
