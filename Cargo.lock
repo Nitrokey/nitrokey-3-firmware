@@ -2722,8 +2722,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddb69f660f962236eb21565780c433412ad0ba35e5106f53191cdf443c1d03d2"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid#46070aa05f763163fc67a9194038dbf33bb04082"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
