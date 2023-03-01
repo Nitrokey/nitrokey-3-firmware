@@ -1,19 +1,24 @@
 #![no_std]
 
+mod dispatch;
+
+use core::marker::PhantomData;
+
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    backend::{self, BackendId},
-    client::ClientBuilder,
-    platform::Syscall,
-    ClientImplementation, Platform, Service,
+    backend::BackendId, client::ClientBuilder, platform::Syscall, ClientImplementation, Platform,
+    Service,
 };
+
+use dispatch::Backend;
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
+
+pub use dispatch::Dispatch;
 
 pub trait Runner {
     type Syscall: Syscall;
@@ -52,18 +57,6 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
 
-#[derive(Debug, Default)]
-pub struct Dispatch;
-
-impl backend::Dispatch for Dispatch {
-    type Context = ();
-    type BackendId = Backend;
-}
-
-pub enum Backend {}
-
-const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
-
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
@@ -77,6 +70,7 @@ pub struct Apps<R: Runner> {
     opcard: OpcardApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
+    _marker: PhantomData<R>,
 }
 
 impl<R: Runner> Apps<R> {
@@ -85,6 +79,7 @@ impl<R: Runner> Apps<R> {
         mut make_client: impl FnMut(&str, &'static [BackendId<Backend>]) -> Client<R>,
         data: Data<R>,
     ) -> Self {
+        let _ = (runner, &mut make_client);
         let Data {
             #[cfg(feature = "admin-app")]
             admin,
@@ -105,6 +100,7 @@ impl<R: Runner> Apps<R> {
             opcard: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
+            _marker: Default::default(),
         }
     }
 
@@ -213,7 +209,7 @@ trait App<R: Runner>: Sized {
 
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         let _ = runner;
-        BACKENDS_DEFAULT
+        dispatch::BACKENDS_DEFAULT
     }
 }
 
@@ -297,6 +293,10 @@ impl<R: Runner> App<R> for OathApp<R> {
         let mut options = oath_authenticator::Options::default();
         options.location = trussed::types::Location::Internal;
         Self::with_options(trussed, options)
+    }
+
+    fn backends(_runner: &R) -> &'static [BackendId<Backend>] {
+        dispatch::BACKENDS_AUTH
     }
 }
 

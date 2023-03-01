@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
-trussed = "0.1"
+trussed = { version = "0.1", features = ["serde-extensions"] }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
@@ -19,10 +19,21 @@ oath-authenticator = { git = "https://github.com/robin-nitrokey/oath-authenticat
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
+# backends
+trussed-auth = { git = "https://github.com/robin-nitrokey/trussed-auth", branch = "ext-encryption-no-std", optional = true }
+
 [features]
+# app selection
 default = ["admin-app", "fido-authenticator", "oath-authenticator", "ndef-app", "trussed/clients-3"]
 alpha = ["opcard", "trussed/clients-4"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
+
+# apps
+fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
+oath-authenticator = ["dep:oath-authenticator", "backend-auth"]
+
+# backends
+backend-auth = ["trussed-auth"]
 
 log-all = [
     "admin-app?/log-all",
@@ -34,5 +45,3 @@ log-all = [
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
 no-reset-time-window = ["fido-authenticator?/disable-reset-time-window"]
-
-fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
