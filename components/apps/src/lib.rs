@@ -285,7 +285,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
 #[cfg(feature = "oath-authenticator")]
 impl<R: Runner> App<R> for OathApp<R> {
-    const CLIENT_ID: &'static str = "oath";
+    const CLIENT_ID: &'static str = "secrets";
 
     type Data = ();
 
