@@ -27,7 +27,7 @@ use hal::{
 };
 use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
-use trussed::{platform::UserInterface, service::Service};
+use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;
 
 use super::{
@@ -712,7 +712,7 @@ impl Stage5 {
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
-        let trussed = Service::with_dispatch(board, Dispatch::default());
+        let trussed = Service::with_dispatch(board, Dispatch::new(Location::Internal));
 
         Stage6 {
             status: self.status,
