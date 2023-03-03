@@ -59,6 +59,6 @@ pub fn init(
         )
         .next(hal.rng, hal.prince, hal.flash)
         .next()
-        .next(hal.rtc)
+        .next(hal.rtc, hal.puf)
         .next()
 }

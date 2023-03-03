@@ -25,9 +25,11 @@ use hal::{
     typestates::init_state::Unknown,
     typestates::pin::state::Gpio,
 };
+use littlefs2::path::Path;
 use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
-use trussed::{platform::UserInterface, service::Service, types::Location};
+use lpc55_pac::puf::keyenable::KEY_A;
+use trussed::{platform::UserInterface, service::Service, types::Location, Bytes};
 use utils::OptionalStorage;
 
 use super::{
@@ -690,7 +692,7 @@ pub struct Stage5 {
 
 impl Stage5 {
     #[inline(never)]
-    pub fn next(mut self, rtc: hal::peripherals::rtc::Rtc<Unknown>) -> Stage6 {
+    pub fn next(mut self, rtc: hal::peripherals::rtc::Rtc<Unknown>, puf: hal::Puf) -> Stage6 {
         let syscon = &mut self.peripherals.syscon;
         let pmc = &mut self.peripherals.pmc;
         let clocks = self.clocks.clocks;
@@ -711,8 +713,58 @@ impl Stage5 {
             super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
+        use trussed::platform::Store;
+        const AC_LEN: usize = 1192;
+        const KC_LEN: usize = 52;
+        const HW_KEY_LEN: usize = 32;
+        const AC_PATH: &Path = Path::from_str_with_nul("activation_code\0");
+        const KC_PATH: &Path = Path::from_str_with_nul("key_code\0");
+        let ifs = self.store.ifs();
+        let ac_res = ifs.read::<AC_LEN>(AC_PATH);
+        let kc_res = ifs.read::<KC_LEN>(KC_PATH);
+        let hw_key = match (ac_res, kc_res) {
+            (Ok(mut ac), Ok(kc)) => {
+                let puf = puf.enabled(&mut self.peripherals.syscon);
+                let mut ac_arr = [0; AC_LEN];
+                ac.resize_default(AC_LEN).unwrap();
+                ac_arr.copy_from_slice(&ac);
+                let puf = puf.start(&ac_arr).unwrap();
+                let mut hw_key = [0; HW_KEY_LEN];
+                assert_eq!(
+                    puf.get_key(KEY_A::NONE, &kc, &mut hw_key).unwrap(),
+                    HW_KEY_LEN
+                );
+                hw_key
+            }
+            _ => {
+                let syscon = &mut self.peripherals.syscon;
+                let puf = puf.enabled(syscon);
+                let mut ac = [0; AC_LEN];
+                let puf = puf
+                    .enroll(&mut ac)
+                    .unwrap()
+                    .disabled(syscon)
+                    .enabled(syscon)
+                    .start(&ac)
+                    .unwrap();
+                ifs.write(AC_PATH, &ac).unwrap();
+                let mut kc = [0; KC_LEN];
+                puf.generate_key(HW_KEY_LEN as u32, 1, &mut kc).unwrap();
+                ifs.write(KC_PATH, &kc).unwrap();
+                let mut hw_key = [0; HW_KEY_LEN];
+                assert_eq!(
+                    puf.get_key(KEY_A::NONE, &kc, &mut hw_key).unwrap(),
+                    HW_KEY_LEN
+                );
+                hw_key
+            }
+        };
+        let hw_key = Bytes::from_slice(&hw_key).unwrap();
+        trace!("hw_key: {:02x?}", hw_key);
+
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
-        let trussed = Service::with_dispatch(board, Dispatch::new(Location::Internal));
+        let trussed =
+            Service::with_dispatch(board, Dispatch::with_hw_key(Location::Internal, hw_key));
 
         Stage6 {
             status: self.status,
