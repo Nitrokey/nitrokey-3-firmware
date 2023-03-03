@@ -1533,7 +1533,6 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
-source = "git+https://github.com/sosthene-nitrokey/lpc55-hal?rev=f072b5973c0f8aefe37ae836e5f3e5e8ffa780bd#f072b5973c0f8aefe37ae836e5f3e5e8ffa780bd"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
@@ -2623,8 +2622,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-auth"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-auth/?tag=v0.1.0#c8ffeddf375ce85d5309c3fa4ea460eeb7bd384c"
+version = "0.1.1"
+source = "git+https://github.com/trussed-dev/trussed-auth/?rev=v0.1.1#308567df8c9c8842613b36ce8f9f408f56241ee4"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
