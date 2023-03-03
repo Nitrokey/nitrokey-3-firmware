@@ -6,11 +6,17 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    backend::{self, BackendId},
+    api::{reply, request, Reply, Request},
+    backend::{Backend as _, BackendId},
     client::ClientBuilder,
+    error::Error as TrussedError,
     platform::Syscall,
-    ClientImplementation, Platform, Service,
+    serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
+    service::ServiceResources,
+    types::{Context, Location},
+    Bytes, ClientImplementation, Platform, Service,
 };
+use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
@@ -52,15 +58,104 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
 
-#[derive(Debug, Default)]
-pub struct Dispatch;
-
-impl backend::Dispatch for Dispatch {
-    type Context = ();
-    type BackendId = Backend;
+#[derive(Debug)]
+pub struct Dispatch {
+    auth: AuthBackend,
 }
 
-pub enum Backend {}
+#[derive(Debug, Default)]
+pub struct DispatchContext {
+    auth: AuthContext,
+}
+
+impl Dispatch {
+    pub fn new(auth_location: Location) -> Self {
+        Self {
+            auth: AuthBackend::new(auth_location),
+        }
+    }
+    pub fn with_hw_key(auth_location: Location, hw_key: Bytes<MAX_HW_KEY_LEN>) -> Self {
+        Self {
+            auth: AuthBackend::with_hw_key(auth_location, hw_key),
+        }
+    }
+}
+
+impl ExtensionDispatch for Dispatch {
+    type Context = DispatchContext;
+    type BackendId = Backend;
+    type ExtensionId = Extension;
+
+    fn core_request<P: Platform>(
+        &mut self,
+        backend: &Self::BackendId,
+        ctx: &mut Context<Self::Context>,
+        request: &Request,
+        resources: &mut ServiceResources<P>,
+    ) -> Result<Reply, TrussedError> {
+        match backend {
+            Backend::Auth => {
+                self.auth
+                    .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
+            }
+        }
+    }
+
+    fn extension_request<P: Platform>(
+        &mut self,
+        backend: &Self::BackendId,
+        extension: &Self::ExtensionId,
+        ctx: &mut Context<Self::Context>,
+        request: &request::SerdeExtension,
+        resources: &mut ServiceResources<P>,
+    ) -> Result<reply::SerdeExtension, TrussedError> {
+        match backend {
+            Backend::Auth => match extension {
+                Extension::Auth => self.auth.extension_request_serialized(
+                    &mut ctx.core,
+                    &mut ctx.backends.auth,
+                    request,
+                    resources,
+                ),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Backend {
+    Auth,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Extension {
+    Auth,
+}
+
+impl From<Extension> for u8 {
+    fn from(extension: Extension) -> Self {
+        match extension {
+            Extension::Auth => 0,
+        }
+    }
+}
+
+impl TryFrom<u8> for Extension {
+    type Error = TrussedError;
+
+    fn try_from(id: u8) -> Result<Self, Self::Error> {
+        match id {
+            0 => Ok(Extension::Auth),
+            _ => Err(TrussedError::InternalError),
+        }
+    }
+}
+
+impl ExtensionId<AuthExtension> for Dispatch {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::Auth;
+}
 
 const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
 
