@@ -19,6 +19,7 @@ mod app {
         timer::Timer,
     };
     use rand_core::SeedableRng;
+    use trussed::types::{Bytes, Location};
 
     #[shared]
     struct SharedResources {
@@ -201,8 +202,19 @@ mod app {
         let platform: ERL::types::RunnerPlatform =
             ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 
-        let mut trussed_service =
-            trussed::service::Service::with_dispatch(platform, apps::Dispatch::default());
+        let mut er = [0; 16];
+        for (i, r) in ctx.device.FICR.er.iter().enumerate() {
+            let v = r.read().bits().to_be_bytes();
+            for (j, w) in v.into_iter().enumerate() {
+                er[i * 4 + j] = w;
+            }
+        }
+        trace!("ER: {:02x?}", er);
+
+        let mut trussed_service = trussed::service::Service::with_dispatch(
+            platform,
+            apps::Dispatch::with_hw_key(Location::Internal, Bytes::from_slice(&er).unwrap()),
+        );
 
         let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 
