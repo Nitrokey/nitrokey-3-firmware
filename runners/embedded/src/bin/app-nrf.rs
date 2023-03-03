@@ -19,6 +19,7 @@ mod app {
         timer::Timer,
     };
     use rand_core::SeedableRng;
+    use trussed::types::Location;
 
     #[shared]
     struct SharedResources {
@@ -201,8 +202,10 @@ mod app {
         let platform: ERL::types::RunnerPlatform =
             ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
 
-        let mut trussed_service =
-            trussed::service::Service::with_dispatch(platform, apps::Dispatch::default());
+        let mut trussed_service = trussed::service::Service::with_dispatch(
+            platform,
+            apps::Dispatch::new(Location::Internal),
+        );
 
         let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 

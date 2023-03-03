@@ -95,6 +95,7 @@ dependencies = [
  "opcard",
  "provisioner-app",
  "trussed",
+ "trussed-auth",
  "trussed-usbip",
  "usbd-ctaphid",
  "utils",
@@ -1441,6 +1442,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
+name = "hkdf"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "791a029f6b9fc27657f6f188ec6e5e43f6911f6f878e0dc5501396e09809d437"
+dependencies = [
+ "hmac 0.12.1",
+]
+
+[[package]]
 name = "hmac"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2449,6 +2459,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-byte-array"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63213ee4ed648dbd87db6fa993d4275b46bfb4ddfd95b3756045007c2b28f742"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde-indexed"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2804,6 +2823,22 @@ dependencies = [
  "sha-1",
  "sha2 0.10.6",
  "zeroize",
+]
+
+[[package]]
+name = "trussed-auth"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-auth/?tag=v0.1.0#c8ffeddf375ce85d5309c3fa4ea460eeb7bd384c"
+dependencies = [
+ "chacha20poly1305",
+ "hkdf",
+ "hmac 0.12.1",
+ "rand_core",
+ "serde",
+ "serde-byte-array",
+ "sha2 0.10.6",
+ "subtle",
+ "trussed",
 ]
 
 [[package]]
