@@ -393,6 +393,12 @@ impl<R: Runner> App<R> for OathApp<R> {
         options.location = trussed::types::Location::Internal;
         Self::with_options(trussed, options)
     }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_OATH: &[BackendId<Backend>] =
+            &[BackendId::Custom(Backend::Auth), BackendId::Core];
+        let _ = runner;
+        BACKENDS_OATH
+    }
 }
 
 #[cfg(feature = "opcard")]
