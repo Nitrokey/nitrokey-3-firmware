@@ -703,6 +703,11 @@ const HW_KEY_LEN: usize = 16;
 impl Stage5 {
     fn get_hw_key(&mut self, puf: hal::Puf) -> Option<[u8; HW_KEY_LEN]> {
         let puf = puf.enabled(&mut self.peripherals.syscon);
+        if puf.status() != 0x01 {
+            self.status.insert(InitStatus::PUF_ERROR);
+            error_now!("status: {:x}, allow: {:x}", puf.status(), puf.allow());
+            return None;
+        }
 
         let ac = self
             .pfr
@@ -755,7 +760,11 @@ impl Stage5 {
 
         let dispatch = match self.get_hw_key(puf) {
             Some(k) => Dispatch::with_hw_key(Location::Internal, Bytes::from_slice(&k).unwrap()),
-            None => Dispatch::with_missing_hw_key(Location::Internal),
+            None => {
+                self.status.insert(InitStatus::HARDWARE_KEY_ERROR);
+                // Don't fail on dispatch error, and use an empty key
+                Dispatch::new(Location::Internal)
+            }
         };
 
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);

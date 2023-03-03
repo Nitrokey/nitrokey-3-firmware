@@ -121,10 +121,12 @@ pub type Apps = apps::Apps<Runner>;
 bitflags! {
     #[derive(Default)]
     pub struct InitStatus: u8 {
-        const NFC_ERROR = 0b00000001;
-        const INTERNAL_FLASH_ERROR = 0b00000010;
-        const EXTERNAL_FLASH_ERROR = 0b00000100;
-        const MIGRATION_ERROR = 0b00001000;
+        const NFC_ERROR = 0b000_00001;
+        const INTERNAL_FLASH_ERROR = 0b0000_0010;
+        const EXTERNAL_FLASH_ERROR = 0b0000_0100;
+        const MIGRATION_ERROR = 0b0000_1000;
+        const HARDWARE_KEY_ERROR = 0b0001_0000;
+        const PUF_ERROR = 0b0010_0000;
     }
 }
 
