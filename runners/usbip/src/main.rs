@@ -9,8 +9,9 @@ use log::info;
 use rand_core::{OsRng, RngCore};
 use trussed::{
     platform::{consent, reboot, ui},
+    types::Location,
     virt::{self, StoreProvider},
-    Platform,
+    Bytes, Platform,
 };
 use trussed_usbip::Service;
 
@@ -180,7 +181,10 @@ fn print_version() {
 fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, serial: Option<u128>) {
     log::info!("Initializing Trussed");
     trussed_usbip::Builder::new(store, options)
-        .dispatch(Dispatch::default())
+        .dispatch(Dispatch::with_hw_key(
+            Location::Internal,
+            Bytes::from_slice(b"Unique hw key").unwrap(),
+        ))
         .init_platform(move |platform| {
             let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
                 Box::new(UserInterface::new());
