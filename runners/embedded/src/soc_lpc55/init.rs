@@ -698,7 +698,39 @@ pub struct Stage5 {
     store: RunnerStore,
 }
 
+const HW_KEY_LEN: usize = 16;
+
 impl Stage5 {
+    fn get_hw_key(&mut self, puf: hal::Puf) -> Option<[u8; HW_KEY_LEN]> {
+        let puf = puf.enabled(&mut self.peripherals.syscon);
+
+        let ac = self
+            .pfr
+            .read_activation_code()
+            .map_err(|_err| error!("Failed to read activation code: {:?}", _err))
+            .ok()?;
+        let puf = puf
+            .start(&ac)
+            .map_err(|_err| error!("Failed to start puf: {:?}", _err))
+            .ok()?;
+        let kc = self
+            .pfr
+            .read_key_code(hal::peripherals::pfr::KeyType::User)
+            .map_err(|_err| error!("Failed to start read keycode: {:?}", _err))
+            .ok()?;
+        let mut hw_key = [0; HW_KEY_LEN];
+        let len = puf
+            .get_key(KEY_A::NONE, &kc, &mut hw_key)
+            .map_err(|_err| error!("Failed to start read key: {:?}", _err))
+            .ok()?;
+        if len != HW_KEY_LEN {
+            error!("Bad key len. Expected {}, got {}", HW_KEY_LEN, len);
+            return None;
+        }
+        trace!("hw_key: {:02x?}", hw_key);
+        Some(hw_key)
+    }
+
     #[inline(never)]
     pub fn next(mut self, rtc: hal::peripherals::rtc::Rtc<Unknown>, puf: hal::Puf) -> Stage6 {
         let syscon = &mut self.peripherals.syscon;
@@ -721,28 +753,13 @@ impl Stage5 {
             super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
-        const AC_LEN: usize = 1192;
-        const KC_LEN: usize = 52;
-        const HW_KEY_LEN: usize = 16;
-        let puf = puf.enabled(&mut self.peripherals.syscon);
-        let ac = self.pfr.read_activation_code().unwrap();
-        let puf = puf.start(&ac).unwrap();
-
-        let kc = self
-            .pfr
-            .read_key_code(hal::peripherals::pfr::KeyType::User)
-            .unwrap();
-        let mut hw_key = [0; HW_KEY_LEN];
-        assert_eq!(
-            puf.get_key(KEY_A::NONE, &kc, &mut hw_key).unwrap(),
-            HW_KEY_LEN
-        );
-        let hw_key = Bytes::from_slice(&hw_key).unwrap();
-        trace!("hw_key: {:02x?}", hw_key);
+        let dispatch = match self.get_hw_key(puf) {
+            Some(k) => Dispatch::with_hw_key(Location::Internal, Bytes::from_slice(&k).unwrap()),
+            None => Dispatch::with_missing_hw_key(Location::Internal),
+        };
 
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
-        let trussed =
-            Service::with_dispatch(board, Dispatch::with_hw_key(Location::Internal, hw_key));
+        let trussed = Service::with_dispatch(board, dispatch);
 
         Stage6 {
             status: self.status,
