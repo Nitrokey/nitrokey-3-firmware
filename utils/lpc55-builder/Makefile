@@ -42,7 +42,51 @@ provision-develop:
 
 .PHONY: provision-release
 provision-release:
-	# TODO: implement
+	# Step 0: reset
+	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
+	$(MAKE) bl-config-cmpa-empty
+	$(MAKE) bl-erase-firmware
+	lpc55 reboot
+	./scripts/usbwait.sh 1fc9:0021
+	# Step 1: build & flash provisioner, configure CFPA, provision keystore
+	$(MAKE) build FEATURES=provisioner,$(FEATUERS)
+	$(MAKE) bl-config-cfpa
+	$(MAKE) bl-provision-keystore
+	$(MAKE) bl-flash
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42b2
+	# Step 2: provision certs
+	$(MAKE) fw-provision-certs
+	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 1fc9:0021
+	# Step 3: Erase provisioner, configure CMPA
+	$(MAKE) bl-erase-firmware
+	$(MAKE) bl-config-cmpa-release
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42dd
+	# Step 4: build, sign & flash final firmware
+	$(MAKE) sign FEATURES=$(FEATURES)
+	$(MAKE) bl-receive-sb2
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42b2
+
+.PHONY: sign
+sign: build
+	$(MAKE) -C ../.. commands.bd
+	cp "$(OUTPUT_BIN)" firmware-nk3xn.bin
+	nxpimage mbi export config/sign.yaml
+	elftosb -f lpc55xx \
+		-k "config/sbkek.txt" -c ../../commands.bd -o firmware-nk3xn.sb2 \
+		-s ./certs/nk-firmware-ee1-key.pem \
+		-S ./certs/nk-firmware-root-cert.der \
+		-S ./certs/nk-firmware-ee1-cert.der \
+		-R ./certs/nk-firmware-root-cert.der \
+		-R ./certs/nk-firmware-ee2-cert.der \
+		-R ./certs/nk-firmware-ee3-cert.der \
+		-R ./certs/nk-firmware-ee4-cert.der \
+		-h rkht.bin firmware-nk3xn-signed.bin
+	nitropy nk3 validate-update --variant lpc55 firmware-nk3xn.sb2
 
 .PHONY: flash
 flash: build
@@ -73,6 +117,10 @@ bl-erase-all:
 .PHONY: bl-erase-firmware
 bl-erase-firmware:
 	lpc55 provision ./config/flash-erase-firmware.toml
+
+.PHONY: bl-receive-sb2
+bl-receive-sb2:
+	lpc55 receive-sb-file firmware-nk3xn.sb2
 
 .PHONY: bl-config-cmpa-empty
 bl-config-cmpa-empty:

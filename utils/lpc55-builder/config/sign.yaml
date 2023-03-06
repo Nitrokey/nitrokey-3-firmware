@@ -1,0 +1,14 @@
+family: lpc55xx  # TODO: should be lpc55s6x?
+outputImageExecutionTarget: "Internal Flash (XIP)"
+outputImageAuthenticationType: "Signed"
+masterBootOutputFile: ../firmware-nk3xn-signed.bin
+inputImageFile: firmware-nk3xn.bin
+enableTrustZone: true
+chainCertificate0File0: ./certs/nk-firmware-ee1-cert.der
+rootCertificate0File: ./certs/nk-firmware-root-cert.der
+rootCertificate1File: ./certs/nk-firmware-ee2-cert.der
+rootCertificate2File: ./certs/nk-firmware-ee3-cert.der
+rootCertificate3File: ./certs/nk-firmware-ee4-cert.der
+mainCertPrivateKeyFile: ./certs/nk-firmware-ee1-key.pem
+mainCertChainId: 0
+mainRootCertId: 0

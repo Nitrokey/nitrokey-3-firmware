@@ -1,6 +1,6 @@
 [factory-settings]
-debug-access = "Disabled"
-rot-fingerprint = "050aad3e77791a81e59c5b2ba5a158937e9460ee325d8ccba09734b8fdebb171"
+# debug-access = "Disabled"
+rot-fingerprint = "e48f84151d42861f654cd7bc9111d0b12ca7974a0139e4217a278819cb473cf9"
 
 [factory-settings.usb-id]
 vid = 0x20a0

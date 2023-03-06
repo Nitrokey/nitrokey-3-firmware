@@ -1,1 +1,6 @@
 data
+firmware-*.bin
+firmware-*.sb2
+commands.bd
+rkht.bin
+certs
