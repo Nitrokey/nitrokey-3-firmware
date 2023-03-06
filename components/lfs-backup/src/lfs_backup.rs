@@ -65,19 +65,26 @@ pub trait BackupBackend {
     // for simplicity we only have one size for read & write
     const RW_SIZE: usize;
 
+    /// implement a low-level read with `len`, update internal cursor
     fn read<const N: usize>(&mut self, len: usize) -> Result<Bytes<N>>;
+    /// implement a low-level write of `content`, update internal cursor
     fn write(&mut self, content: &[u8]) -> Result<usize>;
+    /// erase the entire usable backup space
     fn erase(&mut self) -> Result<usize>;
+    /// reset internal cursor
     fn reset(&mut self);
 
+    /// write backup-start delimiter
     fn write_start(&mut self) -> Result<usize> {
         self.write(FS_BACKUP_START_DELIM.as_slice())
     }
 
+    /// write backup-end delimiter
     fn write_end(&mut self) -> Result<usize> {
         self.write(FS_BACKUP_END_DELIM.as_slice())
     }
 
+    /// write a `littlefs2::fs::DirEntry` to the backend
     fn write_entry(
         &mut self,
         entry: &DirEntry,
@@ -109,6 +116,7 @@ pub trait BackupBackend {
         self.write(buf.as_slice())
     }
 
+    /// read and return the next `FSEntryBlob` from the backend
     fn read_next(&mut self) -> Result<FSEntryBlob> {
         let chunk_one: Bytes<MAX_DUMP_BLOB_LENGTH> = self.read(Self::RW_SIZE)?;
 
@@ -155,6 +163,7 @@ pub trait BackupBackend {
         .map(|v| v.map(|iv| iv.1.unwrap()))
     }
 
+    /// execute backup operation for `fs` into backend
     fn backup<S: littlefs2::driver::Storage>(
         &mut self,
         fs: &Filesystem<S>,
@@ -234,6 +243,7 @@ pub trait BackupBackend {
         Ok((d_cnt, f_cnt))
     }
 
+    /// execute restore operation from backend into `fs`
     fn restore<S: littlefs2::driver::Storage>(
         &mut self,
         fs: &Filesystem<S>,
