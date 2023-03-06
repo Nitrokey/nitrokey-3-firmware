@@ -79,6 +79,12 @@ impl Dispatch {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
         }
     }
+
+    pub fn with_missing_hw_key(auth_location: Location) -> Self {
+        Self {
+            auth: AuthBackend::with_missing_hw_key(auth_location),
+        }
+    }
 }
 
 impl ExtensionDispatch for Dispatch {
