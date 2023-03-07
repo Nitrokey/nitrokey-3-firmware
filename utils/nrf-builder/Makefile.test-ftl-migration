@@ -1,0 +1,24 @@
+MAIN_REPO_DIR=nk3-fw-main
+
+migrate-nrf-test: $(MAIN_REPO_DIR)-update
+	$(MAKE) -C $(MAIN_REPO_DIR)/utils/nrf-builder full-deploy
+
+	#$(MAKE) flash-develop EXTRA_FEATURES=develop-no-press,log-rtt,log-traceP
+	$(MAKE) flash-release 
+
+	nitropy nk3 test
+
+	@echo "if there is a certificate (and no x5c bug)"
+
+
+$(MAIN_REPO_DIR): 
+	git clone https://github.com/Nitrokey/nitrokey-3-firmware.git $(MAIN_REPO_DIR)
+
+.PHONY: $(MAIN_REPO_DIR)-update
+$(MAIN_REPO_DIR)-update: $(MAIN_REPO_DIR)
+	cd $(MAIN_REPO_DIR) && git checkout main
+	cd $(MAIN_REPO_DIR) && git pull
+	cd $(MAIN_REPO_DIR) && git checkout fa94cac8ccc91b7c88c08dcb14312af6e4675700
+
+
+

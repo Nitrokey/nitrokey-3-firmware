@@ -7,6 +7,11 @@ use soc::types::Soc as SocT;
 use types::Soc;
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
+#[cfg(feature = "board-nk3am")]
+use soc::migrations::ftl_journal;
+#[cfg(feature = "board-nk3am")]
+use soc::migrations::ftl_journal::ifs_flash_old::FlashStorage as OldFlashStorage;
+
 extern crate delog;
 delog::generate_macros!();
 
@@ -72,20 +77,65 @@ pub fn init_store(
     let vfs_alloc = transcend!(types::VOLATILE_FS_ALLOC, Filesystem::allocate());
 
     /* Step 2: try mounting each FS in turn */
-    if !littlefs2::fs::Filesystem::is_mountable(ifs_storage) {
-        let _fmt_ext = littlefs2::fs::Filesystem::format(ifs_storage);
-        error!("IFS Mount Error, Reformat {:?}", _fmt_ext);
-        status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
-    };
-    let ifs = match littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage) {
-        Ok(ifs_) => {
-            transcend!(types::INTERNAL_FS, ifs_)
+    if !Filesystem::is_mountable(ifs_storage) {
+        // handle provisioner
+        if cfg!(feature = "provisioner") {
+            info_now!("IFS mount failed - provisioner => formatting");
+            let _fmt_int = Filesystem::format(ifs_storage);
+        } else {
+            status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
+
+            // handle lpc55 boards
+            #[cfg(feature = "board-nk3xn")]
+            {
+                let _fmt_int = Filesystem::format(ifs_storage);
+                error_now!("IFS (lpc55) mount-fail");
+            }
+
+            // handle nRF42 boards
+            #[cfg(feature = "board-nk3am")]
+            {
+                error_now!("IFS (nrf42) mount-fail");
+
+                // regular mount failed, try mounting "old" (pre-journaling) IFS
+                let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+                let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
+                let mut old_ifs_alloc: littlefs2::fs::Allocation<OldFlashStorage> =
+                    Filesystem::allocate();
+                let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
+
+                // we can mount the old ifs filesystem, thus we need to migrate
+                if old_mountable {
+                    let mounted_ifs = ftl_journal::migrate(
+                        &mut old_ifs_storage,
+                        &mut old_ifs_alloc,
+                        ifs_alloc,
+                        ifs_storage,
+                        efs_storage,
+                    );
+                    // migration went fine => use its resulting IFS
+                    if let Ok(()) = mounted_ifs {
+                        info_now!("migration ok, mounting IFS");
+                    // migration failed => format IFS
+                    } else {
+                        error_now!("failed migration, formatting IFS");
+                        let _fmt_ifs = Filesystem::format(ifs_storage);
+                    }
+                } else {
+                    info_now!("recovering from journal");
+                    // IFS and old-IFS cannot be mounted, try to recover from journal
+                    ifs_storage.recover_from_journal();
+                }
+            }
         }
-        Err(_e) => {
-            error!("IFS Mount Error {:?}", _e);
-            panic!("store");
-        }
-    };
+    }
+
+    #[cfg(feature = "board-nk3am")]
+    ifs_storage.format_journal_blocks();
+
+    let ifs_ = Filesystem::mount(ifs_alloc, ifs_storage).expect("Could not bring up IFS!");
+    let ifs = transcend!(types::INTERNAL_FS, ifs_);
+
     if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
         let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {

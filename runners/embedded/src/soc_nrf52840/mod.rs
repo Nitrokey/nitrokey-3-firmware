@@ -19,10 +19,13 @@ pub mod trussed_ui;
 
 pub mod types;
 
-mod flash;
+pub mod flash;
 #[cfg(feature = "extflash_qspi")]
 pub mod qspiflash;
 pub mod rtic_monotonic;
+
+#[cfg(feature = "board-nk3am")]
+pub mod migrations;
 
 pub fn init_bootup(
     ficr: &nrf52840_pac::FICR,

@@ -41,10 +41,10 @@ where
     type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
-        trace!("EFr {:x} {:x}", off, buf.len());
+        /*trace!("EFr {:x} {:x}", off, buf.len());
         if buf.len() == 0 {
             return Ok(0);
-        }
+        }*/
         if buf.len() > FLASH_PROPERTIES.size || off > FLASH_PROPERTIES.size - buf.len() {
             return Err(Error::Unknown(0x6578_7046));
         }

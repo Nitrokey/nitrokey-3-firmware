@@ -24,6 +24,10 @@ rand_core = "0.6"
 rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
 spi-memory = "0.2.0"
 utils = { path = "../../components/utils" }
+serde = { version = "1.0", default-features = false }
+heapless = "0.7"
+heapless-bytes = { version = "0.3.0", features = ["cbor"] }
+lfs-backup = { path = "../../components/lfs-backup" }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -87,7 +91,7 @@ alloc = ["alloc-cortex-m"]
 
 board-nrfdk = ["soc-nrf52840", "extflash_qspi"]
 board-proto1 = ["soc-nrf52840"]
-board-nk3am = ["soc-nrf52840" , "extflash_qspi"]
+board-nk3am = ["soc-nrf52840", "extflash_qspi"]
 
 board-nk3xn = ["soc-lpc55"]
 
