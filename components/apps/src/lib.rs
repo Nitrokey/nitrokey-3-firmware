@@ -292,7 +292,7 @@ impl<R: Runner> App<R> for OathApp<R> {
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
         let mut options = oath_authenticator::Options::default();
-        options.location = trussed::types::Location::Internal;
+        options.location = trussed::types::Location::External;
         Self::with_options(trussed, options)
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
