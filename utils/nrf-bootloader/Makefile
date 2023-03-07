@@ -11,29 +11,23 @@ all: $(IMAGE_NAME).built verify
 		$(IMAGE_NAME) \
 		make -f Makefile.docker
 
-enter: 
+enter: $(IMAGE_NAME).built
 	docker run -it \
 		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
 		bash
 
-verify:
-	if [ "4" = "$(shell docker run -it \
+verify: $(IMAGE_NAME).built
+	docker run -it \
 		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
-		sha256sum -c /work/sha256sums.txt | grep -c "OK")" ]; \
-	then \
-		echo "Verification OK"; \
-	else \
-		echo "Verification FAILED"; \
-		exit 1; \
-	fi 
+		sha256sum -c /work/sha256sums.txt	
 	
 $(IMAGE_NAME).built: Dockerfile
 	docker build -t $(IMAGE_NAME) .
-	touch $<
+	touch $@
 
 clean:
 	rm -rf build
