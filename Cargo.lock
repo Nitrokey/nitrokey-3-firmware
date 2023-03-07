@@ -1018,7 +1018,7 @@ dependencies = [
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.6.0#cae0d089f5932fc3c20ce697c4c21e4ff5c65011"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.7.0#b6ee783fb3ab23672dccf8af3e637960a920a067"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -1950,8 +1950,8 @@ dependencies = [
 
 [[package]]
 name = "oath-authenticator"
-version = "0.6.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.6.0#cae0d089f5932fc3c20ce697c4c21e4ff5c65011"
+version = "0.7.0"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=0.7.0#b6ee783fb3ab23672dccf8af3e637960a920a067"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -1965,6 +1965,7 @@ dependencies = [
  "iso7816",
  "serde",
  "trussed",
+ "trussed-auth",
 ]
 
 [[package]]
