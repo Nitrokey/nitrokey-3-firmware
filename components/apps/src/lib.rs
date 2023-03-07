@@ -6,16 +6,24 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    api::{reply, request, Reply, Request},
-    backend::{Backend as _, BackendId},
+    api::{Reply, Request},
+    backend::BackendId,
     client::ClientBuilder,
     error::Error as TrussedError,
     platform::Syscall,
-    serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
     service::ServiceResources,
     types::{Context, Location},
-    Bytes, ClientImplementation, Platform, Service,
+    ClientImplementation, Platform, Service,
 };
+
+#[cfg(feature = "backend-auth")]
+use trussed::{
+    api::{reply, request},
+    backend::Backend as _,
+    serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
+    Bytes,
+};
+#[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 
 #[cfg(feature = "admin-app")]
@@ -60,33 +68,34 @@ type ProvisionerApp<R> =
 
 #[derive(Debug)]
 pub struct Dispatch {
+    #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
 }
 
 #[derive(Debug, Default)]
 pub struct DispatchContext {
+    #[cfg(feature = "backend-auth")]
     auth: AuthContext,
 }
 
 impl Dispatch {
     pub fn new(auth_location: Location) -> Self {
+        #[cfg(not(feature = "backend-auth"))]
+        let _ = auth_location;
         Self {
+            #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location),
         }
     }
+    #[cfg(feature = "backend-auth")]
     pub fn with_hw_key(auth_location: Location, hw_key: Bytes<MAX_HW_KEY_LEN>) -> Self {
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
         }
     }
-
-    pub fn with_missing_hw_key(auth_location: Location) -> Self {
-        Self {
-            auth: AuthBackend::with_missing_hw_key(auth_location),
-        }
-    }
 }
 
+#[cfg(feature = "backend-auth")]
 impl ExtensionDispatch for Dispatch {
     type Context = DispatchContext;
     type BackendId = Backend;
@@ -128,19 +137,37 @@ impl ExtensionDispatch for Dispatch {
     }
 }
 
+#[cfg(not(feature = "backend-auth"))]
+impl trussed::backend::Dispatch for Dispatch {
+    type Context = DispatchContext;
+    type BackendId = Backend;
+    fn request<P: Platform>(
+        &mut self,
+        backend: &Self::BackendId,
+        _ctx: &mut Context<Self::Context>,
+        _request: &Request,
+        _resources: &mut ServiceResources<P>,
+    ) -> Result<Reply, TrussedError> {
+        match *backend {}
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Backend {
+    #[cfg(feature = "backend-auth")]
     Auth,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum Extension {
+    #[cfg(feature = "backend-auth")]
     Auth,
 }
 
 impl From<Extension> for u8 {
     fn from(extension: Extension) -> Self {
         match extension {
+            #[cfg(feature = "backend-auth")]
             Extension::Auth => 0,
         }
     }
@@ -151,19 +178,19 @@ impl TryFrom<u8> for Extension {
 
     fn try_from(id: u8) -> Result<Self, Self::Error> {
         match id {
+            #[cfg(feature = "backend-auth")]
             0 => Ok(Extension::Auth),
             _ => Err(TrussedError::InternalError),
         }
     }
 }
 
+#[cfg(feature = "backend-auth")]
 impl ExtensionId<AuthExtension> for Dispatch {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::Auth;
 }
-
-const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
 
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
@@ -178,6 +205,10 @@ pub struct Apps<R: Runner> {
     opcard: OpcardApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
+
+    /// Avoid compilation error if no feature is used.
+    /// Without it, the type parameter `R` is not used
+    _compile_no_feature: PhantomData<R>,
 }
 
 impl<R: Runner> Apps<R> {
@@ -186,6 +217,7 @@ impl<R: Runner> Apps<R> {
         mut make_client: impl FnMut(&str, &'static [BackendId<Backend>]) -> Client<R>,
         data: Data<R>,
     ) -> Self {
+        let _ = (runner, &mut make_client);
         let Data {
             #[cfg(feature = "admin-app")]
             admin,
@@ -206,6 +238,7 @@ impl<R: Runner> Apps<R> {
             opcard: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
+            _compile_no_feature: PhantomData::default(),
         }
     }
 
@@ -314,6 +347,7 @@ trait App<R: Runner>: Sized {
 
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         let _ = runner;
+        const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
         BACKENDS_DEFAULT
     }
 }
@@ -390,7 +424,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
 #[cfg(feature = "oath-authenticator")]
 impl<R: Runner> App<R> for OathApp<R> {
-    const CLIENT_ID: &'static str = "oath";
+    const CLIENT_ID: &'static str = "secrets";
 
     type Data = ();
 

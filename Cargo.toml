@@ -15,7 +15,7 @@ version = "1.2.2-alpha.20230224"
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nitrokey.1" }
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-2" }
 lpc55-hal = { git = "https://github.com/robin-nitrokey/lpc55-hal", rev = "f49c9abaa3ef6805d265f7cda3fe1920c3a53aad" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.6" }
+trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.7" }
 
 # unreleased
 interchange = { git = "https://github.com/trussed-dev/interchange" }
