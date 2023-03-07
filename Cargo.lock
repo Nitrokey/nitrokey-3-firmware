@@ -1663,7 +1663,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
-source = "git+https://github.com/robin-nitrokey/lpc55-hal?rev=f49c9abaa3ef6805d265f7cda3fe1920c3a53aad#f49c9abaa3ef6805d265f7cda3fe1920c3a53aad"
+source = "git+https://github.com/nitrokey/lpc55-hal?tag=v0.3.0-nitrokey-2#f072b5973c0f8aefe37ae836e5f3e5e8ffa780bd"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
