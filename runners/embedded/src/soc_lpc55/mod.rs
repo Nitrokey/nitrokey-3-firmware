@@ -24,7 +24,11 @@ pub fn init(
     #[cfg(feature = "log-rtt")]
     rtt_target::rtt_init_print!();
 
-    #[cfg(any(feature = "log-semihosting", feature = "log-serial"))]
+    #[cfg(any(
+        feature = "log-rtt",
+        feature = "log-semihosting",
+        feature = "log-serial"
+    ))]
     Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
 
     crate::banner();
