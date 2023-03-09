@@ -18,7 +18,7 @@ trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth/", tag = "v0
 admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.7.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.8.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
