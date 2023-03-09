@@ -10,6 +10,7 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
+use utils::RamStorage;
 pub mod usbnfc;
 
 #[derive(Clone, Copy)]
@@ -65,7 +66,8 @@ impl apps::Runner for Runner {
     #[cfg(feature = "provisioner")]
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
-    type Filesystem = <SocT as Soc>::InternalFlashStorage;
+    type Filesystem = InternalStorage;
+    type DebugStorage = <SocT as Soc>::ExternalFlashStorage;
 
     fn uuid(&self) -> [u8; 16] {
         *<SocT as Soc>::device_uuid()
@@ -73,21 +75,24 @@ impl apps::Runner for Runner {
 }
 
 // 8KB of RAM
+const_ram_storage!(InternalStorage, 8192);
 const_ram_storage!(VolatileStorage, 8192);
+
+pub type ExternalStorage = RamStorage<<SocT as Soc>::ExternalFlashStorage, 256>;
 
 store!(
     RunnerStore,
-    Internal: <SocT as Soc>::InternalFlashStorage,
-    External: <SocT as Soc>::ExternalFlashStorage,
+    Internal: InternalStorage,
+    External: ExternalStorage,
     Volatile: VolatileStorage
 );
 
-pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
-pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
-pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
+pub static mut INTERNAL_STORAGE: Option<InternalStorage> = None;
+pub static mut INTERNAL_FS_ALLOC: Option<Allocation<InternalStorage>> = None;
+pub static mut INTERNAL_FS: Option<Filesystem<InternalStorage>> = None;
+pub static mut EXTERNAL_STORAGE: Option<ExternalStorage> = None;
+pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<ExternalStorage>> = None;
+pub static mut EXTERNAL_FS: Option<Filesystem<ExternalStorage>> = None;
 pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;

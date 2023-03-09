@@ -89,6 +89,7 @@ dependencies = [
  "admin-app",
  "apdu-dispatch",
  "ctaphid-dispatch",
+ "debug-app",
  "fido-authenticator",
  "ndef-app",
  "oath-authenticator",
@@ -803,6 +804,16 @@ dependencies = [
  "lock_api",
  "once_cell",
  "parking_lot_core",
+]
+
+[[package]]
+name = "debug-app"
+version = "0.1.0"
+dependencies = [
+ "ctaphid-dispatch",
+ "delog",
+ "trussed",
+ "usbd-ctaphid",
 ]
 
 [[package]]

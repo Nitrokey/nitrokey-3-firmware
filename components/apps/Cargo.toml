@@ -13,6 +13,7 @@ utils = { path = "../utils" }
 
 # apps
 admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
+debug-app = { path = "../debug-app", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.6.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
@@ -20,12 +21,13 @@ opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", featur
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [features]
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
+default = ["admin-app", "debug-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
 alpha = ["oath-authenticator", "opcard", "trussed/clients-4"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
 
 log-all = [
     "admin-app?/log-all",
+    "debug-app?/log-all",
     "fido-authenticator?/log-all",
     "oath-authenticator?/log-all",
     "opcard?/log-all",

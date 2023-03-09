@@ -20,6 +20,8 @@ pub trait Runner {
 
     #[cfg(feature = "admin-app")]
     type Reboot: Reboot;
+    #[cfg(feature = "debug-app")]
+    type DebugStorage: trussed::types::LfsStorage;
     #[cfg(feature = "provisioner-app")]
     type Store: trussed::store::Store;
     #[cfg(feature = "provisioner-app")]
@@ -31,6 +33,8 @@ pub trait Runner {
 pub struct Data<R: Runner> {
     #[cfg(feature = "admin-app")]
     pub admin: AdminData,
+    #[cfg(feature = "debug-app")]
+    pub debug: R::DebugStorage,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
     pub _marker: PhantomData<R>,
@@ -40,6 +44,8 @@ type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
 
 #[cfg(feature = "admin-app")]
 type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>;
+#[cfg(feature = "debug-app")]
+type DebugApp<R> = debug_app::DebugApp<<R as Runner>::DebugStorage>;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
@@ -67,6 +73,8 @@ const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
+    #[cfg(feature = "debug-app")]
+    debug: DebugApp<R>,
     #[cfg(feature = "fido-authenticator")]
     fido: FidoApp<R>,
     #[cfg(feature = "ndef-app")]
@@ -88,6 +96,8 @@ impl<R: Runner> Apps<R> {
         let Data {
             #[cfg(feature = "admin-app")]
             admin,
+            #[cfg(feature = "debug-app")]
+            debug,
             #[cfg(feature = "provisioner-app")]
             provisioner,
             ..
@@ -95,6 +105,8 @@ impl<R: Runner> Apps<R> {
         Self {
             #[cfg(feature = "admin-app")]
             admin: App::new(runner, &mut make_client, admin),
+            #[cfg(feature = "debug-app")]
+            debug: App::new(runner, &mut make_client, debug),
             #[cfg(feature = "fido-authenticator")]
             fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
@@ -162,6 +174,8 @@ impl<R: Runner> Apps<R> {
             &mut self.oath,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
+            #[cfg(feature = "debug-app")]
+            &mut self.debug,
         ])
     }
 }
@@ -266,6 +280,17 @@ impl<R: Runner> App<R> for AdminApp<R> {
             utils::VERSION_STRING,
             data.encode(),
         )
+    }
+}
+
+#[cfg(feature = "debug-app")]
+impl<R: Runner> App<R> for DebugApp<R> {
+    const CLIENT_ID: &'static str = "debug";
+
+    type Data = R::DebugStorage;
+
+    fn with_client(_runner: &R, _trussed: Client<R>, data: Self::Data) -> Self {
+        Self::new(data)
     }
 }
 

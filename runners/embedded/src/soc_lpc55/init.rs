@@ -601,7 +601,7 @@ impl Stage4 {
         );
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
-        let store = crate::init_store(internal, external, simulated_efs, &mut self.status);
+        let store = crate::init_store(internal, simulated_efs, &mut self.status);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -631,6 +631,7 @@ impl Stage4 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             rng: self.flash.rng,
+            external,
             store,
         }
     }
@@ -686,6 +687,7 @@ pub struct Stage5 {
     usb_nfc: UsbNfc,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
+    external: OptionalStorage<ExtFlashStorage<Spi, FlashCs>>,
 }
 
 impl Stage5 {
@@ -721,6 +723,7 @@ impl Stage5 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             store: self.store,
+            external: self.external,
             trussed,
         }
     }
@@ -733,6 +736,7 @@ pub struct Stage6 {
     basic: Basic,
     usb_nfc: UsbNfc,
     store: RunnerStore,
+    external: OptionalStorage<ExtFlashStorage<Spi, FlashCs>>,
     trussed: Trussed,
 }
 
@@ -762,6 +766,7 @@ impl Stage6 {
             self.status,
             &self.store,
             self.clocks.is_nfc_passive,
+            self.external,
         );
         let clock_controller = if self.clocks.is_nfc_passive {
             let adc = self.basic.adc.take();

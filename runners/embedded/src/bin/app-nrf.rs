@@ -119,7 +119,7 @@ mod app {
         let extflash = ERL::soc::types::ExternalStorage::new();
 
         let store: ERL::types::RunnerStore =
-            ERL::init_store(internal_flash, extflash, false, &mut init_status);
+            ERL::init_store(internal_flash, false, &mut init_status);
 
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
         /* TODO: set up fingerprint device */
@@ -204,7 +204,13 @@ mod app {
         let mut trussed_service =
             trussed::service::Service::with_dispatch(platform, apps::Dispatch::default());
 
-        let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
+        let apps = ERL::init_apps(
+            &mut trussed_service,
+            init_status,
+            &store,
+            !powered_by_usb,
+            extflash,
+        );
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 

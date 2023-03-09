@@ -1,0 +1,18 @@
+[package]
+name = "debug-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ctaphid-dispatch = "0.1"
+delog = "0.1"
+trussed = "0.1"
+usbd-ctaphid = "0.1.0"
+
+[features]
+log-all = []
+log-none = []
+log-info = []
+log-debug = []
+log-warn = []
+log-error = []
