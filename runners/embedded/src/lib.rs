@@ -1,5 +1,4 @@
 #![no_std]
-#![cfg_attr(feature = "alloc", feature(alloc_error_handler))]
 
 use interchange::Interchange;
 use littlefs2::fs::Filesystem;
@@ -298,16 +297,6 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     error_now!("{}", _info);
     soc::board::set_panic_led();
     loop {
-        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[alloc_error_handler]
-fn oom(_: core::alloc::Layout) -> ! {
-    error_now!("Failed alloc");
-    loop {
-        soc::board::set_panic_led();
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
