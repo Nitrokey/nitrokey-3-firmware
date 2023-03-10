@@ -20,11 +20,11 @@ run: build
 
 .PHONY: provision-develop
 provision-develop:
-	# Step 1: build & flash provisioner, configure device
-	$(MAKE) build FEATURES=develop,provisioner,$(FEATUERS)
+	# Step 1: reset CMPA, erase firmware, build & flash provisioner
 	./scripts/boot-to-bootrom.sh
 	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
-	$(MAKE) bl-config-cmpa-develop
+	$(MAKE) build FEATURES=develop,provisioner,$(FEATUERS)
+	$(MAKE) bl-config-cmpa-empty
 	$(MAKE) bl-erase-firmware
 	$(MAKE) bl-flash
 	lpc55 reboot
@@ -32,6 +32,11 @@ provision-develop:
 	# Step 2: provision certs
 	$(MAKE) fw-provision-certs
 	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 1fc9:0021
+	# Step 3: erase firmware, configure CMPA
+	$(MAKE) bl-erase-firmware
+	$(MAKE) bl-config-cmpa-develop
+	lpc55 reboot
 	./scripts/usbwait.sh 20a0:42dd
 	# Step 3: build & flash final firmware
 	$(MAKE) build FEATURES=develop,$(FEATURES)
@@ -42,7 +47,35 @@ provision-develop:
 
 .PHONY: provision-release
 provision-release:
-	# TODO: implement
+	# TODO: add secure boot
+	# Step 0: reset CMPA, erase firmware
+	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
+	$(MAKE) bl-config-cmpa-empty
+	$(MAKE) bl-erase-firmware
+	lpc55 reboot
+	./scripts/usbwait.sh 1fc9:0021
+	# Step 1: build & flash provisioner, provision keystore
+	$(MAKE) build FEATURES=provisioner,$(FEATUERS)
+	$(MAKE) bl-provision-keystore
+	$(MAKE) bl-flash
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42b2
+	# Step 2: provision certs
+	$(MAKE) fw-provision-certs
+	./scripts/boot-to-bootrom.sh
+	./scripts/usbwait.sh 1fc9:0021
+	# Step 3: erase firmware, configure CMPA
+	$(MAKE) bl-erase-firmware
+	$(MAKE) bl-config-cmpa-develop
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42dd
+	# Step 3: build & flash final firmware
+	$(MAKE) build FEATURES=$(FEATURES)
+	$(MAKE) bl-erase-firmware
+	$(MAKE) bl-flash
+	lpc55 reboot
+	./scripts/usbwait.sh 20a0:42b2
 
 .PHONY: flash
 flash: build
