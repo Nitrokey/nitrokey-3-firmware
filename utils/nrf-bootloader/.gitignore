@@ -1,1 +1,4 @@
 signing-key
+bootloader.hex
+mbr.hex
+build
