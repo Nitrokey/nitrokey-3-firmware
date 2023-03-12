@@ -107,14 +107,7 @@ You might have to press the touch button during the command to confirm a reboot.
 
 ## Using the Alpha Firmware
 
-The alpha firmware can be built by activating the `alpha` feature.  It requires the nightly Rust compiler – check the `Makefile` in `runners/embedded` for the current nightly version:
-```
-$ grep RUSTUP_TOOLCHAIN runners/embedded/Makefile | head -1
-  RUSTUP_TOOLCHAIN = nightly-2022-11-13
-$ rustup +nightly-2022-11-13 target add thumbv8m.main-none-eabi
-```
-
-Make sure that you can compile the alpha firmware:
+The alpha firmware can be built by activating the `alpha` feature.  First, make sure that you can compile the alpha firmware:
 ```
 $ make -C runners/embedded build-nk3xn FEATURES=alpha
 ```
