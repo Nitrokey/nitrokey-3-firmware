@@ -6,23 +6,39 @@ edition = "2021"
 [dependencies]
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
-trussed = "0.1"
+trussed = { version = "0.1", features = ["serde-extensions"]}
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
+
+# Backends
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth/", tag = "v0.1.0", optional = true }
 
 # apps
 admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.6.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.8.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [features]
-default = ["admin-app", "fido-authenticator", "ndef-app", "trussed/clients-2"]
-alpha = ["oath-authenticator", "opcard", "trussed/clients-4"]
+default = [
+    "admin-app",
+    "fido-authenticator",
+    "ndef-app",
+    "oath-authenticator",
+    "trussed/clients-3"
+]
+alpha = ["opcard", "trussed/clients-4"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
+
+# apps
+oath-authenticator = ["dep:oath-authenticator", "backend-auth"]
+fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
+
+# backends
+backend-auth = ["trussed-auth"]
 
 log-all = [
     "admin-app?/log-all",
@@ -34,5 +50,3 @@ log-all = [
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
 no-reset-time-window = ["fido-authenticator?/disable-reset-time-window"]
-
-fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]

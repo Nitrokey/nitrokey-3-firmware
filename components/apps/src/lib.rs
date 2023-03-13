@@ -6,14 +6,16 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    backend::{self, BackendId},
-    client::ClientBuilder,
-    platform::Syscall,
-    ClientImplementation, Platform, Service,
+    backend::BackendId, client::ClientBuilder, platform::Syscall, ClientImplementation, Platform,
+    Service,
 };
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
+
+mod dispatch;
+use dispatch::Backend;
+pub use dispatch::Dispatch;
 
 pub trait Runner {
     type Syscall: Syscall;
@@ -52,18 +54,6 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
 
-#[derive(Debug, Default)]
-pub struct Dispatch;
-
-impl backend::Dispatch for Dispatch {
-    type Context = ();
-    type BackendId = Backend;
-}
-
-pub enum Backend {}
-
-const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
-
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
@@ -77,6 +67,10 @@ pub struct Apps<R: Runner> {
     opcard: OpcardApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
+
+    /// Avoid compilation error if no feature is used.
+    /// Without it, the type parameter `R` is not used
+    _compile_no_feature: PhantomData<R>,
 }
 
 impl<R: Runner> Apps<R> {
@@ -85,6 +79,7 @@ impl<R: Runner> Apps<R> {
         mut make_client: impl FnMut(&str, &'static [BackendId<Backend>]) -> Client<R>,
         data: Data<R>,
     ) -> Self {
+        let _ = (runner, &mut make_client);
         let Data {
             #[cfg(feature = "admin-app")]
             admin,
@@ -105,6 +100,7 @@ impl<R: Runner> Apps<R> {
             opcard: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
+            _compile_no_feature: PhantomData::default(),
         }
     }
 
@@ -213,6 +209,7 @@ trait App<R: Runner>: Sized {
 
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         let _ = runner;
+        const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
         BACKENDS_DEFAULT
     }
 }
@@ -289,14 +286,20 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
 #[cfg(feature = "oath-authenticator")]
 impl<R: Runner> App<R> for OathApp<R> {
-    const CLIENT_ID: &'static str = "oath";
+    const CLIENT_ID: &'static str = "secrets";
 
     type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
         let mut options = oath_authenticator::Options::default();
-        options.location = trussed::types::Location::Internal;
+        options.location = trussed::types::Location::External;
         Self::with_options(trussed, options)
+    }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_OATH: &[BackendId<Backend>] =
+            &[BackendId::Custom(Backend::Auth), BackendId::Core];
+        let _ = runner;
+        BACKENDS_OATH
     }
 }
 
