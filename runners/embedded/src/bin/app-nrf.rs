@@ -116,7 +116,24 @@ mod app {
 
             qspi_extflash
         };
-        #[cfg(not(feature = "extflash_qspi"))]
+        #[cfg(feature = "extflash_spi")]
+        let extflash = {
+            use nrf52840_hal::Spim;
+            //Spim::new(spi, pins, config.speed(), config.mode())
+            let spim = Spim::new(
+                ctx.device.SPIM3,
+                board_gpio.flashnfc_spi.take().unwrap(),
+                nrf52840_hal::spim::Frequency::M2,
+                nrf52840_hal::spim::MODE_0,
+                0x00u8,
+            );
+            use crate::ERL::flash::ExtFlashStorage;
+            let res = ExtFlashStorage::try_new(spim, board_gpio.flash_cs.take().unwrap());
+
+            res.unwrap()
+        };
+
+        #[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
         let extflash = ERL::soc::types::ExternalStorage::new();
 
         let store: ERL::types::RunnerStore =
@@ -289,7 +306,7 @@ mod app {
     fn task_trussed(ctx: task_trussed::Context) {
         let mut trussed = ctx.shared.trussed;
 
-        trace!("irq SWI0_EGU0");
+        //trace!("irq SWI0_EGU0");
         trussed.lock(|trussed| {
             ERL::runtime::run_trussed(trussed);
         });
