@@ -1,3 +1,32 @@
+# v1.3.0-RC1 (2023-03-13)
+
+### Features
+
+- Add secrets app ([#186][]), implementing OTP functionality
+- Return full version in status command ([#172][])
+- Return storage information in status command ([#183][])
+- Reduce risk of data loss by adding journaling to the internal flash ([#160][])
+
+### Changed
+
+- LPC55: use the embedded runner ([#97][])
+
+### Bugfixes
+
+- Use upstream usbd-ccid, including fixed panics and compatibility issues ([#164][])
+- Improve compatibility of FIDO ([#180][])
+- Fix a panic with ctaphid ([#184][])
+
+[#186]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/186
+[#184]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/184
+[#183]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/183
+[#180]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/180
+[#172]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/172
+[#164]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/164
+[#160]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/160
+[#97]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/97
+
+
 # v1.2.2 (2022-10-05)
 
 This release contains additional internal tests.
