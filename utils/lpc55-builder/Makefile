@@ -29,6 +29,8 @@ provision-develop:
 	$(MAKE) bl-flash
 	lpc55 reboot
 	./scripts/usbwait.sh 20a0:42b2
+	# wait 5 more seconds for the device to show up properly again
+	sleep 5
 	# Step 2: provision certs
 	$(MAKE) fw-provision-certs
 	./scripts/boot-to-bootrom.sh
