@@ -215,25 +215,46 @@ trait App<R: Runner>: Sized {
 }
 
 #[cfg(feature = "admin-app")]
-pub struct AdminData {
-    pub init_status: u8,
-    pub ifs_blocks: u8,
-    pub efs_blocks: u16,
+#[derive(Copy, Clone)]
+pub enum Variant {
+    Usbip,
+    Lpc55,
+    Nrf52,
 }
 
 #[cfg(feature = "admin-app")]
-impl Default for AdminData {
-    fn default() -> Self {
-        Self {
-            init_status: 0,
-            ifs_blocks: u8::MAX,
-            efs_blocks: u16::MAX,
+impl From<Variant> for u8 {
+    fn from(variant: Variant) -> Self {
+        match variant {
+            Variant::Usbip => 0,
+            Variant::Lpc55 => 1,
+            Variant::Nrf52 => 2,
         }
     }
 }
 
 #[cfg(feature = "admin-app")]
-pub type AdminStatus = [u8; 4];
+pub struct AdminData {
+    pub init_status: u8,
+    pub ifs_blocks: u8,
+    pub efs_blocks: u16,
+    pub variant: Variant,
+}
+
+#[cfg(feature = "admin-app")]
+impl AdminData {
+    pub fn new(variant: Variant) -> Self {
+        Self {
+            init_status: 0,
+            ifs_blocks: u8::MAX,
+            efs_blocks: u16::MAX,
+            variant,
+        }
+    }
+}
+
+#[cfg(feature = "admin-app")]
+pub type AdminStatus = [u8; 5];
 
 #[cfg(feature = "admin-app")]
 impl AdminData {
@@ -244,6 +265,7 @@ impl AdminData {
             self.ifs_blocks,
             efs_blocks[0],
             efs_blocks[1],
+            self.variant.into(),
         ]
     }
 }

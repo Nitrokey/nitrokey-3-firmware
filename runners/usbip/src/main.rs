@@ -2,7 +2,7 @@ mod store;
 
 use std::path::PathBuf;
 
-use apps::{Apps, Dispatch};
+use apps::{AdminData, Apps, Dispatch, Variant};
 use clap::Parser;
 use clap_num::maybe_hex;
 use log::info;
@@ -192,7 +192,7 @@ fn exec(store: FilesystemOrRam, options: trussed_usbip::Options, serial: Option<
         .build::<Apps<Runner>>()
         .exec(move |_platform| {
             let data = apps::Data {
-                admin: Default::default(),
+                admin: AdminData::new(Variant::Usbip),
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerData {
                     store: unsafe { FilesystemOrRam::store() },
