@@ -11,3 +11,4 @@ Cargo.lock
 !Cargo.lock
 /license.txt
 /commands.bd
+/manifest.json

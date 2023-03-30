@@ -1,0 +1,9 @@
+{
+    "device": "Nitrokey 3",
+    "version": "@VERSION@",
+    "pynitrokey": "v0.4.35",
+    "images": {
+        "lpc55": "firmware-nk3xn-lpc55-@VERSION@.sb2",
+        "nrf52": "firmware-nk3am-nrf52-@VERSION@.zip"
+    }
+}

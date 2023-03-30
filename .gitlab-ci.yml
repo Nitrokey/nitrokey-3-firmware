@@ -17,7 +17,7 @@ variables:
   IMAGE_NAME: nitrokey3
   COMMON_UPDATE_DOCKER: "true"
 
-build-license-txt:
+build-metadata:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -28,9 +28,10 @@ build-license-txt:
   stage: build
   script:
     - make license.txt
+    - make manifest.json
   after_script:
     - mkdir -p artifacts
-    - cp license.txt artifacts
+    - cp license.txt manifest.json artifacts
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
     paths:

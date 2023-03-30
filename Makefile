@@ -15,3 +15,6 @@ commands.bd:
 		runners/embedded/Cargo.toml \
 		runners/embedded/profiles/lpc55.toml \
 		> $@
+
+manifest.json:
+	sed "s/@VERSION@/`git describe --always`/g" utils/manifest.template.json > manifest.json
