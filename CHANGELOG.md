@@ -4,8 +4,10 @@
 
 - usbip: Add `--efs` option to store the external filesystem in a file.
 - Add variant to the status reported by admin-app ([#206][])
+- fido-authenticator: Limit number of resident credentials to ten ([#207][])
 
 [#206]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/206
+[#207]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/207
 
 # v1.3.1 (2023-04-05)
 
