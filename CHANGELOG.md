@@ -1,4 +1,12 @@
-# v1.3.0-RC1 (2023-03-13)
+# v1.3.0 (2023-03-27)
+
+This release introduces the Secrets App with OTP functionality and contains some bugfixes.
+
+**Warning:** On Nitrokey 3 Mini devices, this release causes a migration of the internal filesystem.  See the [Release Notes][v1.3.0] on GitHub for more information.
+
+[v1.3.0]: https://github.com/Nitrokey/nitrokey-3-firmware/releases/tag/v1.3.0
+
+## v1.3.0-RC1 (2023-03-13)
 
 ### Features
 
