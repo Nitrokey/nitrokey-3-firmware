@@ -10,12 +10,11 @@ use rand_core::{OsRng, RngCore};
 use trussed::{
     platform::{consent, reboot, ui},
     types::Location,
-    virt::{self, StoreProvider},
     Bytes, Platform,
 };
 use trussed_usbip::Service;
 
-use store::Ram;
+use store::FilesystemOrRam;
 
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
@@ -37,6 +36,10 @@ struct Args {
     /// Internal file system (default: use RAM).
     #[clap(short, long)]
     ifs: Option<PathBuf>,
+
+    /// External file system (default: use RAM).
+    #[clap(short, long)]
+    efs: Option<PathBuf>,
 }
 
 struct Reboot;
@@ -102,35 +105,31 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 }
 
-struct Runner<S: StoreProvider> {
+struct Runner {
     serial: [u8; 16],
-    _marker: std::marker::PhantomData<S>,
 }
 
-impl<S: StoreProvider> Runner<S> {
+impl Runner {
     fn new(serial: Option<u128>) -> Self {
         let serial = serial.map(u128::to_be_bytes).unwrap_or_else(|| {
             let mut uuid = [0; 16];
             OsRng.fill_bytes(&mut uuid);
             uuid
         });
-        Runner {
-            serial,
-            _marker: Default::default(),
-        }
+        Runner { serial }
     }
 }
 
-impl<S: StoreProvider> apps::Runner for Runner<S> {
-    type Syscall = Service<S, Dispatch>;
+impl apps::Runner for Runner {
+    type Syscall = Service<FilesystemOrRam, Dispatch>;
 
     type Reboot = Reboot;
 
     #[cfg(feature = "provisioner")]
-    type Store = S::Store;
+    type Store = store::Store;
 
     #[cfg(feature = "provisioner")]
-    type Filesystem = <S::Store as trussed::store::Store>::I;
+    type Filesystem = <store::Store as trussed::store::Store>::I;
 
     fn uuid(&self) -> [u8; 16] {
         self.serial
@@ -154,11 +153,8 @@ fn main() {
         pid: PID,
     };
 
-    if let Some(ifs) = args.ifs {
-        exec(virt::Filesystem::new(ifs), options, args.serial);
-    } else {
-        exec(Ram::default(), options, args.serial);
-    }
+    let store_provider = FilesystemOrRam::new(args.ifs, args.efs);
+    exec(store_provider, options, args.serial)
 }
 
 fn print_version() {
@@ -178,7 +174,10 @@ fn print_version() {
     println!();
 }
 
-fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, serial: Option<u128>) {
+fn exec(store: FilesystemOrRam, options: trussed_usbip::Options, serial: Option<u128>) {
+    #[cfg(feature = "provisioner")]
+    use trussed::virt::StoreProvider as _;
+
     log::info!("Initializing Trussed");
     trussed_usbip::Builder::new(store, options)
         .dispatch(Dispatch::with_hw_key(
@@ -190,14 +189,14 @@ fn exec<S: StoreProvider + Clone>(store: S, options: trussed_usbip::Options, ser
                 Box::new(UserInterface::new());
             platform.user_interface().set_inner(ui);
         })
-        .build::<Apps<Runner<S>>>()
+        .build::<Apps<Runner>>()
         .exec(move |_platform| {
             let data = apps::Data {
                 admin: Default::default(),
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerData {
-                    store: unsafe { S::store() },
-                    stolen_filesystem: unsafe { S::ifs() },
+                    store: unsafe { FilesystemOrRam::store() },
+                    stolen_filesystem: unsafe { FilesystemOrRam::ifs() },
                     nfc_powered: false,
                     rebooter: || unimplemented!(),
                 },

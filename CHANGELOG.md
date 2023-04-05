@@ -1,3 +1,9 @@
+# Unreleased
+
+### Features
+
+- usbip: Add `--efs` option to store the external filesystem in a file.
+
 # v1.3.1 (2023-04-05)
 
 This release adds OTP functionality and contains some bugfixes.
