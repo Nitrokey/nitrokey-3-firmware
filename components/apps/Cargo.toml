@@ -12,7 +12,7 @@ usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
 
 # Backends
-trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth/", tag = "v0.1.0", optional = true }
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth/", tag = "v0.2.0", optional = true }
 
 # apps
 admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
