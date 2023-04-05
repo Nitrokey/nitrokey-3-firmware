@@ -12,13 +12,13 @@ usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
 
 # Backends
-trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth/", tag = "v0.2.0", optional = true }
+trussed-auth = { version = "0.2.1", optional = true }
 
 # apps
 admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.8.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.9.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
