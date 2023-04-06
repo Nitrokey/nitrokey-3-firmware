@@ -25,6 +25,53 @@ const WHITE: Intensities = Intensities {
     blue: u8::MAX,
 };
 
+#[repr(u8)]
+pub enum CustomStatus {
+    ReverseHotpSuccess = 0,
+    ReverseHotpError = 1,
+}
+
+impl From<CustomStatus> for u8 {
+    fn from(status: CustomStatus) -> Self {
+        status as _
+    }
+}
+
+impl TryFrom<u8> for CustomStatus {
+    type Error = UnknownStatusError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::ReverseHotpSuccess),
+            1 => Ok(Self::ReverseHotpError),
+            _ => Err(UnknownStatusError(value)),
+        }
+    }
+}
+
+pub struct UnknownStatusError(u8);
+
+impl CustomStatus {
+    fn led_mode(&self, start: Duration) -> LedMode {
+        let color = match self {
+            Self::ReverseHotpSuccess => TEAL,
+            Self::ReverseHotpError => RED,
+        };
+        LedMode::simple_blinking(color, start)
+    }
+
+    fn allow_update(&self) -> bool {
+        false
+    }
+
+    fn duration(&self) -> Option<Duration> {
+        match self {
+            Self::ReverseHotpSuccess => Some(Duration::from_secs(10)),
+            Self::ReverseHotpError => None,
+        }
+    }
+}
+
 pub enum Status {
     Startup(Duration),
     Idle,
@@ -32,12 +79,21 @@ pub enum Status {
     WaitingForUserPresence(Duration),
     Winking(Range<Duration>),
     Error,
+    Custom {
+        status: CustomStatus,
+        start: Duration,
+    },
 }
 
 impl Status {
     pub fn update(&mut self, status: ui::Status, uptime: Duration) {
         if status == ui::Status::Idle && matches!(self, Self::Startup(_) | Self::Winking(_)) {
             return;
+        }
+        if let Self::Custom { status, .. } = self {
+            if !status.allow_update() {
+                return;
+            }
         }
         *self = (status, uptime).into();
     }
@@ -46,6 +102,7 @@ impl Status {
         let end = match self {
             Self::Startup(ref start) => Some(*start + Duration::from_millis(500)),
             Self::Winking(ref range) => Some(range.end),
+            Self::Custom { status, start } => status.duration().map(|duration| *start + duration),
             _ => None,
         };
         if let Some(end) = end {
@@ -69,6 +126,7 @@ impl Status {
             Self::WaitingForUserPresence(start) => LedMode::simple_blinking(WHITE, *start),
             Self::Error => LedMode::constant(RED),
             Self::Winking(range) => LedMode::simple_blinking(WHITE, range.start),
+            Self::Custom { status, start } => status.led_mode(*start),
         }
     }
 }
@@ -80,6 +138,15 @@ impl From<(ui::Status, Duration)> for Status {
             ui::Status::Processing => Self::Processing,
             ui::Status::WaitingForUserPresence => Self::WaitingForUserPresence(uptime),
             ui::Status::Error => Self::Error,
+            ui::Status::Custom(custom) => CustomStatus::try_from(custom)
+                .map(|status| Self::Custom {
+                    status,
+                    start: uptime,
+                })
+                .unwrap_or_else(|_| {
+                    error!("Unsupported custom UI status {}", custom);
+                    Self::Error
+                }),
         }
     }
 }

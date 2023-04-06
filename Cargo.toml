@@ -15,7 +15,7 @@ version = "1.3.1"
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nitrokey.1" }
 littlefs2 = { git = "https://github.com/Nitrokey/littlefs2", tag = "v0.3.2-nitrokey-2" }
 lpc55-hal = { git = "https://github.com/nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey-2" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.8" }
+trussed = { git = "https://github.com/Nitrokey/trussed", rev = "52da9bb674aaf037414ac757b55bc8549b03067c" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.2.1"}
 trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", rev = "311d2366f99cc300b03d61e7f6a0a07abd3e8700"}
 
