@@ -16,8 +16,9 @@ variables:
   MAIN_BRANCH: main 
   IMAGE_NAME: nitrokey3
   COMMON_UPDATE_DOCKER: "true"
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
-build-metadata:
+metadata:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -27,72 +28,81 @@ build-metadata:
     - docker
   stage: build
   script:
+    - make commands.bd
     - make license.txt
     - make manifest.json
   after_script:
     - mkdir -p artifacts
-    - cp license.txt manifest.json artifacts
-    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
-  artifacts:
-    paths:
-      - artifacts
-
-build-lpc55-nk3xn:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - mkdir -p artifacts nk3xn
-    - export VERSION=`git describe --always`
-    - make commands.bd
-    - cp commands.bd nk3xn
-    - make -C runners/embedded build-nk3xn FEATURES=provisioner
-    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/provisioner-nk3xn-lpc55-$VERSION.bin
-    - make -C runners/embedded build-nk3xn FEATURES=alpha
-    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/alpha-nk3xn-lpc55-$VERSION.bin
-    - make -C runners/embedded build-nk3xn
-    - cp ./runners/embedded/artifacts/runner-lpc55-nk3xn.bin nk3xn/firmware-nk3xn-lpc55-$VERSION.bin
-    - zip nk3xn-raw.zip nk3xn/*
-    - cp nk3xn-raw.zip artifacts
-  after_script:
+    - cp commands.bd license.txt manifest.json artifacts
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
     paths:
       - artifacts
 
-build-nrf52-nk3mini:
+check-firmware:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - make -C runners/embedded check-all
+    - make -C runners/embedded check-all FEATURES=provisioner
+    - make -C runners/embedded check-all FEATURES=alpha
+  after_script:
+    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+
+check-usbip:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - cargo check --manifest-path runners/usbip/Cargo.toml
+    - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
+    - cargo check --manifest-path runners/usbip/Cargo.toml --features alpha
+  after_script:
+    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+
+lint:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - make lint
+  after_script:
+    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+
+build-firmware:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
   tags:
     - docker
   stage: build
   script:
-    - export VERSION=`git describe --always`
-    - mkdir -p artifacts nk3am
-    - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
-    - cp runners/embedded/artifacts/*.bin nk3am/provisioner-nk3am-nrf52-$VERSION.bin
-    - cp runners/embedded/artifacts/*.ihex nk3am/provisioner-nk3am-nrf52-$VERSION.ihex
-    - make -C runners/embedded clean-nk3am.bl FEATURES=provisioner
-    - make -C runners/embedded build-nk3am.bl FEATURES=alpha
-    - cp runners/embedded/artifacts/*.bin nk3am/alpha-nk3am-nrf52-$VERSION.bin
-    - cp runners/embedded/artifacts/*.ihex nk3am/alpha-nk3am-nrf52-$VERSION.ihex
-    - make -C runners/embedded clean-nk3am.bl FEATURES=alpha
-    - make -C runners/embedded build-nk3am.bl FEATURES=develop
-    - make -C runners/embedded clean-nk3am.bl FEATURES=develop
+    - git describe --exact-match
+    - export VERSION=`git describe --exact-match`
+    - if echo $VERSION | grep test ; then export FEATURES=alpha ; fi
+    - mkdir -p artifacts
     - make -C runners/embedded build-nk3am.bl
-    - cp runners/embedded/artifacts/*.bin nk3am/firmware-nk3am-nrf52-$VERSION.bin
-    - cp runners/embedded/artifacts/*.ihex nk3am/firmware-nk3am-nrf52-$VERSION.ihex
-    - zip nk3am-raw.zip nk3am/*
-    - cp nk3am-raw.zip artifacts
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nk3am-nrf52-$VERSION.ihex
+    - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nk3am-nrf52-$VERSION.ihex
+    - make -C runners/embedded build-nk3xn
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - make -C runners/embedded build-nk3xn FEATURES=provisioner
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
@@ -102,39 +112,21 @@ build-nrf52-nk3mini:
 build-usbip:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
   tags:
     - docker
   stage: build
   script:
-    - cargo build --release --manifest-path runners/usbip/Cargo.toml
-    - cargo fmt --manifest-path runners/usbip/Cargo.toml -- --check
+    - git describe --exact-match
+    - export VERSION=`git describe --exact-match`
+    - if echo $VERSION | grep test ; then export FEATURES=alpha ; fi
     - mkdir -p artifacts
-    - export VERSION=`git describe --always`
-    - cargo build --release --manifest-path runners/usbip/Cargo.toml
+    - cargo build --release --manifest-path runners/usbip/Cargo.toml --features $FEATURES,
     - cp target/release/usbip-runner artifacts/usbip-runner-$VERSION
     - cargo build --release --manifest-path runners/usbip/Cargo.toml --features provisioner
     - cp target/release/usbip-runner artifacts/usbip-provisioner-$VERSION
-    - cargo build --release --manifest-path runners/usbip/Cargo.toml --features alpha
-    - cp target/release/usbip-runner artifacts/usbip-alpha-$VERSION
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   artifacts:
     paths:
       - artifacts
-
-lint:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make lint
-  after_script:
-    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
