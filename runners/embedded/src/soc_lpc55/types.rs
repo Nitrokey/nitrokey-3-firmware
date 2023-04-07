@@ -2,6 +2,7 @@ use super::board::{button::ThreeButtons, led::RgbLed};
 use super::spi::{FlashCs, Spi};
 use super::trussed::UserInterface;
 use crate::{flash::ExtFlashStorage, types::build_constants};
+use apps::Variant;
 use embedded_time::duration::Milliseconds;
 use lpc55_hal::{
     drivers::timer,
@@ -59,6 +60,8 @@ impl crate::types::Soc for Soc {
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
+    const VARIANT: Variant = Variant::Lpc55;
+
     fn device_uuid() -> &'static [u8; 16] {
         unsafe { &DEVICE_UUID }
     }

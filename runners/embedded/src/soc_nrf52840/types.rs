@@ -1,4 +1,5 @@
 use crate::soc::types::pac::SCB;
+use apps::Variant;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
     pac, spim, twim, uarte,
@@ -62,6 +63,7 @@ impl crate::types::Soc for Soc {
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
+    const VARIANT: Variant = Variant::Nrf52;
 
     fn device_uuid() -> &'static Self::UUID {
         unsafe { &DEVICE_UUID }

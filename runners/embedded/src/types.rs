@@ -4,7 +4,7 @@ use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use apps::Dispatch;
+use apps::{Dispatch, Variant};
 use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
@@ -53,6 +53,7 @@ pub trait Soc {
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;
     const INTERFACE_CONFIG: &'static Config;
+    const VARIANT: Variant;
 
     fn device_uuid() -> &'static Self::UUID;
 }
