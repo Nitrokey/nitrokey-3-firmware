@@ -40,7 +40,7 @@ impl FlashStorage {
         // format, for each block:
         // * write counter, which equals the block idx
         // * write 0x00 into remaining block
-        let buf: [u8; (FTL_BLOCK_SIZE - 4)] = [0x00; (FTL_BLOCK_SIZE - 4)];
+        let buf: [u8; FTL_BLOCK_SIZE - 4] = [0x00; (FTL_BLOCK_SIZE - 4)];
         for idx in 0..FTL_JOURNAL_BLOCKS as u32 {
             let addr = FTL_JOURNAL_START + (REAL_BLOCK_SIZE * idx as usize) as u32;
             self.nvmc.write(addr, &idx.to_be_bytes()).unwrap();
