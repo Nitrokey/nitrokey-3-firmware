@@ -16,6 +16,9 @@ use trussed::{
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 
+#[cfg(feature = "backend-rsa")]
+use trussed_rsa_alloc::SoftwareRsa;
+
 #[derive(Debug)]
 pub struct Dispatch {
     #[cfg(feature = "backend-auth")]
@@ -45,7 +48,6 @@ impl Dispatch {
     }
 }
 
-#[cfg(feature = "backend-auth")]
 impl ExtensionDispatch for Dispatch {
     type Context = DispatchContext;
     type BackendId = Backend;
@@ -59,10 +61,13 @@ impl ExtensionDispatch for Dispatch {
         resources: &mut ServiceResources<P>,
     ) -> Result<Reply, TrussedError> {
         match backend {
+            #[cfg(feature = "backend-auth")]
             Backend::Auth => {
                 self.auth
                     .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
             }
+            #[cfg(feature = "backend-rsa")]
+            Backend::SoftwareRsa => SoftwareRsa.request(&mut ctx.core, &mut (), request, resources),
         }
     }
 
@@ -75,6 +80,7 @@ impl ExtensionDispatch for Dispatch {
         resources: &mut ServiceResources<P>,
     ) -> Result<reply::SerdeExtension, TrussedError> {
         match backend {
+            #[cfg(feature = "backend-auth")]
             Backend::Auth => match extension {
                 Extension::Auth => self.auth.extension_request_serialized(
                     &mut ctx.core,
@@ -83,22 +89,9 @@ impl ExtensionDispatch for Dispatch {
                     resources,
                 ),
             },
+            #[cfg(feature = "backend-rsa")]
+            Backend::SoftwareRsa => Err(TrussedError::RequestNotAvailable),
         }
-    }
-}
-
-#[cfg(not(feature = "backend-auth"))]
-impl trussed::backend::Dispatch for Dispatch {
-    type Context = DispatchContext;
-    type BackendId = Backend;
-    fn request<P: Platform>(
-        &mut self,
-        backend: &Self::BackendId,
-        _ctx: &mut Context<Self::Context>,
-        _request: &Request,
-        _resources: &mut ServiceResources<P>,
-    ) -> Result<Reply, TrussedError> {
-        match *backend {}
     }
 }
 
@@ -106,6 +99,8 @@ impl trussed::backend::Dispatch for Dispatch {
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
     Auth,
+    #[cfg(feature = "backend-rsa")]
+    SoftwareRsa,
 }
 
 #[derive(Debug, Clone, Copy)]
