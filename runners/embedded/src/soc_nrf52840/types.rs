@@ -7,9 +7,6 @@ use nrf52840_hal::{
 };
 use nrf52840_pac;
 
-use crate::flash::ExtFlashStorage;
-use nrf52840_hal::Spim;
-use nrf52840_pac::SPIM3;
 pub type OutPin = Pin<Output<PushPull>>;
 
 //////////////////////////////////////////////////////////////////////////////

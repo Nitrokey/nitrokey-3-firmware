@@ -6,11 +6,6 @@ use soc::types::Soc as SocT;
 use types::Soc;
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
-#[cfg(feature = "board-nk3am")]
-use soc::migrations::ftl_journal;
-#[cfg(feature = "board-nk3am")]
-use soc::migrations::ftl_journal::ifs_flash_old::FlashStorage as OldFlashStorage;
-
 extern crate delog;
 delog::generate_macros!();
 
@@ -96,35 +91,9 @@ pub fn init_store(
             {
                 error_now!("IFS (nrf42) mount-fail");
 
-                // regular mount failed, try mounting "old" (pre-journaling) IFS
-                let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-                let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
-                let mut old_ifs_alloc: littlefs2::fs::Allocation<OldFlashStorage> =
-                    Filesystem::allocate();
-                let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
-
-                // we can mount the old ifs filesystem, thus we need to migrate
-                if old_mountable {
-                    let mounted_ifs = ftl_journal::migrate(
-                        &mut old_ifs_storage,
-                        &mut old_ifs_alloc,
-                        ifs_alloc,
-                        ifs_storage,
-                        efs_storage,
-                    );
-                    // migration went fine => use its resulting IFS
-                    if let Ok(()) = mounted_ifs {
-                        info_now!("migration ok, mounting IFS");
-                    // migration failed => format IFS
-                    } else {
-                        error_now!("failed migration, formatting IFS");
-                        let _fmt_ifs = Filesystem::format(ifs_storage);
-                    }
-                } else {
-                    info_now!("recovering from journal");
-                    // IFS and old-IFS cannot be mounted, try to recover from journal
-                    ifs_storage.recover_from_journal();
-                }
+                info_now!("recovering from journal");
+                // IFS and old-IFS cannot be mounted, try to recover from journal
+                ifs_storage.recover_from_journal();
             }
         }
     }
@@ -141,7 +110,7 @@ pub fn init_store(
             info_now!("Formatting simulated EFS failed as expected");
         } else {
             error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
-            status.insert(types::InitStatus::EXTERNAL_FLASH_ERROR);
+            // status.insert(types::InitStatus::EXTERNAL_FLASH_ERROR);
         }
     };
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {

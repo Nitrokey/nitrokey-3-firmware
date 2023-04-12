@@ -16,7 +16,6 @@ mod app {
         gpio::{p0, p1},
         gpiote::Gpiote,
         rng::Rng,
-        timer::Timer,
     };
     use rand_core::SeedableRng;
     use trussed::types::{Bytes, Location};
@@ -67,10 +66,8 @@ mod app {
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
-        let mut delay_timer = Timer::<nrf52840_pac::TIMER0>::new(ctx.device.TIMER0);
-
         let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
-        let mut board_gpio = {
+        let board_gpio = {
             let dev_gpio_p0 = p0::Parts::new(ctx.device.P0);
             let dev_gpio_p1 = p1::Parts::new(ctx.device.P1);
             ERL::soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
@@ -140,64 +137,6 @@ mod app {
             ERL::init_store(internal_flash, extflash, false, &mut init_status);
 
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
-        /* TODO: set up fingerprint device */
-        /* TODO: set up SE050 device */
-
-        /* *********************************** */
-        /* in the meantime just test i2c comms */
-        /* SE050 minimal functional test - TO BE REMOVED on SE050 inclusion*/
-
-        use embedded_hal::blocking::delay::DelayMs;
-        use nrf52840_hal::prelude::OutputPin;
-
-        if let Some(se_ena) = &mut board_gpio.se_power {
-            match se_ena.set_high() {
-                Err(e) => {
-                    panic!("failed setting se_power high {:?}", e);
-                }
-                Ok(_) => {
-                    debug!("setting se_power high");
-                }
-            }
-        }
-
-        let mut twim = nrf52840_hal::twim::Twim::new(
-            ctx.device.TWIM1,
-            board_gpio.se_pins.take().unwrap(),
-            nrf52840_hal::twim::Frequency::K400,
-        );
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC command
-        let write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-        match twim.write(0x48, &write_buf) {
-            Err(e) => {
-                panic!("i2c: failed I2C write! - {:?}", e);
-            }
-            Ok(_) => {
-                debug!("i2c: write I2C success....");
-            }
-        }
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC response
-        let mut response = [0; 2];
-        match twim.read(0x48, &mut response) {
-            Err(e) => {
-                panic!("i2c: failed I2C read! - {:?}", e);
-            }
-            Ok(_) => {
-                if response == [0xa5, 0xe0] {
-                    debug!("i2c: se050 activation RESYNC cool");
-                } else {
-                    panic!("i2c: se050 activation RESYNC fail!");
-                }
-            }
-        }
-        /* end of se050 minial functional test */
-        /* *********************************** */
 
         /* TODO: set up display */
 
