@@ -50,6 +50,8 @@ type NdefApp = ndef_app::App<'static>;
 type OathApp<R> = oath_authenticator::Authenticator<Client<R>>;
 #[cfg(feature = "opcard")]
 type OpcardApp<R> = opcard::Card<Client<R>>;
+#[cfg(feature = "piv-authenticator")]
+type PivApp<R> = piv_authenticator::Authenticator<Client<R>>;
 #[cfg(feature = "provisioner-app")]
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
@@ -65,6 +67,8 @@ pub struct Apps<R: Runner> {
     oath: OathApp<R>,
     #[cfg(feature = "opcard")]
     opcard: OpcardApp<R>,
+    #[cfg(feature = "piv-authenticator")]
+    piv: PivApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
 
@@ -98,6 +102,8 @@ impl<R: Runner> Apps<R> {
             oath: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "opcard")]
             opcard: App::new(runner, &mut make_client, ()),
+            #[cfg(feature = "piv-authenticator")]
+            piv: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
             _compile_no_feature: PhantomData::default(),
@@ -136,6 +142,8 @@ impl<R: Runner> Apps<R> {
             &mut self.oath,
             #[cfg(feature = "opcard")]
             &mut self.opcard,
+            #[cfg(feature = "piv-authenticator")]
+            &mut self.piv,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
@@ -336,9 +344,38 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         let mut options = opcard::Options::default();
         options.button_available = true;
         options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
-        options.storage = trussed::types::Location::Internal;
+        options.storage = trussed::types::Location::External;
         // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
+    }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_OPCARD
+    }
+}
+
+#[cfg(feature = "piv-authenticator")]
+impl<R: Runner> App<R> for PivApp<R> {
+    const CLIENT_ID: &'static str = "piv";
+
+    type Data = ();
+
+    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
+        Self::new(trussed, piv_authenticator::Options::default())
+    }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_PIV: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_PIV
     }
 }
 
