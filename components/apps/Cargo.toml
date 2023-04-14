@@ -20,7 +20,8 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitro
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.9.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.3.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.4.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", rev = "v0.1.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [features]
@@ -31,12 +32,14 @@ default = [
     "oath-authenticator",
     "trussed/clients-3",
 ]
-alpha = ["opcard", "trussed/clients-4"]
+alpha = ["opcard", "piv-authenticator", "trussed/clients-5"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
 
 # apps
 oath-authenticator = ["dep:oath-authenticator", "backend-auth"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
+opcard = ["dep:opcard", "backend-rsa", "backend-auth"]
+piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth"]
 
 # backends
 backend-auth = ["trussed-auth"]
