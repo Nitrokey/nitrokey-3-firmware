@@ -97,7 +97,7 @@ dependencies = [
  "provisioner-app",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/Nitrokey/trussed-rsa-backend.git?tag=v0.1.0)",
+ "trussed-rsa-alloc",
  "trussed-usbip",
  "usbd-ctaphid",
  "utils",
@@ -1043,8 +1043,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bda469ecf5b58ba898e1a6e68f99529b568e24490f45ced8222240d10d7c6508"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.1#5669a094411221ea1568832be28c03cbba57d55d"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -2025,7 +2024,7 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/Nitrokey/trussed-rsa-backend.git?tag=v0.1.0)",
+ "trussed-rsa-alloc",
 ]
 
 [[package]]
@@ -2126,8 +2125,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/piv-authenticator?rev=v0.1.0#ca6daf33a756b8fd62f0e00cea6d6a4b86bb236c"
+version = "0.1.1"
+source = "git+https://github.com/Nitrokey/piv-authenticator?rev=v0.1.1#25060e30338c6c5bbabc41467300f6a5b6dc4bd4"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2142,7 +2141,7 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=bc48a97cd5a900ff38395433788a6fbe4e712434)",
+ "trussed-rsa-alloc",
  "untrusted",
 ]
 
@@ -3020,20 +3019,6 @@ dependencies = [
 name = "trussed-rsa-alloc"
 version = "0.1.0"
 source = "git+https://github.com/Nitrokey/trussed-rsa-backend.git?tag=v0.1.0#a72ce195a4495a8db26debfb0240a4dc712d8dbe"
-dependencies = [
- "delog",
- "heapless-bytes 0.3.0",
- "num-bigint-dig",
- "postcard 0.7.3",
- "rsa",
- "serde",
- "trussed",
-]
-
-[[package]]
-name = "trussed-rsa-alloc"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=bc48a97cd5a900ff38395433788a6fbe4e712434#bc48a97cd5a900ff38395433788a6fbe4e712434"
 dependencies = [
  "delog",
  "heapless-bytes 0.3.0",
