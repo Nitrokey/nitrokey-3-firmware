@@ -13,11 +13,13 @@ This document lists identifiers used by Nitrokey 3 devices.
 
 ## USB Vendor and Product ID
 
-| Device                        | Vendor ID | Product ID |
-| ----------------------------- | --------: | ---------: |
-| Nitrokey 3                    | 0x20a0    | 0x42b2     |
-| Nitrokey 3 Bootloader (lpc55) | 0x20a0    | 0x42dd     |
-| Nitrokey 3 Bootloader (nrf52) | 0x20a0    | 0x42e8     |
+| Device                         | Vendor ID | Product ID |
+| ------------------------------ | --------: | ---------: |
+| Nitrokey 3                     | 0x20a0    | 0x42b2     |
+| Nitrokey 3 Bootloader (lpc55)  | 0x20a0    | 0x42dd     |
+| Nitrokey 3 Bootloader (nrf52)  | 0x20a0    | 0x42e8     |
+| Nitrokey FIDO2 Mini            | 0x20a0    | 0x42f3     |
+| Nitrokey FIDO2 Mini Bootloader | 0x20a0    | 0x42f4     |
 
 ## FIDO2 AAGUID
 
