@@ -26,6 +26,7 @@ use hal::{
     typestates::pin::state::Gpio,
 };
 use lpc55_hal as hal;
+#[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
 use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;

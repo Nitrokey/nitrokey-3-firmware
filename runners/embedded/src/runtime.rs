@@ -11,7 +11,7 @@ use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
 static WAITING: AtomicBool = AtomicBool::new(false);
 pub struct UserPresenceStatus {}
 impl UserPresenceStatus {
-    pub(crate) fn set_waiting(waiting: bool) {
+    pub fn set_waiting(waiting: bool) {
         WAITING.store(waiting, Relaxed);
     }
     pub fn waiting() -> bool {
