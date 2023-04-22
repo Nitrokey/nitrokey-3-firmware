@@ -8,6 +8,7 @@ do
 	do
 		if lsusb -d $id
 		then
+		  sleep 2
 			exit 0
 		fi
 		echo -n "."

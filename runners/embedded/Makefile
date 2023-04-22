@@ -12,6 +12,7 @@ else
 endif
 
 # rust triplet
+# This requires toml package installed: pip install toml
 TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
 # gnu binutils-prefix
 GNU_TARGET = arm-none-eabi
