@@ -12,6 +12,7 @@ use trussed::{
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
+use trussed::types::Location;
 
 mod dispatch;
 use dispatch::Backend;
@@ -321,9 +322,8 @@ impl<R: Runner> App<R> for OathApp<R> {
     type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        let mut options = oath_authenticator::Options::default();
-        options.location = trussed::types::Location::External;
-        Self::with_options(trussed, options)
+        let mut options = oath_authenticator::Options::new(Location::External, 0, 1);
+        Self::new(trussed, options)
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_OATH: &[BackendId<Backend>] =
