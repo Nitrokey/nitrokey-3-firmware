@@ -323,9 +323,9 @@ impl<R: Runner> App<R> for OathApp<R> {
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
         let mut options = oath_authenticator::Options::new(
-            trussed::types::Location::External,
+            Location::External,
             0,
-            1
+            1,
         );
         Self::new(trussed, options)
     }
