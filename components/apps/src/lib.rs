@@ -387,6 +387,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),
+            BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ];
         let _ = runner;
@@ -407,6 +408,7 @@ impl<R: Runner> App<R> for PivApp<R> {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),
+            BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ];
         let _ = runner;
