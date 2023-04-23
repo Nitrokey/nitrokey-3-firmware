@@ -25,37 +25,13 @@ const WHITE: Intensities = Intensities {
     blue: u8::MAX,
 };
 
-#[repr(u8)]
-pub enum CustomStatus {
-    ReverseHotpSuccess = 0,
-    ReverseHotpError = 1,
-}
-
-impl From<CustomStatus> for u8 {
-    fn from(status: CustomStatus) -> Self {
-        status as _
-    }
-}
-
-impl TryFrom<u8> for CustomStatus {
-    type Error = UnknownStatusError;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::ReverseHotpSuccess),
-            1 => Ok(Self::ReverseHotpError),
-            _ => Err(UnknownStatusError(value)),
-        }
-    }
-}
-
-pub struct UnknownStatusError(u8);
+pub struct CustomStatus(apps::CustomStatus);
 
 impl CustomStatus {
     fn led_mode(&self, start: Duration) -> LedMode {
-        let color = match self {
-            Self::ReverseHotpSuccess => TEAL,
-            Self::ReverseHotpError => RED,
+        let color = match self.0 {
+            apps::CustomStatus::ReverseHotpSuccess => TEAL,
+            apps::CustomStatus::ReverseHotpError => RED,
         };
         LedMode::simple_blinking(color, start)
     }
@@ -65,10 +41,24 @@ impl CustomStatus {
     }
 
     fn duration(&self) -> Option<Duration> {
-        match self {
-            Self::ReverseHotpSuccess => Some(Duration::from_secs(10)),
-            Self::ReverseHotpError => None,
+        match self.0 {
+            apps::CustomStatus::ReverseHotpSuccess => Some(Duration::from_secs(10)),
+            apps::CustomStatus::ReverseHotpError => None,
         }
+    }
+}
+
+impl From<apps::CustomStatus> for CustomStatus {
+    fn from(status: apps::CustomStatus) -> Self {
+        Self(status)
+    }
+}
+
+impl TryFrom<u8> for CustomStatus {
+    type Error = apps::UnknownStatusError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        apps::CustomStatus::try_from(value).map(From::from)
     }
 }
 
