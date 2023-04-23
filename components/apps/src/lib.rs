@@ -57,6 +57,36 @@ type PivApp<R> = piv_authenticator::Authenticator<Client<R>>;
 type ProvisionerApp<R> =
     provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
 
+#[repr(u8)]
+pub enum CustomStatus {
+    #[cfg(feature = "oath-authenticator")]
+    ReverseHotpSuccess = 0,
+    #[cfg(feature = "oath-authenticator")]
+    ReverseHotpError = 1,
+}
+
+impl From<CustomStatus> for u8 {
+    fn from(status: CustomStatus) -> Self {
+        status as _
+    }
+}
+
+impl TryFrom<u8> for CustomStatus {
+    type Error = UnknownStatusError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            #[cfg(feature = "oath-authenticator")]
+            0 => Ok(Self::ReverseHotpSuccess),
+            #[cfg(feature = "oath-authenticator")]
+            1 => Ok(Self::ReverseHotpError),
+            _ => Err(UnknownStatusError(value)),
+        }
+    }
+}
+
+pub struct UnknownStatusError(u8);
+
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
@@ -322,7 +352,11 @@ impl<R: Runner> App<R> for OathApp<R> {
     type Data = ();
 
     fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        let mut options = oath_authenticator::Options::new(Location::External, 0, 1);
+        let options = oath_authenticator::Options::new(
+            Location::External,
+            CustomStatus::ReverseHotpSuccess.into(),
+            CustomStatus::ReverseHotpError.into(),
+        );
         Self::new(trussed, options)
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
