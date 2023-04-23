@@ -1043,7 +1043,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.1#5669a094411221ea1568832be28c03cbba57d55d"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?rev=v0.1.1-nitrokey.2#d47a7c158f83cf60c9a0e3c13df53900342da665"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1052,7 +1052,6 @@ dependencies = [
  "heapless 0.7.16",
  "interchange 0.2.2",
  "iso7816",
- "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
@@ -1596,8 +1595,9 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 
 [[package]]
 name = "littlefs2"
-version = "0.3.2"
-source = "git+https://github.com/Nitrokey/littlefs2?tag=v0.3.2-nitrokey-2#c2d2605baa1bbe9341dba349e4bc3ef42299b5fa"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95c72bdf63e7ad35f391e60c48e4c32560038f1d3a0dd97f90a2891ce09160bf"
 dependencies = [
  "bitflags",
  "cstr_core",
@@ -1655,7 +1655,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.3.0"
-source = "git+https://github.com/nitrokey/lpc55-hal?tag=v0.3.0-nitrokey-2#f49c9abaa3ef6805d265f7cda3fe1920c3a53aad"
+source = "git+https://github.com/Nitrokey/lpc55-hal?tag=v0.3.0-nitrokey.2#781c97372d07e98d48828ae345412cc311bd4113"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
@@ -2965,7 +2965,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey.9#01c020d4af3e6e165ffac7a9588586ff16006aa2"
+source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey.10#91d5a371fafcd794e8cd143a0061a42f44ab6526"
 dependencies = [
  "aes",
  "bitflags",

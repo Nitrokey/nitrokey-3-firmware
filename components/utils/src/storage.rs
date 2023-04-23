@@ -19,7 +19,7 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
     const BLOCK_COUNT: usize = S::BLOCK_COUNT;
 
     type CACHE_SIZE = S::CACHE_SIZE;
-    type LOOKAHEADWORDS_SIZE = S::LOOKAHEADWORDS_SIZE;
+    type LOOKAHEAD_SIZE = S::LOOKAHEAD_SIZE;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         let read_size: usize = Self::READ_SIZE;
@@ -88,7 +88,7 @@ impl<S: Storage, const RAM_SIZE: usize> Storage for OptionalStorage<S, RAM_SIZE>
     const BLOCK_COUNT: usize = S::BLOCK_COUNT;
 
     type CACHE_SIZE = S::CACHE_SIZE;
-    type LOOKAHEADWORDS_SIZE = S::LOOKAHEADWORDS_SIZE;
+    type LOOKAHEAD_SIZE = S::LOOKAHEAD_SIZE;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         info_now!("EFr {:x} {:x}", off, buf.len());
