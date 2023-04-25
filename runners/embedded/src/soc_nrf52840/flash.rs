@@ -216,7 +216,7 @@ impl littlefs2::driver::Storage for FlashStorage {
         (FLASH_SIZE / Self::BLOCK_SIZE) - (FTL_BLOCKS_IN_REAL * FTL_JOURNAL_BLOCKS);
 
     type CACHE_SIZE = generic_array::typenum::U256;
-    type LOOKAHEADWORDS_SIZE = generic_array::typenum::U2;
+    type LOOKAHEAD_SIZE = generic_array::typenum::U1;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
         // skip journal blocks

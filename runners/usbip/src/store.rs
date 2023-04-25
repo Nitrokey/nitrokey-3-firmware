@@ -10,7 +10,7 @@ use std::{
 
 use littlefs2::{
     const_ram_storage,
-    consts::{U16, U2, U512},
+    consts::{U1, U512, U8},
     fs::{Allocation, Filesystem},
 };
 use trussed::{
@@ -44,7 +44,7 @@ const_ram_storage!(
     cache_size_ty=U512,
     block_size=4096,
     block_count=0x2_0000 / 4096,
-    lookaheadwords_size_ty=U2,
+    lookahead_size_ty=U1,
     filename_max_plus_one_ty=U256,
     path_max_plus_one_ty=U256,
     result=LfsResult,
@@ -89,7 +89,7 @@ impl<S: LfsStorage> LfsStorage for FilesystemStorage<S> {
     const BLOCK_CYCLES: isize = S::BLOCK_CYCLES;
 
     type CACHE_SIZE = U512;
-    type LOOKAHEADWORDS_SIZE = U16;
+    type LOOKAHEAD_SIZE = U8;
 
     fn read(&mut self, offset: usize, buffer: &mut [u8]) -> LfsResult<usize> {
         let mut file = File::open(&self.path).unwrap();
@@ -164,7 +164,7 @@ impl<S: LfsStorage> LfsStorage for FilesystemOrRamStorage<S> {
     const BLOCK_CYCLES: isize = S::BLOCK_CYCLES;
 
     type CACHE_SIZE = U512;
-    type LOOKAHEADWORDS_SIZE = U16;
+    type LOOKAHEAD_SIZE = U8;
 
     fn read(&mut self, offset: usize, buffer: &mut [u8]) -> LfsResult<usize> {
         match self {

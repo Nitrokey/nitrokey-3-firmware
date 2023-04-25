@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 delog = "0.1"
-littlefs2 = "0.3"
+littlefs2 = "0.4"
 
 [features]
 log-all = []
