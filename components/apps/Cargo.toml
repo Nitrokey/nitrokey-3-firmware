@@ -32,7 +32,7 @@ default = [
     "oath-authenticator",
     "trussed/clients-3",
 ]
-alpha = ["opcard", "piv-authenticator", "trussed/clients-5"]
+test = ["opcard", "piv-authenticator", "trussed/clients-5"]
 provisioner = ["provisioner-app", "trussed/clients-3"]
 
 # apps

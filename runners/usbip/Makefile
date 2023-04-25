@@ -4,7 +4,7 @@ all: check lint
 .PHONY: check
 check:
 	cargo check
-	cargo check --features alpha
+	cargo check --features test
 	cargo check --features provisioner
 
 .PHONY: lint

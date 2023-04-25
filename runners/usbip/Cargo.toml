@@ -18,5 +18,5 @@ trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", defaul
 utils = { path = "../../components/utils", features = ["log-all"] }
 
 [features]
-alpha = ["apps/alpha"]
+test = ["apps/test"]
 provisioner = ["apps/provisioner"]

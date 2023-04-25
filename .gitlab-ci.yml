@@ -51,7 +51,7 @@ check-firmware:
   script:
     - make -C runners/embedded check-all
     - make -C runners/embedded check-all FEATURES=provisioner
-    - make -C runners/embedded check-all FEATURES=alpha
+    - make -C runners/embedded check-all FEATURES=test
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
 
@@ -66,7 +66,7 @@ check-usbip:
   script:
     - cargo check --manifest-path runners/usbip/Cargo.toml
     - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
-    - cargo check --manifest-path runners/usbip/Cargo.toml --features alpha
+    - cargo check --manifest-path runners/usbip/Cargo.toml --features test
   after_script:
     - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
 
@@ -93,7 +93,7 @@ build-firmware:
   script:
     - git describe --exact-match
     - export VERSION=`git describe --exact-match`
-    - if echo $VERSION | grep test ; then export FEATURES=alpha ; fi
+    - if echo $VERSION | grep test ; then export FEATURES=test ; fi
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3am.bl
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nk3am-nrf52-$VERSION.ihex
@@ -119,7 +119,7 @@ build-usbip:
   script:
     - git describe --exact-match
     - export VERSION=`git describe --exact-match`
-    - if echo $VERSION | grep test ; then export FEATURES=alpha ; fi
+    - if echo $VERSION | grep test ; then export FEATURES=test ; fi
     - mkdir -p artifacts
     - cargo build --release --manifest-path runners/usbip/Cargo.toml --features $FEATURES,
     - cp target/release/usbip-runner artifacts/usbip-runner-$VERSION
