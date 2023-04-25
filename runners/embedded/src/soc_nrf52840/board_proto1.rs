@@ -4,8 +4,6 @@ use nrf52840_hal::{
     spim,
 };
 
-use nrf52840_pac::{CorePeripherals, Peripherals};
-
 use crate::soc::types::BoardGPIO;
 
 pub type TrussedUI = super::dummy_ui::DummyUI;

@@ -1,6 +1,4 @@
-use core::time::Duration;
 use embedded_time::duration::units::Milliseconds;
-use lpc55_hal::{Enabled, Rtc};
 use systick_monotonic::{
     fugit::{MillisDurationU64, TimerDurationU64, TimerInstantU64},
     Systick,
@@ -66,43 +64,4 @@ impl<M: rtic::Monotonic> From<M> for MonotonicWrapper<M> {
 fn convert<const FREQ_HZ: u32>(instant: TimerInstantU64<FREQ_HZ>) -> Milliseconds {
     let duration: MillisDurationU64 = instant.duration_since_epoch().convert();
     Milliseconds(duration.ticks().try_into().unwrap())
-}
-
-pub struct Monotonic {
-    rtc: Rtc<Enabled>,
-}
-
-impl rtic::Monotonic for Monotonic {
-    type Instant = Milliseconds;
-    type Duration = Milliseconds;
-
-    fn now(&mut self) -> Self::Instant {
-        // TODO: handle overflow
-        self.rtc.uptime().try_into().expect("overflow")
-    }
-
-    fn set_compare(&mut self, instant: Self::Instant) {
-        debug_now!("set_compare: {}, {}", instant, self.now());
-        let timeout = instant.0.saturating_sub(self.now().0);
-        // self.rtc.set_wake(Duration::from_millis(timeout.into()));
-    }
-
-    fn clear_compare_flag(&mut self) {
-        // TODO: implement
-        debug_now!("clear_compare_flag");
-    }
-
-    fn zero() -> Self::Instant {
-        Default::default()
-    }
-
-    unsafe fn reset(&mut self) {
-        self.rtc.reset();
-    }
-}
-
-impl From<Rtc<Enabled>> for Monotonic {
-    fn from(rtc: Rtc<Enabled>) -> Self {
-        Self { rtc }
-    }
 }
