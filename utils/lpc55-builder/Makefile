@@ -10,6 +10,17 @@ OUTPUT_ELF ?= $(RUNNER)/artifacts/runner-lpc55-nk3xn.elf
 build:
 	$(MAKE) -C "$(RUNNER)" build-nk3xn
 
+build-all:
+	mkdir -p artifacts
+	$(MAKE) build FEATURES=develop,provisioner,$(FEATURES)
+	cp "$(OUTPUT_BIN)" ./artifacts/provisioner.bin
+	$(MAKE) build FEATURES=$(FEATURES)
+	cp "$(OUTPUT_BIN)" ./artifacts/firmware.bin
+	ls -lh artifacts/
+	readlink -f artifacts/
+	date
+	git describe --long
+
 .PHONY: jlink
 jlink:
 	JLinkGDBServer -strict -device LPC55S69 -if SWD -vd
@@ -23,7 +34,7 @@ provision-develop:
 	# Step 1: reset CMPA, erase firmware, build & flash provisioner
 	./scripts/boot-to-bootrom.sh
 	./scripts/usbwait.sh 1fc9:0021 20a0:42dd
-	$(MAKE) build FEATURES=develop,provisioner,$(FEATUERS)
+	$(MAKE) build FEATURES=develop,provisioner,$(FEATURES)
 	$(MAKE) bl-config-cmpa-empty
 	$(MAKE) bl-erase-firmware
 	$(MAKE) bl-flash
@@ -56,7 +67,7 @@ provision-release:
 	lpc55 reboot
 	./scripts/usbwait.sh 1fc9:0021
 	# Step 1: build & flash provisioner, provision keystore
-	$(MAKE) build FEATURES=provisioner,$(FEATUERS)
+	$(MAKE) build FEATURES=provisioner,$(FEATURES)
 	$(MAKE) bl-provision-keystore
 	$(MAKE) bl-flash
 	lpc55 reboot
