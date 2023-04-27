@@ -1,5 +1,7 @@
 # Unreleased
 
+## v1.4.0-rc.1 (2023-04-27)
+
 ### Features
 
 - usbip: Add `--efs` option to store the external filesystem in a file.
