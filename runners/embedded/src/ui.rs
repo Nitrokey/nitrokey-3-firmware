@@ -137,6 +137,10 @@ impl From<(ui::Status, Duration)> for Status {
                     error!("Unsupported custom UI status {}", custom);
                     Self::Error
                 }),
+            _ => {
+                error!("Unsupported UI status {:?}", status);
+                Self::Error
+            }
         }
     }
 }

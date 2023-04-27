@@ -7,21 +7,22 @@ edition = "2021"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 trussed = { version = "0.1", features = ["serde-extensions"]}
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", default-features = false, features = ["ctaphid", "ccid"], optional = true }
+trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid", "ccid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
 
 # Backends
-trussed-auth = { version = "0.2.1", optional = true }
+trussed-auth = { version = "0.2.2", optional = true }
 trussed-rsa-alloc = { version = "0.1.0", optional = true }
+trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked", "encrypted-chunked"], optional = true }
 
 # apps
-admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "v0.1.0-nitrokey.2", optional = true }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", features = ["dispatch"], optional = true, rev = "v0.1.1-nitrokey.3" }
+admin-app = { version = "0.1.0", optional = true }
+fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "0.10.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "v0.4.0", features = ["apdu-dispatch", "delog", "rsa2048", "rsa4096"], optional = true }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", rev = "v0.1.1", features = ["apdu-dispatch", "delog"], optional = true }
+oath-authenticator = { version = "0.10.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+opcard = { version = "1.0.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
+piv-authenticator = { version = "0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [features]
@@ -38,12 +39,13 @@ provisioner = ["provisioner-app", "trussed/clients-3"]
 # apps
 oath-authenticator = ["dep:oath-authenticator", "backend-auth"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
-opcard = ["dep:opcard", "backend-rsa", "backend-auth"]
-piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth"]
+opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
+piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
 
 # backends
 backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
+backend-staging = ["trussed-staging"]
 
 log-all = [
     "admin-app?/log-all",

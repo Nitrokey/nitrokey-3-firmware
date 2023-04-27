@@ -6,6 +6,13 @@
 - Add variant to the status reported by admin-app ([#206][])
 - fido-authenticator: Limit number of resident credentials to ten ([#207][])
 
+## Changed
+
+- Update applications:
+  - opcard v1.0.0
+  - piv-authenticator v0.2.0
+  - secrets-app v0.10.0
+
 [#206]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/206
 [#207]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/207
 
