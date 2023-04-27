@@ -105,16 +105,16 @@ $ make -C utils/lpc55-builder flash FEATURES=develop
 ```
 You might have to press the touch button during the command to confirm a reboot.
 
-## Using the Alpha Firmware
+## Using the Test Firmware
 
-The alpha firmware can be built by activating the `alpha` feature.  First, make sure that you can compile the alpha firmware:
+The test firmware can be built by activating the `test` feature.  First, make sure that you can compile the test firmware:
 ```
-$ make -C runners/embedded build-nk3xn FEATURES=alpha
+$ make -C runners/embedded build-nk3xn FEATURES=test
 ```
 
-If you have followed the provisioning steps in the Getting Started section, you should now be able to update to the alpha firmware:
+If you have followed the provisioning steps in the Getting Started section, you should now be able to update to the test firmware:
 ```
-$ make -C utils/lpc55-builder flash FEATURES=develop,alpha
+$ make -C utils/lpc55-builder flash FEATURES=develop,test
 ```
 
 ## Debugging
