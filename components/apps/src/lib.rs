@@ -378,9 +378,10 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
         options.button_available = true;
-        options.serial = [0xa0, 0x20, uuid[0], uuid[1]];
+        // See scd/app-openpgp.c in GnuPG for the manufacturer IDs
+        options.manufacturer = 0x000Fu16.to_be_bytes();
+        options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
-        // TODO: set manufacturer to Nitrokey
         Self::new(trussed, options)
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {

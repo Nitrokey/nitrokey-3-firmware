@@ -68,9 +68,9 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.5"
 
 [features]
-default = []
+default = ["alloc"]
 
-test = ["apps/test", "alloc"]
+test = ["apps/test"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
