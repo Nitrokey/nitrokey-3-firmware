@@ -1,5 +1,11 @@
 # Unreleased
 
+### Bugfixes
+
+- Fix overwriting existing resident FIDO2 credentials ([#254][])
+
+[#254]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/254
+
 ## v1.4.0-rc.1 (2023-04-27)
 
 ### Features
