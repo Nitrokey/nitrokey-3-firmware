@@ -1,5 +1,7 @@
 # Unreleased
 
+## v1.4.0-rc.2 (2023-05-02)
+
 ### Bugfixes
 
 - Fix overwriting existing resident FIDO2 credentials ([#254][])
