@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.4.0-rc.1"
+version = "1.4.0-rc.2"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -936,7 +936,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.4.0-rc.1"
+version = "1.4.0-rc.2"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -1045,7 +1045,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.3#7f6a09347babb4bc629ff7668807f3d987fa534f"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.4#857899bff75331b2c9a419f95457f541440c3a0d"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -3217,7 +3217,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.4.0-rc.1"
+version = "1.4.0-rc.2"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3235,7 +3235,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.4.0-rc.1"
+version = "1.4.0-rc.2"
 dependencies = [
  "delog",
  "littlefs2",
