@@ -352,11 +352,13 @@ impl<R: Runner> App<R> for OathApp<R> {
 
     type Data = ();
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+        let uuid = runner.uuid();
         let options = oath_authenticator::Options::new(
             Location::External,
             CustomStatus::ReverseHotpSuccess.into(),
             CustomStatus::ReverseHotpError.into(),
+            [uuid[0], uuid[1], uuid[2], uuid[3]]
         );
         Self::new(trussed, options)
     }
