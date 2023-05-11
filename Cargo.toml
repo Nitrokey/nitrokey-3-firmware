@@ -20,7 +20,6 @@ trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch", tag = "v0.1.1-nitrokey.1" }
 
 # unreleased upstream changes
-interchange = { git = "https://github.com/trussed-dev/interchange" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
 
 # unreleased crates
