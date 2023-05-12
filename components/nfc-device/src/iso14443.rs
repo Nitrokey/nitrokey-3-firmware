@@ -1,9 +1,8 @@
 use core::mem::MaybeUninit;
 
-use apdu_dispatch::interchanges;
+use apdu_dispatch::interchanges::{self, Requester};
 use embedded_time::duration::Milliseconds;
 use heapless::Vec;
-use interchange::Requester;
 
 use crate::traits::nfc;
 
@@ -99,14 +98,14 @@ pub struct Iso14443<DEV: nfc::Device> {
 
     buffer: interchanges::Data,
 
-    interchange: Requester<interchanges::Contactless>,
+    interchange: Requester<'static>,
 }
 
 impl<DEV> Iso14443<DEV>
 where
     DEV: nfc::Device,
 {
-    pub fn new(device: DEV, interchange: Requester<interchanges::Contactless>) -> Self {
+    pub fn new(device: DEV, interchange: Requester<'static>) -> Self {
         Self {
             device: device,
             state: Iso14443State::Receiving,
@@ -339,7 +338,7 @@ where
         let command = interchanges::Data::from_slice(&self.buffer);
         self.buffer.clear();
         if command.is_ok() {
-            if self.interchange.request(command.as_ref().unwrap()).is_ok() {
+            if self.interchange.request(command.unwrap()).is_ok() {
                 Ok(())
             } else {
                 // Would be better to try canceling and taking on this apdu.

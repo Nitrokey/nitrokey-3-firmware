@@ -17,10 +17,12 @@ ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nit
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.4" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.11" }
-ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch", tag = "v0.1.1-nitrokey.1" }
 
 # unreleased upstream changes
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "9dd79aeeb927ab7fdb882fdca8f9324f64d1292c" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", rev = "7e1f11bd125651382d4b403226327de5df5f86b6" }
+ctaphid-dispatch = { git = "https://github.com/sosthene-nitrokey/ctaphid-dispatch", rev = "143387d590fdb8ad587367a3053ef61ebf301f71" }
+apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch", rev = "6a2720d06930b715a7af9411a12c7fcf35d5995f" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "0.11.0" }
@@ -29,8 +31,8 @@ piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.2.2" }
 trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", tag = "v0.1.0"}
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0"}
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner" }
 iso7816 = { git = "https://github.com/Nitrokey/iso7816.git", tag = "v0.1.1-nitrokey.1" }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", rev = "8dfb126a06dcc476015eacfc938d7838830372d1" }
 
 [profile.release]
 codegen-units = 1

@@ -73,12 +73,11 @@ checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "898c4ae30eeab17a209d5576cf7b312fdbee4d1cb739333c1308908fc841a5fb"
+source = "git+https://github.com/trussed-dev/apdu-dispatch?rev=6a2720d06930b715a7af9411a12c7fcf35d5995f#6a2720d06930b715a7af9411a12c7fcf35d5995f"
 dependencies = [
  "delog",
  "heapless 0.7.16",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "iso7816",
 ]
 
@@ -764,12 +763,12 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/ctaphid-dispatch?tag=v0.1.1-nitrokey.1#8dbb490da47c598cf6525432edef5ae296903b1a"
+source = "git+https://github.com/sosthene-nitrokey/ctaphid-dispatch?rev=143387d590fdb8ad587367a3053ef61ebf301f71#143387d590fdb8ad587367a3053ef61ebf301f71"
 dependencies = [
  "delog",
  "heapless 0.7.16",
  "heapless-bytes 0.3.0",
- "interchange 0.2.2",
+ "interchange 0.3.0",
 ]
 
 [[package]]
@@ -963,7 +962,7 @@ dependencies = [
  "generic-array 0.14.7",
  "heapless 0.7.16",
  "heapless-bytes 0.3.0",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "lfs-backup",
  "littlefs2",
  "lpc55-hal",
@@ -1527,7 +1526,8 @@ checksum = "310d743c23f798f10d5ba2f77fdd3eff06aaf2d8f8b9d78beba7fb1167f4ccbf"
 [[package]]
 name = "interchange"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/interchange#1fe9629098bf63a01f7b63595c2b470f6148acb6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92cfaa4be499da454ab279e04dee4837e71b3803eced4bd2b4cdec4bb3377b4f"
 dependencies = [
  "loom",
 ]
@@ -1803,7 +1803,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless 0.7.16",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "iso7816",
  "nb 1.1.0",
 ]
@@ -3063,7 +3063,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner#f3a680ca4c9a1411838ae0774f1713f79d4c2979"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=8dfb126a06dcc476015eacfc938d7838830372d1#8dfb126a06dcc476015eacfc938d7838830372d1"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3172,13 +3172,12 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 [[package]]
 name = "usbd-ccid"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "855caab212e6d9358cd924b1fc2f7d3d14fe0762bf3ccb052f2b00e2e3954084"
+source = "git+https://github.com/trussed-dev/usbd-ccid?rev=7e1f11bd125651382d4b403226327de5df5f86b6#7e1f11bd125651382d4b403226327de5df5f86b6"
 dependencies = [
  "delog",
  "embedded-time",
  "heapless 0.7.16",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "iso7816",
  "usb-device",
 ]
@@ -3186,7 +3185,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid#46070aa05f763163fc67a9194038dbf33bb04082"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid?rev=9dd79aeeb927ab7fdb882fdca8f9324f64d1292c#9dd79aeeb927ab7fdb882fdca8f9324f64d1292c"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
@@ -3194,7 +3193,7 @@ dependencies = [
  "embedded-time",
  "heapless 0.7.16",
  "heapless-bytes 0.3.0",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "serde",
  "usb-device",
 ]
