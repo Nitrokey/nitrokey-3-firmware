@@ -3,7 +3,7 @@ use crate::types::Soc;
 
 pub type CcidClass =
     usbd_ccid::Ccid<'static, 'static, <SocT as Soc>::UsbBus, { apdu_dispatch::interchanges::SIZE }>;
-pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, 'static,'static, <SocT as Soc>::UsbBus>;
+pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, 'static, 'static, <SocT as Soc>::UsbBus>;
 // pub type KeyboardClass = usbd_hid::hid_class::HIDClass<'static, <SocT as Soc>::UsbBus>;
 pub type SerialClass = usbd_serial::SerialPort<'static, <SocT as Soc>::UsbBus>;
 

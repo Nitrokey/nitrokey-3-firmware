@@ -8,9 +8,8 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    backend::BackendId, client::ClientBuilder, platform::Syscall, ClientImplementation, Platform,
-    interrupt::InterruptFlag,
-    Service,
+    backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
+    ClientImplementation, Platform, Service,
 };
 
 #[cfg(feature = "admin-app")]
@@ -114,7 +113,11 @@ pub struct Apps<R: Runner> {
 impl<R: Runner> Apps<R> {
     pub fn new(
         runner: &R,
-        mut make_client: impl FnMut(&str, &'static [BackendId<Backend>], Option<&'static InterruptFlag>) -> Client<R>,
+        mut make_client: impl FnMut(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
         data: Data<R>,
     ) -> Self {
         let _ = (runner, &mut make_client);
@@ -220,7 +223,10 @@ impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
         )
     }
 
-    fn with_ctaphid_apps<T>(&mut self, f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T) -> T {
+    fn with_ctaphid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
+    ) -> T {
         self.ctaphid_dispatch(f)
     }
 
@@ -241,11 +247,19 @@ trait App<R: Runner>: Sized {
 
     fn new(
         runner: &R,
-        make_client: impl FnOnce(&str, &'static [BackendId<Backend>], Option<&'static InterruptFlag>) -> Client<R>,
+        make_client: impl FnOnce(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
         data: Self::Data,
     ) -> Self {
         let backends = Self::backends(runner);
-        Self::with_client(runner, make_client(Self::CLIENT_ID, backends, Self::interrupt()), data)
+        Self::with_client(
+            runner,
+            make_client(Self::CLIENT_ID, backends, Self::interrupt()),
+            data,
+        )
     }
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self;
