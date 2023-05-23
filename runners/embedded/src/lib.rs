@@ -177,10 +177,13 @@ pub fn init_usb_nfc(
     let config = <SocT as Soc>::INTERFACE_CONFIG;
 
     use apdu_dispatch::interchanges::Channel as CcidChannel;
+    use trussed::interrupt::InterruptFlag;
+    use ref_swap::OptionRefSwap;
     use ctaphid_dispatch::types::Channel as CtapChannel;
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static NFC_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel = Channel::new();
+    static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
     /* claim interchanges */
     let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
     let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
@@ -188,7 +191,7 @@ pub fn init_usb_nfc(
 
     /* initialize dispatchers */
     let apdu_dispatch = apdu_dispatch::dispatch::ApduDispatch::new(ccid_rp, nfc_rp);
-    let ctaphid_dispatch = ctaphid_dispatch::dispatch::Dispatch::new(ctaphid_rp);
+    let ctaphid_dispatch = ctaphid_dispatch::dispatch::Dispatch::with_interrupt(ctaphid_rp, Some(&CTAP_INTERRUPT));
 
     /* populate requesters (if bus options are provided) */
     let mut usb_classes = None;
@@ -198,7 +201,7 @@ pub fn init_usb_nfc(
         let ccid = usbd_ccid::Ccid::new(usbbus, ccid_rq, Some(config.card_issuer));
 
         /* Class #2: CTAPHID */
-        let ctaphid = usbd_ctaphid::CtapHid::new(usbbus, ctaphid_rq, 0u32)
+        let ctaphid = usbd_ctaphid::CtapHid::with_interrupt(usbbus, ctaphid_rq, Some(&CTAP_INTERRUPT), 0u32)
             .implements_ctap1()
             .implements_ctap2()
             .implements_wink();

@@ -9,7 +9,7 @@ use trussed::{client, store::Store, types::LfsStorage, Client};
 
 const COMMAND_PROVISIONER: VendorCommand = VendorCommand::H71;
 
-impl<S, FS, T> App for Provisioner<S, FS, T>
+impl<S, FS, T> App<'static> for Provisioner<S, FS, T>
 where
     S: Store,
     FS: 'static + LfsStorage,
