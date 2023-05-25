@@ -20,7 +20,7 @@ trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked"
 admin-app = { version = "0.1.0", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-oath-authenticator = { version = "0.10.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
+secrets-app = { version = "0.11.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.0.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
 piv-authenticator = { version = "0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
@@ -30,7 +30,7 @@ default = [
     "admin-app",
     "fido-authenticator",
     "ndef-app",
-    "oath-authenticator",
+    "secrets-app",
     "opcard",
     "trussed/clients-4",
 ]
@@ -38,7 +38,7 @@ test = ["piv-authenticator", "trussed/clients-5"]
 provisioner = ["provisioner-app", "trussed/clients-5"]
 
 # apps
-oath-authenticator = ["dep:oath-authenticator", "backend-auth"]
+secrets-app = ["dep:secrets-app", "backend-auth"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
@@ -51,7 +51,7 @@ backend-staging = ["trussed-staging"]
 log-all = [
     "admin-app?/log-all",
     "fido-authenticator?/log-all",
-    "oath-authenticator?/log-all",
+    "secrets-app?/log-all",
     "opcard?/log-all",
     "provisioner-app?/log-all",
 ]

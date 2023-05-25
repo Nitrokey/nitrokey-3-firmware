@@ -1,5 +1,7 @@
 #![no_std]
 
+const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
+
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -47,8 +49,8 @@ type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
 type NdefApp = ndef_app::App<'static>;
-#[cfg(feature = "oath-authenticator")]
-type OathApp<R> = oath_authenticator::Authenticator<Client<R>>;
+#[cfg(feature = "secrets-app")]
+type SecretsApp<R> = secrets_app::Authenticator<Client<R>>;
 #[cfg(feature = "opcard")]
 type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "piv-authenticator")]
@@ -59,9 +61,9 @@ type ProvisionerApp<R> =
 
 #[repr(u8)]
 pub enum CustomStatus {
-    #[cfg(feature = "oath-authenticator")]
+    #[cfg(feature = "secrets-app")]
     ReverseHotpSuccess = 0,
-    #[cfg(feature = "oath-authenticator")]
+    #[cfg(feature = "secrets-app")]
     ReverseHotpError = 1,
 }
 
@@ -76,9 +78,9 @@ impl TryFrom<u8> for CustomStatus {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            #[cfg(feature = "oath-authenticator")]
+            #[cfg(feature = "secrets-app")]
             0 => Ok(Self::ReverseHotpSuccess),
-            #[cfg(feature = "oath-authenticator")]
+            #[cfg(feature = "secrets-app")]
             1 => Ok(Self::ReverseHotpError),
             _ => Err(UnknownStatusError(value)),
         }
@@ -94,8 +96,8 @@ pub struct Apps<R: Runner> {
     fido: FidoApp<R>,
     #[cfg(feature = "ndef-app")]
     ndef: NdefApp,
-    #[cfg(feature = "oath-authenticator")]
-    oath: OathApp<R>,
+    #[cfg(feature = "secrets-app")]
+    oath: SecretsApp<R>,
     #[cfg(feature = "opcard")]
     opcard: OpcardApp<R>,
     #[cfg(feature = "piv-authenticator")]
@@ -129,7 +131,7 @@ impl<R: Runner> Apps<R> {
             fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
-            #[cfg(feature = "oath-authenticator")]
+            #[cfg(feature = "secrets-app")]
             oath: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "opcard")]
             opcard: App::new(runner, &mut make_client, ()),
@@ -169,7 +171,7 @@ impl<R: Runner> Apps<R> {
         f(&mut [
             #[cfg(feature = "ndef-app")]
             &mut self.ndef,
-            #[cfg(feature = "oath-authenticator")]
+            #[cfg(feature = "secrets-app")]
             &mut self.oath,
             #[cfg(feature = "opcard")]
             &mut self.opcard,
@@ -193,7 +195,7 @@ impl<R: Runner> Apps<R> {
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
-            #[cfg(feature = "oath-authenticator")]
+            #[cfg(feature = "secrets-app")]
             &mut self.oath,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
@@ -346,17 +348,20 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 }
 
-#[cfg(feature = "oath-authenticator")]
-impl<R: Runner> App<R> for OathApp<R> {
+#[cfg(feature = "secrets-app")]
+impl<R: Runner> App<R> for SecretsApp<R> {
     const CLIENT_ID: &'static str = "secrets";
 
     type Data = ();
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        let options = oath_authenticator::Options::new(
+    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+        let uuid = runner.uuid();
+        let options = secrets_app::Options::new(
             Location::External,
             CustomStatus::ReverseHotpSuccess.into(),
             CustomStatus::ReverseHotpError.into(),
+            [uuid[0], uuid[1], uuid[2], uuid[3]],
+            SECRETS_APP_CREDENTIALS_COUNT_LIMIT,
         );
         Self::new(trussed, options)
     }
