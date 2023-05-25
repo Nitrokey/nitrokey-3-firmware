@@ -23,7 +23,7 @@ interchange = { git = "https://github.com/trussed-dev/interchange" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
 
 # unreleased crates
-oath-authenticator = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "0.10.0" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "0.11.0-rc1" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.0.0" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.2.0" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.2.2" }

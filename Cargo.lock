@@ -91,10 +91,10 @@ dependencies = [
  "ctaphid-dispatch",
  "fido-authenticator",
  "ndef-app",
- "oath-authenticator",
  "opcard",
  "piv-authenticator",
  "provisioner-app",
+ "secrets-app",
  "trussed",
  "trussed-auth",
  "trussed-rsa-alloc",
@@ -999,7 +999,7 @@ dependencies = [
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.10.0#a424326b13362e844ac2709816f9968656e4da1f"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0-rc1#8c4453f8fbe9c1dd973f742b22eef4a55136fc29"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1984,27 +1984,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oath-authenticator"
-version = "0.10.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.10.0#a424326b13362e844ac2709816f9968656e4da1f"
-dependencies = [
- "apdu-dispatch",
- "cbor-smol",
- "ctaphid-dispatch",
- "delog",
- "encrypted_container",
- "flexiber",
- "heapless 0.7.16",
- "heapless-bytes 0.3.0",
- "hex-literal 0.3.4",
- "interchange 0.2.2",
- "iso7816",
- "serde",
- "trussed",
- "trussed-auth",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2509,6 +2488,28 @@ name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
+
+[[package]]
+name = "secrets-app"
+version = "0.11.0"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0-rc1#8c4453f8fbe9c1dd973f742b22eef4a55136fc29"
+dependencies = [
+ "apdu-dispatch",
+ "block-padding",
+ "cbor-smol",
+ "ctaphid-dispatch",
+ "delog",
+ "encrypted_container",
+ "flexiber",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "hex-literal 0.3.4",
+ "interchange 0.2.2",
+ "iso7816",
+ "serde",
+ "trussed",
+ "trussed-auth",
+]
 
 [[package]]
 name = "semver"
