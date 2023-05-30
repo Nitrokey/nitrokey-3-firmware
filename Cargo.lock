@@ -223,7 +223,7 @@ version = "0.56.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2da379dbebc0b76ef63ca68d8fc6e71c0f13e59432e0987e508c1820e6ab5239"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "cexpr",
  "clang-sys",
  "lazy_static",
@@ -247,6 +247,12 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "bitflags"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6776fc96284a0bb647b615056fc496d1fe1644a7ab01829818a6d91cae888b84"
 
 [[package]]
 name = "block-buffer"
@@ -472,7 +478,7 @@ checksum = "a0610544180c38b88101fecf2dd634b174a62eef6946f84dfc6a7127512b381c"
 dependencies = [
  "ansi_term",
  "atty",
- "bitflags",
+ "bitflags 1.3.2",
  "strsim 0.8.0",
  "textwrap 0.11.0",
  "unicode-width",
@@ -486,7 +492,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71655c45cb9845d3270c9d6df84ebe72b4dad3c2ba3f7023ad47c144e4e473a5"
 dependencies = [
  "atty",
- "bitflags",
+ "bitflags 1.3.2",
  "clap_derive",
  "clap_lex",
  "indexmap",
@@ -742,7 +748,7 @@ name = "ctap-types"
 version = "0.1.2"
 source = "git+https://github.com/Nitrokey/ctap-types?tag=v0.1.2-nitrokey.1#d6cc1f56ab6ea45e041b3bd04df6a991cb96a8c8"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "cbor-smol",
  "cosey 0.3.0",
  "delog",
@@ -941,7 +947,7 @@ dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
- "bitflags",
+ "bitflags 1.3.2",
  "cargo-lock",
  "cfg-if",
  "chacha20 0.7.3",
@@ -999,7 +1005,7 @@ dependencies = [
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0-rc1#8c4453f8fbe9c1dd973f742b22eef4a55136fc29"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0#7d3dbe963815500e3cc3abc8f56ff92d62328da4"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1607,7 +1613,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95c72bdf63e7ad35f391e60c48e4c32560038f1d3a0dd97f90a2891ce09160bf"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "cstr_core",
  "cty",
  "delog",
@@ -2328,7 +2334,7 @@ version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb5a58c1855b4b6819d59012155603f0b22ad30cad752600aadfcb695265519a"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
 ]
 
 [[package]]
@@ -2492,9 +2498,10 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "secrets-app"
 version = "0.11.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0-rc1#8c4453f8fbe9c1dd973f742b22eef4a55136fc29"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=0.11.0#7d3dbe963815500e3cc3abc8f56ff92d62328da4"
 dependencies = [
  "apdu-dispatch",
+ "bitflags 2.3.1",
  "block-padding",
  "cbor-smol",
  "ctaphid-dispatch",
@@ -2732,7 +2739,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f94caf9e6bd5673e05be1a3f4113b85cdc7976a1ac8bc2763731ae5a4acee4a9"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "embedded-hal",
 ]
 
@@ -2980,7 +2987,7 @@ version = "0.1.0"
 source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey.11#686aa7064de6a9cfb315c1903c1440f46cc8e840"
 dependencies = [
  "aes",
- "bitflags",
+ "bitflags 1.3.2",
  "cbc",
  "cbor-smol",
  "cfg-if",
@@ -3211,7 +3218,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "log",
  "usb-device",
 ]
