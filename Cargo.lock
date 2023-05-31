@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -764,8 +764,7 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9e775f67c3a82a134a9e23e0771d3fb3808612ab03843cd31a9b0312004bdde"
+source = "git+https://github.com/Nitrokey/ctaphid-dispatch?tag=v0.1.1-nitrokey.1#8dbb490da47c598cf6525432edef5ae296903b1a"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -942,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -3224,7 +3223,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3242,7 +3241,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "delog",
  "littlefs2",

@@ -1,3 +1,20 @@
+# v1.5.0 (2023-05-31)
+
+### Features
+
+- Upgrade the secrets function to version 0.11.0, adding support for static passwords, and KeepassXC integration ([#278][])
+
+### Changed
+
+- Upgrade the OpenPGP function to version 1.1.0, fixing minor specification compliance issues and an unlikely data corruption scenario
+
+### Fixed
+
+- Upgrade ctaphid-dispatch, fixing panics after cancelled operations
+
+[#278]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/278
+[#277]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/277
+
 # v1.4.0 (2023-05-05)
 
 This release adds OpenPGP card support and updates the OTP functionality.
@@ -9,7 +26,7 @@ This release adds OpenPGP card support and updates the OTP functionality.
 - fido-authenticator: Limit number of resident credentials to ten ([#207][])
 - Add opcard to the stable firmware ([#100][])
 
-## Changed
+### Changed
 
 - Update applications:
   - opcard v1.0.0
