@@ -24,12 +24,13 @@ usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "0.11.0" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.0.0" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.1.0" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.2.0" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.2.2" }
 trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", tag = "v0.1.0"}
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0"}
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner" }
+iso7816 = { git = "https://github.com/Nitrokey/iso7816.git", tag = "v0.1.1-nitrokey.1" }
 
 [profile.release]
 codegen-units = 1

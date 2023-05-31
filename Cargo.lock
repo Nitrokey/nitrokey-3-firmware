@@ -1536,8 +1536,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7e6ac743d509349b7865595ce90bbfcfbe59f42b8ec0db9e76ec361ace3f652"
+source = "git+https://github.com/Nitrokey/iso7816.git?tag=v0.1.1-nitrokey.1#d1ee4146c43b9f25d21821c70fefdd87b886f4a9"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -2003,8 +2002,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "opcard"
-version = "1.0.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.0.0#e4ae7a53e566ecb64d0e2d8cf46149b0ea11a4f1"
+version = "1.1.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.1.0#ca86740f9e37767e0063edac87943c0dafef06ab"
 dependencies = [
  "apdu-dispatch",
  "delog",
