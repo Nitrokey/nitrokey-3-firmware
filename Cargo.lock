@@ -2118,8 +2118,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.2.0"
-source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.2.0#3bcde9c4ec7a09daa845b8e4959a558ec3a8b0ee"
+version = "0.3.1"
+source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.3.1#0cd99816c2774e10aa67a9c538b762301ad6d7d5"
 dependencies = [
  "apdu-dispatch",
  "delog",

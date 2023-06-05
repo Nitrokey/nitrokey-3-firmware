@@ -22,7 +22,7 @@ fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = tr
 ndef-app = { path = "../ndef-app", optional = true }
 secrets-app = { version = "0.11.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.1.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
-piv-authenticator = { version = "0.2.0", features = ["apdu-dispatch", "delog"], optional = true }
+piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [features]

@@ -407,8 +407,11 @@ impl<R: Runner> App<R> for PivApp<R> {
 
     type Data = ();
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        Self::new(trussed, piv_authenticator::Options::default())
+    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+        Self::new(
+            trussed,
+            piv_authenticator::Options::default().uuid(Some(runner.uuid())),
+        )
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
