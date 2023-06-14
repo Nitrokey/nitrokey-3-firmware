@@ -143,7 +143,7 @@ impl<R: Runner> Apps<R> {
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
             #[cfg(feature = "webcrypt")]
-            webcrypt:  App::new(runner, &mut make_client, ()),
+            webcrypt: App::new(runner, &mut make_client, ()),
             _compile_no_feature: PhantomData::default(),
         }
     }
@@ -357,7 +357,6 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 }
 
-
 #[cfg(feature = "webcrypt")]
 impl<R: Runner> App<R> for WebcryptApp<R> {
     const CLIENT_ID: &'static str = "webcrypt";
@@ -368,13 +367,15 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
         Self::new(trussed)
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
-        const BACKENDS_WEBCRYPT: &[BackendId<Backend>] =
-            &[BackendId::Custom(Backend::Auth), BackendId::Core];
+        const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
         let _ = runner;
         BACKENDS_WEBCRYPT
     }
 }
-
 
 #[cfg(feature = "secrets-app")]
 impl<R: Runner> App<R> for SecretsApp<R> {
