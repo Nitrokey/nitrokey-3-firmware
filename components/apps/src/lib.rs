@@ -198,6 +198,8 @@ impl<R: Runner> Apps<R> {
         F: FnOnce(&mut [&mut dyn CtaphidApp]) -> T,
     {
         f(&mut [
+            #[cfg(feature = "webcrypt")]
+            &mut self.webcrypt,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
@@ -206,8 +208,6 @@ impl<R: Runner> Apps<R> {
             &mut self.oath,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
-            #[cfg(feature = "webcrypt")]
-            &mut self.webcrypt,
         ])
     }
 }
