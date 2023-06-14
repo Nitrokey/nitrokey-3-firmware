@@ -16,14 +16,15 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app", tag = "v0.1.0-nitro
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nitrokey.1" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.4" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.11" }
+trussed = { git = "https://github.com/Nitrokey/trussed", branch = "webcrypt-devel-0.1.0-nk11" }
+ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", branch="multiple_apps" }
 
 # unreleased upstream changes
 interchange = { git = "https://github.com/trussed-dev/interchange" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
 
 # unreleased crates
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "0.11.0-rc1" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", branch = "wip-webcrypt" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.0.0" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.2.0" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.2.2" }
