@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.5.0-test.20230605"
+version = "1.5.0-test.20230613"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -941,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.5.0-test.20230605"
+version = "1.5.0-test.20230613"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -2118,8 +2118,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.1"
-source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.3.1#0cd99816c2774e10aa67a9c538b762301ad6d7d5"
+version = "0.3.2"
+source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.3.2#69f6b65a6f6be0c9e151340193cc76926c0aa5b1"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -3223,7 +3223,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.5.0-test.20230605"
+version = "1.5.0-test.20230613"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3241,7 +3241,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.5.0-test.20230605"
+version = "1.5.0-test.20230613"
 dependencies = [
  "delog",
  "littlefs2",
