@@ -1,26 +1,22 @@
 
 IMAGE_NAME := nrf-toolchain 
-DOCKER_USER := $(shell id -u):$(shell id -g)
 
 .PHONY: all enter clean verify
 
 all: $(IMAGE_NAME).built verify
 	docker run -it \
-		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
 		make -f Makefile.docker
 
 enter: $(IMAGE_NAME).built
 	docker run -it \
-		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
 		bash
 
 verify: $(IMAGE_NAME).built
 	docker run -it \
-		--user $(DOCKER_USER) \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
 		sha256sum -c /work/sha256sums.txt	
