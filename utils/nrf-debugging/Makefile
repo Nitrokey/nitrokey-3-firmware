@@ -11,6 +11,9 @@ symbols.txt:
 	@echo "maybe one of these:"
 	ls -la ../../runners/embedded/sym*.txt
 
+ocd.conf:
+	sed "s|OBTAIN-SERIAL-FROM-NRFJPROG-I|$$(nrfjprog -i)|" ocd.conf.example > ocd.conf
+
 ocd: ocd.conf
 	openocd -f ocd.conf
 

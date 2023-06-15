@@ -4,7 +4,7 @@ Generally all the following descriptions refer to a flashed device,
 which is connected to a debugger (nRF52840-DK). Make sure you first
 connect the device to the debugger and *afterwards* power on the debugger.
 
-* Get the correct serial number for `ocd.conf` using `nrfjprog -i`
+* Get the correct serial number for `ocd.conf` using `nrfjprog -i`, then use the template in `ocd.conf.example` to create the correct `ocd.conf` (Otherwise you can use `make ocd.conf` with the debugger plugged in).
 
 * How to show RTT (print) debugging outputs:
 
