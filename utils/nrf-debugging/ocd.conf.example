@@ -1,0 +1,5 @@
+source [find interface/jlink.cfg]
+jlink serial OBTAIN-SERIAL-FROM-NRFJPROG-I
+
+transport select swd
+source [find target/nrf52.cfg]

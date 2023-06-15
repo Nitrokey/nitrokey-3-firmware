@@ -1,0 +1,5 @@
+file ./binary
+target extended-remote localhost:3333
+info registers
+info frame
+c

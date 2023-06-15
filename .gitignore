@@ -12,3 +12,6 @@ Cargo.lock
 /license.txt
 /commands.bd
 /manifest.json
+utils/nrf-debugging/binary
+utils/nrf-debugging/symbols.txt
+utils/nrf-debugging/ocd.conf
