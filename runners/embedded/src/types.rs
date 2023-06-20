@@ -74,7 +74,21 @@ impl apps::Runner for Runner {
 }
 
 // 8KB of RAM
-const_ram_storage!(VolatileStorage, 8192);
+const_ram_storage!(
+    name = VolatileStorage,
+    trait = LfsStorage,
+    erase_value = 0xff,
+    read_size = 16,
+    write_size = 256,
+    cache_size_ty = littlefs2::consts::U256,
+    // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
+    block_size = 256,
+    block_count = 8192/256,
+    lookahead_size_ty = littlefs2::consts::U1,
+    filename_max_plus_one_ty = littlefs2::consts::U256,
+    path_max_plus_one_ty = littlefs2::consts::U256,
+    result = LfsResult,
+);
 
 store!(
     RunnerStore,
