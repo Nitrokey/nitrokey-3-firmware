@@ -36,7 +36,7 @@ ctap-types = "0.1"
 
 ### trussed core
 trussed = "0.1"
-interchange = "0.2"
+interchange = "0.3"
 littlefs2 = { version = "0.4", features = ["c-stubs"] }
 
 ### usb machinery

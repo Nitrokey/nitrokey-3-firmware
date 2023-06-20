@@ -1,13 +1,9 @@
 use crate::soc::types::Soc as SocT;
 use crate::types::Soc;
 
-pub type CcidClass = usbd_ccid::Ccid<
-    'static,
-    <SocT as Soc>::UsbBus,
-    apdu_dispatch::interchanges::Contact,
-    { apdu_dispatch::interchanges::SIZE },
->;
-pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, <SocT as Soc>::UsbBus>;
+pub type CcidClass =
+    usbd_ccid::Ccid<'static, 'static, <SocT as Soc>::UsbBus, { apdu_dispatch::interchanges::SIZE }>;
+pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, 'static, <SocT as Soc>::UsbBus>;
 // pub type KeyboardClass = usbd_hid::hid_class::HIDClass<'static, <SocT as Soc>::UsbBus>;
 pub type SerialClass = usbd_serial::SerialPort<'static, <SocT as Soc>::UsbBus>;
 
@@ -40,7 +36,7 @@ impl UsbClasses {
 
 pub struct UsbNfcInit {
     pub usb_classes: Option<UsbClasses>,
-    pub apdu_dispatch: apdu_dispatch::dispatch::ApduDispatch,
-    pub ctaphid_dispatch: ctaphid_dispatch::dispatch::Dispatch,
+    pub apdu_dispatch: apdu_dispatch::dispatch::ApduDispatch<'static>,
+    pub ctaphid_dispatch: ctaphid_dispatch::dispatch::Dispatch<'static>,
     pub iso14443: Option<super::Iso14443>,
 }

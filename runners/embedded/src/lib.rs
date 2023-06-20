@@ -1,6 +1,6 @@
 #![no_std]
 
-use interchange::Interchange;
+use interchange::Channel;
 use littlefs2::fs::Filesystem;
 use soc::types::Soc as SocT;
 use types::Soc;
@@ -176,10 +176,15 @@ pub fn init_usb_nfc(
 ) -> types::usbnfc::UsbNfcInit {
     let config = <SocT as Soc>::INTERFACE_CONFIG;
 
+    use apdu_dispatch::interchanges::Channel as CcidChannel;
+    use ctaphid_dispatch::types::Channel as CtapChannel;
+    static CCID_CHANNEL: CcidChannel = Channel::new();
+    static NFC_CHANNEL: CcidChannel = Channel::new();
+    static CTAP_CHANNEL: CtapChannel = Channel::new();
     /* claim interchanges */
-    let (ccid_rq, ccid_rp) = apdu_dispatch::interchanges::Contact::claim().unwrap();
-    let (nfc_rq, nfc_rp) = apdu_dispatch::interchanges::Contactless::claim().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = ctaphid_dispatch::types::HidInterchange::claim().unwrap();
+    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
+    let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
     /* initialize dispatchers */
     let apdu_dispatch = apdu_dispatch::dispatch::ApduDispatch::new(ccid_rp, nfc_rp);
