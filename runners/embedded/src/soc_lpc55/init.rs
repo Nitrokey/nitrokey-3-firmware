@@ -31,11 +31,14 @@ use lpc55_hal::drivers::timer::Elapsed as _;
 use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;
 
+#[cfg(feature = "se050")]
+use super::types::TimerDelay;
 use super::{
     board,
     clock_controller::DynamicClockController,
     nfc,
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+    types::I2C,
 };
 use crate::{
     flash::ExtFlashStorage,
@@ -248,6 +251,7 @@ impl Stage1 {
         adc: hal::Adc<Unknown>,
         delay_timer: ctimer::Ctimer0,
         ctimer1: ctimer::Ctimer1,
+        ctimer2: ctimer::Ctimer2,
         ctimer3: ctimer::Ctimer3,
         perf_timer: ctimer::Ctimer4,
         pfr: Pfr<Unknown>,
@@ -271,6 +275,9 @@ impl Stage1 {
 
         let mut delay_timer = Timer::new(
             delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
+        );
+        let se050_timer = Timer::new(
+            ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
         let mut perf_timer = Timer::new(
             perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
@@ -315,6 +322,7 @@ impl Stage1 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
+            se050_timer,
             basic,
         }
     }
@@ -325,6 +333,7 @@ pub struct Stage2 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
 }
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
@@ -392,7 +401,7 @@ impl Stage2 {
         )
     }
 
-    fn run_hardware_checks(&mut self, flexcomm5: Flexcomm5<Unknown>) {
+    fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
             .unwrap()
@@ -437,6 +446,7 @@ impl Stage2 {
         }
 
         info_now!("hardware checks successful");
+        i2c
     }
 
     #[inline(never)]
@@ -449,9 +459,7 @@ impl Stage2 {
         usbhs: Usbhs<Unknown>,
         nfc_enabled: bool,
     ) -> Stage3 {
-        if cfg!(feature = "lpc55-hardware-checks") {
-            self.run_hardware_checks(flexcomm5);
-        }
+        let se050_i2c = self.get_se050_i2c(flexcomm5);
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc_chip, spi) = if use_nfc {
@@ -477,6 +485,8 @@ impl Stage2 {
             basic: self.basic,
             usb_nfc,
             spi,
+            se050_timer: self.se050_timer,
+            se050_i2c,
         }
     }
 }
@@ -488,6 +498,8 @@ pub struct Stage3 {
     basic: Basic,
     usb_nfc: UsbNfc,
     spi: Option<Spi>,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_i2c: I2C,
 }
 
 impl Stage3 {
@@ -521,6 +533,8 @@ impl Stage3 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             spi: self.spi,
+            se050_timer: self.se050_timer,
+            se050_i2c: self.se050_i2c,
             flash,
         }
     }
@@ -534,6 +548,8 @@ pub struct Stage4 {
     usb_nfc: UsbNfc,
     spi: Option<Spi>,
     flash: Flash,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_i2c: I2C,
 }
 
 impl Stage4 {
@@ -632,6 +648,8 @@ impl Stage4 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             rng: self.flash.rng,
+            se050_timer: self.se050_timer,
+            se050_i2c: self.se050_i2c,
             store,
         }
     }
@@ -687,6 +705,8 @@ pub struct Stage5 {
     usb_nfc: UsbNfc,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_i2c: I2C,
 }
 
 impl Stage5 {
@@ -723,6 +743,8 @@ impl Stage5 {
             usb_nfc: self.usb_nfc,
             store: self.store,
             trussed,
+            se050_timer: self.se050_timer,
+            se050_i2c: self.se050_i2c,
         }
     }
 }
@@ -735,6 +757,8 @@ pub struct Stage6 {
     usb_nfc: UsbNfc,
     store: RunnerStore,
     trussed: Trussed,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_i2c: I2C,
 }
 
 impl Stage6 {
@@ -758,10 +782,20 @@ impl Stage6 {
     #[inline(never)]
     pub fn next(mut self) -> All {
         self.perform_data_migrations();
+        #[cfg(not(feature = "se050"))]
+        {
+            let _ = self.se050_i2c;
+            let _ = self.se050_timer;
+        }
+
         let apps = crate::init_apps(
             &mut self.trussed,
             self.status,
             &self.store,
+            #[cfg(feature = "se050")]
+            self.se050_i2c,
+            #[cfg(feature = "se050")]
+            TimerDelay(self.se050_timer),
             self.clocks.is_nfc_passive,
         );
         let clock_controller = if self.clocks.is_nfc_passive {

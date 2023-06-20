@@ -10,6 +10,8 @@ use apdu_dispatch::{
 };
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
+#[cfg(feature = "se050")]
+use embedded_hal::blocking::delay::DelayUs;
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
     ClientImplementation, Platform, Service,
@@ -35,6 +37,10 @@ pub trait Runner {
     type Store: trussed::store::Store;
     #[cfg(feature = "provisioner-app")]
     type Filesystem: trussed::types::LfsStorage + 'static;
+    #[cfg(feature = "se050")]
+    type Twi: se050::t1::I2CForT1;
+    #[cfg(feature = "se050")]
+    type Se050Timer: DelayUs<u32>;
 
     fn uuid(&self) -> [u8; 16];
 }
@@ -44,6 +50,10 @@ pub struct Data<R: Runner> {
     pub admin: AdminData,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
+    #[cfg(feature = "se050")]
+    pub twi: R::Twi,
+    #[cfg(feature = "se050")]
+    pub se050_timer: R::Se050Timer,
     pub _marker: PhantomData<R>,
 }
 
@@ -110,6 +120,8 @@ pub struct Apps<R: Runner> {
     opcard: OpcardApp<R>,
     #[cfg(feature = "piv-authenticator")]
     piv: PivApp<R>,
+    #[cfg(feature = "se050-test-app")]
+    se050: se050_test_app::Card<R::Twi, R::Se050Timer>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
     #[cfg(feature = "webcrypt")]
@@ -135,6 +147,10 @@ impl<R: Runner> Apps<R> {
             admin,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            #[cfg(feature = "se050-test-app")]
+            twi,
+            #[cfg(feature = "se050-test-app")]
+            se050_timer,
             ..
         } = data;
         #[cfg(feature = "webcrypt")]
@@ -159,6 +175,8 @@ impl<R: Runner> Apps<R> {
             provisioner: App::new(runner, &mut make_client, provisioner),
             #[cfg(feature = "webcrypt")]
             webcrypt: webcrypt_fido_bypass,
+            #[cfg(feature = "se050-test-app")]
+            se050: se050_test_app::Card::new(twi, 0x48, se050_timer),
             _compile_no_feature: PhantomData::default(),
         }
     }
@@ -194,6 +212,8 @@ impl<R: Runner> Apps<R> {
             &mut self.ndef,
             #[cfg(feature = "secrets-app")]
             &mut self.oath,
+            #[cfg(feature = "se050-test-app")]
+            &mut self.se050,
             #[cfg(feature = "opcard")]
             &mut self.opcard,
             #[cfg(feature = "piv-authenticator")]

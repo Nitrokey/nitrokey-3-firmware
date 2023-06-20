@@ -3,6 +3,10 @@ check:
 	$(MAKE) -C runners/embedded check-all
 	$(MAKE) -C runners/usbip check
 
+.PHONY: doc
+doc: 
+	$(MAKE) -C runners/embedded doc-nk3am
+	
 .PHONY: lint
 lint:
 	cargo fmt -- --check

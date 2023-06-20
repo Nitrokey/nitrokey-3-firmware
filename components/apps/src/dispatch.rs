@@ -6,13 +6,18 @@ use trussed::{
     Platform,
 };
 
-#[cfg(feature = "backend-auth")]
+#[cfg(any(
+    feature = "backend-auth",
+    feature = "backend-rsa",
+    feature = "backend-staging"
+))]
 use trussed::{
     api::{reply, request},
     backend::Backend as _,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
     Bytes,
 };
+
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 

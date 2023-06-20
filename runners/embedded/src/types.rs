@@ -7,6 +7,8 @@ pub use apdu_dispatch::{
 use apps::{Dispatch, Variant};
 use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
+#[cfg(feature = "se050")]
+use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
@@ -43,6 +45,11 @@ pub trait Soc {
     type Reboot;
     type UUID;
 
+    #[cfg(feature = "se050")]
+    type Se050Timer: DelayUs<u32>;
+    #[cfg(feature = "se050")]
+    type Twi: se050::t1::I2CForT1;
+
     type Duration;
     type Instant;
 
@@ -67,6 +74,10 @@ impl apps::Runner for Runner {
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
+    #[cfg(feature = "se050")]
+    type Twi = <SocT as Soc>::Twi;
+    #[cfg(feature = "se050")]
+    type Se050Timer = <SocT as Soc>::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
         *<SocT as Soc>::device_uuid()

@@ -88,11 +88,14 @@ dependencies = [
  "admin-app",
  "apdu-dispatch",
  "ctaphid-dispatch",
+ "embedded-hal",
  "fido-authenticator",
  "ndef-app",
  "opcard",
  "piv-authenticator",
  "provisioner-app",
+ "se050",
+ "se050-test-app",
  "secrets-app",
  "trussed",
  "trussed-auth",
@@ -250,9 +253,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6776fc96284a0bb647b615056fc496d1fe1644a7ab01829818a6d91cae888b84"
+checksum = "6dbe3c979c178231552ecba20214a8272df4e09f232a87aef4320cf06539aded"
 
 [[package]]
 name = "block-buffer"
@@ -672,6 +675,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "crc16"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338089f42c427b86394a5ee60ff321da23a5c89c9d89514c829687b26359fcff"
+
+[[package]]
 name = "critical-section"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1000,6 +1009,7 @@ dependencies = [
  "rand_core",
  "ref-swap",
  "rtt-target",
+ "se050",
  "serde",
  "spi-memory",
  "systick-monotonic",
@@ -1588,7 +1598,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/iso7816.git?tag=v0.1.1-nitrokey.1#d1ee4146c43b9f25d21821c70fefdd87b886f4a9"
+source = "git+https://github.com/sosthene-nitrokey/iso7816.git?rev=160ca3bbd8e21ec4e4ee1e0748e1eaa53a45c97f#160ca3bbd8e21ec4e4ee1e0748e1eaa53a45c97f"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -2559,12 +2569,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
+name = "se050"
+version = "0.0.1"
+source = "git+https://github.com/sosthene-nitrokey/se050-generation.git?rev=3932f59cec4eca71bffd55d5b01a9bcf5064bd62#3932f59cec4eca71bffd55d5b01a9bcf5064bd62"
+dependencies = [
+ "bitflags 2.3.2",
+ "byteorder",
+ "crc16",
+ "delog",
+ "embedded-hal",
+ "heapless 0.7.16",
+ "hex-literal 0.4.1",
+ "iso7816",
+ "lpc55-hal",
+ "nrf-hal-common",
+]
+
+[[package]]
+name = "se050-test-app"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "delog",
+ "embedded-hal",
+ "heapless 0.7.16",
+ "hex-literal 0.4.1",
+ "iso7816",
+ "se050",
+]
+
+[[package]]
 name = "secrets-app"
 version = "0.12.0"
 source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.12.0#78283f591805fd3737f000e8c51213287ed3d338"
 dependencies = [
  "apdu-dispatch",
- "bitflags 2.3.1",
+ "bitflags 2.3.2",
  "block-padding",
  "cbor-smol",
  "ctaphid-dispatch",

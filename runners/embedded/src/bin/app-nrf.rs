@@ -67,7 +67,9 @@ mod app {
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
+        #[cfg(feature = "extflash_qspi")]
         let mut delay_timer = Timer::<nrf52840_pac::TIMER0>::new(ctx.device.TIMER0);
+        let se050_timer = Timer::<nrf52840_pac::TIMER1>::new(ctx.device.TIMER1);
 
         let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
         let mut board_gpio = {
@@ -142,12 +144,6 @@ mod app {
         let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
         /* TODO: set up fingerprint device */
         /* TODO: set up SE050 device */
-
-        /* *********************************** */
-        /* in the meantime just test i2c comms */
-        /* SE050 minimal functional test - TO BE REMOVED on SE050 inclusion*/
-
-        use embedded_hal::blocking::delay::DelayMs;
         use nrf52840_hal::prelude::OutputPin;
 
         if let Some(se_ena) = &mut board_gpio.se_power {
@@ -161,43 +157,16 @@ mod app {
             }
         }
 
-        let mut twim = nrf52840_hal::twim::Twim::new(
+        let twim = nrf52840_hal::twim::Twim::new(
             ctx.device.TWIM1,
             board_gpio.se_pins.take().unwrap(),
             nrf52840_hal::twim::Frequency::K400,
         );
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC command
-        let write_buf = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-        match twim.write(0x48, &write_buf) {
-            Err(e) => {
-                panic!("i2c: failed I2C write! - {:?}", e);
-            }
-            Ok(_) => {
-                debug!("i2c: write I2C success....");
-            }
+        #[cfg(not(feature = "se050"))]
+        {
+            let _ = se050_timer;
+            let _ = twim;
         }
-
-        delay_timer.delay_ms(100u32);
-
-        // RESYNC response
-        let mut response = [0; 2];
-        match twim.read(0x48, &mut response) {
-            Err(e) => {
-                panic!("i2c: failed I2C read! - {:?}", e);
-            }
-            Ok(_) => {
-                if response == [0xa5, 0xe0] {
-                    debug!("i2c: se050 activation RESYNC cool");
-                } else {
-                    panic!("i2c: se050 activation RESYNC fail!");
-                }
-            }
-        }
-        /* end of se050 minial functional test */
-        /* *********************************** */
 
         /* TODO: set up display */
 
@@ -233,7 +202,16 @@ mod app {
             apps::Dispatch::with_hw_key(Location::Internal, Bytes::from_slice(&er).unwrap()),
         );
 
-        let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
+        let apps = ERL::init_apps(
+            &mut trussed_service,
+            init_status,
+            &store,
+            #[cfg(feature = "se050")]
+            twim,
+            #[cfg(feature = "se050")]
+            se050_timer,
+            !powered_by_usb,
+        );
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
