@@ -51,6 +51,8 @@ type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conformi
 type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "secrets-app")]
 type SecretsApp<R> = secrets_app::Authenticator<Client<R>>;
+#[cfg(feature = "webcrypt")]
+type WebcryptApp<R> = webcrypt::Webcrypt<Client<R>>;
 #[cfg(feature = "opcard")]
 type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "piv-authenticator")]
@@ -104,7 +106,8 @@ pub struct Apps<R: Runner> {
     piv: PivApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
-
+    #[cfg(feature = "webcrypt")]
+    webcrypt: WebcryptApp<R>,
     /// Avoid compilation error if no feature is used.
     /// Without it, the type parameter `R` is not used
     _compile_no_feature: PhantomData<R>,
@@ -143,6 +146,8 @@ impl<R: Runner> Apps<R> {
             piv: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
+            #[cfg(feature = "webcrypt")]
+            webcrypt: App::new(runner, &mut make_client, ()),
             _compile_no_feature: PhantomData::default(),
         }
     }
@@ -188,6 +193,8 @@ impl<R: Runner> Apps<R> {
             &mut self.admin,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
+            #[cfg(feature = "webcrypt")]
+            &mut self.webcrypt,
         ])
     }
 
@@ -196,6 +203,8 @@ impl<R: Runner> Apps<R> {
         F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
         f(&mut [
+            #[cfg(feature = "webcrypt")]
+            &mut self.webcrypt,
             #[cfg(feature = "fido-authenticator")]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
@@ -373,6 +382,26 @@ impl<R: Runner> App<R> for FidoApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+}
+
+#[cfg(feature = "webcrypt")]
+impl<R: Runner> App<R> for WebcryptApp<R> {
+    const CLIENT_ID: &'static str = "webcrypt";
+
+    type Data = ();
+
+    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
+        Self::new(trussed)
+    }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_WEBCRYPT
     }
 }
 
