@@ -41,7 +41,7 @@ delim = ,
 space := $(null) #
 COMMA_FEATURES = $(subst $(space),$(delim),$(BUILD_FEATURES))
 
-.PHONY: list build reset program check check-all clean clean-all check-env set-vars
+.PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
 all: build-nrfdk build-nk3am build-proto1 build-nk3xn $(ARTIFACTS)
@@ -151,6 +151,20 @@ check: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	cargo check --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
+
+doc: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+
+	cargo --version
+
+	cp -f $(CFG_PATH) cfg.toml
+	echo '' >> cfg.toml
+	echo '[build]' >> cfg.toml
+	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
+	echo 'board = "$(BOARD)"' >> cfg.toml
+
+	cargo doc --target $(TARGET) \
+		--features $(COMMA_FEATURES) \
+		--verbose
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
 	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)

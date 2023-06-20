@@ -46,6 +46,7 @@ pub fn init(
             hal.adc,
             hal.ctimer.0,
             hal.ctimer.1,
+            hal.ctimer.2,
             hal.ctimer.3,
             hal.ctimer.4,
             hal.pfr,

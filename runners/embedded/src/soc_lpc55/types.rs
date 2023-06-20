@@ -3,13 +3,28 @@ use super::spi::{FlashCs, Spi};
 use super::trussed::UserInterface;
 use crate::{flash::ExtFlashStorage, types::build_constants};
 use apps::Variant;
+#[cfg(feature = "se050")]
+use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
+#[cfg(feature = "se050")]
+use embedded_time::duration::Microseconds;
 use embedded_time::duration::Milliseconds;
+#[cfg(feature = "se050")]
+use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
-    drivers::timer,
-    peripherals::{ctimer, flash, rng, syscon},
+    drivers::{
+        pins::{Pio0_9, Pio1_14},
+        timer,
+    },
+    peripherals::{ctimer, flash, flexcomm::I2c5, rng, syscon},
     raw,
     traits::flash::WriteErase,
+    typestates::pin::{
+        function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
+        state::Special,
+    },
+    I2cMaster,
 };
+
 use trussed::types::LfsResult;
 use utils::OptionalStorage;
 
@@ -39,6 +54,30 @@ const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
     usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
 };
 
+pub(super) type I2C = I2cMaster<
+    Pio0_9,
+    Pio1_14,
+    I2c5,
+    (
+        lpc55_hal::Pin<Pio0_9, Special<FC5_TXD_SCL_MISO_WS>>,
+        lpc55_hal::Pin<Pio1_14, Special<FC5_CTS_SDA_SSEL0>>,
+    ),
+>;
+
+#[cfg(feature = "se050")]
+pub struct TimerDelay<T>(pub T);
+
+#[cfg(feature = "se050")]
+impl<T> DelayUs<u32> for TimerDelay<T>
+where
+    T: CountDown<Time = Microseconds<u32>>,
+{
+    fn delay_us(&mut self, delay: u32) {
+        self.0.start(Microseconds::new(delay));
+        nb::block!(self.0.wait()).unwrap();
+    }
+}
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = InternalFilesystem;
@@ -49,6 +88,10 @@ impl crate::types::Soc for Soc {
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
     type UUID = [u8; 16];
+    #[cfg(feature = "se050")]
+    type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
+    #[cfg(feature = "se050")]
+    type Twi = I2C;
 
     type Instant = ();
     type Duration = Milliseconds;
