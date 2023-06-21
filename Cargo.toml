@@ -22,7 +22,7 @@ trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "e9cbf904f548979685c4c06d75479b75e3695160" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch", tag = "v0.1.1-nitrokey.2" }
-apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch", rev = "b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4" }
+apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.2-nitrokey.1" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "75626206ca3410fdcef0bb77cd7fd7962054f077" }
