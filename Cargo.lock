@@ -3194,7 +3194,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid?rev=e9cbf904f548979685c4c06d75479b75e3695160#e9cbf904f548979685c4c06d75479b75e3695160"
+source = "git+https://github.com/Nitrokey/usbd-ctaphid?tag=v0.1.0-nitrokey.1#e9cbf904f548979685c4c06d75479b75e3695160"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
