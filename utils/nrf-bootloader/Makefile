@@ -66,7 +66,9 @@ UPLOAD_SH = $(BL_DIR)/upload.sh
 
 FW_SIGNED = fw_signed_update.zip
 FW_RAW = fw_unsigned.hex
-TTYDEV = /dev/ttyACM1
+TTYDEV := $(wildcard /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*)
+# /dev/serial/by-id/usb-Nitrokey_Nitrokey_3-if02
+# /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader_F95AF80A9E98-if00
 
 fw-assemble-dfu: $(FW_SIGNED)
 
