@@ -8,8 +8,8 @@ use apdu_dispatch::{
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 use trussed::{
-    backend::BackendId, client::ClientBuilder, platform::Syscall, ClientImplementation, Platform,
-    Service,
+    backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
+    ClientImplementation, Platform, Service,
 };
 
 #[cfg(feature = "admin-app")]
@@ -113,7 +113,11 @@ pub struct Apps<R: Runner> {
 impl<R: Runner> Apps<R> {
     pub fn new(
         runner: &R,
-        mut make_client: impl FnMut(&str, &'static [BackendId<Backend>]) -> Client<R>,
+        mut make_client: impl FnMut(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
         data: Data<R>,
     ) -> Self {
         let _ = (runner, &mut make_client);
@@ -153,9 +157,10 @@ impl<R: Runner> Apps<R> {
     {
         Self::new(
             runner,
-            |id, backends| {
+            |id, backends, interrupt| {
                 ClientBuilder::new(id)
                     .backends(backends)
+                    .interrupt(interrupt)
                     .prepare(trussed)
                     .unwrap()
                     .build(R::Syscall::default())
@@ -188,7 +193,7 @@ impl<R: Runner> Apps<R> {
 
     pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn CtaphidApp]) -> T,
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
         f(&mut [
             #[cfg(feature = "fido-authenticator")]
@@ -204,7 +209,7 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<Client<R>, Dispatch> for Apps<R> {
+impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
     type Data = (R, Data<R>);
 
     fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
@@ -213,12 +218,15 @@ impl<R: Runner> trussed_usbip::Apps<Client<R>, Dispatch> for Apps<R> {
     {
         Self::new(
             &runner,
-            move |id, backends| builder.build(id, backends),
+            move |id, backends, _| builder.build(id, backends),
             data,
         )
     }
 
-    fn with_ctaphid_apps<T>(&mut self, f: impl FnOnce(&mut [&mut dyn CtaphidApp]) -> T) -> T {
+    fn with_ctaphid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
+    ) -> T {
         self.ctaphid_dispatch(f)
     }
 
@@ -239,11 +247,19 @@ trait App<R: Runner>: Sized {
 
     fn new(
         runner: &R,
-        make_client: impl FnOnce(&str, &'static [BackendId<Backend>]) -> Client<R>,
+        make_client: impl FnOnce(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
         data: Self::Data,
     ) -> Self {
         let backends = Self::backends(runner);
-        Self::with_client(runner, make_client(Self::CLIENT_ID, backends), data)
+        Self::with_client(
+            runner,
+            make_client(Self::CLIENT_ID, backends, Self::interrupt()),
+            data,
+        )
     }
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self;
@@ -252,6 +268,10 @@ trait App<R: Runner>: Sized {
         let _ = runner;
         const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
         BACKENDS_DEFAULT
+    }
+
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        None
     }
 }
 
@@ -327,6 +347,10 @@ impl<R: Runner> App<R> for AdminApp<R> {
             data.encode(),
         )
     }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
+    }
 }
 
 #[cfg(feature = "fido-authenticator")]
@@ -345,6 +369,10 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 max_resident_credential_count: Some(10),
             },
         )
+    }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
     }
 }
 
@@ -370,6 +398,10 @@ impl<R: Runner> App<R> for SecretsApp<R> {
             &[BackendId::Custom(Backend::Auth), BackendId::Core];
         let _ = runner;
         BACKENDS_OATH
+    }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
     }
 }
 
@@ -399,6 +431,10 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         let _ = runner;
         BACKENDS_OPCARD
     }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
+    }
 }
 
 #[cfg(feature = "piv-authenticator")]
@@ -422,6 +458,10 @@ impl<R: Runner> App<R> for PivApp<R> {
         ];
         let _ = runner;
         BACKENDS_PIV
+    }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
     }
 }
 
@@ -449,5 +489,9 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
             uuid,
             data.rebooter,
         )
+    }
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
     }
 }

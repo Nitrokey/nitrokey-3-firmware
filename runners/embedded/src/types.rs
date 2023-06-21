@@ -129,7 +129,7 @@ pub type Trussed = trussed::Service<RunnerPlatform, Dispatch>;
 pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
-pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static>;
+pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;
 
 pub type Apps = apps::Apps<Runner>;
 

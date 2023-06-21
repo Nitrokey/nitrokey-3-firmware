@@ -93,7 +93,7 @@ where
         let threshold: u8 = 1;
 
         let start_time = self.uptime().as_millis();
-        let timeout_at = start_time + 28_000u128;
+        let timeout_at = start_time + 1_000u128;
         let mut next_check = start_time + 25u128;
 
         self.set_status(ui::Status::WaitingForUserPresence);
