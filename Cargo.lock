@@ -1006,7 +1006,7 @@ dependencies = [
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=75626206ca3410fdcef0bb77cd7fd7962054f077#75626206ca3410fdcef0bb77cd7fd7962054f077"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.11.0-interrupt.1#4637a4b5a425636da0283962ce1979170a9ea1fd"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -2505,7 +2505,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "secrets-app"
 version = "0.12.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=75626206ca3410fdcef0bb77cd7fd7962054f077#75626206ca3410fdcef0bb77cd7fd7962054f077"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.11.0-interrupt.1#4637a4b5a425636da0283962ce1979170a9ea1fd"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.3.1",
