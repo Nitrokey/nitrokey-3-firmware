@@ -1,0 +1,25 @@
+set pagination off
+set logging file gdb.txt
+set logging on
+
+set architecture arm
+set endian little
+set arm fallback-mode thumb
+set arm force-mode thumb
+set style enabled off
+file binary.elf
+target remote :3333
+
+
+define stepinf
+    while(1)
+	p $msp
+    step
+    end
+end
+
+# Automatically start tracing upon reaching the following line
+# b transport.rs:181
+# commands
+# stepinf
+# end
