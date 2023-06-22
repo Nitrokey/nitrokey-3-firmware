@@ -1,4 +1,4 @@
-83eb4f5f423493d8bfa70385de18bd6e1632e5eb8194b607cb6750718ec1f1c6  /JLink_Linux_V756a_x86_64.deb
 e30b1c94508afe70ea3ad5eefb6b9914ee70b9dce17f14412bcbbb53d1aad9bd  /nrf-command-line-tools-10.15.0_amd.zip
 c4bd1b39120bc4b5dd0397a6ea1643d3c7d7ae7f0d2bdeb17f836ebfe0476cce  /v17.1.0-ddde560.tar.gz
 a384e3eb09133054e3006af2033bd497f466a0ae4c2a6dd75e895afaad3c53e3  /usr/bin/nrfutil
+126972a35c91880c6a66637cdf3ad2e96a9dbc9b7640d575cce65c2cc3087943  /jlink.deb
