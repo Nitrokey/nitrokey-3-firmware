@@ -21,8 +21,8 @@ use trussed_rsa_alloc::SoftwareRsa;
 
 #[cfg(feature = "backend-staging")]
 use trussed_staging::{
-    streaming::ChunkedExtension, wrap_key_to_file::WrapKeyToFileExtension, StagingBackend,
-    StagingContext,
+    hmacsha256p256::HmacSha256P256Extension, streaming::ChunkedExtension,
+    wrap_key_to_file::WrapKeyToFileExtension, StagingBackend, StagingContext,
 };
 
 #[derive(Debug)]
@@ -129,6 +129,13 @@ impl ExtensionDispatch for Dispatch {
                     request,
                     resources,
                 ),
+                Extension::HmacShaP256 => <StagingBackend as ExtensionImpl<HmacSha256P256Extension>>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -154,6 +161,8 @@ pub enum Extension {
     Chunked,
     #[cfg(feature = "backend-staging")]
     WrapKeyToFile,
+    #[cfg(feature = "backend-staging")]
+    HmacShaP256,
 }
 
 impl From<Extension> for u8 {
@@ -165,6 +174,8 @@ impl From<Extension> for u8 {
             Extension::Chunked => 1,
             #[cfg(feature = "backend-staging")]
             Extension::WrapKeyToFile => 2,
+            #[cfg(feature = "backend-staging")]
+            Extension::HmacShaP256 => 3,
         }
     }
 }
@@ -180,6 +191,8 @@ impl TryFrom<u8> for Extension {
             1 => Ok(Extension::Chunked),
             #[cfg(feature = "backend-staging")]
             2 => Ok(Extension::WrapKeyToFile),
+            #[cfg(feature = "backend-staging")]
+            3 => Ok(Extension::HmacShaP256),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -204,4 +217,11 @@ impl ExtensionId<WrapKeyToFileExtension> for Dispatch {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::WrapKeyToFile;
+}
+
+#[cfg(feature = "backend-staging")]
+impl ExtensionId<HmacSha256P256Extension> for Dispatch {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::HmacShaP256;
 }

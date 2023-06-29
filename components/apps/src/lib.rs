@@ -397,6 +397,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Staging),
             BackendId::Custom(Backend::Auth),
             BackendId::Core,
         ];
