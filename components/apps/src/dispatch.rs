@@ -21,9 +21,12 @@ use trussed_rsa_alloc::SoftwareRsa;
 
 #[cfg(feature = "backend-staging")]
 use trussed_staging::{
-    hmacsha256p256::HmacSha256P256Extension, streaming::ChunkedExtension,
-    wrap_key_to_file::WrapKeyToFileExtension, StagingBackend, StagingContext,
+    streaming::ChunkedExtension, wrap_key_to_file::WrapKeyToFileExtension, StagingBackend,
+    StagingContext,
 };
+
+#[cfg(all(feature = "webcrypt", feature = "backend-staging"))]
+use trussed_staging::hmacsha256p256::HmacSha256P256Extension;
 
 #[derive(Debug)]
 pub struct Dispatch {
@@ -129,6 +132,7 @@ impl ExtensionDispatch for Dispatch {
                     request,
                     resources,
                 ),
+                #[cfg(feature = "webcrypt")]
                 Extension::HmacShaP256 => <StagingBackend as ExtensionImpl<HmacSha256P256Extension>>::extension_request_serialized(
                     &mut self.staging,
                     &mut ctx.core,
@@ -219,7 +223,7 @@ impl ExtensionId<WrapKeyToFileExtension> for Dispatch {
     const ID: Self::Id = Self::Id::WrapKeyToFile;
 }
 
-#[cfg(feature = "backend-staging")]
+#[cfg(all(feature = "backend-staging", feature = "webcrypt"))]
 impl ExtensionId<HmacSha256P256Extension> for Dispatch {
     type Id = Extension;
 

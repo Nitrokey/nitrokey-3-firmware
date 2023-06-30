@@ -15,6 +15,8 @@ use trussed::{
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
 use trussed::types::Location;
+
+#[cfg(feature = "webcrypt")]
 use webcrypt::PeekingBypass;
 
 mod dispatch;
@@ -132,6 +134,7 @@ impl<R: Runner> Apps<R> {
             provisioner,
             ..
         } = data;
+        #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
             App::new(runner, &mut make_client, ()),
             App::new(runner, &mut make_client, ()),
