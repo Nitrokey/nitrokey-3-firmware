@@ -38,7 +38,7 @@ trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner", tag = "v0
 
 [profile.release]
 codegen-units = 1
-lto = true
+lto = "thin"
 opt-level = "z"
 incremental = false
 debug = true
