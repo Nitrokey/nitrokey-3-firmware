@@ -15,13 +15,14 @@ use trussed::{
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
 use trussed::types::Location;
+use webcrypt::PeekingBypass;
 
 mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
 
 pub trait Runner {
-    type Syscall: Syscall;
+    type Syscall: Syscall + 'static;
 
     #[cfg(feature = "admin-app")]
     type Reboot: Reboot;
@@ -94,7 +95,7 @@ pub struct UnknownStatusError(u8);
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
-    #[cfg(feature = "fido-authenticator")]
+    #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
     fido: FidoApp<R>,
     #[cfg(feature = "ndef-app")]
     ndef: NdefApp,
@@ -107,7 +108,7 @@ pub struct Apps<R: Runner> {
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
     #[cfg(feature = "webcrypt")]
-    webcrypt: WebcryptApp<R>,
+    webcrypt: PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>,
     /// Avoid compilation error if no feature is used.
     /// Without it, the type parameter `R` is not used
     _compile_no_feature: PhantomData<R>,
@@ -131,10 +132,14 @@ impl<R: Runner> Apps<R> {
             provisioner,
             ..
         } = data;
+        let webcrypt_fido_bypass = PeekingBypass::new(
+            App::new(runner, &mut make_client, ()),
+            App::new(runner, &mut make_client, ()),
+        );
         Self {
             #[cfg(feature = "admin-app")]
             admin: App::new(runner, &mut make_client, admin),
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
@@ -147,7 +152,7 @@ impl<R: Runner> Apps<R> {
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
             #[cfg(feature = "webcrypt")]
-            webcrypt: App::new(runner, &mut make_client, ()),
+            webcrypt: webcrypt_fido_bypass,
             _compile_no_feature: PhantomData::default(),
         }
     }
@@ -187,7 +192,7 @@ impl<R: Runner> Apps<R> {
             &mut self.opcard,
             #[cfg(feature = "piv-authenticator")]
             &mut self.piv,
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
@@ -205,7 +210,7 @@ impl<R: Runner> Apps<R> {
         f(&mut [
             #[cfg(feature = "webcrypt")]
             &mut self.webcrypt,
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
