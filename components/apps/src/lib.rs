@@ -1,6 +1,7 @@
 #![no_std]
 
 const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
+const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
@@ -17,7 +18,7 @@ pub use admin_app::Reboot;
 use trussed::types::Location;
 
 #[cfg(feature = "webcrypt")]
-use webcrypt::PeekingBypass;
+use webcrypt::{PeekingBypass, Webcrypt};
 
 mod dispatch;
 use dispatch::Backend;
@@ -399,8 +400,16 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
 
     type Data = ();
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
-        Self::new(trussed)
+    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+        let uuid = runner.uuid();
+        Webcrypt::new_with_options(
+            trussed,
+            webcrypt::Options::new(
+                Location::External,
+                [uuid[0], uuid[1], uuid[2], uuid[3]],
+                WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT,
+            ),
+        )
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
