@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.5.0-test.20230613"
+version = "1.5.0-test.20230704"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -943,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.5.0-test.20230613"
+version = "1.5.0-test.20230704"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -3262,7 +3262,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.5.0-test.20230613"
+version = "1.5.0-test.20230704"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3280,7 +3280,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.5.0-test.20230613"
+version = "1.5.0-test.20230704"
 dependencies = [
  "delog",
  "littlefs2",
