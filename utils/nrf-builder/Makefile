@@ -55,7 +55,7 @@ ALL_ARTIFACTS := $(FW_NAME_RELEASE) $(FW_NAME_PROVISIONER) $(FW_NAME_DEVELOP) \
 
 SRCS = $(shell find $(FW_RUNNER)/src -name "*.rs" )
 
-TTY := $(wildcard /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*)
+TTY := /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*
 
 EXTRA_FEATURES :=
 

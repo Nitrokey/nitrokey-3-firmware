@@ -1006,7 +1006,7 @@ dependencies = [
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.11.0-interrupt.1#4637a4b5a425636da0283962ce1979170a9ea1fd"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.12.0#78283f591805fd3737f000e8c51213287ed3d338"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1081,9 +1081,8 @@ dependencies = [
 
 [[package]]
 name = "flexiber"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3df5b1466eec7b03f5848d8388b99975a0ba1a26510db61ba87c2a6177938e5"
+version = "0.1.1"
+source = "git+https://github.com/Nitrokey/flexiber?tag=0.1.1.nitrokey#26f2c8047472cffde13d0be280a001733cbf44c7"
 dependencies = [
  "delog",
  "flexiber_derive",
@@ -1093,8 +1092,7 @@ dependencies = [
 [[package]]
 name = "flexiber_derive"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "500c147f43e74e711720769dd7f37bc90dc6e0798621bfe5e3acb8239fd2f826"
+source = "git+https://github.com/Nitrokey/flexiber?tag=0.1.1.nitrokey#26f2c8047472cffde13d0be280a001733cbf44c7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2505,7 +2503,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "secrets-app"
 version = "0.12.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.11.0-interrupt.1#4637a4b5a425636da0283962ce1979170a9ea1fd"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.12.0#78283f591805fd3737f000e8c51213287ed3d338"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.3.1",
