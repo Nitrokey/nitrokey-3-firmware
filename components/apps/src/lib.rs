@@ -1,6 +1,8 @@
 #![no_std]
 
+#[cfg(feature = "secrets-app")]
 const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
+#[cfg(feature = "webcrypt")]
 const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
 use apdu_dispatch::{
