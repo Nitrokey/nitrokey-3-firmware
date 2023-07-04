@@ -1,6 +1,7 @@
 #![no_std]
 
 const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
+const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
@@ -16,12 +17,15 @@ use trussed::{
 pub use admin_app::Reboot;
 use trussed::types::Location;
 
+#[cfg(feature = "webcrypt")]
+use webcrypt::{PeekingBypass, Webcrypt};
+
 mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
 
 pub trait Runner {
-    type Syscall: Syscall;
+    type Syscall: Syscall + 'static;
 
     #[cfg(feature = "admin-app")]
     type Reboot: Reboot;
@@ -51,6 +55,8 @@ type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conformi
 type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "secrets-app")]
 type SecretsApp<R> = secrets_app::Authenticator<Client<R>>;
+#[cfg(feature = "webcrypt")]
+type WebcryptApp<R> = webcrypt::Webcrypt<Client<R>>;
 #[cfg(feature = "opcard")]
 type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "piv-authenticator")]
@@ -92,7 +98,7 @@ pub struct UnknownStatusError(u8);
 pub struct Apps<R: Runner> {
     #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
-    #[cfg(feature = "fido-authenticator")]
+    #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
     fido: FidoApp<R>,
     #[cfg(feature = "ndef-app")]
     ndef: NdefApp,
@@ -104,7 +110,8 @@ pub struct Apps<R: Runner> {
     piv: PivApp<R>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
-
+    #[cfg(feature = "webcrypt")]
+    webcrypt: PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>,
     /// Avoid compilation error if no feature is used.
     /// Without it, the type parameter `R` is not used
     _compile_no_feature: PhantomData<R>,
@@ -128,10 +135,15 @@ impl<R: Runner> Apps<R> {
             provisioner,
             ..
         } = data;
+        #[cfg(feature = "webcrypt")]
+        let webcrypt_fido_bypass = PeekingBypass::new(
+            App::new(runner, &mut make_client, ()),
+            App::new(runner, &mut make_client, ()),
+        );
         Self {
             #[cfg(feature = "admin-app")]
             admin: App::new(runner, &mut make_client, admin),
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             fido: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
@@ -143,6 +155,8 @@ impl<R: Runner> Apps<R> {
             piv: App::new(runner, &mut make_client, ()),
             #[cfg(feature = "provisioner-app")]
             provisioner: App::new(runner, &mut make_client, provisioner),
+            #[cfg(feature = "webcrypt")]
+            webcrypt: webcrypt_fido_bypass,
             _compile_no_feature: PhantomData::default(),
         }
     }
@@ -182,12 +196,14 @@ impl<R: Runner> Apps<R> {
             &mut self.opcard,
             #[cfg(feature = "piv-authenticator")]
             &mut self.piv,
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
+            // #[cfg(feature = "webcrypt")]
+            // &mut self.webcrypt,
         ])
     }
 
@@ -196,7 +212,9 @@ impl<R: Runner> Apps<R> {
         F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
         f(&mut [
-            #[cfg(feature = "fido-authenticator")]
+            #[cfg(feature = "webcrypt")]
+            &mut self.webcrypt,
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
             #[cfg(feature = "admin-app")]
             &mut self.admin,
@@ -373,6 +391,35 @@ impl<R: Runner> App<R> for FidoApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+}
+
+#[cfg(feature = "webcrypt")]
+impl<R: Runner> App<R> for WebcryptApp<R> {
+    const CLIENT_ID: &'static str = "webcrypt";
+
+    type Data = ();
+
+    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+        let uuid = runner.uuid();
+        Webcrypt::new_with_options(
+            trussed,
+            webcrypt::Options::new(
+                Location::External,
+                [uuid[0], uuid[1], uuid[2], uuid[3]],
+                WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT,
+            ),
+        )
+    }
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_WEBCRYPT
     }
 }
 

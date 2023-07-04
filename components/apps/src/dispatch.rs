@@ -25,6 +25,9 @@ use trussed_staging::{
     StagingContext,
 };
 
+#[cfg(all(feature = "webcrypt", feature = "backend-staging"))]
+use trussed_staging::hmacsha256p256::HmacSha256P256Extension;
+
 #[derive(Debug)]
 pub struct Dispatch {
     #[cfg(feature = "backend-auth")]
@@ -129,6 +132,14 @@ impl ExtensionDispatch for Dispatch {
                     request,
                     resources,
                 ),
+                #[cfg(feature = "webcrypt")]
+                Extension::HmacShaP256 => <StagingBackend as ExtensionImpl<HmacSha256P256Extension>>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -154,6 +165,8 @@ pub enum Extension {
     Chunked,
     #[cfg(feature = "backend-staging")]
     WrapKeyToFile,
+    #[cfg(feature = "backend-staging")]
+    HmacShaP256,
 }
 
 impl From<Extension> for u8 {
@@ -165,6 +178,8 @@ impl From<Extension> for u8 {
             Extension::Chunked => 1,
             #[cfg(feature = "backend-staging")]
             Extension::WrapKeyToFile => 2,
+            #[cfg(feature = "backend-staging")]
+            Extension::HmacShaP256 => 3,
         }
     }
 }
@@ -180,6 +195,8 @@ impl TryFrom<u8> for Extension {
             1 => Ok(Extension::Chunked),
             #[cfg(feature = "backend-staging")]
             2 => Ok(Extension::WrapKeyToFile),
+            #[cfg(feature = "backend-staging")]
+            3 => Ok(Extension::HmacShaP256),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -204,4 +221,11 @@ impl ExtensionId<WrapKeyToFileExtension> for Dispatch {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::WrapKeyToFile;
+}
+
+#[cfg(all(feature = "backend-staging", feature = "webcrypt"))]
+impl ExtensionId<HmacSha256P256Extension> for Dispatch {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::HmacShaP256;
 }

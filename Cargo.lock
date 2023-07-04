@@ -101,6 +101,7 @@ dependencies = [
  "trussed-usbip",
  "usbd-ctaphid",
  "utils",
+ "webcrypt",
 ]
 
 [[package]]
@@ -1285,6 +1286,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-version"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6b0decc02f4636b9ccad390dcbe77b722a77efedfa393caf8379a51d5c61899"
+dependencies = [
+ "git-version-macro",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "git-version-macro"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe69f1cbdb6e28af2bac214e943b99ce8a0a06b447d15d3e61161b0423139f3f"
+dependencies = [
+ "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2242,6 +2265,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-hack"
+version = "0.5.20+deprecated"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3056,14 +3085,16 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey.1#c6aa6bdd65f04eb746a2d65725ba2d01c27ae1f7"
+source = "git+https://github.com/Nitrokey/trussed-staging.git?branch=hmacsha256p256#1b54bf8703d515688a58f2f605c3efa0f2f60ced"
 dependencies = [
  "chacha20poly1305",
  "delog",
+ "hmac 0.12.1",
  "littlefs2",
  "rand_core",
  "serde",
  "serde-byte-array",
+ "sha2 0.10.6",
  "trussed",
 ]
 
@@ -3300,6 +3331,27 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+
+[[package]]
+name = "webcrypt"
+version = "0.7.0"
+source = "git+https://github.com/Nitrokey/nitrokey-webcrypt-rust?tag=v0.7.0#01f821c9f3a76780e72bec6fe09d40898bfe6f95"
+dependencies = [
+ "apdu-dispatch",
+ "cbor-smol",
+ "ctap-types",
+ "ctaphid-dispatch",
+ "delog",
+ "generic-array 0.14.7",
+ "git-version",
+ "heapless 0.7.16",
+ "heapless-bytes 0.3.0",
+ "serde",
+ "serde-indexed",
+ "trussed",
+ "trussed-rsa-alloc",
+ "trussed-staging",
+]
 
 [[package]]
 name = "winapi"

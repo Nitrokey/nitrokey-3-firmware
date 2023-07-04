@@ -20,6 +20,7 @@ trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked"
 admin-app = { version = "0.1.0", optional = true }
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
+webcrypt = { version = "0.7.0", optional = true }
 secrets-app = { version = "0.12.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.1.1", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
 piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog"], optional = true }
@@ -34,11 +35,12 @@ default = [
     "opcard",
     "trussed/clients-4",
 ]
-test = ["piv-authenticator", "trussed/clients-5"]
+test = ["piv-authenticator", "webcrypt", "trussed/clients-6"]
 provisioner = ["provisioner-app", "trussed/clients-5"]
 
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth"]
+webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa", "backend-staging", "trussed-staging/hmacsha256p256"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
@@ -52,6 +54,7 @@ log-all = [
     "admin-app?/log-all",
     "fido-authenticator?/log-all",
     "secrets-app?/log-all",
+    "webcrypt?/log-all",
     "opcard?/log-all",
     "provisioner-app?/log-all",
 ]
