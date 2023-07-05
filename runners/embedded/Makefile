@@ -120,6 +120,7 @@ clean-all:
 #### actual build, clean, reset, program targets
 ###############################################################################
 
+CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	cargo --version
@@ -130,9 +131,10 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
 	echo 'board = "$(BOARD)"' >> cfg.toml
 
-	cargo build --release --target $(TARGET) \
+	# NRF52/test -> "release-thin-lto", use "release" otherwise
+	cargo build --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
-		--quiet
+		--quiet --profile $(CUSTOM_PROFILE)
 
 	cp $(RAW_OUT) ./$(OUT_ELF)
 
@@ -154,9 +156,9 @@ check: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
 	echo 'board = "$(BOARD)"' >> cfg.toml
 
-	cargo check --release --target $(TARGET) \
+	cargo check --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
-		--quiet
+		--quiet --profile $(CUSTOM_PROFILE)
 
 clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
 	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
