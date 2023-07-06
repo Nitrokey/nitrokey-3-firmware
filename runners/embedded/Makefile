@@ -31,7 +31,8 @@ SRCS = $(shell find src -name "*.rs" )
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
-RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/release/$(SOC)_runner
+CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
+RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
 # feature definition
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
@@ -120,7 +121,6 @@ clean-all:
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
 build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
 
 	cargo --version
