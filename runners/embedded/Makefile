@@ -125,11 +125,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 
 	cargo --version
 
-	cp -f $(CFG_PATH) cfg.toml
-	echo '' >> cfg.toml
-	echo '[build]' >> cfg.toml
-	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
-	echo 'board = "$(BOARD)"' >> cfg.toml
+	./create_cfg.sh $(CFG_PATH) $(BUILD_PROFILE) $(BOARD)
 
 	# NRF52/test -> "release-thin-lto", use "release" otherwise
 	cargo build --target $(TARGET) \
@@ -150,11 +146,7 @@ check: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 
 	cargo --version
 
-	cp -f $(CFG_PATH) cfg.toml
-	echo '' >> cfg.toml
-	echo '[build]' >> cfg.toml
-	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
-	echo 'board = "$(BOARD)"' >> cfg.toml
+	./create_cfg.sh $(CFG_PATH) $(BUILD_PROFILE) $(BOARD)
 
 	cargo check --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
