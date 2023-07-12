@@ -17,10 +17,10 @@ ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nit
 fido-authenticator = { git = "https://github.com/robin-nitrokey/fido-authenticator.git", branch = "cred-id" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.12" }
+trussed = { git = "https://github.com/Nitrokey/trussed", branch = "service-reference" }
 
 # unreleased upstream changes
-usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid", tag = "v0.1.0-nitrokey.1" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch", tag = "v0.1.1-nitrokey.2" }
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.2-nitrokey.1" }
