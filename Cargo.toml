@@ -42,6 +42,7 @@ lto = "fat"
 opt-level = "z"
 incremental = false
 debug = true
+strip = false
 
 [profile.release-thin-lto]
 lto = "thin"

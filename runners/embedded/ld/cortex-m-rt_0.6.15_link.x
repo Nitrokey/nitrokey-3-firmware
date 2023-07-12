@@ -166,6 +166,11 @@ SECTIONS
     *(.ARM.exidx.*);
     *(.ARM.extab.*);
   }
+  /* `INFO` makes the section not allocatable so it won't be loaded into memory */
+  .stack_sizes (INFO) :
+  {
+    KEEP(*(.stack_sizes));
+  }
 }
 
 /* Do not exceed this mark in the error messages below                                    | */
@@ -230,4 +235,3 @@ ASSERT(SIZEOF(.vector_table) <= 0x400, "
 There can't be more than 240 interrupt handlers. This may be a bug in
 your device crate, or you may have registered more than 240 interrupt
 handlers.");
-
