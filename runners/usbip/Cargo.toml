@@ -16,6 +16,7 @@ pretty_env_logger = "0.4.0"
 trussed = { version = "0.1", features = ["clients-3"] }
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid", "ccid"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
+dialoguer = { version = "0.10.4", default-features = false }
 
 [features]
 test = ["apps/test"]
