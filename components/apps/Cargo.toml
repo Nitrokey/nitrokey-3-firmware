@@ -26,6 +26,7 @@ opcard = { version = "1.1.1", features = ["apdu-dispatch", "delog", "rsa2048-gen
 piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 se050-test-app = { path = "../se050-test-app", optional = true }
+se050-backend-random = { path = "../se050-backend-random", optional = true }
 se050 = { version = "0.0.1", optional = true}
 embedded-hal = "0.2.7"
 
@@ -48,6 +49,7 @@ fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
 se050-test-app = ["dep:se050-test-app", "se050", "trussed/clients-6"]
+se050-backend-random = ["dep:se050-backend-random", "se050"]
 se050 = ["dep:se050"]
 
 # backends

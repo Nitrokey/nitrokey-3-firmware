@@ -733,7 +733,14 @@ impl Stage5 {
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
         let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
-        let trussed = Service::with_dispatch(board, Dispatch::new(Location::Internal));
+        let trussed = Service::with_dispatch(
+            board,
+            Dispatch::new(
+                Location::Internal,
+                #[cfg(feature = "se050-backend-random")]
+                se050::se050::Se050::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer)),
+            ),
+        );
 
         Stage6 {
             status: self.status,
@@ -743,7 +750,9 @@ impl Stage5 {
             usb_nfc: self.usb_nfc,
             store: self.store,
             trussed,
+            #[cfg(feature = "se050-test-app")]
             se050_timer: self.se050_timer,
+            #[cfg(feature = "se050-test-app")]
             se050_i2c: self.se050_i2c,
         }
     }
@@ -757,7 +766,9 @@ pub struct Stage6 {
     usb_nfc: UsbNfc,
     store: RunnerStore,
     trussed: Trussed,
+    #[cfg(feature = "se050-test-app")]
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    #[cfg(feature = "se050-test-app")]
     se050_i2c: I2C,
 }
 
@@ -782,19 +793,13 @@ impl Stage6 {
     #[inline(never)]
     pub fn next(mut self) -> All {
         self.perform_data_migrations();
-        #[cfg(not(feature = "se050"))]
-        {
-            let _ = self.se050_i2c;
-            let _ = self.se050_timer;
-        }
-
         let apps = crate::init_apps(
             &mut self.trussed,
             self.status,
             &self.store,
-            #[cfg(feature = "se050")]
+            #[cfg(feature = "se050-test-app")]
             self.se050_i2c,
-            #[cfg(feature = "se050")]
+            #[cfg(feature = "se050-test-app")]
             TimerDelay(self.se050_timer),
             self.clocks.is_nfc_passive,
         );

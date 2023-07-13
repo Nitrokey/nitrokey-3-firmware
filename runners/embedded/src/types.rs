@@ -49,6 +49,10 @@ pub trait Soc {
     type Se050Timer: DelayUs<u32>;
     #[cfg(feature = "se050")]
     type Twi: se050::t1::I2CForT1;
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer;
+    #[cfg(not(feature = "se050"))]
+    type Twi;
 
     type Duration;
     type Instant;
@@ -74,9 +78,7 @@ impl apps::Runner for Runner {
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
-    #[cfg(feature = "se050")]
     type Twi = <SocT as Soc>::Twi;
-    #[cfg(feature = "se050")]
     type Se050Timer = <SocT as Soc>::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
@@ -135,7 +137,8 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed = trussed::Service<RunnerPlatform, Dispatch>;
+pub type Trussed =
+    trussed::Service<RunnerPlatform, Dispatch<<SocT as Soc>::Twi, <SocT as Soc>::Se050Timer>>;
 
 pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 
