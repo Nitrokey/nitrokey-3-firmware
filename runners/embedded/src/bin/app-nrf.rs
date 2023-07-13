@@ -199,16 +199,21 @@ mod app {
 
         let mut trussed_service = trussed::service::Service::with_dispatch(
             platform,
-            apps::Dispatch::with_hw_key(Location::Internal, Bytes::from_slice(&er).unwrap()),
+            apps::Dispatch::with_hw_key(
+                Location::Internal,
+                Bytes::from_slice(&er).unwrap(),
+                #[cfg(feature = "se050-backend-random")]
+                se050::se050::Se050::new(twim, 0x48, se050_timer),
+            ),
         );
 
         let apps = ERL::init_apps(
             &mut trussed_service,
             init_status,
             &store,
-            #[cfg(feature = "se050")]
+            #[cfg(feature = "se050-test-app")]
             twim,
-            #[cfg(feature = "se050")]
+            #[cfg(feature = "se050-test-app")]
             se050_timer,
             !powered_by_usb,
         );

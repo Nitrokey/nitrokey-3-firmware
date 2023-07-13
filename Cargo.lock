@@ -95,6 +95,7 @@ dependencies = [
  "piv-authenticator",
  "provisioner-app",
  "se050",
+ "se050-backend-random",
  "se050-test-app",
  "secrets-app",
  "trussed",
@@ -2583,6 +2584,20 @@ dependencies = [
  "iso7816",
  "lpc55-hal",
  "nrf-hal-common",
+]
+
+[[package]]
+name = "se050-backend-random"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "delog",
+ "embedded-hal",
+ "heapless 0.7.16",
+ "hex-literal 0.4.1",
+ "iso7816",
+ "se050",
+ "trussed",
 ]
 
 [[package]]

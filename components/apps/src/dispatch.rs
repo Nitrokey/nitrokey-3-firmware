@@ -1,3 +1,6 @@
+use core::marker::PhantomData;
+
+use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayUs;
 use trussed::{
     api::{Reply, Request},
     error::Error as TrussedError,
@@ -18,6 +21,11 @@ use trussed::{
     Bytes,
 };
 
+#[cfg(feature = "se050-backend-random")]
+use embedded_hal::blocking::delay::DelayUs;
+#[cfg(feature = "se050-backend-random")]
+use se050::{se050::Se050, t1::I2CForT1};
+
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 
@@ -33,12 +41,15 @@ use trussed_staging::{
 #[cfg(all(feature = "webcrypt", feature = "backend-staging"))]
 use trussed_staging::hmacsha256p256::HmacSha256P256Extension;
 
-#[derive(Debug)]
-pub struct Dispatch {
+pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
     #[cfg(feature = "backend-staging")]
     staging: StagingBackend,
+    #[cfg(feature = "se050-backend-random")]
+    se050: se050_backend_random::BackendRandom<T, D>,
+    #[cfg(not(feature = "se050-backend-random"))]
+    __: PhantomData<(T, D)>,
 }
 
 #[derive(Default)]
@@ -49,8 +60,11 @@ pub struct DispatchContext {
     staging: StagingContext,
 }
 
-impl Dispatch {
-    pub fn new(auth_location: Location) -> Self {
+impl<T: Twi, D: Delay> Dispatch<T, D> {
+    pub fn new(
+        auth_location: Location,
+        #[cfg(feature = "se050-backend-random")] se050: Se050<T, D>,
+    ) -> Self {
         #[cfg(not(feature = "backend-auth"))]
         let _ = auth_location;
         Self {
@@ -58,20 +72,53 @@ impl Dispatch {
             auth: AuthBackend::new(auth_location),
             #[cfg(feature = "backend-staging")]
             staging: StagingBackend::new(),
+            #[cfg(feature = "se050-backend-random")]
+            se050: se050_backend_random::BackendRandom::new(se050),
+            #[cfg(not(feature = "se050-backend-random"))]
+            __: Default::default(),
         }
     }
 
     #[cfg(feature = "backend-auth")]
-    pub fn with_hw_key(auth_location: Location, hw_key: Bytes<MAX_HW_KEY_LEN>) -> Self {
+    pub fn with_hw_key(
+        auth_location: Location,
+        hw_key: Bytes<MAX_HW_KEY_LEN>,
+        #[cfg(feature = "se050-backend-random")] se050: Se050<T, D>,
+    ) -> Self {
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
             #[cfg(feature = "backend-staging")]
             staging: StagingBackend::new(),
+            #[cfg(feature = "se050-backend-random")]
+            se050: se050_backend_random::BackendRandom::new(se050),
+            #[cfg(not(feature = "se050-backend-random"))]
+            __: Default::default(),
         }
     }
 }
 
-impl ExtensionDispatch for Dispatch {
+// HACK around #[cfg] for where clauses. See https://users.rust-lang.org/t/cfg-on-where-clause-items/90292
+
+#[cfg(feature = "se050-backend-random")]
+pub trait Twi: I2CForT1 {}
+#[cfg(feature = "se050-backend-random")]
+impl<T: I2CForT1> Twi for T {}
+#[cfg(feature = "se050-backend-random")]
+pub trait Delay: DelayUs<u32> {}
+#[cfg(feature = "se050-backend-random")]
+impl<D: DelayUs<u32>> Delay for D {}
+
+#[cfg(not(feature = "se050-backend-random"))]
+pub trait Twi {}
+#[cfg(not(feature = "se050-backend-random"))]
+impl<T> Twi for T {}
+
+#[cfg(not(feature = "se050-backend-random"))]
+pub trait Delay {}
+#[cfg(not(feature = "se050-backend-random"))]
+impl<D> Delay for D {}
+
+impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
     type Context = DispatchContext;
     type BackendId = Backend;
     type ExtensionId = Extension;
@@ -96,6 +143,10 @@ impl ExtensionDispatch for Dispatch {
                 self.staging
                     .request(&mut ctx.core, &mut ctx.backends.staging, request, resources)
             }
+            #[cfg(feature = "se050-backend-random")]
+            Backend::Se050 => self
+                .se050
+                .request(&mut ctx.core, &mut (), request, resources),
         }
     }
 
@@ -148,6 +199,7 @@ impl ExtensionDispatch for Dispatch {
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
+            _ => Err(TrussedError::RequestNotAvailable),
         }
     }
 }
@@ -160,6 +212,8 @@ pub enum Backend {
     SoftwareRsa,
     #[cfg(feature = "backend-staging")]
     Staging,
+    #[cfg(feature = "se050-backend-random")]
+    Se050,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -208,28 +262,28 @@ impl TryFrom<u8> for Extension {
 }
 
 #[cfg(feature = "backend-auth")]
-impl ExtensionId<AuthExtension> for Dispatch {
+impl<T: Twi, D: Delay> ExtensionId<AuthExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::Auth;
 }
 
 #[cfg(feature = "backend-staging")]
-impl ExtensionId<ChunkedExtension> for Dispatch {
+impl<T: Twi, D: Delay> ExtensionId<ChunkedExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::Chunked;
 }
 
 #[cfg(feature = "backend-staging")]
-impl ExtensionId<WrapKeyToFileExtension> for Dispatch {
+impl<T: Twi, D: Delay> ExtensionId<WrapKeyToFileExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::WrapKeyToFile;
 }
 
 #[cfg(all(feature = "backend-staging", feature = "webcrypt"))]
-impl ExtensionId<HmacSha256P256Extension> for Dispatch {
+impl<T: Twi, D: Delay> ExtensionId<HmacSha256P256Extension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::HmacShaP256;

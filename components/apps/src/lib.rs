@@ -17,6 +17,11 @@ use trussed::{
     ClientImplementation, Platform, Service,
 };
 
+#[cfg(all(feature = "se050-test-app", feature = "se050-backend-random"))]
+compile_error!(
+    "The features se050-test-app and se050-backend-random cannot be enable simultaneously"
+);
+
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
 use trussed::types::Location;
@@ -38,9 +43,13 @@ pub trait Runner {
     #[cfg(feature = "provisioner-app")]
     type Filesystem: trussed::types::LfsStorage + 'static;
     #[cfg(feature = "se050")]
-    type Twi: se050::t1::I2CForT1;
+    type Twi: se050::t1::I2CForT1 + 'static;
     #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32>;
+    type Se050Timer: DelayUs<u32> + 'static;
+    #[cfg(not(feature = "se050"))]
+    type Twi: 'static;
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer: 'static;
 
     fn uuid(&self) -> [u8; 16];
 }
@@ -50,14 +59,17 @@ pub struct Data<R: Runner> {
     pub admin: AdminData,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
-    #[cfg(feature = "se050")]
+    #[cfg(feature = "se050-test-app")]
     pub twi: R::Twi,
-    #[cfg(feature = "se050")]
+    #[cfg(feature = "se050-test-app")]
     pub se050_timer: R::Se050Timer,
     pub _marker: PhantomData<R>,
 }
 
-type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
+type Client<R> = ClientImplementation<
+    <R as Runner>::Syscall,
+    Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
+>;
 
 #[cfg(feature = "admin-app")]
 type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>;
@@ -183,7 +195,7 @@ impl<R: Runner> Apps<R> {
 
     pub fn with_service<P: Platform>(
         runner: &R,
-        trussed: &mut Service<P, Dispatch>,
+        trussed: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         data: Data<R>,
     ) -> Self
     where
@@ -492,6 +504,8 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
+            #[cfg(feature = "se050-backend-random")]
+            BackendId::Custom(Backend::Se050),
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),
             BackendId::Custom(Backend::Staging),

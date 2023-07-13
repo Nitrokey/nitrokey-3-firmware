@@ -255,8 +255,8 @@ pub fn init_apps(
     trussed: &mut types::Trussed,
     init_status: types::InitStatus,
     store: &types::RunnerStore,
-    #[cfg(feature = "se050")] twi: <SocT as types::Soc>::Twi,
-    #[cfg(feature = "se050")] se050_timer: <SocT as types::Soc>::Se050Timer,
+    #[cfg(feature = "se050-test-app")] twi: <SocT as types::Soc>::Twi,
+    #[cfg(feature = "se050-test-app")] se050_timer: <SocT as types::Soc>::Se050Timer,
     nfc_powered: bool,
 ) -> types::Apps {
     use trussed::platform::Store as _;
@@ -296,9 +296,9 @@ pub fn init_apps(
         admin,
         #[cfg(feature = "provisioner")]
         provisioner,
-        #[cfg(feature = "se050")]
+        #[cfg(feature = "se050-test-app")]
         twi,
-        #[cfg(feature = "se050")]
+        #[cfg(feature = "se050-test-app")]
         se050_timer,
         _marker: Default::default(),
     };

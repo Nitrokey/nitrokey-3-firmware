@@ -172,6 +172,9 @@ impl apps::Runner for Runner {
     #[cfg(feature = "provisioner")]
     type Filesystem = <store::Store as trussed::store::Store>::I;
 
+    type Twi = ();
+    type Se050Timer = ();
+
     fn uuid(&self) -> [u8; 16] {
         self.serial
     }

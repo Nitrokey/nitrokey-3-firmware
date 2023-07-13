@@ -92,6 +92,10 @@ impl crate::types::Soc for Soc {
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
     #[cfg(feature = "se050")]
     type Twi = I2C;
+    #[cfg(not(feature = "se050"))]
+    type Twi = ();
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer = ();
 
     type Instant = ();
     type Duration = Milliseconds;
