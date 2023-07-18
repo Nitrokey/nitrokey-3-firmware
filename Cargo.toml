@@ -35,7 +35,7 @@ trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", branch = "hmacsha256p256" }
 iso7816 = { git = "https://github.com/sosthene-nitrokey/iso7816.git", rev = "160ca3bbd8e21ec4e4ee1e0748e1eaa53a45c97f"}
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.2" }
-se050 = { git = "https://github.com/sosthene-nitrokey/se050-generation.git", rev = "3932f59cec4eca71bffd55d5b01a9bcf5064bd62"}
+se050 = { git = "https://github.com/sosthene-nitrokey/se050-generation.git", rev = "f53e134043afc2cc9333f957f0d79f07c1a6ca62"}
 
 [profile.release]
 codegen-units = 1

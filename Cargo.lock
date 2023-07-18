@@ -2572,7 +2572,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "se050"
 version = "0.0.1"
-source = "git+https://github.com/sosthene-nitrokey/se050-generation.git?rev=3932f59cec4eca71bffd55d5b01a9bcf5064bd62#3932f59cec4eca71bffd55d5b01a9bcf5064bd62"
+source = "git+https://github.com/sosthene-nitrokey/se050-generation.git?rev=f53e134043afc2cc9333f957f0d79f07c1a6ca62#f53e134043afc2cc9333f957f0d79f07c1a6ca62"
 dependencies = [
  "bitflags 2.3.2",
  "byteorder",
