@@ -6,11 +6,12 @@ use iso7816::{Instruction, Status};
 use se050::{
     se050::{
         commands::{
-            CreateSession, DeleteAll, DeleteSecureObject, GetRandom, ReadIdList, ReadObject,
-            VerifySessionUserId, WriteBinary, WriteUserId,
+            CreateSession, DeleteAll, DeleteSecureObject, EcdsaSign, EcdsaVerify, EddsaSign,
+            EddsaVerify, GetRandom, ReadEcCurveList, ReadIdList, ReadObject, VerifySessionUserId,
+            WriteBinary, WriteEcKey, WriteUserId,
         },
         policies::{ObjectAccessRule, ObjectPolicyFlags, Policy, PolicySet},
-        ObjectId, ProcessSessionCmd, Se050,
+        EcCurve, EcDsaSignatureAlgo, ObjectId, P1KeyType, ProcessSessionCmd, Se050, Se050Result,
     },
     t1::I2CForT1,
 };
@@ -29,9 +30,9 @@ pub struct Card<Twi, D> {
 macro_rules! command {
     ($e:expr; $msg:literal) => {{
         debug_now!($msg);
-        let res = $e;
-        debug_now!("Got res: {:?}", res);
-        res?
+        let __res = $e;
+        debug_now!("Got res: {:?}", __res);
+        __res?
     }};
 }
 
@@ -73,13 +74,15 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
 
         match u8::from(command.instruction()) {
             0x84 => {
+                let mut buf = [b'a'; BUFFER_LEN];
                 let len = command.expected();
-                let res = command!(self.se.run_command(&GetRandom {length: (len as u16).into()}, &mut self.buf); "Running get random");
-                reply.extend_from_slice(&res.data).unwrap();
-                if self.buf == [b'a'; BUFFER_LEN] {
+                let res = command!(self.se.run_command(&GetRandom {length: (len as u16).into()}, &mut buf); "Running get random");
+                reply.extend_from_slice(res.data).unwrap();
+                if res.data == &[b'a'; BUFFER_LEN][..len] {
                     debug_now!("Failed to get random");
                     return Err(Status::UnspecifiedNonpersistentExecutionError);
                 }
+                self.buf[..len].copy_from_slice(res.data)
             }
             0xD1 => {
                 let data = &hex!("31323334");
@@ -170,6 +173,94 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                     }, &mut buf);
                     "Running delete_binary"
                 );
+            }
+            0xD7 => {
+                command!(self.se.create_and_set_curve(EcCurve::NistP256); "Creating curve NistP256");
+            }
+            0xD8 => {
+                let mut buf = [0; 200];
+                let mut buf2 = [0; 200];
+                let object_id = ObjectId(hex!("01223344"));
+                command!(self.se.run_command(
+                    &WriteEcKey {
+                        transient: false,
+                        is_auth: false,
+                        key_type: Some(P1KeyType::KeyPair),
+                        policy: None,
+                        max_attempts: None,
+                        object_id,
+                        curve: Some(EcCurve::NistP256),
+                        private_key: None,
+                        public_key: None,
+                    },
+                    &mut buf,
+                ); "Creating ec key");
+                let res = command!(self.se.run_command(
+                    &EcdsaSign {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: EcDsaSignatureAlgo::Sha256,
+                    },
+                    &mut buf
+                ); "Runing signature");
+                let res = command!(self.se.run_command(
+                    &EcdsaVerify {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: EcDsaSignatureAlgo::Sha256,
+                        signature: res.signature
+                    },
+                    &mut buf2
+                ); "Runing verifcation");
+                if res.result == Se050Result::Success {
+                    reply.push(0x01).unwrap();
+                } else {
+                    reply.push(0x02).unwrap();
+                }
+            }
+            0xD9 => {
+                let mut buf = [0; 200];
+                let res = command!(self.se.run_command(&ReadEcCurveList {}, &mut buf); "Reading EC curve list");
+                reply.extend_from_slice(res.ids).ok();
+            }
+            0xDA => {
+                let mut buf = [0; 200];
+                let mut buf2 = [0; 200];
+                let object_id = ObjectId(hex!("01223344"));
+                command!(self.se.run_command(
+                    &WriteEcKey {
+                        transient: false,
+                        is_auth: false,
+                        key_type: Some(P1KeyType::KeyPair),
+                        policy: None,
+                        max_attempts: None,
+                        object_id,
+                        curve: Some(EcCurve::IdEccEd25519),
+                        private_key: None,
+                        public_key: None,
+                    },
+                    &mut buf,
+                ); "Creating ec key");
+                let res = command!(self.se.run_command(
+                    &EddsaSign {
+                        key_id: object_id,
+                        data: &[52; 32],
+                    },
+                    &mut buf
+                ); "Runing signature");
+                let res = command!(self.se.run_command(
+                    &EddsaVerify     {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        signature: res.signature
+                    },
+                    &mut buf2
+                ); "Runing verifcation");
+                if res.result == Se050Result::Success {
+                    reply.push(0x01).unwrap();
+                } else {
+                    reply.push(0x02).unwrap();
+                }
             }
             _ => {}
         }
