@@ -98,6 +98,7 @@ where
 
         self.set_status(ui::Status::WaitingForUserPresence);
 
+        UserPresenceStatus::set_waiting(true);
         loop {
             let cur_time = self.uptime().as_millis();
 
@@ -111,9 +112,7 @@ where
             }
 
             if let Some(button) = self.buttons.as_mut() {
-                UserPresenceStatus::set_waiting(true);
                 is_pressed = button.is_pressed(Button::A);
-                UserPresenceStatus::set_waiting(false);
             }
 
             if is_pressed {
@@ -129,6 +128,7 @@ where
                 break;
             }
         }
+        UserPresenceStatus::set_waiting(false);
 
         // consent, if we've counted 3 "presses"
         if counter >= threshold {
