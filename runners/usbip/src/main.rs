@@ -1,21 +1,17 @@
 mod store;
+mod ui;
 
-use std::{path::PathBuf, thread, time::Duration};
+use std::{path::PathBuf, sync::Arc, thread};
 
 use apps::{AdminData, Apps, Dispatch, Variant};
 use clap::{Parser, ValueEnum};
 use clap_num::maybe_hex;
-use dialoguer::Confirm;
-use log::{debug, info};
 use rand_core::{OsRng, RngCore};
-use trussed::{
-    platform::{consent, reboot, ui},
-    types::Location,
-    Bytes, Platform,
-};
+use trussed::{types::Location, Bytes, Platform};
 use trussed_usbip::Service;
 
 use store::FilesystemOrRam;
+use ui::{Signals, UserInterface, UserPresence};
 
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
@@ -46,16 +42,31 @@ struct Args {
     ///
     /// The interactive option shows a prompt on stderr requesting consent from the user.  Note
     /// that the runner execution is blocked during the prompt.
+    ///
+    /// The signal option accepts the next user consent request within one second after a SIGUSR1
+    /// signal is received.
     #[clap(short, long, value_enum, default_value_t)]
-    user_presence: UserPresence,
+    user_presence: UserPresenceMechanism,
 }
 
-#[derive(Clone, Copy, Debug, Default, ValueEnum)]
-enum UserPresence {
+#[derive(Clone, Copy, Debug, Default, PartialEq, ValueEnum)]
+enum UserPresenceMechanism {
     #[default]
     AcceptAll,
     RejectAll,
     Interactive,
+    Signal,
+}
+
+impl From<UserPresenceMechanism> for UserPresence {
+    fn from(user_presence: UserPresenceMechanism) -> Self {
+        match user_presence {
+            UserPresenceMechanism::AcceptAll => Self::Fixed(true),
+            UserPresenceMechanism::RejectAll => Self::Fixed(false),
+            UserPresenceMechanism::Interactive => Self::Interactive,
+            UserPresenceMechanism::Signal => Self::Signal(Arc::new(Signals::new())),
+        }
+    }
 }
 
 struct Reboot;
@@ -75,74 +86,6 @@ impl apps::Reboot for Reboot {
 
     fn locked() -> bool {
         false
-    }
-}
-
-struct UserInterface {
-    start_time: std::time::Instant,
-    user_presence: UserPresence,
-    consent: Option<consent::Level>,
-}
-
-impl UserInterface {
-    fn new(user_presence: UserPresence) -> Self {
-        Self {
-            start_time: std::time::Instant::now(),
-            user_presence,
-            consent: None,
-        }
-    }
-}
-
-impl trussed::platform::UserInterface for UserInterface {
-    fn check_user_presence(&mut self) -> consent::Level {
-        // The call is repeated until it times out or returns something else than None so we cache
-        // the user selection.
-        let consent = *self.consent.get_or_insert_with(|| {
-            let user_presence = match self.user_presence {
-                UserPresence::AcceptAll => true,
-                UserPresence::RejectAll => false,
-                UserPresence::Interactive => Confirm::new()
-                    .with_prompt("User presence?")
-                    .interact()
-                    .unwrap(),
-            };
-            let consent = if user_presence {
-                consent::Level::Normal
-            } else {
-                consent::Level::None
-            };
-            debug!("Answering user presence check with consent level {consent:?}");
-            consent
-        });
-        if consent == consent::Level::None {
-            thread::sleep(Duration::from_millis(100));
-        }
-        consent
-    }
-
-    fn set_status(&mut self, status: ui::Status) {
-        info!("Set status: {:?}", status);
-
-        let is_waiting = status == ui::Status::WaitingForUserPresence;
-        trussed_usbip::set_waiting(is_waiting);
-        if is_waiting {
-            info!(">>>> Received confirmation request");
-        } else {
-            debug!("Resetting cached used consent");
-            self.consent = None;
-        }
-    }
-
-    fn refresh(&mut self) {}
-
-    fn uptime(&mut self) -> core::time::Duration {
-        self.start_time.elapsed()
-    }
-
-    fn reboot(&mut self, to: reboot::To) -> ! {
-        info!("Restart!  ({:?})", to);
-        std::process::exit(25);
     }
 }
 
@@ -195,7 +138,8 @@ fn main() {
     };
 
     let store_provider = FilesystemOrRam::new(args.ifs, args.efs);
-    exec(store_provider, options, args.serial, args.user_presence)
+    let user_presence = args.user_presence.into();
+    exec(store_provider, options, args.serial, user_presence)
 }
 
 fn print_version() {
@@ -224,6 +168,13 @@ fn exec(
     #[cfg(feature = "provisioner")]
     use trussed::virt::StoreProvider as _;
 
+    if let UserPresence::Signal(signals) = &user_presence {
+        let signals = signals.clone();
+        thread::spawn(move || {
+            signals.update();
+        });
+    }
+
     log::info!("Initializing Trussed");
     trussed_usbip::Builder::new(store, options)
         .dispatch(Dispatch::with_hw_key(
@@ -232,7 +183,7 @@ fn exec(
         ))
         .init_platform(move |platform| {
             let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
-                Box::new(UserInterface::new(user_presence));
+                Box::new(UserInterface::new(user_presence.clone()));
             platform.user_interface().set_inner(ui);
         })
         .build::<Apps<Runner>>()

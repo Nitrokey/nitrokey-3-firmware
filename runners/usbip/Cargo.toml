@@ -9,14 +9,15 @@ cfg-if = { version = "1.0.0" }
 clap = { version = "3.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
 delog = { version = "0.1.6", features = ["std-log"] }
+dialoguer = { version = "0.10.4", default-features = false }
 littlefs2 = { version = "0.4" }
 log = { version = "0.4.14", default-features = false }
-rand_core = { version = "0.6.4", features = ["getrandom"] }
 pretty_env_logger = "0.4.0"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+signal-hook = { version = "0.3.17", default-features = false }
 trussed = { version = "0.1", features = ["clients-3"] }
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
-dialoguer = { version = "0.10.4", default-features = false }
 
 [features]
 test = ["apps/test"]

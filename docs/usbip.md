@@ -75,6 +75,7 @@ Note that some log message use the `!` target so you might not be able to filter
   - `accept-all` (default) always accepts user presence checks.
   - `reject-all` always rejects user presence checks.
   - `interactive` shows a query on stderr when a user presence check is executed.
+  - `signal` accepts the next user presence check within one second after receiving a SIGUSR1 signal, e. g. with `pkill -SIGUSR1 usbip-runner`.
 
 For more information on these options, execute `cargo run -- --help`.
 
