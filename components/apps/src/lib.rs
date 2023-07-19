@@ -250,6 +250,7 @@ impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
         self.ctaphid_dispatch(f)
     }
 
+    #[cfg(feature = "trussed-usbip-ccid")]
     fn with_ccid_apps<T>(
         &mut self,
         f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<ApduCommandSize, ApduResponseSize>]) -> T,

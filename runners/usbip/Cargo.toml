@@ -14,10 +14,11 @@ log = { version = "0.4.14", default-features = false }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 pretty_env_logger = "0.4.0"
 trussed = { version = "0.1", features = ["clients-3"] }
-trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid", "ccid"] }
+trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
 dialoguer = { version = "0.10.4", default-features = false }
 
 [features]
 test = ["apps/test"]
 provisioner = ["apps/provisioner"]
+ccid = ["apps/trussed-usbip-ccid", "trussed-usbip/ccid"]

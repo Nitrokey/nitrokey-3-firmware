@@ -7,7 +7,7 @@ edition = "2021"
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
 trussed = { version = "0.1", features = ["serde-extensions"]}
-trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid", "ccid"], optional = true }
+trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
 
@@ -58,6 +58,8 @@ log-all = [
     "opcard?/log-all",
     "provisioner-app?/log-all",
 ]
+
+trussed-usbip-ccid = ["trussed-usbip/ccid"]
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
 no-reset-time-window = ["fido-authenticator?/disable-reset-time-window"]

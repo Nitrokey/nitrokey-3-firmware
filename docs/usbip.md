@@ -23,10 +23,6 @@ While this means that many low-level parts of the firmware are replaced with the
 
 ## Running the Simulation
 
-**Note:** Please read the full guide, especially the [Limitations][] section, before executing these steps.
-
-[Limitations]: #Limitations
-
 Clone the firmware repository [Nitrokey/nitrokey-3-firmware](https://github.com/Nitrokey/nitrokey-3-firmware) and enter the `runners/usbip` directory:
 
 ```
@@ -86,13 +82,15 @@ For more information on these options, execute `cargo run -- --help`.
 
 The Nitrokey 3 implements two transport protocols over USB: CTAPHID and CCID.
 There is an unresolved issue that triggers a kernel bug if the CCID transport is used with the USB/IP runner ([#261][]).
-Therefore it is recommended to only use the USB/IP runner with the CTAPHID transport.
+Therefore CCID is disabled by default and it is recommended to only use the USB/IP runner with the CTAPHID transport.
 Applications like [`opcard`][] support an alternative simulation method, `vsmartcard`, to reliably simulate the CCID transport.
 
 [#261]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/261
 [`opcard`]: https://github.com/Nitrokey/opcard-rs
 
-To avoid accidentally triggering this problem, it is recommended to stop `pcsc` before starting the USB/IP simulation:
+If you really want to use CCID with the USB/IP runner, activate the `ccid` feature.
+To avoid accidentally triggering this problem, it is recommended to stop `pcsc` before starting the USB/IP simulation if the `ccid` feature is activated.
 ```
 $ sudo systemctl stop pcscd.service pcscd.socket
+$ cargo run --features ccid
 ```
