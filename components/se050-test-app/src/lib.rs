@@ -6,12 +6,17 @@ use iso7816::{Instruction, Status};
 use se050::{
     se050::{
         commands::{
-            CreateSession, DeleteAll, DeleteSecureObject, EcdsaSign, EcdsaVerify, EddsaSign,
-            EddsaVerify, GetRandom, ReadEcCurveList, ReadIdList, ReadObject, VerifySessionUserId,
-            WriteBinary, WriteEcKey, WriteUserId,
+            CipherDecryptInit, CipherEncryptInit, CipherFinal, CipherOneShotDecrypt,
+            CipherOneShotEncrypt, CipherUpdate, CreateCipherObject, CreateSession,
+            CreateSignatureObject, DeleteAll, DeleteCryptoObj, DeleteSecureObject, EcdsaSign,
+            EcdsaVerify, EddsaSign, EddsaVerify, GenRsaKey, GetRandom, MacGenerateFinal,
+            MacGenerateInit, MacOneShotGenerate, MacOneShotValidate, MacUpdate, MacValidateFinal,
+            MacValidateInit, ReadEcCurveList, ReadIdList, ReadObject, RsaSign, RsaVerify,
+            VerifySessionUserId, WriteBinary, WriteEcKey, WriteSymmKey, WriteUserId,
         },
         policies::{ObjectAccessRule, ObjectPolicyFlags, Policy, PolicySet},
-        EcCurve, EcDsaSignatureAlgo, ObjectId, P1KeyType, ProcessSessionCmd, Se050, Se050Result,
+        CipherMode, CryptoObjectId, Digest, EcCurve, EcDsaSignatureAlgo, MacAlgo, ObjectId,
+        P1KeyType, ProcessSessionCmd, RsaSignatureAlgo, Se050, Se050Result, SymmKeyType,
     },
     t1::I2CForT1,
 };
@@ -261,6 +266,271 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 } else {
                     reply.push(0x02).unwrap();
                 }
+            }
+            0xDB => {
+                let mut buf = [0; 1000];
+                let mut buf2 = [0; 1000];
+                let object_id = ObjectId(hex!("01223344"));
+                command!(self.se.run_command(
+                    &GenRsaKey {
+                        transient: false,
+                        is_auth: false,
+                        policy: None,
+                        max_attempts: None,
+                        object_id,
+                        key_size: Some(2048.into()),
+                    },
+                    &mut buf,
+                ); "Creating RSA key");
+                let res = command!(self.se.run_command(
+                    &RsaSign {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: RsaSignatureAlgo::RsaSha256Pkcs1,
+                    },
+                    &mut buf
+                ); "Runing signature");
+                let res = command!(self.se.run_command(
+                    &RsaVerify     {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: RsaSignatureAlgo::RsaSha256Pkcs1,
+                        signature: res.signature
+                    },
+                    &mut buf2
+                ); "Runing verifcation");
+                if res.result == Se050Result::Success {
+                    reply.push(0x01).unwrap();
+                } else {
+                    reply.push(0x02).unwrap();
+                }
+            }
+            0xDD => {
+                let mut buf = [0; 1000];
+                let mut buf2 = [0; 1000];
+                let object_id = ObjectId(hex!("02334455"));
+                command!(self.se.run_command(
+                    &GenRsaKey {
+                        transient: false,
+                        is_auth: false,
+                        policy: None,
+                        max_attempts: None,
+                        object_id,
+                        key_size: Some(4096.into()),
+                    },
+                    &mut buf,
+                ); "Creating RSA key");
+                let res = command!(self.se.run_command(
+                    &RsaSign {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: RsaSignatureAlgo::RsaSha512Pkcs1,
+                    },
+                    &mut buf
+                ); "Runing signature");
+                let res = command!(self.se.run_command(
+                    &RsaVerify     {
+                        key_id: object_id,
+                        data: &[52; 32],
+                        algo: RsaSignatureAlgo::RsaSha512Pkcs1,
+                        signature: res.signature
+                    },
+                    &mut buf2
+                ); "Runing verifcation");
+                if res.result == Se050Result::Success {
+                    reply.push(0x01).unwrap();
+                } else {
+                    reply.push(0x02).unwrap();
+                }
+            }
+            0xDC => {
+                let Ok(count) = (&**command.data()).try_into() else {
+                    error!("Bad count data");
+                    return Err(Status::IncorrectDataParameter);
+                };
+                let retries = u32::from_be_bytes(count);
+                self.se.set_t1_retry_count(retries);
+            }
+
+            0xDE => {
+                let mut buf = [0; 1000];
+                let mut buf2 = [0; 1000];
+                let plaintext_data = [2; 32 * 15];
+                let key_id = ObjectId(hex!("03445566"));
+                let cipher_id = CryptoObjectId(hex!("0123"));
+                let key = [0x42; 32];
+                let iv = [0xFF; 16];
+                command!(self.se.run_command(&WriteSymmKey {
+                    transient: true,
+                    is_auth: false,
+                    key_type: SymmKeyType::Aes,
+                    policy: None,
+                    max_attempts: None,
+                    object_id: key_id,
+                    kek_id: None,
+                    value: &key,
+                }, &mut buf); "writing key");
+                let ciphertext1 = command!(self.se.run_command(& CipherOneShotEncrypt {
+                    key_id,
+                    mode: CipherMode::AesCtr,
+                    plaintext: &plaintext_data,
+                    initialization_vector: Some(&iv),
+                }, &mut buf); "one shot encrypt");
+                let plaintext1 = command!(self.se.run_command(& CipherOneShotDecrypt {
+                    key_id,
+                    mode: CipherMode::AesCtr,
+                    ciphertext: &ciphertext1.ciphertext,
+                    initialization_vector: Some(&iv),
+                }, &mut buf2); "one shot decrypt");
+                assert_eq!(plaintext1.plaintext, plaintext_data);
+                command!(self.se.run_command(&CreateCipherObject {
+                    id: cipher_id,
+                    subtype: CipherMode::AesCtr,
+                }, &mut buf2); "Creating cipher object");
+                command!(self.se.run_command(& CipherEncryptInit {
+                    key_id,
+                    initialization_vector: Some(&iv),
+                    cipher_id,
+                }, &mut buf2); "init encrypt");
+                let ciphertext2 = command!(self.se.run_command(& CipherUpdate {
+                    cipher_id,
+                    data: &plaintext_data[0..32*10],
+                }, &mut buf2); "init encrypt");
+                reply.extend_from_slice(&ciphertext2.data).ok();
+                let ciphertext3 = command!(self.se.run_command(& CipherUpdate {
+                    cipher_id,
+                    data: &plaintext_data[32*10..][..32*5],
+                }, &mut buf2); "init encrypt");
+                reply.extend_from_slice(&ciphertext3.data).ok();
+                let ciphertext4 = command!(self.se.run_command(& CipherFinal {
+                    cipher_id,
+                    data: &plaintext_data[32*15..],
+                }, &mut buf2); "init encrypt");
+                reply.extend_from_slice(&ciphertext4.data).ok();
+                command!(self.se.run_command(&DeleteCryptoObj {
+                    id: cipher_id,
+                }, &mut buf2); "Creating cipher object");
+                reply.extend_from_slice(&[0x42; 16]).ok();
+                command!(self.se.run_command(&CreateCipherObject {
+                    id: cipher_id,
+                    subtype: CipherMode::AesCtr,
+                }, &mut buf2); "Creating cipher object");
+                command!(self.se.run_command(& CipherDecryptInit {
+                    key_id,
+                    initialization_vector: Some(&iv),
+                    cipher_id,
+                }, &mut buf2); "init encrypt");
+                let ciphertext2 = command!(self.se.run_command(& CipherUpdate {
+                    cipher_id,
+                    data: &ciphertext1.ciphertext[0..32*10],
+                }, &mut buf2); "encrypt update");
+                reply.extend_from_slice(&ciphertext2.data).ok();
+                let ciphertext3 = command!(self.se.run_command(& CipherUpdate {
+                    cipher_id,
+                    data: &ciphertext1.ciphertext[32*10..][..32*5],
+                }, &mut buf2); "encrypt update");
+                reply.extend_from_slice(&ciphertext3.data).ok();
+                let ciphertext4 = command!(self.se.run_command(& CipherFinal {
+                    cipher_id,
+                    data: &ciphertext1.ciphertext[32*15..],
+                }, &mut buf2); "encrypt final");
+                reply.extend_from_slice(&ciphertext4.data).ok();
+                command!(self.se.run_command(&DeleteCryptoObj {
+                    id: cipher_id,
+                }, &mut buf2); "Creating cipher object");
+                command!(self.se.run_command(&DeleteSecureObject { object_id: key_id }, &mut buf2); "deleting");
+            }
+            0xDF => {
+                let mut buf = [0; 1000];
+                let mut buf2 = [0; 1000];
+                let plaintext_data = [2; 32 * 15];
+                let key_id = ObjectId(hex!("03445566"));
+                let mac_id = CryptoObjectId(hex!("0123"));
+                let key = [0x42; 32];
+                command!(self.se.run_command(&WriteSymmKey {
+                    transient: false,
+                    is_auth: false,
+                    key_type: SymmKeyType::Hmac,
+                    policy: None,
+                    max_attempts: None,
+                    object_id: key_id,
+                    kek_id: None,
+                    value: &key,
+                }, &mut buf); "writing key");
+                let tag1 = command!(self.se.run_command(& MacOneShotGenerate {
+                    key_id,
+                    data: &plaintext_data,
+                    algo: MacAlgo::HmacSha256
+                }, &mut buf); "one shotd generate");
+                reply.extend_from_slice(tag1.tag).ok();
+                let res = command!(self.se.run_command(& MacOneShotValidate {
+                    key_id,
+                    algo: MacAlgo::HmacSha256,
+                    data: &plaintext_data,
+                    tag: tag1.tag,
+                }, &mut buf2); "one shot decrypt");
+                if res.result == Se050Result::Success {
+                    reply.extend_from_slice(&[0x01; 16]).unwrap();
+                } else {
+                    reply.extend_from_slice(&[0x02; 16]).unwrap();
+                }
+                command!(self.se.run_command(&CreateSignatureObject {
+                    id: mac_id,
+                    subtype: MacAlgo::HmacSha256,
+                }, &mut buf2); "Creating mac object");
+                command!(self.se.run_command(& MacGenerateInit {
+                    key_id,
+                    mac_id,
+                }, &mut buf2); "init generate");
+                command!(self.se.run_command(& MacUpdate {
+                    mac_id,
+                    data: &plaintext_data[0..32*10],
+                }, &mut buf2); "update");
+                command!(self.se.run_command(& MacUpdate {
+                    mac_id,
+                    data: &plaintext_data[32*10..][..32*5],
+                }, &mut buf2); "update");
+                let tag2 = command!(self.se.run_command(&MacGenerateFinal {
+                    mac_id,
+                    data: &plaintext_data[32*15..],
+                }, &mut buf2); "generate final");
+                assert_eq!(tag2.tag, tag1.tag);
+                command!(self.se.run_command(&DeleteCryptoObj {
+                    id: mac_id,
+                }, &mut buf); "deleting mac object");
+
+                command!(self.se.run_command(&CreateSignatureObject {
+                    id: mac_id,
+                    subtype: MacAlgo::HmacSha256,
+                }, &mut buf); "Creating mac object");
+                command!(self.se.run_command(& MacValidateInit {
+                    key_id,
+                    mac_id,
+                }, &mut buf); "init validate");
+                command!(self.se.run_command(& MacUpdate {
+                    mac_id,
+                    data: &plaintext_data[0..32*10],
+                }, &mut buf); "update");
+                command!(self.se.run_command(& MacUpdate {
+                    mac_id,
+                    data: &plaintext_data[32*10..][..32*5],
+                }, &mut buf); "update");
+                let res2 = command!(self.se.run_command(&MacValidateFinal {
+                    mac_id,
+                    data: &plaintext_data[32*15..],
+                    tag: tag2.tag,
+                }, &mut buf); "validate final");
+                if res2.result == Se050Result::Success {
+                    reply.extend_from_slice(&[0x01; 16]).unwrap();
+                } else {
+                    reply.extend_from_slice(&[0x02; 16]).unwrap();
+                }
+                command!(self.se.run_command(&DeleteSecureObject { object_id: key_id }, &mut buf2); "deleting");
+            }
+            0xE0 => {
+                let mut buf = [0; 100];
+                let key_id = ObjectId(hex!("03445566"));
+                command!(self.se.run_command(&DeleteSecureObject { object_id: key_id }, &mut buf); "deleting");
             }
             _ => {}
         }
