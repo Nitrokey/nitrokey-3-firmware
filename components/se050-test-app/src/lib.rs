@@ -7,12 +7,13 @@ use se050::{
     se050::{
         commands::{
             CipherDecryptInit, CipherEncryptInit, CipherFinal, CipherOneShotDecrypt,
-            CipherOneShotEncrypt, CipherUpdate, CreateCipherObject, CreateSession,
-            CreateSignatureObject, DeleteAll, DeleteCryptoObj, DeleteSecureObject, EcdsaSign,
-            EcdsaVerify, EddsaSign, EddsaVerify, GenRsaKey, GetRandom, MacGenerateFinal,
-            MacGenerateInit, MacOneShotGenerate, MacOneShotValidate, MacUpdate, MacValidateFinal,
-            MacValidateInit, ReadEcCurveList, ReadIdList, ReadObject, RsaSign, RsaVerify,
-            VerifySessionUserId, WriteBinary, WriteEcKey, WriteSymmKey, WriteUserId,
+            CipherOneShotEncrypt, CipherUpdate, CreateCipherObject, CreateDigestObject,
+            CreateSession, CreateSignatureObject, DeleteAll, DeleteCryptoObj, DeleteSecureObject,
+            DigestFinal, DigestInit, DigestOneShot, DigestUpdate, EcdsaSign, EcdsaVerify,
+            EddsaSign, EddsaVerify, GenRsaKey, GetRandom, MacGenerateFinal, MacGenerateInit,
+            MacOneShotGenerate, MacOneShotValidate, MacUpdate, MacValidateFinal, MacValidateInit,
+            ReadEcCurveList, ReadIdList, ReadObject, RsaSign, RsaVerify, VerifySessionUserId,
+            WriteBinary, WriteEcKey, WriteSymmKey, WriteUserId,
         },
         policies::{ObjectAccessRule, ObjectPolicyFlags, Policy, PolicySet},
         CipherMode, CryptoObjectId, Digest, EcCurve, EcDsaSignatureAlgo, MacAlgo, ObjectId,
@@ -409,7 +410,7 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 reply.extend_from_slice(&ciphertext4.data).ok();
                 command!(self.se.run_command(&DeleteCryptoObj {
                     id: cipher_id,
-                }, &mut buf2); "Creating cipher object");
+                }, &mut buf2); "Deleting cipher object");
                 reply.extend_from_slice(&[0x42; 16]).ok();
                 command!(self.se.run_command(&CreateCipherObject {
                     id: cipher_id,
@@ -437,7 +438,7 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 reply.extend_from_slice(&ciphertext4.data).ok();
                 command!(self.se.run_command(&DeleteCryptoObj {
                     id: cipher_id,
-                }, &mut buf2); "Creating cipher object");
+                }, &mut buf2); "Deleting cipher object");
                 command!(self.se.run_command(&DeleteSecureObject { object_id: key_id }, &mut buf2); "deleting");
             }
             0xDF => {
@@ -525,7 +526,45 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 } else {
                     reply.extend_from_slice(&[0x02; 16]).unwrap();
                 }
+                command!(self.se.run_command(&DeleteCryptoObj {
+                    id: mac_id,
+                }, &mut buf2); "Deleting mac object");
                 command!(self.se.run_command(&DeleteSecureObject { object_id: key_id }, &mut buf2); "deleting");
+            }
+            0xE1 => {
+                let mut buf = [0; 1000];
+                let mut buf2 = [0; 1000];
+                let plaintext_data = [2; 32 * 15];
+                let digest_id = CryptoObjectId(hex!("0123"));
+                let digest1 = command!(self.se.run_command(& DigestOneShot {
+                    algo: Digest::Sha256,
+                    data: &plaintext_data,
+                }, &mut buf); "one shot digest");
+                reply.extend_from_slice(digest1.digest).ok();
+                reply.extend_from_slice(&[0x42; 16]).ok();
+                command!(self.se.run_command(&CreateDigestObject {
+                    id: digest_id,
+                    subtype: Digest::Sha256,
+                }, &mut buf2); "Creating digest object");
+                command!(self.se.run_command(& DigestInit {
+                   digest_id,
+                }, &mut buf2); "init digest");
+                command!(self.se.run_command(& DigestUpdate {
+                    digest_id,
+                    data: &plaintext_data[0..32*10],
+                }, &mut buf2); "update");
+                command!(self.se.run_command(& DigestUpdate {
+                    digest_id,
+                    data: &plaintext_data[32*10..][..32*5],
+                }, &mut buf2); "update");
+                let digest2 = command!(self.se.run_command(&DigestFinal {
+                    digest_id,
+                    data: &plaintext_data[32*15..],
+                }, &mut buf2); "generate final");
+                reply.extend_from_slice(digest2.digest).ok();
+                command!(self.se.run_command(&DeleteCryptoObj {
+                    id: digest_id,
+                }, &mut buf2); "Deleting digest object");
             }
             0xE0 => {
                 let mut buf = [0; 100];

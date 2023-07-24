@@ -12,5 +12,6 @@
 # ../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:DE:00:00:00
 # ../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF
 # ../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:E0:00:00
-../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:DE:00:00:00
+# ../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:DE:00:00:00
 # ../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:DF:00:00:00
+../OpenSC/src/tools/opensc-tool -c default -s 00:A4:04:00:05:D2760001FF -s 00:E1:00:00:00
