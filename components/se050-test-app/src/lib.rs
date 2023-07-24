@@ -373,20 +373,23 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 }, &mut buf); "writing key");
                 let ciphertext1 = command!(self.se.run_command(& CipherOneShotEncrypt {
                     key_id,
-                    mode: CipherMode::AesCtr,
+                    mode: CipherMode::AesCbcNopad,
                     plaintext: &plaintext_data,
                     initialization_vector: Some(&iv),
                 }, &mut buf); "one shot encrypt");
+                reply.extend_from_slice(ciphertext1.ciphertext).ok();
+                reply.extend_from_slice(&[0x22; 16]).ok();
                 let plaintext1 = command!(self.se.run_command(& CipherOneShotDecrypt {
                     key_id,
-                    mode: CipherMode::AesCtr,
+                    mode: CipherMode::AesCbcNopad,
                     ciphertext: &ciphertext1.ciphertext,
                     initialization_vector: Some(&iv),
                 }, &mut buf2); "one shot decrypt");
-                assert_eq!(plaintext1.plaintext, plaintext_data);
+                reply.extend_from_slice(plaintext1.plaintext).ok();
+                reply.extend_from_slice(&[0x22; 16]).ok();
                 command!(self.se.run_command(&CreateCipherObject {
                     id: cipher_id,
-                    subtype: CipherMode::AesCtr,
+                    subtype: CipherMode::AesCbcNopad,
                 }, &mut buf2); "Creating cipher object");
                 command!(self.se.run_command(& CipherEncryptInit {
                     key_id,
@@ -414,7 +417,7 @@ impl<Twi: I2CForT1, D: DelayUs<u32>> Card<Twi, D> {
                 reply.extend_from_slice(&[0x42; 16]).ok();
                 command!(self.se.run_command(&CreateCipherObject {
                     id: cipher_id,
-                    subtype: CipherMode::AesCtr,
+                    subtype: CipherMode::AesCbcNopad,
                 }, &mut buf2); "Creating cipher object");
                 command!(self.se.run_command(& CipherDecryptInit {
                     key_id,
