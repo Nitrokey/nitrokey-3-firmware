@@ -5,12 +5,14 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app?tag=v0.1.0-nitrokey.3#15aec92ff3f30f2ad1ff157ac5077c7211a04c77"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
  "delog",
+ "embedded-hal",
+ "hex-literal 0.4.1",
  "iso7816",
+ "se050",
  "trussed",
 ]
 
@@ -96,7 +98,6 @@ dependencies = [
  "provisioner-app",
  "se050",
  "se050-backend-random",
- "se050-test-app",
  "secrets-app",
  "trussed",
  "trussed-auth",
@@ -2598,19 +2599,6 @@ dependencies = [
  "iso7816",
  "se050",
  "trussed",
-]
-
-[[package]]
-name = "se050-test-app"
-version = "0.1.0"
-dependencies = [
- "apdu-dispatch",
- "delog",
- "embedded-hal",
- "heapless 0.7.16",
- "hex-literal 0.4.1",
- "iso7816",
- "se050",
 ]
 
 [[package]]

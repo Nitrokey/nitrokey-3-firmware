@@ -25,7 +25,6 @@ secrets-app = { version = "0.12.0", features = ["apdu-dispatch", "ctaphid"], opt
 opcard = { version = "1.1.1", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
 piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
-se050-test-app = { path = "../se050-test-app", optional = true }
 se050-backend-random = { path = "../se050-backend-random", optional = true }
 se050 = { version = "0.0.1", optional = true}
 embedded-hal = "0.2.7"
@@ -48,7 +47,7 @@ webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa", "backend-staging", "t
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
-se050-test-app = ["dep:se050-test-app", "se050", "trussed/clients-6"]
+se050-test-app = ["se050", "admin-app?/se050"]
 se050-backend-random = ["dep:se050-backend-random", "se050"]
 se050 = ["dep:se050"]
 
@@ -57,6 +56,7 @@ backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
 backend-staging = ["trussed-staging"]
 
+
 log-all = [
     "admin-app?/log-all",
     "fido-authenticator?/log-all",
@@ -64,7 +64,6 @@ log-all = [
     "webcrypt?/log-all",
     "opcard?/log-all",
     "provisioner-app?/log-all",
-    "se050-test-app?/log-all",
 ]
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
