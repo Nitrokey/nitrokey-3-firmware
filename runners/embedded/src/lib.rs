@@ -261,7 +261,13 @@ pub fn init_apps(
 ) -> types::Apps {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(<SocT as types::Soc>::VARIANT);
+    let mut admin = apps::AdminData::new(
+        <SocT as types::Soc>::VARIANT,
+        #[cfg(feature = "se050-test-app")]
+        twi,
+        #[cfg(feature = "se050-test-app")]
+        se050_timer,
+    );
     admin.init_status = init_status.bits();
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -296,10 +302,6 @@ pub fn init_apps(
         admin,
         #[cfg(feature = "provisioner")]
         provisioner,
-        #[cfg(feature = "se050-test-app")]
-        twi,
-        #[cfg(feature = "se050-test-app")]
-        se050_timer,
         _marker: Default::default(),
     };
     types::Apps::with_service(&types::Runner, trussed, data)
