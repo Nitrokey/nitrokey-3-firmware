@@ -1,1 +1,0 @@
-../../runners/embedded/symbols-nrf52-bootloader-nk3am.txt
