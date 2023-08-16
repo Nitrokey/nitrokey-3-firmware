@@ -158,6 +158,7 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
         request: &request::SerdeExtension,
         resources: &mut ServiceResources<P>,
     ) -> Result<reply::SerdeExtension, TrussedError> {
+        #[allow(unreachable_patterns)]
         match backend {
             #[cfg(feature = "backend-auth")]
             Backend::Auth => match extension {
