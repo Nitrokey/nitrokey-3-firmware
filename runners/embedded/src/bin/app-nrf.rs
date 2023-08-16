@@ -203,7 +203,7 @@ mod app {
                 Location::Internal,
                 Bytes::from_slice(&er).unwrap(),
                 #[cfg(feature = "se050-backend-random")]
-                se050::se050::Se050::new(twim, 0x48, se050_timer),
+                se05x::se05x::Se05X::new(twim, 0x48, se050_timer),
             ),
         );
 

@@ -1,6 +1,6 @@
+#[cfg(not(feature = "se050-backend-random"))]
 use core::marker::PhantomData;
 
-use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayUs;
 use trussed::{
     api::{Reply, Request},
     error::Error as TrussedError,
@@ -24,7 +24,7 @@ use trussed::{
 #[cfg(feature = "se050-backend-random")]
 use embedded_hal::blocking::delay::DelayUs;
 #[cfg(feature = "se050-backend-random")]
-use se050::{se050::Se050, t1::I2CForT1};
+use se05x::{se05x::Se05X, t1::I2CForT1};
 
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
@@ -63,7 +63,7 @@ pub struct DispatchContext {
 impl<T: Twi, D: Delay> Dispatch<T, D> {
     pub fn new(
         auth_location: Location,
-        #[cfg(feature = "se050-backend-random")] se050: Se050<T, D>,
+        #[cfg(feature = "se050-backend-random")] se050: Se05X<T, D>,
     ) -> Self {
         #[cfg(not(feature = "backend-auth"))]
         let _ = auth_location;
@@ -83,7 +83,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
     pub fn with_hw_key(
         auth_location: Location,
         hw_key: Bytes<MAX_HW_KEY_LEN>,
-        #[cfg(feature = "se050-backend-random")] se050: Se050<T, D>,
+        #[cfg(feature = "se050-backend-random")] se050: Se05X<T, D>,
     ) -> Self {
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),

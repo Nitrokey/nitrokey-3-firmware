@@ -1,8 +1,8 @@
 #![no_std]
 
 use embedded_hal::blocking::delay::DelayUs;
-use se050::{
-    se050::{commands::GetRandom, Se050},
+use se05x::{
+    se05x::{commands::GetRandom, Se05X},
     t1::I2CForT1,
 };
 use trussed::{
@@ -18,13 +18,13 @@ delog::generate_macros!();
 const BUFFER_LEN: usize = trussed::config::MAX_MESSAGE_LENGTH + 10;
 
 pub struct BackendRandom<Twi, D> {
-    se: Se050<Twi, D>,
+    se: Se05X<Twi, D>,
     enabled: bool,
-    failed_enable: Option<se050::se050::Error>,
+    failed_enable: Option<se05x::se05x::Error>,
 }
 
 impl<Twi: I2CForT1, D: DelayUs<u32>> BackendRandom<Twi, D> {
-    pub fn new(se: Se050<Twi, D>) -> Self {
+    pub fn new(se: Se05X<Twi, D>) -> Self {
         BackendRandom {
             se,
             enabled: false,

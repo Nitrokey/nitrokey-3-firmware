@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app?rev=8ab34bf89cdcfcc25f4d2b463de225de28eafc8f#8ab34bf89cdcfcc25f4d2b463de225de28eafc8f"
+source = "git+https://github.com/Nitrokey/admin-app?rev=2ddb1ad5f74a973779a0c6535c9bb58979f0da1f#2ddb1ad5f74a973779a0c6535c9bb58979f0da1f"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -14,7 +14,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "iso7816",
  "rand_chacha",
- "se050",
+ "se05x",
  "trussed",
 ]
 
@@ -98,8 +98,8 @@ dependencies = [
  "opcard",
  "piv-authenticator",
  "provisioner-app",
- "se050",
  "se050-backend-random",
+ "se05x",
  "secrets-app",
  "trussed",
  "trussed-auth",
@@ -1038,7 +1038,7 @@ dependencies = [
  "rand_core",
  "ref-swap",
  "rtt-target",
- "se050",
+ "se05x",
  "serde",
  "spi-memory",
  "systick-monotonic",
@@ -2592,9 +2592,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "se050"
+name = "se050-backend-random"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "delog",
+ "embedded-hal",
+ "heapless 0.7.16",
+ "hex-literal 0.4.1",
+ "iso7816",
+ "se05x",
+ "trussed",
+]
+
+[[package]]
+name = "se05x"
 version = "0.0.1"
-source = "git+https://github.com/sosthene-nitrokey/se050-generation.git?rev=b1c9479698ae8afe36d6158a91f988d212d8aaa0#b1c9479698ae8afe36d6158a91f988d212d8aaa0"
+source = "git+https://github.com/Nitrokey/se05x.git?rev=db1ddea25cc382355b4292352652da656abc3005#db1ddea25cc382355b4292352652da656abc3005"
 dependencies = [
  "aes",
  "bitflags 2.4.0",
@@ -2609,20 +2623,6 @@ dependencies = [
  "lpc55-hal",
  "nrf-hal-common",
  "rand",
-]
-
-[[package]]
-name = "se050-backend-random"
-version = "0.1.0"
-dependencies = [
- "apdu-dispatch",
- "delog",
- "embedded-hal",
- "heapless 0.7.16",
- "hex-literal 0.4.1",
- "iso7816",
- "se050",
- "trussed",
 ]
 
 [[package]]

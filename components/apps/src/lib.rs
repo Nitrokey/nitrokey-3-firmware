@@ -13,7 +13,7 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 #[cfg(feature = "se050-test-app")]
-use se050::se050::Se050;
+use se05x::se05x::Se05X;
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
     ClientImplementation, Platform, Service,
@@ -45,7 +45,7 @@ pub trait Runner {
     #[cfg(feature = "provisioner-app")]
     type Filesystem: trussed::types::LfsStorage + 'static;
     #[cfg(feature = "se050")]
-    type Twi: se050::t1::I2CForT1 + 'static;
+    type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32> + 'static;
     #[cfg(not(feature = "se050"))]
@@ -78,7 +78,7 @@ type AdminApp<R> = admin_app::App<
     Client<R>,
     <R as Runner>::Reboot,
     AdminStatus,
-    Se050<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
+    Se05X<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
 >;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
@@ -446,7 +446,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
         #[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
         {
             let status = data.encode();
-            let se050 = Se050::new(data.twi, 0x48, data.se050_timer);
+            let se050 = Se05X::new(data.twi, 0x48, data.se050_timer);
             return Self::with_se(
                 trussed,
                 runner.uuid(),

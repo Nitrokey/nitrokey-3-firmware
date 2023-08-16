@@ -738,7 +738,7 @@ impl Stage5 {
             Dispatch::new(
                 Location::Internal,
                 #[cfg(feature = "se050-backend-random")]
-                se050::se050::Se050::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer)),
+                se05x::se05x::Se05X::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer)),
             ),
         );
 

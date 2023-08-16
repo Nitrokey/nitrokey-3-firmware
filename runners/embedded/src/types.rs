@@ -48,7 +48,7 @@ pub trait Soc {
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32>;
     #[cfg(feature = "se050")]
-    type Twi: se050::t1::I2CForT1;
+    type Twi: se05x::t1::I2CForT1;
     #[cfg(not(feature = "se050"))]
     type Se050Timer;
     #[cfg(not(feature = "se050"))]
