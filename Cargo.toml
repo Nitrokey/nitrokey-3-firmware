@@ -26,7 +26,7 @@ ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch", tag =
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch", tag = "v0.1.2-nitrokey.1" }
 
 # unreleased crates
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.12.0" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc1" }
 webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust", tag = "v0.7.0"}
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.1.1" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.2" }
