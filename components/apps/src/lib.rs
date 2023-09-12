@@ -10,12 +10,13 @@ use apdu_dispatch::{
 };
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
+use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
-    ClientImplementation, Platform, Service,
+    store::filestore::ClientFilestore, ClientImplementation, Platform, Service,
 };
 
-#[cfg(feature = "admin-app")]
+use admin_app::ConfigValueMut;
 pub use admin_app::Reboot;
 use trussed::types::Location;
 
@@ -26,12 +27,47 @@ mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
 
+fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+    value == &Default::default()
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct Config {
+    #[serde(default, rename = "f", skip_serializing_if = "is_default")]
+    fido: FidoConfig,
+}
+
+impl admin_app::Config for Config {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        let (app, key) = key.split_once('.')?;
+        match app {
+            "fido" => self.fido.field(key),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct FidoConfig {
+    #[serde(default, rename = "t", skip_serializing_if = "is_default")]
+    disable_skip_up_timeout: bool,
+}
+
+impl admin_app::Config for FidoConfig {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        match key {
+            "disable_skip_up_timeout" => {
+                Some(ConfigValueMut::Bool(&mut self.disable_skip_up_timeout))
+            }
+            _ => None,
+        }
+    }
+}
+
 pub trait Runner {
     type Syscall: Syscall + 'static;
 
-    #[cfg(feature = "admin-app")]
     type Reboot: Reboot;
-    #[cfg(feature = "provisioner-app")]
     type Store: trussed::store::Store;
     #[cfg(feature = "provisioner-app")]
     type Filesystem: trussed::types::LfsStorage + 'static;
@@ -40,8 +76,7 @@ pub trait Runner {
 }
 
 pub struct Data<R: Runner> {
-    #[cfg(feature = "admin-app")]
-    pub admin: AdminData,
+    pub admin: AdminData<R>,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
     pub _marker: PhantomData<R>,
@@ -49,8 +84,7 @@ pub struct Data<R: Runner> {
 
 type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
 
-#[cfg(feature = "admin-app")]
-type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>;
+type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus, Config>;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
@@ -98,7 +132,6 @@ impl TryFrom<u8> for CustomStatus {
 pub struct UnknownStatusError(u8);
 
 pub struct Apps<R: Runner> {
-    #[cfg(feature = "admin-app")]
     admin: AdminApp<R>,
     #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
     fido: FidoApp<R>,
@@ -114,9 +147,6 @@ pub struct Apps<R: Runner> {
     provisioner: ProvisionerApp<R>,
     #[cfg(feature = "webcrypt")]
     webcrypt: PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>,
-    /// Avoid compilation error if no feature is used.
-    /// Without it, the type parameter `R` is not used
-    _compile_no_feature: PhantomData<R>,
 }
 
 impl<R: Runner> Apps<R> {
@@ -131,35 +161,35 @@ impl<R: Runner> Apps<R> {
     ) -> Self {
         let _ = (runner, &mut make_client);
         let Data {
-            #[cfg(feature = "admin-app")]
             admin,
             #[cfg(feature = "provisioner-app")]
             provisioner,
             ..
         } = data;
+
+        let admin = AdminApp::<R>::new(runner, &mut make_client, admin, &());
+
         #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
-            App::new(runner, &mut make_client, ()),
-            App::new(runner, &mut make_client, ()),
+            App::new(runner, &mut make_client, (), &admin.config().fido),
+            App::new(runner, &mut make_client, (), &()),
         );
         Self {
-            #[cfg(feature = "admin-app")]
-            admin: App::new(runner, &mut make_client, admin),
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            fido: App::new(runner, &mut make_client, ()),
+            fido: App::new(runner, &mut make_client, (), &admin.config().fido),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
             #[cfg(feature = "secrets-app")]
-            oath: App::new(runner, &mut make_client, ()),
+            oath: App::new(runner, &mut make_client, (), &()),
             #[cfg(feature = "opcard")]
-            opcard: App::new(runner, &mut make_client, ()),
+            opcard: App::new(runner, &mut make_client, (), &()),
             #[cfg(feature = "piv-authenticator")]
-            piv: App::new(runner, &mut make_client, ()),
+            piv: App::new(runner, &mut make_client, (), &()),
             #[cfg(feature = "provisioner-app")]
-            provisioner: App::new(runner, &mut make_client, provisioner),
+            provisioner: App::new(runner, &mut make_client, provisioner, &()),
             #[cfg(feature = "webcrypt")]
             webcrypt: webcrypt_fido_bypass,
-            _compile_no_feature: PhantomData::default(),
+            admin,
         }
     }
 
@@ -200,7 +230,6 @@ impl<R: Runner> Apps<R> {
             &mut self.piv,
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
-            #[cfg(feature = "admin-app")]
             &mut self.admin,
             #[cfg(feature = "provisioner-app")]
             &mut self.provisioner,
@@ -218,7 +247,6 @@ impl<R: Runner> Apps<R> {
             &mut self.webcrypt,
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             &mut self.fido,
-            #[cfg(feature = "admin-app")]
             &mut self.admin,
             #[cfg(feature = "secrets-app")]
             &mut self.oath,
@@ -262,6 +290,7 @@ impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
 trait App<R: Runner>: Sized {
     /// additional data needed by this Trussed app
     type Data;
+    type Config: admin_app::Config;
 
     /// the desired client ID
     const CLIENT_ID: &'static str;
@@ -274,19 +303,22 @@ trait App<R: Runner>: Sized {
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
         data: Self::Data,
+        config: &Self::Config,
     ) -> Self {
-        let backends = Self::backends(runner);
+        let backends = Self::backends(runner, config);
         Self::with_client(
             runner,
             make_client(Self::CLIENT_ID, backends, Self::interrupt()),
             data,
+            config,
         )
     }
 
-    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self;
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data, config: &Self::Config)
+        -> Self;
 
-    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
-        let _ = runner;
+    fn backends(runner: &R, config: &Self::Config) -> &'static [BackendId<Backend>] {
+        let _ = (runner, config);
         const BACKENDS_DEFAULT: &[BackendId<Backend>] = &[];
         BACKENDS_DEFAULT
     }
@@ -296,7 +328,6 @@ trait App<R: Runner>: Sized {
     }
 }
 
-#[cfg(feature = "admin-app")]
 #[derive(Copy, Clone)]
 pub enum Variant {
     Usbip,
@@ -304,7 +335,6 @@ pub enum Variant {
     Nrf52,
 }
 
-#[cfg(feature = "admin-app")]
 impl From<Variant> for u8 {
     fn from(variant: Variant) -> Self {
         match variant {
@@ -315,18 +345,18 @@ impl From<Variant> for u8 {
     }
 }
 
-#[cfg(feature = "admin-app")]
-pub struct AdminData {
+pub struct AdminData<R: Runner> {
+    pub store: R::Store,
     pub init_status: u8,
     pub ifs_blocks: u8,
     pub efs_blocks: u16,
     pub variant: Variant,
 }
 
-#[cfg(feature = "admin-app")]
-impl AdminData {
-    pub fn new(variant: Variant) -> Self {
+impl<R: Runner> AdminData<R> {
+    pub fn new(store: R::Store, variant: Variant) -> Self {
         Self {
+            store,
             init_status: 0,
             ifs_blocks: u8::MAX,
             efs_blocks: u16::MAX,
@@ -335,12 +365,10 @@ impl AdminData {
     }
 }
 
-#[cfg(feature = "admin-app")]
 pub type AdminStatus = [u8; 5];
 
-#[cfg(feature = "admin-app")]
-impl AdminData {
-    fn encode(&self) -> AdminStatus {
+impl<R: Runner> AdminData<R> {
+    fn status(&self) -> AdminStatus {
         let efs_blocks = self.efs_blocks.to_be_bytes();
         [
             self.init_status,
@@ -352,20 +380,25 @@ impl AdminData {
     }
 }
 
-#[cfg(feature = "admin-app")]
+const ADMIN_APP_CLIENT_ID: &str = "admin";
+
 impl<R: Runner> App<R> for AdminApp<R> {
-    const CLIENT_ID: &'static str = "admin";
+    const CLIENT_ID: &'static str = ADMIN_APP_CLIENT_ID;
 
-    type Data = AdminData;
+    type Data = AdminData<R>;
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
         const VERSION: u32 = utils::VERSION.encode();
-        Self::new(
+        // TODO: use CLIENT_ID directly
+        let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
+        Self::load(
             trussed,
+            &mut filestore,
             runner.uuid(),
             VERSION,
             utils::VERSION_STRING,
-            data.encode(),
+            data.status(),
         )
     }
     fn interrupt() -> Option<&'static InterruptFlag> {
@@ -379,14 +412,20 @@ impl<R: Runner> App<R> for FidoApp<R> {
     const CLIENT_ID: &'static str = "fido";
 
     type Data = ();
+    type Config = FidoConfig;
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(_runner: &R, trussed: Client<R>, _: (), config: &Self::Config) -> Self {
+        let skip_up_timeout = if config.disable_skip_up_timeout {
+            None
+        } else {
+            Some(core::time::Duration::from_secs(2))
+        };
         fido_authenticator::Authenticator::new(
             trussed,
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
-                skip_up_timeout: Some(core::time::Duration::from_secs(2)),
+                skip_up_timeout,
                 max_resident_credential_count: Some(10),
             },
         )
@@ -402,8 +441,9 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
     const CLIENT_ID: &'static str = "webcrypt";
 
     type Data = ();
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         let uuid = runner.uuid();
         Webcrypt::new_with_options(
             trussed,
@@ -414,7 +454,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
             ),
         )
     }
-    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Staging),
@@ -431,8 +471,9 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     const CLIENT_ID: &'static str = "secrets";
 
     type Data = ();
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         let uuid = runner.uuid();
         let options = secrets_app::Options::new(
             Location::External,
@@ -443,7 +484,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
         );
         Self::new(trussed, options)
     }
-    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_OATH: &[BackendId<Backend>] =
             &[BackendId::Custom(Backend::Auth), BackendId::Core];
         let _ = runner;
@@ -460,8 +501,9 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     const CLIENT_ID: &'static str = "opcard";
 
     type Data = ();
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
         options.button_available = true;
@@ -471,7 +513,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.storage = trussed::types::Location::External;
         Self::new(trussed, options)
     }
-    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),
@@ -492,14 +534,15 @@ impl<R: Runner> App<R> for PivApp<R> {
     const CLIENT_ID: &'static str = "piv";
 
     type Data = ();
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, _: ()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         Self::new(
             trussed,
             piv_authenticator::Options::default().uuid(Some(runner.uuid())),
         )
     }
-    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),
@@ -528,8 +571,9 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
     const CLIENT_ID: &'static str = "attn";
 
     type Data = ProvisionerData<R>;
+    type Config = ();
 
-    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
         let uuid = runner.uuid();
         Self::new(
             trussed,
@@ -543,5 +587,25 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Config, FidoConfig};
+    use cbor_smol::{cbor_serialize_bytes, Bytes};
+
+    #[test]
+    fn test_config_size() {
+        let config = Config {
+            fido: FidoConfig {
+                disable_skip_up_timeout: true,
+            },
+        };
+        let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
+        // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512
+        // bytes for LPC55 and 256 bytes for NRF52.  As the block count is only problematic on the
+        // LPC55, this could be increased to 128 if necessary.
+        assert!(data.len() < 64, "{}: {}", data.len(), hex::encode(&data));
     }
 }

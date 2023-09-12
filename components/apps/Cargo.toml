@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
+serde = { version = "1.0.180", default-features = false }
 trussed = { version = "0.1", features = ["serde-extensions"]}
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
@@ -17,7 +18,7 @@ trussed-rsa-alloc = { version = "0.1.0", optional = true }
 trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked", "encrypted-chunked"], optional = true }
 
 # apps
-admin-app = { version = "0.1.0", optional = true }
+admin-app = "0.1.0"
 fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 webcrypt = { version = "0.7.0", optional = true }
@@ -26,15 +27,12 @@ opcard = { version = "1.1.1", features = ["apdu-dispatch", "delog", "rsa2048-gen
 piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
+[dev-dependencies]
+cbor-smol = "0.4"
+hex = "0.4"
+
 [features]
-default = [
-    "admin-app",
-    "fido-authenticator",
-    "ndef-app",
-    "secrets-app",
-    "opcard",
-    "trussed/clients-4",
-]
+default = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "trussed/clients-4"]
 test = ["piv-authenticator", "webcrypt", "trussed/clients-6"]
 provisioner = ["provisioner-app", "trussed/clients-5"]
 
@@ -50,14 +48,7 @@ backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
 backend-staging = ["trussed-staging"]
 
-log-all = [
-    "admin-app?/log-all",
-    "fido-authenticator?/log-all",
-    "secrets-app?/log-all",
-    "webcrypt?/log-all",
-    "opcard?/log-all",
-    "provisioner-app?/log-all",
-]
+log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 
 trussed-usbip-ccid = ["trussed-usbip/ccid"]
 

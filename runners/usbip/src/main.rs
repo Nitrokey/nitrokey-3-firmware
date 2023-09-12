@@ -7,7 +7,7 @@ use apps::{AdminData, Apps, Dispatch, Variant};
 use clap::{Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
-use trussed::{types::Location, Bytes, Platform};
+use trussed::{types::Location, virt::StoreProvider as _, Bytes, Platform};
 use trussed_usbip::Service;
 
 use store::FilesystemOrRam;
@@ -109,7 +109,6 @@ impl apps::Runner for Runner {
 
     type Reboot = Reboot;
 
-    #[cfg(feature = "provisioner")]
     type Store = store::Store;
 
     #[cfg(feature = "provisioner")]
@@ -165,9 +164,6 @@ fn exec(
     serial: Option<u128>,
     user_presence: UserPresence,
 ) {
-    #[cfg(feature = "provisioner")]
-    use trussed::virt::StoreProvider as _;
-
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {
@@ -188,11 +184,12 @@ fn exec(
         })
         .build::<Apps<Runner>>()
         .exec(move |_platform| {
+            let store = unsafe { FilesystemOrRam::store() };
             let data = apps::Data {
-                admin: AdminData::new(Variant::Usbip),
+                admin: AdminData::new(store, Variant::Usbip),
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerData {
-                    store: unsafe { FilesystemOrRam::store() },
+                    store,
                     stolen_filesystem: unsafe { FilesystemOrRam::ifs() },
                     nfc_powered: false,
                     rebooter: || unimplemented!(),
