@@ -28,6 +28,7 @@ serde = { version = "1.0", default-features = false }
 heapless = "0.7"
 heapless-bytes = { version = "0.3.0", features = ["cbor"] }
 lfs-backup = { path = "../../components/lfs-backup" }
+rand = { version =  "0.8.5", default-features = false }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"

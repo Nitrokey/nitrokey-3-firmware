@@ -1033,6 +1033,7 @@ dependencies = [
  "nfc-device",
  "nrf52840-hal",
  "nrf52840-pac",
+ "rand",
  "rand_core",
  "ref-swap",
  "rtt-target",

@@ -170,8 +170,33 @@ mod app {
 
         /* TODO: set up display */
 
-        let dev_rng = Rng::new(ctx.device.RNG);
-        let chacha_rng = chacha20::ChaCha8Rng::from_rng(dev_rng).unwrap();
+        use chacha20::ChaCha8Rng;
+        use rand::Rng as _;
+        let mut dev_rng = Rng::new(ctx.device.RNG);
+        let seed: [u8; 32] = dev_rng.gen();
+        #[cfg(feature = "se050")]
+        let mut se050 = se05x::se05x::Se05X::new(twim, 0x48, se050_timer);
+
+        let seed = (|| {
+            use se05x::se05x::commands::GetRandom;
+            se050.enable()?;
+            let buf = &mut [0; 100];
+            let se050_rand = se050.run_command(&GetRandom { length: 32.into() }, buf)?;
+            let mut s: [u8; 32] = se050_rand
+                .data
+                .try_into()
+                .or(Err(se05x::se05x::Error::Unknown))?;
+            for (se050, orig) in s.iter_mut().zip(seed) {
+                *se050 ^= orig;
+            }
+            Ok::<_, se05x::se05x::Error>(s)
+        })()
+        .unwrap_or_else(|_err| {
+            debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
+            seed
+        });
+
+        let chacha_rng = ChaCha8Rng::from_seed(seed);
 
         #[cfg(feature = "board-nk3am")]
         let ui = ERL::soc::board::init_ui(
@@ -203,7 +228,7 @@ mod app {
                 Location::Internal,
                 Bytes::from_slice(&er).unwrap(),
                 #[cfg(feature = "se050")]
-                se05x::se05x::Se05X::new(twim, 0x48, se050_timer),
+                se050,
             ),
         );
 
