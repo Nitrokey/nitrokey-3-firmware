@@ -102,7 +102,6 @@ soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic", "se05x?/
 
 se050 = ["dep:se05x", "apps/se050"]
 se050-test-app = ["se050", "apps/se050-test-app"]
-se050-backend-random = ["se050", "apps/se050-backend-random"]
 
 extflash_qspi = []
 extflash_spi = []

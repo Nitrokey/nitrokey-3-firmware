@@ -202,21 +202,12 @@ mod app {
             apps::Dispatch::with_hw_key(
                 Location::Internal,
                 Bytes::from_slice(&er).unwrap(),
-                #[cfg(feature = "se050-backend-random")]
+                #[cfg(feature = "se050")]
                 se05x::se05x::Se05X::new(twim, 0x48, se050_timer),
             ),
         );
 
-        let apps = ERL::init_apps(
-            &mut trussed_service,
-            init_status,
-            &store,
-            #[cfg(feature = "se050-test-app")]
-            twim,
-            #[cfg(feature = "se050-test-app")]
-            se050_timer,
-            !powered_by_usb,
-        );
+        let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 

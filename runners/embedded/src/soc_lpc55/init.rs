@@ -737,7 +737,7 @@ impl Stage5 {
             board,
             Dispatch::new(
                 Location::Internal,
-                #[cfg(feature = "se050-backend-random")]
+                #[cfg(feature = "se050")]
                 se05x::se05x::Se05X::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer)),
             ),
         );
@@ -750,10 +750,6 @@ impl Stage5 {
             usb_nfc: self.usb_nfc,
             store: self.store,
             trussed,
-            #[cfg(feature = "se050-test-app")]
-            se050_timer: self.se050_timer,
-            #[cfg(feature = "se050-test-app")]
-            se050_i2c: self.se050_i2c,
         }
     }
 }
@@ -766,10 +762,6 @@ pub struct Stage6 {
     usb_nfc: UsbNfc,
     store: RunnerStore,
     trussed: Trussed,
-    #[cfg(feature = "se050-test-app")]
-    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
-    #[cfg(feature = "se050-test-app")]
-    se050_i2c: I2C,
 }
 
 impl Stage6 {
@@ -797,10 +789,6 @@ impl Stage6 {
             &mut self.trussed,
             self.status,
             &self.store,
-            #[cfg(feature = "se050-test-app")]
-            self.se050_i2c,
-            #[cfg(feature = "se050-test-app")]
-            TimerDelay(self.se050_timer),
             self.clocks.is_nfc_passive,
         );
         let clock_controller = if self.clocks.is_nfc_passive {

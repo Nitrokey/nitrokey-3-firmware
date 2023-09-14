@@ -12,17 +12,10 @@ use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
-#[cfg(feature = "se050-test-app")]
-use se05x::se05x::Se05X;
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
     ClientImplementation, Platform, Service,
 };
-
-#[cfg(all(feature = "se050-test-app", feature = "se050-backend-random"))]
-compile_error!(
-    "The features se050-test-app and se050-backend-random cannot be enable simultaneously"
-);
 
 #[cfg(feature = "admin-app")]
 pub use admin_app::Reboot;
@@ -57,9 +50,6 @@ pub trait Runner {
 }
 
 pub struct Data<R: Runner> {
-    #[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-    pub admin: AdminData<R>,
-    #[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
     pub admin: AdminData,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
@@ -71,15 +61,7 @@ type Client<R> = ClientImplementation<
     Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
 >;
 
-#[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
 type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus>;
-#[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-type AdminApp<R> = admin_app::App<
-    Client<R>,
-    <R as Runner>::Reboot,
-    AdminStatus,
-    Se05X<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
->;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
@@ -345,7 +327,6 @@ impl From<Variant> for u8 {
     }
 }
 
-#[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
 pub struct AdminData {
     pub init_status: u8,
     pub ifs_blocks: u8,
@@ -353,17 +334,6 @@ pub struct AdminData {
     pub variant: Variant,
 }
 
-#[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-pub struct AdminData<R: Runner> {
-    pub init_status: u8,
-    pub ifs_blocks: u8,
-    pub efs_blocks: u16,
-    pub variant: Variant,
-    pub twi: R::Twi,
-    pub se050_timer: R::Se050Timer,
-}
-
-#[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
 impl AdminData {
     pub fn new(variant: Variant) -> Self {
         Self {
@@ -375,24 +345,9 @@ impl AdminData {
     }
 }
 
-#[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-impl<R: Runner> AdminData<R> {
-    pub fn new(variant: Variant, twi: R::Twi, se050_timer: R::Se050Timer) -> Self {
-        Self {
-            init_status: 0,
-            ifs_blocks: u8::MAX,
-            efs_blocks: u16::MAX,
-            variant,
-            twi,
-            se050_timer,
-        }
-    }
-}
-
 #[cfg(feature = "admin-app")]
 pub type AdminStatus = [u8; 5];
 
-#[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
 impl AdminData {
     fn encode(&self) -> AdminStatus {
         let efs_blocks = self.efs_blocks.to_be_bytes();
@@ -405,61 +360,37 @@ impl AdminData {
         ]
     }
 }
-
-#[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-impl<R: Runner> AdminData<R> {
-    fn encode(&self) -> AdminStatus {
-        let efs_blocks = self.efs_blocks.to_be_bytes();
-        [
-            self.init_status,
-            self.ifs_blocks,
-            efs_blocks[0],
-            efs_blocks[1],
-            self.variant.into(),
-        ]
-    }
-}
-
 #[cfg(feature = "admin-app")]
 impl<R: Runner> App<R> for AdminApp<R> {
     const CLIENT_ID: &'static str = "admin";
 
-    #[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
     type Data = AdminData;
-    #[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-    type Data = AdminData<R>;
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data) -> Self {
         const VERSION: u32 = utils::VERSION.encode();
 
-        #[cfg(all(feature = "admin-app", not(feature = "se050-test-app")))]
-        {
-            return Self::new(
-                trussed,
-                runner.uuid(),
-                VERSION,
-                utils::VERSION_STRING,
-                data.encode(),
-            );
-        }
-
-        #[cfg(all(feature = "admin-app", feature = "se050-test-app"))]
-        {
-            let status = data.encode();
-            let se050 = Se05X::new(data.twi, 0x48, data.se050_timer);
-            return Self::with_se(
-                trussed,
-                runner.uuid(),
-                VERSION,
-                utils::VERSION_STRING,
-                status,
-                se050,
-            );
-        }
+        #[cfg(feature = "admin-app")]
+        return admin_app::App::new(
+            trussed,
+            runner.uuid(),
+            VERSION,
+            utils::VERSION_STRING,
+            data.encode(),
+        );
     }
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+
+    fn backends(runner: &R) -> &'static [BackendId<Backend>] {
+        const BACKENDS_ADMIN: &[BackendId<Backend>] = &[
+            #[cfg(feature = "se050-test-app")]
+            BackendId::Custom(Backend::Se050),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_ADMIN
     }
 }
 
@@ -562,7 +493,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     }
     fn backends(runner: &R) -> &'static [BackendId<Backend>] {
         const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
-            #[cfg(feature = "se050-backend-random")]
+            #[cfg(feature = "se050")]
             BackendId::Custom(Backend::Se050),
             BackendId::Custom(Backend::SoftwareRsa),
             BackendId::Custom(Backend::Auth),

@@ -1,4 +1,4 @@
-#[cfg(not(feature = "se050-backend-random"))]
+#[cfg(not(feature = "se050"))]
 use core::marker::PhantomData;
 
 use trussed::{
@@ -21,10 +21,12 @@ use trussed::{
     Bytes,
 };
 
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 use se05x::{se05x::Se05X, t1::I2CForT1};
+#[cfg(feature = "se050")]
+use trussed_se050_backend::{manage::ManageExtension, Context as Se050Context, Se050Backend};
 
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
@@ -46,9 +48,9 @@ pub struct Dispatch<T = (), D = ()> {
     auth: AuthBackend,
     #[cfg(feature = "backend-staging")]
     staging: StagingBackend,
-    #[cfg(feature = "se050-backend-random")]
-    se050: se050_backend_random::BackendRandom<T, D>,
-    #[cfg(not(feature = "se050-backend-random"))]
+    #[cfg(feature = "se050")]
+    se050: trussed_se050_backend::Se050Backend<T, D>,
+    #[cfg(not(feature = "se050"))]
     __: PhantomData<(T, D)>,
 }
 
@@ -58,13 +60,12 @@ pub struct DispatchContext {
     auth: AuthContext,
     #[cfg(feature = "backend-staging")]
     staging: StagingContext,
+    #[cfg(feature = "se050")]
+    se050: Se050Context,
 }
 
 impl<T: Twi, D: Delay> Dispatch<T, D> {
-    pub fn new(
-        auth_location: Location,
-        #[cfg(feature = "se050-backend-random")] se050: Se05X<T, D>,
-    ) -> Self {
+    pub fn new(auth_location: Location, #[cfg(feature = "se050")] se050: Se05X<T, D>) -> Self {
         #[cfg(not(feature = "backend-auth"))]
         let _ = auth_location;
         Self {
@@ -72,9 +73,9 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
             auth: AuthBackend::new(auth_location),
             #[cfg(feature = "backend-staging")]
             staging: StagingBackend::new(),
-            #[cfg(feature = "se050-backend-random")]
-            se050: se050_backend_random::BackendRandom::new(se050),
-            #[cfg(not(feature = "se050-backend-random"))]
+            #[cfg(feature = "se050")]
+            se050: trussed_se050_backend::Se050Backend::new(se050),
+            #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
     }
@@ -83,15 +84,15 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
     pub fn with_hw_key(
         auth_location: Location,
         hw_key: Bytes<MAX_HW_KEY_LEN>,
-        #[cfg(feature = "se050-backend-random")] se050: Se05X<T, D>,
+        #[cfg(feature = "se050")] se050: Se05X<T, D>,
     ) -> Self {
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
             #[cfg(feature = "backend-staging")]
             staging: StagingBackend::new(),
-            #[cfg(feature = "se050-backend-random")]
-            se050: se050_backend_random::BackendRandom::new(se050),
-            #[cfg(not(feature = "se050-backend-random"))]
+            #[cfg(feature = "se050")]
+            se050: trussed_se050_backend::Se050Backend::new(se050),
+            #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
     }
@@ -99,23 +100,23 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
 
 // HACK around #[cfg] for where clauses. See https://users.rust-lang.org/t/cfg-on-where-clause-items/90292
 
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 pub trait Twi: I2CForT1 {}
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 impl<T: I2CForT1> Twi for T {}
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 pub trait Delay: DelayUs<u32> {}
-#[cfg(feature = "se050-backend-random")]
+#[cfg(feature = "se050")]
 impl<D: DelayUs<u32>> Delay for D {}
 
-#[cfg(not(feature = "se050-backend-random"))]
+#[cfg(not(feature = "se050"))]
 pub trait Twi {}
-#[cfg(not(feature = "se050-backend-random"))]
+#[cfg(not(feature = "se050"))]
 impl<T> Twi for T {}
 
-#[cfg(not(feature = "se050-backend-random"))]
+#[cfg(not(feature = "se050"))]
 pub trait Delay {}
-#[cfg(not(feature = "se050-backend-random"))]
+#[cfg(not(feature = "se050"))]
 impl<D> Delay for D {}
 
 impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
@@ -143,10 +144,11 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 self.staging
                     .request(&mut ctx.core, &mut ctx.backends.staging, request, resources)
             }
-            #[cfg(feature = "se050-backend-random")]
-            Backend::Se050 => self
-                .se050
-                .request(&mut ctx.core, &mut (), request, resources),
+            #[cfg(feature = "se050")]
+            Backend::Se050 => {
+                self.se050
+                    .request(&mut ctx.core, &mut ctx.backends.se050, request, resources)
+            }
         }
     }
 
@@ -200,6 +202,19 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
+            #[cfg(feature = "se050")]
+            Backend::Se050 => {
+                match extension {
+                    Extension::Se050Manage => <Se050Backend<_,_> as ExtensionImpl<ManageExtension>>::extension_request_serialized(
+                        &mut self.se050,
+                        &mut ctx.core,
+                        &mut ctx.backends.se050,
+                        request,
+                        resources
+                    ),
+                    _ => Err(TrussedError::RequestNotAvailable),
+                }
+            }
             _ => Err(TrussedError::RequestNotAvailable),
         }
     }
@@ -213,7 +228,7 @@ pub enum Backend {
     SoftwareRsa,
     #[cfg(feature = "backend-staging")]
     Staging,
-    #[cfg(feature = "se050-backend-random")]
+    #[cfg(feature = "se050")]
     Se050,
 }
 
@@ -227,6 +242,8 @@ pub enum Extension {
     WrapKeyToFile,
     #[cfg(feature = "backend-staging")]
     HmacShaP256,
+    #[cfg(feature = "se050")]
+    Se050Manage,
 }
 
 impl From<Extension> for u8 {
@@ -240,6 +257,8 @@ impl From<Extension> for u8 {
             Extension::WrapKeyToFile => 2,
             #[cfg(feature = "backend-staging")]
             Extension::HmacShaP256 => 3,
+            #[cfg(feature = "se050")]
+            Extension::Se050Manage => 4,
         }
     }
 }
@@ -257,6 +276,8 @@ impl TryFrom<u8> for Extension {
             2 => Ok(Extension::WrapKeyToFile),
             #[cfg(feature = "backend-staging")]
             3 => Ok(Extension::HmacShaP256),
+            #[cfg(feature = "se050")]
+            4 => Ok(Extension::Se050Manage),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -288,4 +309,11 @@ impl<T: Twi, D: Delay> ExtensionId<HmacSha256P256Extension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::HmacShaP256;
+}
+
+#[cfg(feature = "se050")]
+impl<T: Twi, D: Delay> ExtensionId<ManageExtension> for Dispatch<T, D> {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::Se050Manage;
 }
