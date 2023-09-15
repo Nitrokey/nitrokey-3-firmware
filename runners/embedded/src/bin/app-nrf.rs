@@ -194,6 +194,7 @@ mod app {
         })()
         .unwrap_or_else(|_err| {
             debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
+            init_status |= ERL::types::InitStatus::SE050_RAND_ERROR;
             seed
         });
 
