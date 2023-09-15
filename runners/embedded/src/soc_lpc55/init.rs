@@ -742,6 +742,12 @@ impl Stage5 {
             ),
         );
 
+        #[cfg(not(feature = "se050"))]
+        {
+            let _ = self.se050_timer;
+            let _ = self.se050_i2c;
+        }
+
         Stage6 {
             status: self.status,
             peripherals: self.peripherals,

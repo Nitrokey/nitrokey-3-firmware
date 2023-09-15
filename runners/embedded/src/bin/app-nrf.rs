@@ -177,6 +177,7 @@ mod app {
         #[cfg(feature = "se050")]
         let mut se050 = se05x::se05x::Se05X::new(twim, 0x48, se050_timer);
 
+        #[cfg(feature = "se050")]
         let seed = (|| {
             use se05x::se05x::commands::GetRandom;
             se050.enable()?;
