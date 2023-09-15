@@ -3223,7 +3223,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-staging.git?branch=hmacsha256p256#1b54bf8703d515688a58f2f605c3efa0f2f60ced"
+source = "git+https://github.com/Nitrokey/trussed-staging.git?branch=hmacsha256p256#8329b1257855134db7cb3339f633eec91e985b88"
 dependencies = [
  "chacha20poly1305",
  "delog",
