@@ -15,7 +15,7 @@ use lpc55_hal::{
         pins::{Pio0_9, Pio1_14},
         timer,
     },
-    peripherals::{ctimer, flash, flexcomm::I2c5, rng, syscon},
+    peripherals::{ctimer, flash, flexcomm::I2c5, syscon},
     raw,
     traits::flash::WriteErase,
     typestates::pin::{
@@ -84,7 +84,7 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
-    type Rng = rng::Rng<lpc55_hal::Enabled>;
+    type Rng = chacha20::ChaCha8Rng;
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
     type UUID = [u8; 16];

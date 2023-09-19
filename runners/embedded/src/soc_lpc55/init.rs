@@ -732,13 +732,49 @@ impl Stage5 {
             super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
-        let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
+        use chacha20::ChaCha8Rng;
+        use rand::{Rng as _, SeedableRng as _};
+        let mut dev_rng = self.rng;
+        let seed: [u8; 32] = dev_rng.gen();
+        #[cfg(feature = "se050")]
+        let mut se050 =
+            se05x::se05x::Se05X::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer));
+
+        #[cfg(feature = "se050")]
+        let seed = (|| {
+            if self.clocks.is_nfc_passive {
+                self.status |= InitStatus::SE050_RAND_ERROR;
+                return Ok(seed);
+            }
+
+            use se05x::se05x::commands::GetRandom;
+            se050.enable()?;
+            let buf = &mut [0; 100];
+            let se050_rand = se050.run_command(&GetRandom { length: 32.into() }, buf)?;
+            let mut s: [u8; 32] = se050_rand
+                .data
+                .try_into()
+                .or(Err(se05x::se05x::Error::Unknown))?;
+            for (se050, orig) in s.iter_mut().zip(seed) {
+                *se050 ^= orig;
+            }
+            Ok::<_, se05x::se05x::Error>(s)
+        })()
+        .unwrap_or_else(|_err| {
+            debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
+            self.status |= InitStatus::SE050_RAND_ERROR;
+            seed
+        });
+
+        let chacha_rng = ChaCha8Rng::from_seed(seed);
+
+        let board = types::RunnerPlatform::new(chacha_rng, self.store, solobee_interface);
         let trussed = Service::with_dispatch(
             board,
             Dispatch::new(
                 Location::Internal,
                 #[cfg(feature = "se050")]
-                se05x::se05x::Se05X::new(self.se050_i2c, 0x48, TimerDelay(self.se050_timer)),
+                se050,
             ),
         );
 
