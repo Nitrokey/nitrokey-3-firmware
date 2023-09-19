@@ -1,9 +1,25 @@
 
 IMAGE_NAME := nrf-toolchain 
 
+BL_DIR = .
+BL_HEX = $(BL_DIR)/bootloader.hex
+MBR_HEX = $(BL_DIR)/mbr.hex
+BL_CONFIGS = $(BL_DIR)/config/default_sdk_config.h $(BL_DIR)/config/nk_sdk_config.h $(BL_DIR)/config/sdk_config.h
+
+SIGN_SH = $(BL_DIR)/sign.sh
+UPLOAD_SH = $(BL_DIR)/upload.sh
+
+FW_SIGNED = fw_signed_update.zip
+FW_RAW = fw_unsigned.hex
+
+TTYDEV := $(wildcard /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*)
+KEY_DIR ?= $(BL_DIR)/signing-key
+SIGNING_KEY = $(KEY_DIR)/dfu_private.key
+PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
+
 .PHONY: all enter clean verify
 
-all: $(IMAGE_NAME).built verify
+all: $(IMAGE_NAME).built verify $(SIGNING_KEY)
 	docker run -it \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
@@ -37,35 +53,26 @@ clean:
 
 FIRMWARE_VERSION = 15
 
-BL_DIR = .
-BL_HEX = $(BL_DIR)/bootloader.hex
-MBR_HEX = $(BL_DIR)/mbr.hex
-BL_CONFIGS = $(BL_DIR)/config/default_sdk_config.h $(BL_DIR)/config/nk_sdk_config.h $(BL_DIR)/config/sdk_config.h
 
-# descent to build mbr.hex + booloader.hex 
-$(BL_HEX) $(MBR_HEX): $(BL_DIR) $(BL_CONFIGS)
-	$(MAKE) -C $(BL_DIR)
-
-
-KEY_DIR ?= $(BL_DIR)/signing-key
-SIGNING_KEY = $(KEY_DIR)/dfu_private.key
-PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
-
-SIGN_SH = $(BL_DIR)/sign.sh
-UPLOAD_SH = $(BL_DIR)/upload.sh
-
-FW_SIGNED = fw_signed_update.zip
-FW_RAW = fw_unsigned.hex
-TTYDEV := $(wildcard /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*)
 # /dev/serial/by-id/usb-Nitrokey_Nitrokey_3-if02
 # /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader_F95AF80A9E98-if00
+
+# descent to build mbr.hex + booloader.hex 
+$(BL_HEX) $(MBR_HEX): $(BL_DIR) $(BL_CONFIGS) $(KEY_DIR) $(SIGNING_KEY)
+	$(MAKE) -C $(BL_DIR)
 
 fw-assemble-dfu: $(FW_SIGNED)
 
 $(FW_RAW): $(OUT_IHEX)
 	cp $< $(@)
 
-$(FW_SIGNED): $(FW_RAW) $(SIGN_SH) # $(SIGNING_KEY) 
+$(KEY_DIR) $(SIGNING_KEY) $(PUBLIC_KEY): copy-test-certs
+
+.PHONY: copy-test-certs
+copy-test-certs:
+	cp -r ../test-certificates/firmware-nrf52 $(KEY_DIR)
+
+$(FW_SIGNED): $(FW_RAW) $(SIGN_SH) $(KEY_DIR) 
 	bash $(SIGN_SH) $(FIRMWARE_VERSION) $(FW_SIGNED) $(FW_RAW) $(SIGNING_KEY)
 
 sign-nk3am.bl: $(FW_SIGNED)
@@ -77,16 +84,16 @@ fw-upload: $(FW_SIGNED) $(UPLOAD_SH)
 	fi
 	bash $(UPLOAD_SH) $(FW_SIGNED) $(TTYDEV)
 
-generate-key:
-	@echo "----------- THIS IS NOT AN AUTOMATED STEP ----------"
-	@echo "Before following these steps, make sure you are not overwriting a key!"
-	@echo "To generate a proper key-pair run the following command:"
-	@echo "$ generate_key.sh <target_directory>"
-
-$(SIGNING_KEY): generate-key
-	@echo "NO SIGNING KEY FOUND...."
-	@echo "GENERATE one and put it here: $(SIGNING_KEY)"
-	exit 1
+#generate-key:
+#	@echo "----------- THIS IS NOT AN AUTOMATED STEP ----------"
+#	@echo "Before following these steps, make sure you are not overwriting a key!"
+#	@echo "To generate a proper key-pair run the following command:"
+#	@echo "$ generate_key.sh <target_directory>"
+#
+#$(SIGNING_KEY): generate-key
+#	@echo "NO SIGNING KEY FOUND...."
+#	@echo "GENERATE one and put it here: $(SIGNING_KEY)"
+#	exit 1
 
 
 lazy-fw:
