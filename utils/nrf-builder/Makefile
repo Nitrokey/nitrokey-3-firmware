@@ -10,7 +10,7 @@ NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
 
 KEY_DIR := $(TEST_CERTS_DIR)/firmware-nrf52
-PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.pem
+PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.key
 
 BL_OUTPUT := mbr.hex bootloader.hex
 
