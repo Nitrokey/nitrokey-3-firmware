@@ -437,11 +437,11 @@ impl Stage2 {
         nb::block!(self.basic.delay_timer.wait()).ok();
 
         // RESYNC response
-        let mut response = [0; 2];
+        let mut response = [0; 5];
         i2c.read(0x48, &mut response)
             .expect("failed to read RESYNC response");
 
-        if response != [0xa5, 0xe0] {
+        if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
             panic!("Unexpected RESYNC response: {:?}", response);
         }
 
