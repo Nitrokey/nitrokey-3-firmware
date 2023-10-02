@@ -1,7 +1,6 @@
 
-TEST_CERTS_REPO := git@git.nitrokey.com:robin/test-certificates.git
-TEST_CERTS_DIR := test-certs
-TEST_FIDO_CERTS_DIR := $(TEST_CERTS_DIR)/nk3/fido
+TEST_CERTS_DIR := ../test-certificates
+TEST_FIDO_CERTS_DIR := $(TEST_CERTS_DIR)/fido
 TEST_FIDO_CERT := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-cert.der
 TEST_FIDO_KEY := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-key.trussed
 
@@ -10,8 +9,8 @@ NK3_FW_DIR := nk3-fw
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
 
-KEY_DIR := $(TEST_CERTS_DIR)/nk3/firmware-nrf52
-PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.pem
+KEY_DIR := $(TEST_CERTS_DIR)/firmware-nrf52
+PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.key
 
 BL_OUTPUT := mbr.hex bootloader.hex
 
@@ -26,8 +25,6 @@ FW_BIN := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin
 SH_SIGN := $(NK3_BL_DIR)/sign.sh
 SH_UPLOAD := $(NK3_BL_DIR)/upload.sh
 SH_BL_SIGN := $(NK3_BL_DIR)/sign-bootloader.sh
-
-REPOS := $(TEST_CERTS_DIR)-update
 
 GEN_COMMANDS_RUN := cd ../gen-commands-bd && cargo run -- ../../runners/embedded/Cargo.toml ../../runners/embedded/profiles/nrf52-bootloader.toml
 
@@ -137,29 +134,19 @@ fast-deploy:
 
 clean:
 	rm -rf $(ALL_ARTIFACTS)
-	rm -rf test-certs 
 
 
 ######
 
-$(TEST_CERTS_DIR):
-	git clone $(TEST_CERTS_REPO) $@
-
-.PHONY: $(TEST_CERTS_DIR)-update
-$(TEST_CERTS_DIR)-update: $(TEST_CERTS_DIR)
-	cd $(TEST_CERTS_DIR) && git pull
-
-$(KEY_DIR) $(PRIV_SIGN_KEY): $(TEST_CERTS_DIR)-update
-
-$(NK3_BL_KEY_DIR): $(KEY_DIR) $(REPOS)
+$(NK3_BL_KEY_DIR): $(KEY_DIR)
 	cp -r $< $(NK3_BL_KEY_DIR)
 
-$(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR) $(REPOS)
+$(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR)
 	$(MAKE) -C $(NK3_BL_DIR) build-bootloader
 	cp $(NK3_BL_DIR)/mbr.hex mbr.hex
 	cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
 
-$(FW_RUNNER): $(NK3_FW_DIR) $(REPOS)
+$(FW_RUNNER): $(NK3_FW_DIR)
 
 $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 	$(SH_BL_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)

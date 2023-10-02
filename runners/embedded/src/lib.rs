@@ -259,7 +259,7 @@ pub fn init_apps(
 ) -> types::Apps {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(<SocT as types::Soc>::VARIANT);
+    let mut admin = apps::AdminData::new(*store, <SocT as types::Soc>::VARIANT);
     admin.init_status = init_status.bits();
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
