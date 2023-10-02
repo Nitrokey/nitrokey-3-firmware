@@ -1624,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/sosthene-nitrokey/iso7816.git?rev=160ca3bbd8e21ec4e4ee1e0748e1eaa53a45c97f#160ca3bbd8e21ec4e4ee1e0748e1eaa53a45c97f"
+source = "git+https://github.com/sosthene-nitrokey/iso7816.git?rev=58152e8737bf59c1123e75dc94691f076b31e030#58152e8737bf59c1123e75dc94691f076b31e030"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -2606,7 +2606,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "se05x"
 version = "0.0.1"
-source = "git+https://github.com/Nitrokey/se05x.git?rev=0b77eb6b152d214897696aadf87767fd84ffcb0e#0b77eb6b152d214897696aadf87767fd84ffcb0e"
+source = "git+https://github.com/Nitrokey/se05x.git?rev=2625b3387557a02d12948f2f44e980e37f1f9cca#2625b3387557a02d12948f2f44e980e37f1f9cca"
 dependencies = [
  "aes",
  "bitflags 2.4.0",
