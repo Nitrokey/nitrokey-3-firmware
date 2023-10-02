@@ -12,7 +12,7 @@ version = "1.5.0-test.20230704"
 
 [patch.crates-io]
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app", tag = "v0.1.0-nitrokey.4" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app", rev = "68964474c5443fe10799bf9b2ceb31c723d72cf5" }
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", rev = "0d9f6f5d7ff7f6c90c8f284037699f749daee641" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", rev = "0a32941d560612aa764d7042c2cbf6a04f9abb71" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
