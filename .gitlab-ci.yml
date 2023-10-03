@@ -3,6 +3,7 @@ include: 'https://raw.githubusercontent.com/Nitrokey/common-ci-jobs/master/commo
 stages:
   - pull-github
   - build
+  - test
   - deploy
 
 variables:
@@ -17,6 +18,8 @@ variables:
   IMAGE_NAME: nitrokey3
   COMMON_UPDATE_DOCKER: "true"
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
 
 metadata:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -164,3 +167,55 @@ build-usbip:
   artifacts:
     paths:
       - artifacts
+
+# This is a copy of build-firmware, but without the strict tag check guard and NK3AM build temporarily removed
+# FIXME Either this or build-firmware should be removed
+build-firmware-for-tests:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - git describe
+    - export VERSION=`git describe`
+    - mkdir -p artifacts
+    - make -C runners/embedded build-nk3xn FEATURES=no-buttons
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
+  after_script:
+    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+  artifacts:
+    paths:
+      - artifacts
+
+
+# This is a hardware test job for the Nitrokey 3
+hardware-tests:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  tags:
+    - nk3-hw
+  stage: test
+  script:
+    - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "git@git.nitrokey.com:"
+    - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "https://git.nitrokey.com/"
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
+    - cd nitrokey-hardware-test && make ci FW=../artifacts && cd .. # use built firmware files
+    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml  # the result will be merged in the future
+  after_script:
+    - curl $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+  dependencies:
+    - build-firmware-for-tests  # needs artifacts from this job only to run, don't send anything else
+  needs:
+    - build-firmware-for-tests  # can start immediately after this job succeeds
+  artifacts:
+    when: always
+    paths:
+      - nitrokey-hardware-test/artifacts
+    reports:
+      junit: nitrokey-hardware-test/artifacts/report-junit.xml
+
