@@ -37,7 +37,7 @@ trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", 
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.2" }
 se05x = { git = "https://github.com/Nitrokey/se05x.git", rev = "2625b3387557a02d12948f2f44e980e37f1f9cca"} 
 serde-indexed = { git = "https://github.com/sosthene-nitrokey/serde-indexed.git", rev = "5005d23cb4ee8622e62188ea0f9466146f851f0d" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "94f67f57855ac503986924f4c4a3d09fe450718a" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "1a2288cf9647353352d3b0858472a595eaf2835a" }
 
 [profile.release]
 codegen-units = 1

@@ -3228,7 +3228,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=94f67f57855ac503986924f4c4a3d09fe450718a#94f67f57855ac503986924f4c4a3d09fe450718a"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=1a2288cf9647353352d3b0858472a595eaf2835a#1a2288cf9647353352d3b0858472a595eaf2835a"
 dependencies = [
  "cbor-smol",
  "delog",
