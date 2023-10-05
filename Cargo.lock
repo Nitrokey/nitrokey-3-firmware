@@ -3182,7 +3182,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/Nitrokey/pc-usbip-runner.git?tag=v0.0.1-nitrokey.2#d002d47f336e0da61c2e590170f044f2e4e7b548"
+source = "git+https://github.com/Nitrokey/pc-usbip-runner.git?tag=v0.0.1-nitrokey.3#43655c47e13687f96fab607e6f06b331538c6bfc"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",

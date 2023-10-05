@@ -34,7 +34,7 @@ piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag
 trussed-auth = { git = "https://github.com/Nitrokey/trussed-auth", tag = "v0.2.2-nitrokey.1" }
 trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", tag = "v0.1.0"}
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "hmacsha256p256" }
-trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.2" }
+trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 
 [profile.release]
 codegen-units = 1
