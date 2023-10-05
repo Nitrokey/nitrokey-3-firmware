@@ -13,11 +13,12 @@ version = "1.5.0-test.20230704"
 [patch.crates-io]
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app", tag = "v0.1.0-nitrokey.4" }
-ctap-types = { git = "https://github.com/Nitrokey/ctap-types", rev = "42751efdc3c717135e8f26ceaa6ce23fb57d0498" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", rev = "0e3e56558505f5fdc755c41ff91727c20cdd3ba6" }
+ctap-types = { git = "https://github.com/Nitrokey/ctap-types.git", tag = "v0.1.2-nitrokey.3" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.6" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 iso7816 = { git = "https://github.com/Nitrokey/iso7816.git", tag = "v0.1.1-nitrokey.1"}
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
+serde-indexed = { git = "https://github.com/Nitrokey/serde-indexed.git", tag = "v0.1.0-nitrokey.1" }
 trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.12" }
 
 # unreleased upstream changes

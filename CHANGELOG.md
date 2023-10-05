@@ -1,3 +1,13 @@
+# Unreleased
+
+### Fixed
+
+- fido-authenticator: Reduce the maximum credential ID length for improved compatibility ([fido-authenticator#37][])
+- fido-authenticator: Multiple changes to improve compliance with the specification (overview: [fido-authenticator#6][])
+
+[fido-authenticator#6]: https://github.com/Nitrokey/fido-authenticator/issues/6
+[fido-authenticator#37]: https://github.com/trussed-dev/fido-authenticator/issues/37
+
 # v1.5.0 (2023-05-31)
 
 ### Features
