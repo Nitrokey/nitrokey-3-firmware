@@ -63,7 +63,6 @@ pub struct Runner;
 impl apps::Runner for Runner {
     type Syscall = RunnerSyscall;
     type Reboot = <SocT as Soc>::Reboot;
-    #[cfg(feature = "provisioner")]
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
