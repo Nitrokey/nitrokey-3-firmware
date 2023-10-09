@@ -16,7 +16,7 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app", tag = "v0.1.0-nitro
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", rev = "42751efdc3c717135e8f26ceaa6ce23fb57d0498" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", rev = "0e3e56558505f5fdc755c41ff91727c20cdd3ba6" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
-iso7816 = { git = "https://github.com/Nitrokey/iso7816.git", tag = "v0.1.1-nitrokey.1"}
+iso7816 = { git = "https://github.com/trussed-dev/iso7816.git", rev = "58152e8737bf59c1123e75dc94691f076b31e030"}
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 trussed = { git = "https://github.com/Nitrokey/trussed", tag = "v0.1.0-nitrokey.12" }
 
@@ -31,6 +31,7 @@ secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "
 webcrypt = { git = "https://github.com/Nitrokey/nitrokey-webcrypt-rust", tag = "v0.7.0"}
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.1.1" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.2" }
+se05x = { git = "https://github.com/Nitrokey/se05x.git", rev = "2625b3387557a02d12948f2f44e980e37f1f9cca"} 
 trussed-auth = { git = "https://github.com/Nitrokey/trussed-auth", tag = "v0.2.2-nitrokey.1" }
 trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", tag = "v0.1.0"}
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "hmacsha256p256" }

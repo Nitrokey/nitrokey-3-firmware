@@ -1,4 +1,7 @@
+#[cfg(feature = "se050")]
+use super::types::TimerDelay;
 use apps::Dispatch;
+use chacha20::ChaCha8Rng;
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -28,6 +31,9 @@ use hal::{
 use lpc55_hal as hal;
 #[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
+use rand_core::{RngCore as _, SeedableRng as _};
+#[cfg(feature = "se050")]
+use se05x::se05x::Se05X;
 use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;
 
@@ -36,6 +42,7 @@ use super::{
     clock_controller::DynamicClockController,
     nfc,
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+    types::I2C,
 };
 use crate::{
     flash::ExtFlashStorage,
@@ -248,6 +255,7 @@ impl Stage1 {
         adc: hal::Adc<Unknown>,
         delay_timer: ctimer::Ctimer0,
         ctimer1: ctimer::Ctimer1,
+        ctimer2: ctimer::Ctimer2,
         ctimer3: ctimer::Ctimer3,
         perf_timer: ctimer::Ctimer4,
         pfr: Pfr<Unknown>,
@@ -271,6 +279,9 @@ impl Stage1 {
 
         let mut delay_timer = Timer::new(
             delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
+        );
+        let se050_timer = Timer::new(
+            ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
         let mut perf_timer = Timer::new(
             perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
@@ -315,6 +326,7 @@ impl Stage1 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
+            se050_timer,
             basic,
         }
     }
@@ -325,6 +337,7 @@ pub struct Stage2 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
+    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
 }
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
@@ -392,7 +405,7 @@ impl Stage2 {
         )
     }
 
-    fn run_hardware_checks(&mut self, flexcomm5: Flexcomm5<Unknown>) {
+    fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
             .unwrap()
@@ -428,15 +441,17 @@ impl Stage2 {
         nb::block!(self.basic.delay_timer.wait()).ok();
 
         // RESYNC response
-        let mut response = [0; 2];
+        let mut response = [0; 5];
         i2c.read(0x48, &mut response)
             .expect("failed to read RESYNC response");
 
-        if response != [0xa5, 0xe0] {
+        if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
             panic!("Unexpected RESYNC response: {:?}", response);
         }
 
         info_now!("hardware checks successful");
+
+        i2c
     }
 
     #[inline(never)]
@@ -449,9 +464,7 @@ impl Stage2 {
         usbhs: Usbhs<Unknown>,
         nfc_enabled: bool,
     ) -> Stage3 {
-        if cfg!(feature = "lpc55-hardware-checks") {
-            self.run_hardware_checks(flexcomm5);
-        }
+        let se050_i2c = self.get_se050_i2c(flexcomm5);
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc_chip, spi) = if use_nfc {
@@ -477,6 +490,7 @@ impl Stage2 {
             basic: self.basic,
             usb_nfc,
             spi,
+            se050: (se050_i2c, self.se050_timer),
         }
     }
 }
@@ -488,6 +502,7 @@ pub struct Stage3 {
     basic: Basic,
     usb_nfc: UsbNfc,
     spi: Option<Spi>,
+    se050: (I2C, Timer<ctimer::Ctimer2<hal::Enabled>>),
 }
 
 impl Stage3 {
@@ -521,6 +536,7 @@ impl Stage3 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             spi: self.spi,
+            se050: self.se050,
             flash,
         }
     }
@@ -533,6 +549,7 @@ pub struct Stage4 {
     basic: Basic,
     usb_nfc: UsbNfc,
     spi: Option<Spi>,
+    se050: (I2C, Timer<ctimer::Ctimer2<hal::Enabled>>),
     flash: Flash,
 }
 
@@ -632,6 +649,7 @@ impl Stage4 {
             basic: self.basic,
             usb_nfc: self.usb_nfc,
             rng: self.flash.rng,
+            se050: self.se050,
             store,
         }
     }
@@ -687,6 +705,30 @@ pub struct Stage5 {
     usb_nfc: UsbNfc,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
+    se050: (I2C, Timer<ctimer::Ctimer2<hal::Enabled>>),
+}
+
+#[cfg(feature = "se050")]
+fn inject_se050_entropy<
+    Twi: se05x::t1::I2CForT1,
+    D: embedded_hal::blocking::delay::DelayUs<u32>,
+>(
+    se050: &mut Se05X<Twi, D>,
+    seed: &[u8; 32],
+) -> Result<[u8; 32], se05x::se05x::Error> {
+    use se05x::se05x::commands::GetRandom;
+    se050.enable()?;
+    let buf = &mut [0; 100];
+    let se050_rand = se050.run_command(&GetRandom { length: 32.into() }, buf)?;
+    let mut s: [u8; 32] = se050_rand
+        .data
+        .try_into()
+        .or(Err(se05x::se05x::Error::Unknown))?;
+    info!("Entropy from SE050: {:?}", s);
+    for (se050, orig) in s.iter_mut().zip(seed) {
+        *se050 ^= orig;
+    }
+    Ok(s)
 }
 
 impl Stage5 {
@@ -712,7 +754,30 @@ impl Stage5 {
             super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
         solobee_interface.set_status(trussed::platform::ui::Status::Idle);
 
-        let board = types::RunnerPlatform::new(self.rng, self.store, solobee_interface);
+        let mut seed = [0; 32];
+        self.rng.fill_bytes(&mut seed);
+
+        #[cfg(feature = "se050")]
+        {
+            if self.clocks.is_nfc_passive {
+                self.status |= InitStatus::SE050_RAND_ERROR;
+            } else {
+                let mut se050 = Se05X::new(self.se050.0, 0x48, TimerDelay(self.se050.1));
+                match inject_se050_entropy(&mut se050, &seed) {
+                    Ok(extended_seed) => {
+                        seed = extended_seed;
+                    }
+                    Err(_err) => {
+                        error!("Failed to get SE050 entropy: {_err:?}");
+                        self.status |= InitStatus::SE050_RAND_ERROR;
+                    }
+                }
+            }
+        }
+
+        let rng = ChaCha8Rng::from_seed(seed);
+
+        let board = types::RunnerPlatform::new(rng, self.store, solobee_interface);
         let trussed = Service::with_dispatch(board, Dispatch::new(Location::Internal));
 
         Stage6 {

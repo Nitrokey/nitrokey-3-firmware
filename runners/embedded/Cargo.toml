@@ -28,6 +28,7 @@ serde = { version = "1.0", default-features = false }
 heapless = "0.7"
 heapless-bytes = { version = "0.3.0", features = ["cbor"] }
 lfs-backup = { path = "../../components/lfs-backup" }
+se05x = { version = "0.0.1", optional = true}
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -96,13 +97,14 @@ board-nk3am = ["soc-nrf52840", "extflash_spi"]
 
 board-nk3xn = ["soc-lpc55"]
 
-soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20"]
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic"]
+soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "se05x?/nrf"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "se05x?/lpc55", "chacha20", "systick-monotonic"]
 
 extflash_qspi = []
 extflash_spi = []
 
 lpc55-hardware-checks = []
+se050 = ["se05x"]
 
 log-all = []
 log-trace = []

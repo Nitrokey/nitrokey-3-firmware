@@ -542,6 +542,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmac"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8543454e3c3f5126effff9cd44d562af4e31fb8ce1cc0d3dcd8f084515dbc1aa"
+dependencies = [
+ "cipher 0.4.4",
+ "dbl",
+ "digest 0.10.6",
+]
+
+[[package]]
 name = "cobs"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -680,6 +691,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "crc16"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338089f42c427b86394a5ee60ff321da23a5c89c9d89514c829687b26359fcff"
+
+[[package]]
 name = "critical-section"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -812,6 +829,15 @@ dependencies = [
  "lock_api",
  "once_cell",
  "parking_lot_core",
+]
+
+[[package]]
+name = "dbl"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd2735a791158376708f9347fe8faba9667589d82427ef3aed6794a8981de3d9"
+dependencies = [
+ "generic-array 0.14.7",
 ]
 
 [[package]]
@@ -1008,6 +1034,7 @@ dependencies = [
  "rand_core",
  "ref-swap",
  "rtt-target",
+ "se05x",
  "serde",
  "spi-memory",
  "systick-monotonic",
@@ -1602,7 +1629,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/iso7816.git?tag=v0.1.1-nitrokey.1#d1ee4146c43b9f25d21821c70fefdd87b886f4a9"
+source = "git+https://github.com/trussed-dev/iso7816.git?rev=58152e8737bf59c1123e75dc94691f076b31e030#58152e8737bf59c1123e75dc94691f076b31e030"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -2571,6 +2598,26 @@ name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
+
+[[package]]
+name = "se05x"
+version = "0.0.1"
+source = "git+https://github.com/Nitrokey/se05x.git?rev=2625b3387557a02d12948f2f44e980e37f1f9cca#2625b3387557a02d12948f2f44e980e37f1f9cca"
+dependencies = [
+ "aes",
+ "bitflags 2.4.0",
+ "byteorder",
+ "cmac",
+ "crc16",
+ "delog",
+ "embedded-hal",
+ "heapless 0.7.16",
+ "hex-literal 0.4.1",
+ "iso7816",
+ "lpc55-hal",
+ "nrf-hal-common",
+ "rand",
+]
 
 [[package]]
 name = "secrets-app"

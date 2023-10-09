@@ -139,6 +139,7 @@ bitflags! {
         const INTERNAL_FLASH_ERROR = 0b00000010;
         const EXTERNAL_FLASH_ERROR = 0b00000100;
         const MIGRATION_ERROR = 0b00001000;
+        const SE050_RAND_ERROR = 0b00010000;
     }
 }
 
