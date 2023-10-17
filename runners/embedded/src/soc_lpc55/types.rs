@@ -41,7 +41,7 @@ use lpc55_hal::littlefs2_prince_filesystem;
 #[cfg(feature = "no-encrypted-storage")]
 littlefs2_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
 #[cfg(not(feature = "no-encrypted-storage"))]
-littlefs2_prince_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
+pub use super::prince::InternalFilesystem;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 

@@ -2,6 +2,7 @@ pub mod clock_controller;
 pub mod init;
 pub mod monotonic;
 pub mod nfc;
+pub mod prince;
 pub mod spi;
 pub mod trussed;
 pub mod types;
