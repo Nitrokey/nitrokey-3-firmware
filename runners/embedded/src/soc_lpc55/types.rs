@@ -1,7 +1,7 @@
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::spi::{FlashCs, Spi};
 use super::trussed::UserInterface;
-use crate::{flash::ExtFlashStorage, types::build_constants};
+use crate::flash::ExtFlashStorage;
 use apps::Variant;
 use embedded_time::duration::Milliseconds;
 use lpc55_hal::{
@@ -10,7 +10,6 @@ use lpc55_hal::{
     raw,
     traits::flash::WriteErase,
 };
-use trussed::types::LfsResult;
 use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -19,14 +18,16 @@ use utils::OptionalStorage;
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
 
 #[cfg(feature = "no-encrypted-storage")]
+use crate::types::build_constants;
+#[cfg(feature = "no-encrypted-storage")]
 use lpc55_hal::littlefs2_filesystem;
-#[cfg(not(feature = "no-encrypted-storage"))]
-use lpc55_hal::littlefs2_prince_filesystem;
+#[cfg(feature = "no-encrypted-storage")]
+use trussed::types::LfsResult;
 
 #[cfg(feature = "no-encrypted-storage")]
 littlefs2_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
 #[cfg(not(feature = "no-encrypted-storage"))]
-littlefs2_prince_filesystem!(InternalFilesystem: (build_constants::CONFIG_FILESYSTEM_BOUNDARY));
+pub use super::prince::InternalFilesystem;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
