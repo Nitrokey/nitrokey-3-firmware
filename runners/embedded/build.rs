@@ -13,6 +13,8 @@ struct Config {
 #[derive(serde::Deserialize)]
 struct Parameters {
     flash_origin: u32,
+    #[serde(default)]
+    flash_end: Option<u32>,
     filesystem_boundary: u32,
     filesystem_end: u32,
 }
@@ -106,21 +108,24 @@ fn generate_memory_x(outpath: &Path, template: &str, config: &Config) {
 "#;
 
     let template = std::fs::read_to_string(template).expect("cannot read memory.x template file");
-    let template = template.replace(
-        "##FLASH_LENGTH##",
-        &format!(
-            "{}",
-            (config.parameters.filesystem_boundary - config.parameters.flash_origin) >> 10
-        ),
-    );
 
-    let template = template.replace(
-        "##FS_LENGTH##",
-        &format!(
-            "{}",
-            (config.parameters.filesystem_end - config.parameters.filesystem_boundary) >> 10
-        ),
+    let flash_end = config
+        .parameters
+        .flash_end
+        .unwrap_or(config.parameters.filesystem_boundary);
+    let flash_len = flash_end - config.parameters.flash_origin;
+    assert!(
+        flash_len % 1024 == 0,
+        "Flash length must be a multiple of 1024"
     );
+    let template = template.replace("##FLASH_LENGTH##", &format!("{}", flash_len >> 10));
+
+    let fs_len = config.parameters.filesystem_end - config.parameters.filesystem_boundary;
+    assert!(
+        fs_len % 1024 == 0,
+        "Flash length must be a multiple of 1024"
+    );
+    let template = template.replace("##FS_LENGTH##", &format!("{}", fs_len >> 10));
 
     let template = template.replace(
         "##FS_BASE##",
@@ -219,6 +224,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         &mut f,
         "CONFIG_FLASH_BASE",
         config.parameters.flash_origin,
+        usize
+    );
+    add_build_variable!(
+        &mut f,
+        "CONFIG_FLASH_END",
+        config
+            .parameters
+            .flash_end
+            .unwrap_or(config.parameters.filesystem_boundary),
         usize
     );
 
