@@ -114,22 +114,18 @@ fn generate_memory_x(outpath: &Path, template: &str, config: &Config) {
         .flash_end
         .unwrap_or(config.parameters.filesystem_boundary);
     let flash_len = flash_end - config.parameters.flash_origin;
-    assert!(
-        flash_len % 1024 == 0,
-        "Flash length must be a multiple of 1024"
-    );
-    let template = template.replace("##FLASH_LENGTH##", &format!("{}", flash_len >> 10));
+    let template = template.replace("##FLASH_LENGTH##", &format!("{flash_len:#X}"));
 
     let fs_len = config.parameters.filesystem_end - config.parameters.filesystem_boundary;
-    let template = template.replace("##FS_LENGTH##", &format!("{}", fs_len >> 10));
+    let template = template.replace("##FS_LENGTH##", &format!("{fs_len:#X}"));
 
     let template = template.replace(
         "##FS_BASE##",
-        &format!("{:x}", config.parameters.filesystem_boundary),
+        &format!("{:#X}", config.parameters.filesystem_boundary),
     );
     let template = template.replace(
         "##FLASH_BASE##",
-        &format!("{:x}", config.parameters.flash_origin),
+        &format!("{:#X}", config.parameters.flash_origin),
     );
 
     std::fs::write(outpath, [buildrs_caveat, &template].join("")).expect("cannot write memory.x");
