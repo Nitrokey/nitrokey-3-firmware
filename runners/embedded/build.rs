@@ -121,10 +121,6 @@ fn generate_memory_x(outpath: &Path, template: &str, config: &Config) {
     let template = template.replace("##FLASH_LENGTH##", &format!("{}", flash_len >> 10));
 
     let fs_len = config.parameters.filesystem_end - config.parameters.filesystem_boundary;
-    assert!(
-        fs_len % 1024 == 0,
-        "Flash length must be a multiple of 1024"
-    );
     let template = template.replace("##FS_LENGTH##", &format!("{}", fs_len >> 10));
 
     let template = template.replace(

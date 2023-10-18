@@ -17,30 +17,39 @@ use lpc55_hal::{
     typestates::init_state::Enabled,
 };
 
-use crate::types::build_constants::CONFIG_FILESYSTEM_BOUNDARY;
+use crate::types::build_constants::{
+    CONFIG_FILESYSTEM_BOUNDARY, CONFIG_FILESYSTEM_END, CONFIG_FLASH_END,
+};
 
-const FS_START: usize = CONFIG_FILESYSTEM_BOUNDARY;
-const FLASH_SIZE: usize = 631 * 1024 + 512;
-const FS_END: usize = FLASH_SIZE;
-const BLOCK_COUNT: usize = (FS_END - FS_START) / BLOCK_SIZE;
+pub const FS_START: usize = CONFIG_FILESYSTEM_BOUNDARY;
+pub const FS_END: usize = CONFIG_FILESYSTEM_END;
+pub const BLOCK_COUNT: usize = (FS_END - FS_START) / BLOCK_SIZE;
+const _FLASH_SIZE: usize = 631 * 1024 + 512;
 
 const PRINCE_REGION2_START: usize = 0x80_000;
+const PRINCE_SUBREGION_SIZE: usize = 8 * 1024;
 const PRINCE_REGION2_ENABLE: u32 = {
     let offset = FS_START - PRINCE_REGION2_START;
-    let subregion_count = offset / 8 / 1024;
+    let subregion_count = offset / PRINCE_SUBREGION_SIZE;
     0xffffffff << subregion_count
 };
 const PRINCE_REGION2_DISABLE: u32 = 0;
 
 // Check that the FS is placed in PRINCE Region 2
-const _: () = assert!(FS_START < FLASH_SIZE);
-const _: () = assert!(FS_START > PRINCE_REGION2_START);
-const _: () = assert!(FS_END <= FLASH_SIZE);
+const _: () = assert!(FS_START >= PRINCE_REGION2_START);
+const _: () = assert!(FS_START < FS_END);
+const _: () = assert!(FS_END <= _FLASH_SIZE);
+// Check that the firmware does not overlap with the PRINCE subregions used for the FS
+const _: () = assert!(
+    CONFIG_FLASH_END
+        <= PRINCE_REGION2_START
+            + (FS_START - PRINCE_REGION2_START) / PRINCE_SUBREGION_SIZE * PRINCE_SUBREGION_SIZE
+);
 // Check that offset and size are multiples of the block size
 const _: () = assert!(FS_START % BLOCK_SIZE == 0);
 const _: () = assert!(FS_END % BLOCK_SIZE == 0);
 // Check that flash region does NOT spill over the flash boundary
-const _: () = assert!(FS_START + BLOCK_COUNT * BLOCK_SIZE <= FLASH_SIZE);
+const _: () = assert!(FS_START + BLOCK_COUNT * BLOCK_SIZE <= _FLASH_SIZE);
 
 pub fn enable(prince: &mut Prince<Enabled>) {
     prince.set_region_enable(Region::Region2, PRINCE_REGION2_ENABLE);

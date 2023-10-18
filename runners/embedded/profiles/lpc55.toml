@@ -7,7 +7,7 @@ target = "thumbv8m.main-none-eabi"
 flash_origin = 0x00000000
 flash_end = 0x92000
 filesystem_boundary = 0x93000
-filesystem_end = 0x9D800
+filesystem_end = 0x9DE00
 
 [identifier]
 usb_id_vendor = 0x20A0
