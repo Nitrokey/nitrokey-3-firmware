@@ -504,8 +504,8 @@ impl Stage3 {
         #[allow(unused_mut)]
         let mut rng = rng.enabled(syscon);
 
-        let prince = prince.enabled(&mut rng);
-        prince.disable_all_region_2();
+        let mut prince = prince.enabled(&mut rng);
+        super::prince::disable(&mut prince);
 
         let flash_gordon = FlashGordon::new(flash.enabled(syscon));
 

@@ -1,9 +1,9 @@
 MEMORY
 {
 
-    FLASH : ORIGIN = 0x##FLASH_BASE##, LENGTH = ##FLASH_LENGTH##K
+    FLASH : ORIGIN = ##FLASH_BASE##, LENGTH = ##FLASH_LENGTH##
 
-    FILESYSTEM : ORIGIN = 0x##FS_BASE##, LENGTH = ##FS_LENGTH##K
+    FILESYSTEM : ORIGIN = ##FS_BASE##, LENGTH = ##FS_LENGTH##
 
     /* for use with standard link.x */
     RAM : ORIGIN = 0x20000000, LENGTH = 272K
