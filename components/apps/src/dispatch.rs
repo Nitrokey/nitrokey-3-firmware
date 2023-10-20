@@ -181,44 +181,50 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
             Backend::SoftwareRsa => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-staging")]
             Backend::Staging => match extension {
-                Extension::Chunked => <StagingBackend as ExtensionImpl<ChunkedExtension>>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
-                Extension::WrapKeyToFile => <StagingBackend as ExtensionImpl<WrapKeyToFileExtension>>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
+                Extension::Chunked => {
+                    ExtensionImpl::<ChunkedExtension>::extension_request_serialized(
+                        &mut self.staging,
+                        &mut ctx.core,
+                        &mut ctx.backends.staging,
+                        request,
+                        resources,
+                    )
+                }
+                Extension::WrapKeyToFile => {
+                    ExtensionImpl::<WrapKeyToFileExtension>::extension_request_serialized(
+                        &mut self.staging,
+                        &mut ctx.core,
+                        &mut ctx.backends.staging,
+                        request,
+                        resources,
+                    )
+                }
                 #[cfg(feature = "webcrypt")]
-                Extension::HmacShaP256 => <StagingBackend as ExtensionImpl<HmacSha256P256Extension>>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
+                Extension::HmacShaP256 => {
+                    ExtensionImpl::<HmacSha256P256Extension>::extension_request_serialized(
+                        &mut self.staging,
+                        &mut ctx.core,
+                        &mut ctx.backends.staging,
+                        request,
+                        resources,
+                    )
+                }
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             #[cfg(feature = "se050")]
-            Backend::Se050 => {
-                match extension {
-                    Extension::Se050Manage => <Se050Backend<_,_> as ExtensionImpl<ManageExtension>>::extension_request_serialized(
+            Backend::Se050 => match extension {
+                Extension::Se050Manage => {
+                    ExtensionImpl::<ManageExtension>::extension_request_serialized(
                         self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
                         &mut ctx.core,
                         &mut ctx.backends.se050,
                         request,
-                        resources
-                    ),
-                    _ => Err(TrussedError::RequestNotAvailable),
+                        resources,
+                    )
                 }
-            }
+                _ => Err(TrussedError::RequestNotAvailable),
+            },
             _ => Err(TrussedError::RequestNotAvailable),
         }
     }
