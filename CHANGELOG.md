@@ -1,31 +1,55 @@
 # Unreleased
 
+### Features
+
+- Add an SE050 driver and its tests ([#335][])
+- usbip: Add user presence check ([#314][], [#321][])
+- admin-app: Add config mechanism ([#344][])
+
 ### Changed
 
+- Use SE050 entropy to bootstrap the random number generator ([#335][])
+- secrets-app: Update to v0.13.0-rc.1
+  - Confirm credential removal with a touch ([trussed-secrets-app#92][])
+  - Allow to update credential ([trussed-secrets-app#65][])
+  - Remove challenge response authentication method ([trussed-secrets-app#44][])
 - Improve stack usage of several components ([#353][])
 - Reject APDU commands from multiple transports ([apdu-dispatch#19][])
 
+### Fixed
+
+- fido-authenticator: Reduce the maximum credential ID length for improved compatibility ([fido-authenticator#37][])
+- fido-authenticator: Multiple changes to improve compliance with the specification (overview: [fido-authenticator#6][])
+- Correct maximum binary size for LPC55 and only enable PRINCE for the subregions used for the filesystem ([#355][])
+
+[#314]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/314
+[#321]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/321
+[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
+[#344]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/344
 [#353]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/353
+[#355]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/355
 [apdu-dispatch#19]: https://github.com/trussed-dev/apdu-dispatch/pull/19
+[fido-authenticator#6]: https://github.com/Nitrokey/fido-authenticator/issues/6
+[fido-authenticator#37]: https://github.com/trussed-dev/fido-authenticator/issues/37
+[trussed-secrets-app#44]: https://github.com/Nitrokey/trussed-secrets-app/issues/44
+[trussed-secrets-app#65]: https://github.com/Nitrokey/trussed-secrets-app/issues/65
+[trussed-secrets-app#92]: https://github.com/Nitrokey/trussed-secrets-app/issues/92
+
 
 # v1.5.0 (2023-05-31)
 
 ### Features
 
 - Upgrade the secrets function to version 0.11.0, adding support for static passwords, and KeepassXC integration ([#278][])
-- Add an SE050 driver and its tests ([#335][])
 
 ### Changed
 
 - Upgrade the OpenPGP function to version 1.1.0, fixing minor specification compliance issues and an unlikely data corruption scenario
-- Use SE050 entropy to bootstrap the random number generator ([#335][]) 
-
 
 ### Fixed
 
 - Upgrade ctaphid-dispatch, fixing panics after cancelled operations
 
-[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
 [#278]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/278
 [#277]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/277
 
