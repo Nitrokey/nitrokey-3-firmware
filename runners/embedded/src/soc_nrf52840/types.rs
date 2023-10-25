@@ -56,6 +56,14 @@ impl crate::types::Soc for Soc {
     type TrussedUI = super::board::TrussedUI;
     type Reboot = self::Reboot;
     type UUID = [u8; 16];
+    #[cfg(feature = "se050")]
+    type Twi = twim::Twim<pac::TWIM1>;
+    #[cfg(feature = "se050")]
+    type Se050Timer = nrf52840_hal::Timer<nrf52840_pac::TIMER1>;
+    #[cfg(not(feature = "se050"))]
+    type Twi = ();
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer = ();
 
     type Duration = super::rtic_monotonic::RtcDuration;
     type Instant = super::rtic_monotonic::RtcInstant;

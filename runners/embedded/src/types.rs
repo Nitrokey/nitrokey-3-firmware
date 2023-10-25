@@ -7,6 +7,8 @@ pub use apdu_dispatch::{
 use apps::{Dispatch, Variant};
 use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
+#[cfg(feature = "se050")]
+use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
@@ -43,6 +45,15 @@ pub trait Soc {
     type Reboot;
     type UUID;
 
+    #[cfg(feature = "se050")]
+    type Se050Timer: DelayUs<u32>;
+    #[cfg(feature = "se050")]
+    type Twi: se05x::t1::I2CForT1;
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer;
+    #[cfg(not(feature = "se050"))]
+    type Twi;
+
     type Duration;
     type Instant;
 
@@ -66,6 +77,8 @@ impl apps::Runner for Runner {
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
+    type Twi = <SocT as Soc>::Twi;
+    type Se050Timer = <SocT as Soc>::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
         *<SocT as Soc>::device_uuid()
@@ -123,7 +136,8 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed = trussed::Service<RunnerPlatform, Dispatch>;
+pub type Trussed =
+    trussed::Service<RunnerPlatform, Dispatch<<SocT as Soc>::Twi, <SocT as Soc>::Se050Timer>>;
 
 pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 
@@ -139,6 +153,7 @@ bitflags! {
         const INTERNAL_FLASH_ERROR = 0b00000010;
         const EXTERNAL_FLASH_ERROR = 0b00000100;
         const MIGRATION_ERROR = 0b00001000;
+        const SE050_RAND_ERROR = 0b00010000;
     }
 }
 

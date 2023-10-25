@@ -28,6 +28,7 @@ serde = { version = "1.0", default-features = false }
 heapless = "0.7"
 heapless-bytes = { version = "0.3.0", features = ["cbor"] }
 lfs-backup = { path = "../../components/lfs-backup" }
+rand = { version =  "0.8.5", default-features = false }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -62,6 +63,7 @@ systick-monotonic = { version = "1.0.0", optional = true }
 alloc-cortex-m = { version = "0.4.3", optional = true }
 bitflags = "1.3.2"
 ref-swap = "0.1.0"
+se05x = { version = "0.0.1", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -96,8 +98,11 @@ board-nk3am = ["soc-nrf52840", "extflash_spi"]
 
 board-nk3xn = ["soc-lpc55"]
 
-soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20"]
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic"]
+soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "se05x?/nrf"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic", "se05x?/lpc55", "chacha20"]
+
+se050 = ["dep:se05x", "apps/se050"]
+se050-test-app = ["se050", "apps/se050-test-app"]
 
 extflash_qspi = []
 extflash_spi = []

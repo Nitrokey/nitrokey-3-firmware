@@ -299,6 +299,43 @@ pub fn init_apps(
     types::Apps::with_service(&types::Runner, trussed, data)
 }
 
+#[cfg(feature = "se050")]
+pub fn init_se050<
+    I2C: se05x::t1::I2CForT1,
+    D: embedded_hal::blocking::delay::DelayUs<u32>,
+    R: rand::CryptoRng + rand::RngCore,
+>(
+    i2c: I2C,
+    delay: D,
+    dev_rng: &mut R,
+    init_status: &mut types::InitStatus,
+) -> (se05x::se05x::Se05X<I2C, D>, chacha20::ChaCha8Rng) {
+    use chacha20::ChaCha8Rng;
+    use rand::{Rng as _, SeedableRng};
+    use se05x::se05x::commands::GetRandom;
+
+    let seed: [u8; 32] = dev_rng.gen();
+    let mut se050 = se05x::se05x::Se05X::new(i2c, 0x48, delay);
+    let seed = (|| {
+        se050.enable()?;
+        let buf = &mut [0; 100];
+        let se050_rand = se050.run_command(&GetRandom { length: 32.into() }, buf)?;
+        let mut s: [u8; 32] = se050_rand
+            .data
+            .try_into()
+            .or(Err(se05x::se05x::Error::Unknown))?;
+        for (se050, orig) in s.iter_mut().zip(seed) {
+            *se050 ^= orig;
+        }
+        Ok::<_, se05x::se05x::Error>(s)
+    })()
+    .unwrap_or_else(|_err| {
+        debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
+        *init_status |= types::InitStatus::SE050_RAND_ERROR;
+        seed
+    });
+    (se050, ChaCha8Rng::from_seed(seed))
+}
 #[inline(never)]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
