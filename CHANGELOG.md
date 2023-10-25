@@ -1,3 +1,13 @@
+# Unreleased
+
+### Changed
+
+- Improve stack usage of several components ([#353][])
+- Reject APDU commands from multiple transports ([apdu-dispatch#19][])
+
+[#353]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/353
+[apdu-dispatch#19]: https://github.com/trussed-dev/apdu-dispatch/pull/19
+
 # v1.5.0 (2023-05-31)
 
 ### Features

@@ -79,7 +79,7 @@ checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "git+https://github.com/Nitrokey/apdu-dispatch?tag=v0.1.2-nitrokey.1#b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4"
+source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=f8d5e7738ed328935411aa7a4114622ebc96287f#f8d5e7738ed328935411aa7a4114622ebc96287f"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/ctaphid-dispatch?tag=v0.1.1-nitrokey.2#57cb3317878a8593847595319aa03ef17c29ec5b"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=94c97223ba8affaab08559c12105846b8fb14c7b#94c97223ba8affaab08559c12105846b8fb14c7b"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -1624,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/nitrokey/iso7816.git?rev=v0.1.1-nitrokey.2#5765eaac0f19313cf908071d8dfc9b1cd3bdae0a"
+source = "git+https://github.com/trussed-dev/iso7816.git?rev=33f04012168f3a2341f57f7fc0a0e9baf7fd364d#33f04012168f3a2341f57f7fc0a0e9baf7fd364d"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -3161,10 +3161,10 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed?tag=v0.1.0-nitrokey.12#f3c95ab16fe6f9357a5d792e709e93d06c304b34"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=91d501b6a9bfe9588c26864f6f456e5702226b25#91d501b6a9bfe9588c26864f6f456e5702226b25"
 dependencies = [
  "aes",
- "bitflags 1.3.2",
+ "bitflags 2.4.0",
  "cbc",
  "cbor-smol",
  "cfg-if",
@@ -3407,7 +3407,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/usbd-ctaphid?tag=v0.1.0-nitrokey.1#e9cbf904f548979685c4c06d75479b75e3695160"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=3f24df2f8b799eb203539c0e723854e8f7739f79#3f24df2f8b799eb203539c0e723854e8f7739f79"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
