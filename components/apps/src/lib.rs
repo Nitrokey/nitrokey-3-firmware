@@ -10,6 +10,8 @@ use apdu_dispatch::{
 };
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
+#[cfg(feature = "se050")]
+use embedded_hal::blocking::delay::DelayUs;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
@@ -71,6 +73,14 @@ pub trait Runner {
     type Store: trussed::store::Store;
     #[cfg(feature = "provisioner-app")]
     type Filesystem: trussed::types::LfsStorage + 'static;
+    #[cfg(feature = "se050")]
+    type Twi: se05x::t1::I2CForT1 + 'static;
+    #[cfg(feature = "se050")]
+    type Se050Timer: DelayUs<u32> + 'static;
+    #[cfg(not(feature = "se050"))]
+    type Twi: 'static;
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer: 'static;
 
     fn uuid(&self) -> [u8; 16];
 }
@@ -82,7 +92,10 @@ pub struct Data<R: Runner> {
     pub _marker: PhantomData<R>,
 }
 
-type Client<R> = ClientImplementation<<R as Runner>::Syscall, Dispatch>;
+type Client<R> = ClientImplementation<
+    <R as Runner>::Syscall,
+    Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
+>;
 
 type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus, Config>;
 #[cfg(feature = "fido-authenticator")]
@@ -174,6 +187,7 @@ impl<R: Runner> Apps<R> {
             App::new(runner, &mut make_client, (), &admin.config().fido),
             App::new(runner, &mut make_client, (), &()),
         );
+
         Self {
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
             fido: App::new(runner, &mut make_client, (), &admin.config().fido),
@@ -195,7 +209,7 @@ impl<R: Runner> Apps<R> {
 
     pub fn with_service<P: Platform>(
         runner: &R,
-        trussed: &mut Service<P, Dispatch>,
+        trussed: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         data: Data<R>,
     ) -> Self
     where
@@ -404,6 +418,16 @@ impl<R: Runner> App<R> for AdminApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+
+    fn backends(runner: &R, _config: &()) -> &'static [BackendId<Backend>] {
+        const BACKENDS_ADMIN: &[BackendId<Backend>] = &[
+            #[cfg(feature = "se050-test-app")]
+            BackendId::Custom(Backend::Se050),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_ADMIN
     }
 }
 

@@ -3,15 +3,19 @@
 ### Features
 
 - Upgrade the secrets function to version 0.11.0, adding support for static passwords, and KeepassXC integration ([#278][])
+- Add an SE050 driver and its tests ([#335][])
 
 ### Changed
 
 - Upgrade the OpenPGP function to version 1.1.0, fixing minor specification compliance issues and an unlikely data corruption scenario
+- Use SE050 entropy to bootstrap the random number generator ([#335][]) 
+
 
 ### Fixed
 
 - Upgrade ctaphid-dispatch, fixing panics after cancelled operations
 
+[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
 [#278]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/278
 [#277]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/277
 
