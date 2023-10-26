@@ -173,28 +173,42 @@ build-usbip:
     paths:
       - artifacts
 
-# This is a copy of build-firmware, but without the strict tag check guard and NK3AM build temporarily removed
+# This is a copy of build-firmware, but without the strict tag check guard, and with no-buttons feature.
+# Additionally its run on push, while build-firmware is just "web" only.
 # FIXME Either this or build-firmware should be removed
 build-firmware-for-tests:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'  # FIXME remove, if that's colliding with artifacts from build-firmware (see releases)
   tags:
     - docker
   stage: build
+  variables:
+      ARTIFACTS: artifacts-tests
   script:
     - git describe
     - export VERSION=`git describe`
-    - mkdir -p artifacts
+    - rm -r ./${ARTIFACTS}
+    - mkdir -p ${ARTIFACTS}/nrf52 ${ARTIFACTS}/lpc55
+    - find ${ARTIFACTS}
+    - echo LPC
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin ${ARTIFACTS}/lpc55/firmware-nk3xn-lpc55-$VERSION.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
-  after_script:
-    - wget $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin ${ARTIFACTS}/lpc55/provisioner-nk3xn-lpc55-$VERSION.bin
+    - wget https://github.com/NordicSemiconductor/pc-nrfutil/releases/download/v6.1.2/nrfutil-linux && \
+        mv nrfutil-linux /usr/bin/nrfutil && \
+        chmod +x /usr/bin/nrfutil
+    - echo NRF
+    - make -C utils/nrf-builder build EXTRA_FEATURES=no-buttons
+    - cp -v utils/nrf-builder/provisioner-nk3am-nrf52*zip ${ARTIFACTS}/nrf52/
+    - cp -v $(shell ls utils/nrf-builder/develop-nk3am-nrf52*.zip) ${ARTIFACTS}/nrf52/firmware-nk3am-nrf52-$(VERSION).zip
+    - find ${ARTIFACTS} -type f
+    - echo TODO FEATURES+=test
   artifacts:
     paths:
-      - artifacts
+      - artifacts-tests
 
 
 # This is a hardware test job for the Nitrokey 3
@@ -204,14 +218,15 @@ hardware-tests:
   tags:
     - nk3-hw
   stage: test
+  parallel:
+    matrix:
+      - MODEL: [ nrf52, lpc55 ]
   script:
     - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "git@git.nitrokey.com:"
     - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "https://git.nitrokey.com/"
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - cd nitrokey-hardware-test && make ci FW=../artifacts && cd .. # use built firmware files
+    - cd nitrokey-hardware-test && make ci FW=../artifacts-tests/$MODEL/ MODEL=$MODEL && cd .. # use built firmware files
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml  # the result will be merged in the future
-  after_script:
-    - curl $icon_server/checkmark/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/$CI_JOB_NAME/$CI_JOB_STATUS/${CI_JOB_URL#*/*/*/}
   dependencies:
     - build-firmware-for-tests  # needs artifacts from this job only to run, don't send anything else
   needs:
