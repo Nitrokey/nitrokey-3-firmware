@@ -178,7 +178,6 @@ build-firmware-for-tests:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
   tags:
     - docker
   stage: build
@@ -201,7 +200,6 @@ build-firmware-for-tests:
 hardware-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
   tags:
     - nk3-hw
   stage: test
