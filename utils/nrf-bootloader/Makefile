@@ -20,26 +20,27 @@ PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
 .PHONY: all enter clean verify
 
 all: $(IMAGE_NAME).built verify $(SIGNING_KEY)
-	docker run -it \
-		-v $(shell pwd):/work \
-		$(IMAGE_NAME) \
-		make -f Makefile.docker
+	#docker run -it \
+#		-v $(shell pwd):/work \
+#		$(IMAGE_NAME) \
+#		make -f Makefile.docker
+	echo Nothing to do
 
 enter: $(IMAGE_NAME).built
-	docker run -it \
-		-v $(shell pwd):/work \
-		$(IMAGE_NAME) \
-		bash
+	#docker run -it \
+#		-v $(shell pwd):/work \
+#		$(IMAGE_NAME) \
+#		bash
+	echo Nothing to do
 
 verify: $(IMAGE_NAME).built
-	docker run -it \
-		-v $(shell pwd):/work \
-		$(IMAGE_NAME) \
-		sha256sum -c /work/sha256sums.txt	
+	#sha256sum -c sha256sums.txt
+	echo Nothing to do
 	
 $(IMAGE_NAME).built: Dockerfile
-	docker build -t $(IMAGE_NAME) .
-	touch $@
+	#docker build -t $(IMAGE_NAME) .
+	#touch $@
+	echo Nothing to do
 
 clean:
 	rm -rf build

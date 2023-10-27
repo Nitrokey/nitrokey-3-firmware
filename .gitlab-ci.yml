@@ -175,7 +175,7 @@ build-usbip:
 
 # This is a copy of build-firmware, but without the strict tag check guard, and with no-buttons feature.
 # Additionally its run on push, while build-firmware is just "web" only.
-# FIXME Either this or build-firmware should be removed
+# TODO Discuss should this be merged to build-firmware (here we are using different features)
 build-firmware-for-tests:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
@@ -189,21 +189,23 @@ build-firmware-for-tests:
   script:
     - git describe
     - export VERSION=`git describe`
-    - rm -r ./${ARTIFACTS}
+    - rm -r ./${ARTIFACTS} || true
     - mkdir -p ${ARTIFACTS}/nrf52 ${ARTIFACTS}/lpc55
     - find ${ARTIFACTS}
-    - echo LPC
+    - echo Building LPC firmware
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin ${ARTIFACTS}/lpc55/firmware-nk3xn-lpc55-$VERSION.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin ${ARTIFACTS}/lpc55/provisioner-nk3xn-lpc55-$VERSION.bin
+    - echo Building NRF firmware
     - wget https://github.com/NordicSemiconductor/pc-nrfutil/releases/download/v6.1.2/nrfutil-linux && \
-        mv nrfutil-linux /usr/bin/nrfutil && \
+        cp nrfutil-linux /usr/bin/nrfutil && \
         chmod +x /usr/bin/nrfutil
-    - echo NRF
+    - cp nrfutil-linux /usr/bin/nrfutil
+    - chmod +x /usr/bin/nrfutil
     - make -C utils/nrf-builder build EXTRA_FEATURES=no-buttons
     - cp -v utils/nrf-builder/provisioner-nk3am-nrf52*zip ${ARTIFACTS}/nrf52/
-    - cp -v $(shell ls utils/nrf-builder/develop-nk3am-nrf52*.zip) ${ARTIFACTS}/nrf52/firmware-nk3am-nrf52-$(VERSION).zip
+    - cp -v $(ls utils/nrf-builder/develop-nk3am-nrf52*.zip) ${ARTIFACTS}/nrf52/firmware-nk3am-nrf52-$VERSION.zip
     - find ${ARTIFACTS} -type f
     - echo TODO FEATURES+=test
   artifacts:

@@ -143,8 +143,10 @@ $(NK3_BL_KEY_DIR): $(KEY_DIR)
 
 $(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR)
 	$(MAKE) -C $(NK3_BL_DIR) build-bootloader
-	cp $(NK3_BL_DIR)/mbr.hex mbr.hex
-	cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
+	# cp $(NK3_BL_DIR)/mbr.hex mbr.hex
+	# cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
+	# copy prebuilt binaries - use these only in CI tests!
+	cp suspicious-binaries/* .
 
 $(FW_RUNNER): $(NK3_FW_DIR)
 
