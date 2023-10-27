@@ -791,7 +791,7 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "git+https://github.com/Nitrokey/ctap-types?rev=v0.1.2-nitrokey.3#0d9f6f5d7ff7f6c90c8f284037699f749daee641"
+source = "git+https://github.com/Nitrokey/ctap-types?tag=v0.1.2-nitrokey.4#702b5b5248f88091b22c46c936cb0f99425c0a61"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -1127,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?rev=v0.1.1-nitrokey.6#d318c117a26ce75194e122a36f6e03ec95c960e0"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.7#2f49017eec5a87bd2570593571b87a15a9890ed0"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -3521,7 +3521,7 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust?tag=v0.8.0-rc2#d1b9fbb77df998f5fb1e9e8997afefaa69360508"
+source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust?tag=v0.8.0-rc3#e4ab7c371187ccfc69adcc098d0f81ece15ceae2"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
