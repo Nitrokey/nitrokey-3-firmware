@@ -60,11 +60,10 @@ pub fn init(
             hal.flexcomm.5,
             hal.inputmux,
             hal.pint,
-            hal.usbhs,
             nfc_enabled,
         )
         .next(hal.rng, hal.prince, hal.flash)
         .next()
         .next(hal.rtc)
-        .next()
+        .next(hal.usbhs)
 }
