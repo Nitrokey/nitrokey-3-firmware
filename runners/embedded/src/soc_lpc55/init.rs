@@ -1,3 +1,6 @@
+use apdu_dispatch::interchanges::{
+    Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
+};
 use apps::Dispatch;
 use embedded_hal::{
     blocking::i2c::{Read, Write},
@@ -25,6 +28,7 @@ use hal::{
     typestates::init_state::Unknown,
     typestates::pin::state::Gpio,
 };
+use interchange::Channel;
 use lpc55_hal as hal;
 #[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
@@ -46,8 +50,10 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, InitStatus, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, InitStatus, Iso14443, RunnerStore, Trussed},
 };
+
+type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -336,10 +342,6 @@ pub struct Stage2 {
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
 }
 
-type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
-
-static mut USBD: Option<UsbBusType> = None;
-
 impl Stage2 {
     fn setup_spi(&mut self, flexcomm0: Flexcomm0<Unknown>, config: SpiConfig) -> Spi {
         let token = self.clocks.clocks.support_flexcomm_token().unwrap();
@@ -347,35 +349,13 @@ impl Stage2 {
         spi::init(spi, &mut self.clocks.iocon, config)
     }
 
-    fn setup_usb_bus(&mut self, usbp: Usbhs) -> &'static UsbBusType {
-        let vbus_pin = pins::Pio0_22::take()
-            .unwrap()
-            .into_usb0_vbus_pin(&mut self.clocks.iocon);
-
-        let mut usb = usbp.enabled_as_device(
-            &mut self.peripherals.anactrl,
-            &mut self.peripherals.pmc,
-            &mut self.peripherals.syscon,
-            &mut self.basic.delay_timer,
-            self.clocks.clocks.support_usbhs_token().unwrap(),
-        );
-        // TODO: do we need this one?
-        usb.disable_high_speed();
-
-        let usbd = lpc55_hal::drivers::UsbBus::new(usb, vbus_pin);
-        unsafe {
-            USBD.replace(usbd);
-        }
-
-        unsafe { USBD.as_ref().unwrap() }
-    }
-
     fn setup_fm11nc08(
         &mut self,
         spi: Spi,
         inputmux: InputMux<Unknown>,
         pint: Pint<Unknown>,
-    ) -> Option<nfc::NfcChip> {
+        nfc_rq: CcidRequester<'static>,
+    ) -> Option<Iso14443> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
@@ -390,7 +370,7 @@ impl Stage2 {
 
         let force_nfc_reconfig = cfg!(feature = "reconfigure-nfc");
 
-        nfc::try_setup(
+        let nfc = nfc::try_setup(
             spi,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
@@ -398,7 +378,13 @@ impl Stage2 {
             &mut self.basic.delay_timer,
             force_nfc_reconfig,
             &mut self.status,
-        )
+        )?;
+
+        let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        iso14443.poll();
+        // Give a small delay to charge up capacitors
+        // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+        Some(iso14443)
     }
 
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
@@ -456,34 +442,30 @@ impl Stage2 {
         flexcomm5: Flexcomm5<Unknown>,
         mux: InputMux<Unknown>,
         pint: Pint<Unknown>,
-        usbhs: Usbhs<Unknown>,
         nfc_enabled: bool,
     ) -> Stage3 {
+        static NFC_CHANNEL: CcidChannel = Channel::new();
+        let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+
         let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
-        let (nfc_chip, spi) = if use_nfc {
+        let (nfc, spi) = if use_nfc {
             let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-            let nfc = self.setup_fm11nc08(spi, mux, pint);
+            let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
             (nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
             (None, Some(spi))
         };
 
-        let usb_bus = if !self.clocks.is_nfc_passive {
-            Some(self.setup_usb_bus(usbhs))
-        } else {
-            None
-        };
-
-        let usb_nfc = crate::init_usb_nfc(usb_bus, nfc_chip);
         Stage3 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
-            usb_nfc,
+            nfc,
+            nfc_rp,
             spi,
             se050_timer: self.se050_timer,
             se050_i2c,
@@ -496,7 +478,8 @@ pub struct Stage3 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    usb_nfc: UsbNfc,
+    nfc: Option<Iso14443>,
+    nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
     se050_i2c: Option<I2C>,
@@ -531,7 +514,8 @@ impl Stage3 {
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
-            usb_nfc: self.usb_nfc,
+            nfc: self.nfc,
+            nfc_rp: self.nfc_rp,
             spi: self.spi,
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
@@ -545,7 +529,8 @@ pub struct Stage4 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    usb_nfc: UsbNfc,
+    nfc: Option<Iso14443>,
+    nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     flash: Flash,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
@@ -634,20 +619,18 @@ impl Stage4 {
             };
         }
 
-        if let Some(iso14443) = &mut self.usb_nfc.iso14443 {
+        if let Some(iso14443) = &mut self.nfc {
             iso14443.poll();
         }
-
-        // Cancel any possible outstanding use in delay timer
-        self.basic.delay_timer.cancel().ok();
 
         Stage5 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
-            usb_nfc: self.usb_nfc,
             rng: self.flash.rng,
+            nfc: self.nfc,
+            nfc_rp: self.nfc_rp,
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
             store,
@@ -702,7 +685,8 @@ pub struct Stage5 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    usb_nfc: UsbNfc,
+    nfc: Option<Iso14443>,
+    nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
@@ -774,7 +758,8 @@ impl Stage5 {
             peripherals: self.peripherals,
             clocks: self.clocks,
             basic: self.basic,
-            usb_nfc: self.usb_nfc,
+            nfc: self.nfc,
+            nfc_rp: self.nfc_rp,
             store: self.store,
             trussed,
         }
@@ -786,7 +771,8 @@ pub struct Stage6 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    usb_nfc: UsbNfc,
+    nfc: Option<Iso14443>,
+    nfc_rp: CcidResponder<'static>,
     store: RunnerStore,
     trussed: Trussed,
 }
@@ -809,8 +795,29 @@ impl Stage6 {
         }
     }
 
+    fn setup_usb_bus(&mut self, usbp: Usbhs) -> &'static UsbBusType {
+        static mut USBD: Option<UsbBusType> = None;
+
+        let vbus_pin = pins::Pio0_22::take()
+            .unwrap()
+            .into_usb0_vbus_pin(&mut self.clocks.iocon);
+
+        let mut usb = usbp.enabled_as_device(
+            &mut self.peripherals.anactrl,
+            &mut self.peripherals.pmc,
+            &mut self.peripherals.syscon,
+            &mut self.basic.delay_timer,
+            self.clocks.clocks.support_usbhs_token().unwrap(),
+        );
+        // TODO: do we need this one?
+        usb.disable_high_speed();
+
+        let usbd = lpc55_hal::drivers::UsbBus::new(usb, vbus_pin);
+        unsafe { USBD.insert(usbd) }
+    }
+
     #[inline(never)]
-    pub fn next(mut self) -> All {
+    pub fn next(mut self, usbhs: Usbhs<Unknown>) -> All {
         self.perform_data_migrations();
         let apps = crate::init_apps(
             &mut self.trussed,
@@ -818,6 +825,18 @@ impl Stage6 {
             &self.store,
             self.clocks.is_nfc_passive,
         );
+
+        let usb_bus = if !self.clocks.is_nfc_passive {
+            Some(self.setup_usb_bus(usbhs))
+        } else {
+            None
+        };
+
+        let usb_nfc = crate::init_usb_nfc(usb_bus, self.nfc, self.nfc_rp);
+
+        // Cancel any possible outstanding use in delay timer
+        self.basic.delay_timer.cancel().ok();
+
         let clock_controller = if self.clocks.is_nfc_passive {
             let adc = self.basic.adc.take();
             let clocks = self.clocks.clocks;
@@ -841,10 +860,10 @@ impl Stage6 {
 
         All {
             basic: self.basic,
-            usb_nfc: self.usb_nfc,
             trussed: self.trussed,
             apps,
             clock_controller,
+            usb_nfc,
         }
     }
 }

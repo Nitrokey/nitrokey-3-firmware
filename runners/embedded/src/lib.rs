@@ -1,9 +1,16 @@
 #![no_std]
 
+use apdu_dispatch::{
+    dispatch::ApduDispatch,
+    interchanges::{Channel as CcidChannel, Responder as CcidResponder},
+};
+use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use littlefs2::fs::Filesystem;
+use ref_swap::OptionRefSwap;
 use soc::types::Soc as SocT;
-use types::Soc;
+use trussed::interrupt::InterruptFlag;
+use types::{Iso14443, Soc};
 use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
 
 #[cfg(feature = "board-nk3am")]
@@ -172,27 +179,22 @@ pub fn init_store(
 
 pub fn init_usb_nfc(
     usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
-    nfcdev_opt: Option<<SocT as Soc>::NfcDevice>,
+    nfc: Option<Iso14443>,
+    nfc_rp: CcidResponder<'static>,
 ) -> types::usbnfc::UsbNfcInit {
     let config = <SocT as Soc>::INTERFACE_CONFIG;
 
-    use apdu_dispatch::interchanges::Channel as CcidChannel;
-    use ctaphid_dispatch::types::Channel as CtapChannel;
-    use ref_swap::OptionRefSwap;
-    use trussed::interrupt::InterruptFlag;
     static CCID_CHANNEL: CcidChannel = Channel::new();
-    static NFC_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel = Channel::new();
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
+
     /* claim interchanges */
     let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
-    let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
     let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
     /* initialize dispatchers */
-    let apdu_dispatch = apdu_dispatch::dispatch::ApduDispatch::new(ccid_rp, nfc_rp);
-    let ctaphid_dispatch =
-        ctaphid_dispatch::dispatch::Dispatch::with_interrupt(ctaphid_rp, Some(&CTAP_INTERRUPT));
+    let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);
+    let ctaphid_dispatch = CtaphidDispatch::with_interrupt(ctaphid_rp, Some(&CTAP_INTERRUPT));
 
     /* populate requesters (if bus options are provided) */
     let mut usb_classes = None;
@@ -226,28 +228,11 @@ pub fn init_usb_nfc(
         ));
     }
 
-    // TODO: move up?
-    let iso14443 = {
-        if let Some(nfcdev) = nfcdev_opt {
-            let mut iso14443 = nfc_device::Iso14443::new(nfcdev, nfc_rq);
-
-            iso14443.poll();
-            if true {
-                // Give a small delay to charge up capacitors
-                // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
-            }
-
-            Some(iso14443)
-        } else {
-            None
-        }
-    };
-
     types::usbnfc::UsbNfcInit {
         usb_classes,
         apdu_dispatch,
         ctaphid_dispatch,
-        iso14443,
+        iso14443: nfc,
     }
 }
 
@@ -336,6 +321,7 @@ pub fn init_se050<
     });
     (se050, ChaCha8Rng::from_seed(seed))
 }
+
 #[inline(never)]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {

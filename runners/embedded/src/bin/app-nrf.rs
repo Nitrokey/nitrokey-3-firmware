@@ -12,6 +12,8 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use apdu_dispatch::interchanges::Channel as CcidChannel;
+    use interchange::Channel;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
@@ -140,7 +142,9 @@ mod app {
         let store: ERL::types::RunnerStore =
             ERL::init_store(internal_flash, extflash, false, &mut init_status);
 
-        let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
+        static NFC_CHANNEL: CcidChannel = Channel::new();
+        let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+        let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None, nfc_rp);
         /* TODO: set up fingerprint device */
         /* TODO: set up SE050 device */
         use nrf52840_hal::prelude::OutputPin;
