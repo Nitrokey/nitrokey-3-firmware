@@ -36,7 +36,7 @@ pub fn banner() {
         "Embedded Runner ({}:{}) using librunner {}",
         <SocT as Soc>::SOC_NAME,
         <SocT as Soc>::BOARD_NAME,
-        utils::VERSION,
+        utils::VERSION_STRING,
     );
 }
 

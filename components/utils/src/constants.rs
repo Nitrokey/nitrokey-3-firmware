@@ -1,23 +1,22 @@
-use core::fmt::{self, Display, Formatter};
-
 pub const VERSION: Version = Version::from_env();
-pub const VERSION_STRING: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION_STRING: &str = env!("NK3_FIRMWARE_VERSION");
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Version {
     pub major: u8,
     pub minor: u8,
     pub patch: u8,
-    pub pre: Option<&'static str>,
 }
 
 impl Version {
     pub const fn from_env() -> Self {
+        let major = parse_simple_u8(env!("CARGO_PKG_VERSION_MAJOR"));
+        let minor = parse_simple_u8(env!("CARGO_PKG_VERSION_MINOR"));
+        let patch = parse_simple_u8(env!("CARGO_PKG_VERSION_PATCH"));
         Self {
-            major: parse_simple_u8(env!("CARGO_PKG_VERSION_MAJOR")),
-            minor: parse_simple_u8(env!("CARGO_PKG_VERSION_MINOR")),
-            patch: parse_simple_u8(env!("CARGO_PKG_VERSION_PATCH")),
-            pre: optional_str(env!("CARGO_PKG_VERSION_PRE")),
+            major,
+            minor,
+            patch,
         }
     }
 
@@ -30,16 +29,6 @@ impl Version {
 
     pub const fn usb_release(&self) -> u16 {
         u16::from_be_bytes([self.major, self.minor])
-    }
-}
-
-impl Display for Version {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "v{}.{}.{}", self.major, self.minor, self.patch)?;
-        if let Some(pre) = self.pre {
-            write!(f, "-{pre}")?;
-        }
-        Ok(())
     }
 }
 
@@ -59,14 +48,6 @@ const fn parse_simple_u8(s: &str) -> u8 {
         i += 1;
     }
     value
-}
-
-const fn optional_str(s: &str) -> Option<&str> {
-    if s.is_empty() {
-        None
-    } else {
-        Some(s)
-    }
 }
 
 #[cfg(test)]

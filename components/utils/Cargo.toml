@@ -7,13 +7,20 @@ edition = "2021"
 delog = "0.1"
 littlefs2 = "0.4"
 
+[build-dependencies]
+chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
+regex = { version = "1.10.2", default-features = false }
+semver = "1.0.20"
+
+[dev-dependencies]
+quickcheck = "1.0.3"
+
 [features]
+test = []
+
 log-all = []
 log-none = []
 log-info = []
 log-debug = []
 log-warn = []
 log-error = []
-
-[dev-dependencies]
-quickcheck = "1.0.3"

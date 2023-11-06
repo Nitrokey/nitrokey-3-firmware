@@ -14,20 +14,16 @@ As we have a `Cargo.lock` file with fixed dependency versions, we don’t automa
 
 ## Releasing
 
-### Creating Releases
-
-To release a new version of the firmware, perform the following steps:
-1. Update the version counter in `Cargo.toml`.
+To release a stable release or release candidate of the firmware, perform the following steps:
+1. Update the version counter in `Cargo.toml` using the patterns `<major>.<minor>.<patch>` or `<major>.<minor>.<patch>-rc.<n>`.
 2. Run the firmware build for the embedded runner and add the updated `Cargo.lock`.
 3. Update the changelog.
-4. Commit all changed files and create a signed tag with a `v` prefix and the version number, for example `v1.0.0`.
-5. Create a release on GitHub and copy the relevant section from the changelog to the release description.
+4. Commit all changed files, create a PR and merge it once reviewed.
+5. Create a signed tag with a `v` prefix and the version number, for example `v1.0.0` or `v1.5.0-rc.0`.
 
-### Signing Releases (lpc55)
+To release a test release, just create a signed tag with the version number using the pattern `v<major>.<minor>.<patch>-test.<yyyy><mm><dd>`, for example `v1.5.0-test.20231106`.
 
-1. Download the `firmware-nk3xn.bin` and `commands.bd` as built by the CI from the release tag.
-2. Sign the firmware and build a SB2.1 image using the `commands.bd` file.
-3. Upload the SB2.1 image to the GitHub release using the filename pattern `firmware-<device>-<chip>-v<version>.sb2`, for example `firmware-nk3xn-lpc55-v1.0.0.sb2`.
+Refer to the internal documentation for more details on the release process.
 
 ## Forking Dependencies
 
