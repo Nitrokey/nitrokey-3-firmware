@@ -19,7 +19,7 @@ variables:
   REPO_NAME: nitrokey-3-firmware
   MAIN_BRANCH: main 
   IMAGE_NAME: nitrokey3
-  COMMON_UPDATE_DOCKER: "false"
+  COMMON_UPDATE_DOCKER: "true"
   COMMON_UPLOAD_FILES: "false"
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   LC_ALL: C.UTF-8
