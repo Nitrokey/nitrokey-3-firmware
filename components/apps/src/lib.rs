@@ -40,6 +40,8 @@ fn is_default<T: Default + PartialEq>(value: &T) -> bool {
 pub struct Config {
     #[serde(default, rename = "f", skip_serializing_if = "is_default")]
     fido: FidoConfig,
+    #[serde(default, rename = "o", skip_serializing_if = "is_default")]
+    opcard: OpcardConfig,
 }
 
 impl admin_app::Config for Config {
@@ -47,6 +49,7 @@ impl admin_app::Config for Config {
         let (app, key) = key.split_once('.')?;
         match app {
             "fido" => self.fido.field(key),
+            "opcard" => self.opcard.field(key),
             _ => None,
         }
     }
@@ -55,10 +58,21 @@ impl admin_app::Config for Config {
         &self,
         key: &str,
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
-        match key {
-            #[cfg(feature = "factory-reset")]
-            "opcard" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
+        #[cfg(feature = "factory-reset")]
+        return match (key.split_once('.'), key) {
+            (Some(("fido", key)), _) => self.fido.reset_client_id(key),
+            (None, "fido") => self.fido.reset_client_id(""),
+
+            (Some(("opcard", key)), _) => self.opcard.reset_client_id(key),
+            (None, "opcard") => self.opcard.reset_client_id(""),
+
             _ => None,
+        };
+
+        #[cfg(not(feature = "factory-reset"))]
+        {
+            _ = key;
+            return None;
         }
     }
 }
@@ -75,6 +89,67 @@ impl admin_app::Config for FidoConfig {
             "disable_skip_up_timeout" => {
                 Some(ConfigValueMut::Bool(&mut self.disable_skip_up_timeout))
             }
+            _ => None,
+        }
+    }
+
+    fn reset_client_id(
+        &self,
+        _key: &str,
+    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
+        None
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct OpcardConfig {
+    #[cfg(feature = "se050")]
+    #[serde(default, rename = "t", skip_serializing_if = "is_default")]
+    use_se050_backend: bool,
+}
+
+impl OpcardConfig {
+    fn backends(&self) -> &'static [BackendId<Backend>] {
+        const BACKENDS_OPCARD_DEFAULT: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+        ];
+        #[cfg(feature = "se050")]
+        const BACKENDS_OPCARD_SE050: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::Se050),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+        ];
+        #[cfg(feature = "se050")]
+        return match self.use_se050_backend {
+            true => BACKENDS_OPCARD_SE050,
+            false => BACKENDS_OPCARD_DEFAULT,
+        };
+        #[cfg(not(feature = "se050"))]
+        BACKENDS_OPCARD_DEFAULT
+    }
+}
+
+impl admin_app::Config for OpcardConfig {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        match key {
+            #[cfg(feature = "se050")]
+            "use_se050_backend" => Some(ConfigValueMut::Bool(&mut self.use_se050_backend)),
+            _ => None,
+        }
+    }
+
+    fn reset_client_id(
+        &self,
+        key: &str,
+    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
+        match key {
+            #[cfg(feature = "factory-reset")]
+            "" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            #[cfg(feature = "se050")]
+            "use_se050_backend" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
         }
     }
@@ -217,7 +292,7 @@ impl<R: Runner> Apps<R> {
             opcard: if init_status.contains(InitStatus::CONFIG_ERROR) {
                 None
             } else {
-                Some(App::new(runner, &mut make_client, (), &()))
+                Some(App::new(runner, &mut make_client, (), &admin.config().opcard))
             },
             #[cfg(feature = "piv-authenticator")]
             piv: App::new(runner, &mut make_client, (), &()),
@@ -519,9 +594,9 @@ impl<R: Runner> App<R> for AdminApp<R> {
 
     fn backends(runner: &R, _config: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_ADMIN: &[BackendId<Backend>] = &[
+            #[cfg(feature = "se050")]
+            BackendId::Custom(Backend::Se050Manage),
             BackendId::Custom(Backend::StagingManage),
-            #[cfg(feature = "se050-test-app")]
-            BackendId::Custom(Backend::Se050),
             BackendId::Core,
         ];
         let _ = runner;
@@ -631,7 +706,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     }
 }
 
-#[cfg(feature = "factory-reset")]
+#[cfg(any(feature = "factory-reset", feature = "se050"))]
 static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new();
 
 #[cfg(feature = "opcard")]
@@ -639,9 +714,9 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     const CLIENT_ID: &'static str = "opcard";
 
     type Data = ();
-    type Config = ();
+    type Config = OpcardConfig;
 
-    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &OpcardConfig) -> Self {
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
         options.button_available = true;
@@ -649,21 +724,14 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
-        #[cfg(feature = "factory-reset")]
+        #[cfg(any(feature = "factory-reset", feature = "se050"))]
         {
             options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
         }
         Self::new(trussed, options)
     }
-    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
-        const BACKENDS_OPCARD: &[BackendId<Backend>] = &[
-            BackendId::Custom(Backend::SoftwareRsa),
-            BackendId::Custom(Backend::Auth),
-            BackendId::Custom(Backend::Staging),
-            BackendId::Core,
-        ];
-        let _ = runner;
-        BACKENDS_OPCARD
+    fn backends(_runner: &R, config: &OpcardConfig) -> &'static [BackendId<Backend>] {
+        config.backends()
     }
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
@@ -734,7 +802,7 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Config, FidoConfig};
+    use super::{Config, FidoConfig, OpcardConfig};
     use cbor_smol::{cbor_serialize_bytes, Bytes};
 
     #[test]
@@ -742,6 +810,10 @@ mod tests {
         let config = Config {
             fido: FidoConfig {
                 disable_skip_up_timeout: true,
+            },
+            opcard: OpcardConfig {
+                #[cfg(feature = "se050")]
+                use_se050_backend: false,
             },
         };
         let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();

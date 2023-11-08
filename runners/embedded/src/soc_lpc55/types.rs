@@ -26,7 +26,6 @@ use lpc55_hal::{
     I2cMaster,
 };
 
-use trussed::types::LfsResult;
 use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////

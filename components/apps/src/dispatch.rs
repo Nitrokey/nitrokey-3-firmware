@@ -89,19 +89,35 @@ fn build_staging_backend() -> StagingBackend {
     backend
 }
 
+#[cfg(feature = "se050")]
+const NAMESPACE: trussed_se050_backend::namespacing::Namespace = {
+    use trussed_se050_backend::namespacing::*;
+
+    Namespace(&[
+        NamespaceItem {
+            client: path!("admin"),
+            value: NamespaceValue::Client1,
+        },
+        NamespaceItem {
+            client: path!("opcard"),
+            value: NamespaceValue::Client2,
+        },
+    ])
+};
+
 impl<T: Twi, D: Delay> Dispatch<T, D> {
     pub fn new(
         auth_location: Location,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,
     ) -> Self {
-        #[cfg(not(feature = "backend-auth"))]
+        #[cfg(not(all(feature = "backend-auth", feature = "se050")))]
         let _ = auth_location;
         Self {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
-            se050: se050.map(trussed_se050_backend::Se050Backend::new),
+            se050: se050.map(|driver| Se050Backend::new(driver, auth_location, None, NAMESPACE)),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -113,11 +129,16 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         hw_key: Bytes<MAX_HW_KEY_LEN>,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,
     ) -> Self {
+        #[cfg(feature = "se050")]
+        // Should the backend really use the same key?
+        let hw_key_se050 = hw_key.clone();
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
-            se050: se050.map(trussed_se050_backend::Se050Backend::new),
+            se050: se050.map(|driver| {
+                Se050Backend::new(driver, auth_location, Some(hw_key_se050), NAMESPACE)
+            }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -176,6 +197,8 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 .as_mut()
                 .ok_or(TrussedError::GeneralError)?
                 .request(&mut ctx.core, &mut ctx.backends.se050, request, resources),
+            #[cfg(feature = "se050")]
+            Backend::Se050Manage => Err(TrussedError::RequestNotAvailable),
         }
     }
 
@@ -248,6 +271,36 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
             },
             #[cfg(feature = "se050")]
             Backend::Se050 => match extension {
+                #[cfg(feature = "trussed-auth")]
+                Extension::Auth => ExtensionImpl::<AuthExtension>::extension_request_serialized(
+                    self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
+                    &mut ctx.core,
+                    &mut ctx.backends.se050,
+                    request,
+                    resources,
+                ),
+                Extension::WrapKeyToFile => {
+                    ExtensionImpl::<WrapKeyToFileExtension>::extension_request_serialized(
+                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
+                        &mut ctx.core,
+                        &mut ctx.backends.se050,
+                        request,
+                        resources,
+                    )
+                }
+                _ => Err(TrussedError::RequestNotAvailable),
+            },
+            #[cfg(feature = "se050")]
+            Backend::Se050Manage => match extension {
+                Extension::Manage => {
+                    ExtensionImpl::<ManageExtension>::extension_request_serialized(
+                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
+                        &mut ctx.core,
+                        &mut ctx.backends.se050,
+                        request,
+                        resources,
+                    )
+                }
                 Extension::Se050Manage => ExtensionImpl::<
                     trussed_se050_backend::manage::ManageExtension,
                 >::extension_request_serialized(
@@ -275,6 +328,9 @@ pub enum Backend {
     StagingManage,
     #[cfg(feature = "se050")]
     Se050,
+    #[cfg(feature = "se050")]
+    /// Separate BackendId to prevent non-priviledged apps from accessing the manage Extension
+    Se050Manage,
 }
 
 #[derive(Debug, Clone, Copy)]
