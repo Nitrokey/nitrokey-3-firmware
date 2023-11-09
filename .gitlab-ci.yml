@@ -210,7 +210,7 @@ build-firmware-for-tests:
     - echo TODO FEATURES+=test
   artifacts:
     paths:
-      - artifacts-tests
+      - artifacts-hardware-tests
 
 
 # This is a hardware test job for the Nitrokey 3
