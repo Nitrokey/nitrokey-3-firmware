@@ -185,7 +185,7 @@ build-firmware-for-tests:
     - docker
   stage: build
   variables:
-      ARTIFACTS: artifacts-tests
+      ARTIFACTS: artifacts-hardware-tests
   script:
     - git describe
     - export VERSION=`git describe`
