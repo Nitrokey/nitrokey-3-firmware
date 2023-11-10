@@ -20,7 +20,7 @@
 
 - fido-authenticator: Reduce the maximum credential ID length for improved compatibility ([fido-authenticator#37][])
 - fido-authenticator: Multiple changes to improve compliance with the specification (overview: [fido-authenticator#6][])
-- Upgrade opcard to v1.2.0, fixing memory issues when using multiple RSA keys, potential data corruption, and properly rejecting NFC requests ([#376][])
+- Upgrade opcard to v1.2.0, fixing memory issues when using multiple RSA keys, potential data corruption, correct handling of non canonical curve25519 public keys and properly rejecting NFC requests ([#376][])
 - Correct maximum binary size for LPC55 and only enable PRINCE for the subregions used for the filesystem ([#355][])
 - lpc55: Move USB initialization to the end of the boot process to make sure that the device can respond to all requests, fixing a potential delay when connecting the device under Linux ([#302][])
 
