@@ -1,4 +1,4 @@
-# Unreleased
+# 1.6.0-rc.1 (2023-11-10)
 
 ### Features
 
