@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app?rev=6c88a4bd58f2b6516c424b4dbf9581989ffa915e#6c88a4bd58f2b6516c424b4dbf9581989ffa915e"
+source = "git+https://github.com/Nitrokey/admin-app?tag=v0.1.0-nitrokey.6#b67c3647b7b6ec3ce8c453e9ffbf9327dfd5c813"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -94,7 +94,7 @@ checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=915fc237103fcecc29d0f0b73391f19abf6576de#915fc237103fcecc29d0f0b73391f19abf6576de"
+source = "git+https://github.com/Nitrokey/apdu-dispatch.git?tag=v0.1.2-nitrokey.2#647029550ea204b7a714ddf8852b93e644f4a429"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -850,7 +850,7 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=94c97223ba8affaab08559c12105846b8fb14c7b#94c97223ba8affaab08559c12105846b8fb14c7b"
+source = "git+https://github.com/Nitrokey/ctaphid-dispatch.git?tag=v0.1.1-nitrokey.3#7f08ac0229ca49a5e2cd69e001658e1b43bc0a2b"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -1013,6 +1013,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ed25519"
+version = "2.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
+dependencies = [
+ "signature 2.1.0",
+]
+
+[[package]]
 name = "elliptic-curve"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1120,7 +1129,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=238c66ece9bc81ef63839f749ac7d42531de87b5#238c66ece9bc81ef63839f749ac7d42531de87b5"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0-rc2#c4cd4c10c4b6e6910b462ee963ac3610ffdfc3aa"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1166,7 +1175,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?rev=bb6c07c12a8ea94db1dc897513cdf54f73a275e4#bb6c07c12a8ea94db1dc897513cdf54f73a275e4"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.8#f4cf88ae9e32c6da587fa87a67ea1522fbd80cb6"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1686,7 +1695,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/iso7816.git?rev=33f04012168f3a2341f57f7fc0a0e9baf7fd364d#33f04012168f3a2341f57f7fc0a0e9baf7fd364d"
+source = "git+https://github.com/Nitrokey/iso7816.git?tag=v0.1.1-nitrokey.2#5765eaac0f19313cf908071d8dfc9b1cd3bdae0a"
 dependencies = [
  "delog",
  "heapless 0.7.16",
@@ -2158,8 +2167,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "opcard"
-version = "1.1.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=90a1bbc0bd023de1487e9d3421f8697634575806#90a1bbc0bd023de1487e9d3421f8697634575806"
+version = "1.2.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.2.0#ad61078c4653d0daa0512bf1a8466bbba7039edc"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2275,8 +2284,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.2"
-source = "git+https://github.com/Nitrokey/piv-authenticator?rev=6a1f877fc624081d675b880260b7a473c09af1fb#6a1f877fc624081d675b880260b7a473c09af1fb"
+version = "0.3.3"
+source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.3.3#caed9e43ac04484d3808140f7f6393a1e09d6678"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2415,7 +2424,7 @@ dependencies = [
  "heapless-bytes 0.3.0",
  "littlefs2",
  "nisty",
- "salty",
+ "salty 0.2.0",
  "trussed",
 ]
 
@@ -2655,7 +2664,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77cdd38ed8bfe51e53ee991aae0791b94349d0a05cfdecd283835a8a965d4c37"
 dependencies = [
  "cosey 0.3.0",
- "ed25519",
+ "ed25519 1.5.3",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "salty"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b947325a585e90733e0e9ec097228f40b637cc346f9bd68f84d5c6297d0fcfef"
+dependencies = [
+ "cosey 0.3.0",
+ "ed25519 2.2.3",
  "subtle",
  "zeroize",
 ]
@@ -2698,7 +2719,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=238c66ece9bc81ef63839f749ac7d42531de87b5#238c66ece9bc81ef63839f749ac7d42531de87b5"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0-rc2#c4cd4c10c4b6e6910b462ee963ac3610ffdfc3aa"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.4.1",
@@ -3229,7 +3250,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=91d501b6a9bfe9588c26864f6f456e5702226b25#91d501b6a9bfe9588c26864f6f456e5702226b25"
+source = "git+https://github.com/Nitrokey/trussed.git?rev=v0.1.0-nitrokey.14#30a4764ddca80fd5f23eff6db1c53770f84c2c2f"
 dependencies = [
  "aes",
  "bitflags 2.4.1",
@@ -3255,7 +3276,7 @@ dependencies = [
  "postcard 0.7.3",
  "rand_chacha",
  "rand_core",
- "salty",
+ "salty 0.3.0",
  "serde",
  "serde-indexed",
  "sha-1",
@@ -3475,7 +3496,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=3f24df2f8b799eb203539c0e723854e8f7739f79#3f24df2f8b799eb203539c0e723854e8f7739f79"
+source = "git+https://github.com/Nitrokey/usbd-ctaphid.git?tag=v0.1.0-nitrokey.2#3f24df2f8b799eb203539c0e723854e8f7739f79"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
@@ -3646,7 +3667,7 @@ checksum = "0d046c5d029ba91a1ed14da14dca44b68bf2f124cfbaf741c54151fdb3e0750b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-webcrypt-rust?rev=43bcd3e452e5151e71ccba0aa15b360416663c29#43bcd3e452e5151e71ccba0aa15b360416663c29"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc4#4ec145499b7b2331ac36cb9656da4a732f7c7180"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
