@@ -53,7 +53,12 @@ where
     FS: 'static + LfsStorage,
     T: Client + client::X255 + client::HmacSha256,
 {
-    fn select(&mut self, _apdu: &Command, reply: &mut response::Data) -> Result {
+    fn select(
+        &mut self,
+        _interface: Interface,
+        _apdu: &Command,
+        reply: &mut response::Data,
+    ) -> Result {
         self.buffer_file_contents.clear();
         self.buffer_filename.clear();
         // For manufacture speed, return uuid on select

@@ -1,5 +1,6 @@
 use apdu_dispatch::{
-    app, command::SIZE as CommandSize, response, response::SIZE as ResponseSize, Command,
+    app, command::SIZE as CommandSize, dispatch::Interface, response,
+    response::SIZE as ResponseSize, Command,
 };
 use iso7816::{Instruction, Status};
 
@@ -42,7 +43,12 @@ impl<'a> iso7816::App for App<'a> {
 }
 
 impl<'a> app::App<CommandSize, ResponseSize> for App<'a> {
-    fn select(&mut self, _apdu: &Command, _reply: &mut response::Data) -> app::Result {
+    fn select(
+        &mut self,
+        _interface: Interface,
+        _apdu: &Command,
+        _reply: &mut response::Data,
+    ) -> app::Result {
         Ok(())
     }
 
