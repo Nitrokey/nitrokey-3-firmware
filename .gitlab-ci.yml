@@ -186,12 +186,17 @@ hardware-tests:
     - if: '$CI_PIPELINE_SOURCE == "push"'
   tags:
     - nk3-hw
+  parallel:
+    matrix:
+      - MODEL: [ nrf52, lpc55 ]
   stage: test
   script:
+    - ykushcmd ykush3 -s Y3N11073 -d a
+    - ykushcmd ykush3 -s Y3N11081 -d a
     - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "git@git.nitrokey.com:"
     - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "https://git.nitrokey.com/"
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - cd nitrokey-hardware-test && make ci FW=../artifacts && cd .. # use built firmware files
+    - cd nitrokey-hardware-test && make ci FW=../artifacts MODEL=$MODEL && cd .. # use built firmware files
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml  # the result will be merged in the future
   dependencies:
     - build-firmware-for-tests  # needs artifacts from this job only to run, don't send anything else
