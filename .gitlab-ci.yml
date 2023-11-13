@@ -19,7 +19,7 @@ variables:
   REPO_NAME: nitrokey-3-firmware
   MAIN_BRANCH: main 
   IMAGE_NAME: nitrokey3
-  COMMON_UPDATE_DOCKER: "true"
+  COMMON_UPDATE_DOCKER: "false"
   COMMON_UPLOAD_FILES: "false"
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   LC_ALL: C.UTF-8
@@ -69,16 +69,6 @@ check-usbip:
     - cargo check --manifest-path runners/usbip/Cargo.toml
     - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
     - cargo check --manifest-path runners/usbip/Cargo.toml --features test
-
-test:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - cd components/apps && cargo test
 
 lint:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -172,15 +162,30 @@ build-firmware-for-tests:
     - export VERSION=`git describe`
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
+    - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nrf52.hex
+    - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
   artifacts:
     paths:
       - artifacts
 
+###############################################################################
+# test stage
 
-# This is a hardware test job for the Nitrokey 3
+software-tests:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: test
+  script:
+    - cd components/apps && cargo test
+
 hardware-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -191,21 +196,17 @@ hardware-tests:
       - MODEL: [ nrf52, lpc55 ]
   stage: test
   script:
-    - ykushcmd ykush3 -s Y3N11073 -d a
-    - ykushcmd ykush3 -s Y3N11081 -d a
-    - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "git@git.nitrokey.com:"
-    - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/".insteadOf "https://git.nitrokey.com/"
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - cd nitrokey-hardware-test && make ci FW=../artifacts MODEL=$MODEL && cd .. # use built firmware files
-    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml  # the result will be merged in the future
+    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL
+    #- cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
   dependencies:
-    - build-firmware-for-tests  # needs artifacts from this job only to run, don't send anything else
+    - build-firmware-for-tests
   needs:
-    - build-firmware-for-tests  # can start immediately after this job succeeds
+    - build-firmware-for-tests
   artifacts:
     when: always
     paths:
       - nitrokey-hardware-test/artifacts
-    reports:
-      junit: nitrokey-hardware-test/artifacts/report-junit.xml
+    #reports:
+    #  junit: nitrokey-hardware-test/artifacts/report-junit.xml
 
