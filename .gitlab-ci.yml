@@ -70,16 +70,6 @@ check-usbip:
     - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
     - cargo check --manifest-path runners/usbip/Cargo.toml --features test
 
-test:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - cd components/apps && cargo test
-
 lint:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
@@ -179,8 +169,19 @@ build-firmware-for-tests:
     paths:
       - artifacts
 
+###############################################################################
+# test stage
 
-# This is a hardware test job for the Nitrokey 3
+test:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: test
+  script:
+    - cd components/apps && cargo test
+
 hardware-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
