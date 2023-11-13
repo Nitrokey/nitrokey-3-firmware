@@ -176,7 +176,7 @@ build-firmware-for-tests:
 ###############################################################################
 # test stage
 
-test:
+software-tests:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
