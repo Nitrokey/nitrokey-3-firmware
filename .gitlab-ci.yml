@@ -162,9 +162,13 @@ build-firmware-for-tests:
     - export VERSION=`git describe`
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
+    - make -C runners/embedded build-nk3am FEATURES=no-buttons
+    - cp runners/embedded/artifacts/runner-nrf52-nk3am.bin artifacts/firmware-nrf52.bin
+    - make -C runners/embedded build-nk3am FEATURES=provisioner,no-buttons
+    - cp runners/embedded/artifacts/runner-nrf52-nk3am.bin artifacts/provisioner-nrf52.bin
   artifacts:
     paths:
       - artifacts
