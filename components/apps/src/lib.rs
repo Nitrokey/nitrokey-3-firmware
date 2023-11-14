@@ -15,11 +15,11 @@ use embedded_hal::blocking::delay::DelayUs;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
-    store::filestore::ClientFilestore, ClientImplementation, Platform, Service,
+    store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
 };
 
-use admin_app::ConfigValueMut;
 pub use admin_app::Reboot;
+use admin_app::{ConfigValueMut, ResetSignalAllocation};
 use trussed::types::Location;
 
 #[cfg(feature = "webcrypt")]
@@ -46,6 +46,18 @@ impl admin_app::Config for Config {
             "fido" => self.fido.field(key),
             _ => None,
         }
+    }
+
+    fn reset_client_id(&self, _key: &str) -> Option<&'static Path> {
+        None
+    }
+
+    fn reset_signal(&self, _key: &str) -> Option<&'static ResetSignalAllocation> {
+        None
+    }
+
+    fn can_reset(&self, _client: &str) -> Option<&'static ResetSignalAllocation> {
+        None
     }
 }
 
@@ -422,6 +434,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
 
     fn backends(runner: &R, _config: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_ADMIN: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::StagingManage),
             #[cfg(feature = "se050-test-app")]
             BackendId::Custom(Backend::Se050),
             BackendId::Core,

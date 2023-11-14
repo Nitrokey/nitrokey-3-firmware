@@ -11,11 +11,13 @@ trussed = { version = "0.1", features = ["serde-extensions"]}
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.1", optional = true }
 utils = { path = "../utils" }
+if_chain = "1.0.2"
+littlefs2 = { version = "0.4" }
 
 # Backends
 trussed-auth = { version = "0.2.2", optional = true }
 trussed-rsa-alloc = { version = "0.1.0", optional = true }
-trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked", "encrypted-chunked"], optional = true }
+trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked", "encrypted-chunked", "manage"] }
 
 # apps
 admin-app = "0.1.0"
@@ -41,17 +43,17 @@ provisioner = ["provisioner-app", "trussed/clients-5"]
 
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth"]
-webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa", "backend-staging", "trussed-staging/hmacsha256p256"]
+backend-staging-hmacsha256p256 = ["trussed-staging/hmacsha256p256"]
+webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa", "backend-staging-hmacsha256p256"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
-opcard = ["dep:opcard", "backend-rsa", "backend-auth", "backend-staging"]
-piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "backend-staging"]
+opcard = ["dep:opcard", "backend-rsa", "backend-auth"]
+piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth"]
 se050-test-app = ["se050", "admin-app/se050"]
 se050 = ["trussed-se050-backend", "dep:se05x"]
 
 # backends
 backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
-backend-staging = ["trussed-staging"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 

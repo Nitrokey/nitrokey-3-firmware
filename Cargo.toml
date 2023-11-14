@@ -12,7 +12,7 @@ version = "1.6.0-rc.1"
 
 [patch.crates-io]
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app", tag = "v0.1.0-nitrokey.6" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", rev = "1adbce18ca884d35a3a4b80a7c5dd8fca9e4bae0" }
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nitrokey.4" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.8" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
@@ -23,9 +23,10 @@ serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 iso7816 = { git = "https://github.com/Nitrokey/iso7816.git", tag = "v0.1.1-nitrokey.2"}
-trussed = { git = "https://github.com/Nitrokey/trussed.git", rev = "v0.1.0-nitrokey.14" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "d97c64d0bc5f83ce22b0e0ed034a2b451616b3f9" }
 usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "e6c46e7ba5ae19129e457a2182e40a439c0322fe" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
@@ -33,9 +34,9 @@ webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.2.0" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
 se05x = { git = "https://github.com/Nitrokey/se05x.git", tag = "v0.1.0"} 
-trussed-auth = { git = "https://github.com/Nitrokey/trussed-auth", tag = "v0.2.2-nitrokey.1" }
-trussed-rsa-alloc = { git = "https://github.com/Nitrokey/trussed-rsa-backend.git", tag = "v0.1.0"}
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "hmacsha256p256" }
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "62235294bd63977bbb88eb01e7ac44b8010eb450" }
+trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "2f51478f0861ff8db19fdd5290f023ab6f4c2fb9" }
+trussed-staging = { git = "https://github.com/nitrokey/trussed-staging.git", branch = "hmacsha256p256-rebased" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.1.0-test-driver" }
 
