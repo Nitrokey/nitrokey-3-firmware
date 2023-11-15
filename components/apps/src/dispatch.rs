@@ -47,7 +47,7 @@ pub struct Dispatch<T = (), D = ()> {
     auth: AuthBackend,
     staging: StagingBackend,
     #[cfg(feature = "se050")]
-    se050: Option<trussed_se050_backend::Se050Backend<T, D>>,
+    se050: Option<Se050Backend<T, D>>,
     #[cfg(not(feature = "se050"))]
     __: PhantomData<(T, D)>,
 }

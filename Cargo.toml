@@ -12,7 +12,7 @@ version = "1.6.0-rc.1"
 
 [patch.crates-io]
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", rev = "1adbce18ca884d35a3a4b80a7c5dd8fca9e4bae0" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", rev = "410899311ae7b194360366ff477f74d4d278e056" }
 ctap-types = { git = "https://github.com/Nitrokey/ctap-types", tag = "v0.1.2-nitrokey.4" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.8" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
@@ -31,7 +31,7 @@ littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "e6c46e7ba
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc4"}
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.2.0" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "6dfe4c1112443e337591f59c0b74ece79a2e2c30" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
 se05x = { git = "https://github.com/Nitrokey/se05x.git", tag = "v0.1.0"} 
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "62235294bd63977bbb88eb01e7ac44b8010eb450" }

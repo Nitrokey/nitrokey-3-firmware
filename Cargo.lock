@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=1adbce18ca884d35a3a4b80a7c5dd8fca9e4bae0#1adbce18ca884d35a3a4b80a7c5dd8fca9e4bae0"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=410899311ae7b194360366ff477f74d4d278e056#410899311ae7b194360366ff477f74d4d278e056"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -2176,8 +2176,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "1.2.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.2.0#ad61078c4653d0daa0512bf1a8466bbba7039edc"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=6dfe4c1112443e337591f59c0b74ece79a2e2c30#6dfe4c1112443e337591f59c0b74ece79a2e2c30"
 dependencies = [
+ "admin-app",
  "apdu-dispatch",
  "delog",
  "heapless 0.7.16",

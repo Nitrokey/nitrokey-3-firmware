@@ -12,6 +12,7 @@ use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
+use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
@@ -48,16 +49,14 @@ impl admin_app::Config for Config {
         }
     }
 
-    fn reset_client_id(&self, _key: &str) -> Option<&'static Path> {
-        None
-    }
-
-    fn reset_signal(&self, _key: &str) -> Option<&'static ResetSignalAllocation> {
-        None
-    }
-
-    fn can_reset(&self, _client: &str) -> Option<&'static ResetSignalAllocation> {
-        None
+    fn reset_client_id(
+        &self,
+        key: &str,
+    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
+        match key {
+            "opcard" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            _ => None,
+        }
     }
 }
 
@@ -533,6 +532,8 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     }
 }
 
+static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new();
+
 #[cfg(feature = "opcard")]
 impl<R: Runner> App<R> for OpcardApp<R> {
     const CLIENT_ID: &'static str = "opcard";
@@ -548,6 +549,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
+        options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
         Self::new(trussed, options)
     }
     fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
