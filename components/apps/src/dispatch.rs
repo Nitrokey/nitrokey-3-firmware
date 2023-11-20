@@ -271,6 +271,7 @@ pub enum Backend {
     #[cfg(feature = "backend-rsa")]
     SoftwareRsa,
     Staging,
+    /// Separate BackendId to prevent non-priviledged apps from accessing the manage Extension
     StagingManage,
     #[cfg(feature = "se050")]
     Se050,
