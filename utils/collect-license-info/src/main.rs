@@ -4,7 +4,7 @@ use std::{
 };
 
 use askama::Template;
-use cargo_license::DependencyDetails;
+use cargo_license::{DependencyDetails, GetDependenciesOpt};
 use cargo_metadata::{CargoOpt, MetadataCommand, Package};
 use gumdrop::Options;
 use spdx::{Expression, LicenseId};
@@ -33,12 +33,20 @@ impl Args {
     }
 
     fn dependencies(&self) -> BTreeSet<Dependency> {
-        cargo_license::get_dependencies_from_cargo_lock(self.into(), true, true)
-            .expect("failed to collect dependencies")
-            .into_iter()
-            .filter(|d| d.license.is_some())
-            .map(Dependency::from)
-            .collect()
+        cargo_license::get_dependencies_from_cargo_lock(
+            self.into(),
+            GetDependenciesOpt {
+                avoid_dev_deps: false,
+                avoid_build_deps: false,
+                direct_deps_only: false,
+                root_only: false,
+            },
+        )
+        .expect("failed to collect dependencies")
+        .into_iter()
+        .filter(|d| d.license.is_some())
+        .map(Dependency::from)
+        .collect()
     }
 }
 
