@@ -4,7 +4,7 @@ mod ui;
 use std::{path::PathBuf, sync::Arc, thread};
 
 use apps::{AdminData, Apps, Dispatch, Variant};
-use clap::{Parser, ValueEnum};
+use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
 use trussed::{types::Location, virt::StoreProvider as _, Bytes, Platform};
@@ -20,14 +20,14 @@ const PID: u16 = 0x42b2;
 
 /// USP/IP based virtualization of a Nitrokey 3 device.
 #[derive(Parser, Debug)]
-#[clap(about, author, global_setting(clap::AppSettings::NoAutoVersion))]
+#[clap(about, author)]
 struct Args {
     /// Print version information.
-    #[clap(short, long)]
+    #[clap(short, long, action = ArgAction::SetTrue)]
     version: bool,
 
     /// Device serial number (default: randomly generated).
-    #[clap(short, long, parse(try_from_str=maybe_hex))]
+    #[clap(short, long, value_parser(maybe_hex::<u128>))]
     serial: Option<u128>,
 
     /// Internal file system (default: use RAM).
