@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app?tag=v0.1.0-nitrokey.6#b67c3647b7b6ec3ce8c453e9ffbf9327dfd5c813"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=410899311ae7b194360366ff477f74d4d278e056#410899311ae7b194360366ff477f74d4d278e056"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -18,6 +18,7 @@ dependencies = [
  "strum_macros",
  "trussed",
  "trussed-se050-backend",
+ "trussed-staging",
 ]
 
 [[package]]
@@ -113,6 +114,8 @@ dependencies = [
  "embedded-hal",
  "fido-authenticator",
  "hex",
+ "if_chain",
+ "littlefs2",
  "ndef-app",
  "opcard",
  "piv-authenticator",
@@ -1658,6 +1661,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "if_chain"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1777,8 +1786,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95c72bdf63e7ad35f391e60c48e4c32560038f1d3a0dd97f90a2891ce09160bf"
+source = "git+https://github.com/trussed-dev/littlefs2?rev=e6c46e7ba5ae19129e457a2182e40a439c0322fe#e6c46e7ba5ae19129e457a2182e40a439c0322fe"
 dependencies = [
  "bitflags 1.3.2",
  "cstr_core",
@@ -2168,8 +2176,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "1.2.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.2.0#ad61078c4653d0daa0512bf1a8466bbba7039edc"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=a824c6473ce1b88b45b32de21089401fc9f7f683#a824c6473ce1b88b45b32de21089401fc9f7f683"
 dependencies = [
+ "admin-app",
  "apdu-dispatch",
  "delog",
  "heapless 0.7.16",
@@ -3250,7 +3259,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?rev=v0.1.0-nitrokey.14#30a4764ddca80fd5f23eff6db1c53770f84c2c2f"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=d97c64d0bc5f83ce22b0e0ed034a2b451616b3f9#d97c64d0bc5f83ce22b0e0ed034a2b451616b3f9"
 dependencies = [
  "aes",
  "bitflags 2.4.1",
@@ -3287,7 +3296,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.2.2"
-source = "git+https://github.com/Nitrokey/trussed-auth?tag=v0.2.2-nitrokey.1#203a90dd13a7378f596b3099cd986a8da6185137"
+source = "git+https://github.com/trussed-dev/trussed-auth?rev=62235294bd63977bbb88eb01e7ac44b8010eb450#62235294bd63977bbb88eb01e7ac44b8010eb450"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3303,7 +3312,7 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-rsa-backend.git?tag=v0.1.0#a72ce195a4495a8db26debfb0240a4dc712d8dbe"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9#2f51478f0861ff8db19fdd5290f023ab6f4c2fb9"
 dependencies = [
  "delog",
  "heapless-bytes 0.3.0",
@@ -3338,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=hmacsha256p256#1b54bf8703d515688a58f2f605c3efa0f2f60ced"
+source = "git+https://github.com/nitrokey/trussed-staging.git?branch=hmacsha256p256-rebased#edb966aba4a3c211b6453d6f01259823e82b932b"
 dependencies = [
  "chacha20poly1305",
  "delog",

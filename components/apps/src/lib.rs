@@ -12,14 +12,15 @@ use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
+use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
-    store::filestore::ClientFilestore, ClientImplementation, Platform, Service,
+    store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
 };
 
-use admin_app::ConfigValueMut;
 pub use admin_app::Reboot;
+use admin_app::{ConfigValueMut, ResetSignalAllocation};
 use trussed::types::Location;
 
 #[cfg(feature = "webcrypt")]
@@ -44,6 +45,16 @@ impl admin_app::Config for Config {
         let (app, key) = key.split_once('.')?;
         match app {
             "fido" => self.fido.field(key),
+            _ => None,
+        }
+    }
+
+    fn reset_client_id(
+        &self,
+        key: &str,
+    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
+        match key {
+            "opcard" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
         }
     }
@@ -422,6 +433,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
 
     fn backends(runner: &R, _config: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_ADMIN: &[BackendId<Backend>] = &[
+            BackendId::Custom(Backend::StagingManage),
             #[cfg(feature = "se050-test-app")]
             BackendId::Custom(Backend::Se050),
             BackendId::Core,
@@ -520,6 +532,8 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     }
 }
 
+static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new();
+
 #[cfg(feature = "opcard")]
 impl<R: Runner> App<R> for OpcardApp<R> {
     const CLIENT_ID: &'static str = "opcard";
@@ -535,6 +549,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
+        options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
         Self::new(trussed, options)
     }
     fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
