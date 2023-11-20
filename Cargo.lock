@@ -2176,7 +2176,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "1.2.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=6dfe4c1112443e337591f59c0b74ece79a2e2c30#6dfe4c1112443e337591f59c0b74ece79a2e2c30"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=a824c6473ce1b88b45b32de21089401fc9f7f683#a824c6473ce1b88b45b32de21089401fc9f7f683"
 dependencies = [
  "admin-app",
  "apdu-dispatch",

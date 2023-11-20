@@ -31,7 +31,7 @@ littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "e6c46e7ba
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc4"}
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "6dfe4c1112443e337591f59c0b74ece79a2e2c30" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "a824c6473ce1b88b45b32de21089401fc9f7f683" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
 se05x = { git = "https://github.com/Nitrokey/se05x.git", tag = "v0.1.0"} 
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "62235294bd63977bbb88eb01e7ac44b8010eb450" }

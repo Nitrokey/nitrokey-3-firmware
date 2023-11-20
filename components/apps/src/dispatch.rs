@@ -373,6 +373,13 @@ mod tests {
         assert!(should_preserve_file(path!("/fido/x5c/00")));
         assert!(should_preserve_file(path!("/fido/sec/01")));
         assert!(should_preserve_file(path!("/fido/x5c/01")));
+        assert!(should_preserve_file(path!("/attn/pub/00")));
+        assert!(should_preserve_file(path!("/attn/sec/01")));
+        assert!(should_preserve_file(path!("/attn/sec/02")));
+        assert!(should_preserve_file(path!("/attn/sec/03")));
+        assert!(should_preserve_file(path!("/attn/x5c/01")));
+        assert!(should_preserve_file(path!("/attn/x5c/02")));
+        assert!(should_preserve_file(path!("/attn/x5c/03")));
         assert!(!should_preserve_file(path!("/fido/dat/sec/00")));
     }
 }
