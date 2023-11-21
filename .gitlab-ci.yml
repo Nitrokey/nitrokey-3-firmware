@@ -198,8 +198,8 @@ hardware-tests:
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
-    #- find nitrokey-hardware-test/artifacts/
-    #- cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
+    - find nitrokey-hardware-test/artifacts/
+    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
   dependencies:
     - build-firmware-for-tests
   needs:
@@ -208,6 +208,6 @@ hardware-tests:
     when: always
     paths:
       - nitrokey-hardware-test/artifacts
-    #reports:
-    #  junit: nitrokey-hardware-test/artifacts/report-junit.xml
+    reports:
+      junit: nitrokey-hardware-test/artifacts/report-junit.xml
 
