@@ -54,6 +54,7 @@ impl admin_app::Config for Config {
         key: &str,
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         match key {
+            #[cfg(feature = "factory-reset")]
             "opcard" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
         }
@@ -532,6 +533,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     }
 }
 
+#[cfg(feature = "factory-reset")]
 static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new();
 
 #[cfg(feature = "opcard")]
@@ -549,7 +551,10 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
-        options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
+        #[cfg(feature = "factory-reset")]
+        {
+            options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
+        }
         Self::new(trussed, options)
     }
     fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
