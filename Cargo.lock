@@ -833,7 +833,7 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "git+https://github.com/Nitrokey/ctap-types?tag=v0.1.2-nitrokey.4#702b5b5248f88091b22c46c936cb0f99425c0a61"
+source = "git+https://github.com/trussed-dev/ctap-types.git?rev=7d4ad69e64ad308944c012aef5b9cfd7654d9be8#7d4ad69e64ad308944c012aef5b9cfd7654d9be8"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -1178,7 +1178,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.8#f4cf88ae9e32c6da587fa87a67ea1522fbd80cb6"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.9#162ac6a2e603fb69944ff1679dced9752f0c7cf2"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1190,7 +1190,9 @@ dependencies = [
  "serde",
  "serde-indexed",
  "serde_cbor",
+ "sha2 0.10.8",
  "trussed",
+ "trussed-staging",
 ]
 
 [[package]]
@@ -3259,7 +3261,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=d97c64d0bc5f83ce22b0e0ed034a2b451616b3f9#d97c64d0bc5f83ce22b0e0ed034a2b451616b3f9"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=b1781805a2e33615d2d00b8bec80c0b1f5870ca1#b1781805a2e33615d2d00b8bec80c0b1f5870ca1"
 dependencies = [
  "aes",
  "bitflags 2.4.1",
@@ -3347,7 +3349,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.1#cec6260499a246d6ede687ea8ca2a97667295a23"
+source = "git+https://github.com/Nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.2#a21f11a95254dee81c6534a1260b1318bfac87b5"
 dependencies = [
  "chacha20poly1305",
  "delog",
@@ -3676,7 +3678,7 @@ checksum = "0d046c5d029ba91a1ed14da14dca44b68bf2f124cfbaf741c54151fdb3e0750b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc4#4ec145499b7b2331ac36cb9656da4a732f7c7180"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc5#012227d413666d82de416dc30c7e3008113cbadb"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",

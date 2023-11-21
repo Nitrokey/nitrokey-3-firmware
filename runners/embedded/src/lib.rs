@@ -275,13 +275,16 @@ pub fn init_apps(
         }
     };
 
+    let runner = types::Runner {
+        is_efs_available: !nfc_powered,
+    };
     let data = apps::Data {
         admin,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),
     };
-    types::Apps::with_service(&types::Runner, trussed, data)
+    types::Apps::with_service(&runner, trussed, data)
 }
 
 #[cfg(feature = "se050")]
