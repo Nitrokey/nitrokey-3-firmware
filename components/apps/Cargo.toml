@@ -38,7 +38,7 @@ hex = "0.4"
 
 [features]
 default = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "trussed/clients-4"]
-test = ["piv-authenticator", "webcrypt", "trussed/clients-6"]
+test = ["piv-authenticator", "webcrypt", "factory-reset", "trussed/clients-6"]
 provisioner = ["provisioner-app", "trussed/clients-5"]
 
 # apps
@@ -58,6 +58,8 @@ backend-rsa = ["trussed-rsa-alloc"]
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 
 trussed-usbip-ccid = ["trussed-usbip/ccid"]
+
+factory-reset = ["admin-app/factory-reset"]
 
 # Allow resetting FIDO authenticator (and possibly others) even after 10s uptime
 no-reset-time-window = ["fido-authenticator?/disable-reset-time-window"]
