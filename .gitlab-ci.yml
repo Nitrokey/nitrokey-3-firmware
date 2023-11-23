@@ -21,7 +21,6 @@ variables:
   IMAGE_NAME: nitrokey3
   COMMON_UPDATE_DOCKER: "false"
   COMMON_UPLOAD_FILES: "false"
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
 
@@ -197,8 +196,9 @@ hardware-tests:
   stage: test
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL
-    #- cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
+    - git -C nitrokey-hardware-test checkout v1.0
+    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
+    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
   dependencies:
     - build-firmware-for-tests
   needs:
@@ -207,6 +207,6 @@ hardware-tests:
     when: always
     paths:
       - nitrokey-hardware-test/artifacts
-    #reports:
-    #  junit: nitrokey-hardware-test/artifacts/report-junit.xml
+    reports:
+      junit: nitrokey-hardware-test/artifacts/report-junit.xml
 
