@@ -1,14 +1,21 @@
+# Unreleased
+
+- Add an SE050 driver and its tests ([#335][])
+- Use SE050 entropy to bootstrap the random number generator ([#335][])
+
+# 1.6.0 (2023-11-23)
+
+- no additions since v1.6.0-rc.1
+
 # 1.6.0-rc.1 (2023-11-10)
 
 ### Features
 
-- Add an SE050 driver and its tests ([#335][])
 - usbip: Add user presence check ([#314][], [#321][])
 - admin-app: Add config mechanism ([#344][])
 
 ### Changed
 
-- Use SE050 entropy to bootstrap the random number generator ([#335][])
 - secrets-app: Update to v0.13.0-rc.1
   - Confirm credential removal with a touch ([trussed-secrets-app#92][])
   - Allow to update credential ([trussed-secrets-app#65][])
