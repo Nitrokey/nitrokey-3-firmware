@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=c83c8a27c20b4b6820d60cb8ef2204c51f398db0#c83c8a27c20b4b6820d60cb8ef2204c51f398db0"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.7#c83c8a27c20b4b6820d60cb8ef2204c51f398db0"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -105,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.6.0-rc.1"
+version = "1.6.0"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -1060,7 +1060,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.6.0-rc.1"
+version = "1.6.0"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -3347,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed-staging.git?branch=hmacsha256p256-rebased#cec6260499a246d6ede687ea8ca2a97667295a23"
+source = "git+https://github.com/nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.1#cec6260499a246d6ede687ea8ca2a97667295a23"
 dependencies = [
  "chacha20poly1305",
  "delog",
@@ -3544,7 +3544,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.6.0-rc.1"
+version = "1.6.0"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3564,7 +3564,7 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "1.6.0-rc.1"
+version = "1.6.0"
 dependencies = [
  "chrono",
  "delog",
