@@ -716,7 +716,8 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     type Data = ();
     type Config = OpcardConfig;
 
-    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &OpcardConfig) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), config: &OpcardConfig) -> Self {
+        let _ = config;
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
         options.button_available = true;
@@ -724,6 +725,13 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = trussed::types::Location::External;
+        #[cfg(feature = "se050")]
+        {
+            if config.use_se050_backend {
+                options.rsa_max_import = opcard::RsaKeySizes::Rsa4096;
+            }
+        }
+
         #[cfg(any(feature = "factory-reset", feature = "se050"))]
         {
             options.reset_signal = Some(&OPCARD_RESET_SIGNAL);
@@ -813,7 +821,7 @@ mod tests {
             },
             opcard: OpcardConfig {
                 #[cfg(feature = "se050")]
-                use_se050_backend: false,
+                use_se050_backend: true,
             },
         };
         let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
