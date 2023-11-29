@@ -21,7 +21,7 @@ trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked"
 
 # apps
 admin-app = "0.1.0"
-fido-authenticator = { version = "0.1.1", features = ["dispatch"], optional = true }
+fido-authenticator = { version = "0.1.1", features = ["chunked", "dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 webcrypt = { version = "0.8.0", optional = true }
 secrets-app = { version = "0.13.0", features = ["apdu-dispatch", "ctaphid"], optional = true }

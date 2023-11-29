@@ -120,6 +120,10 @@ impl apps::Runner for Runner {
     fn uuid(&self) -> [u8; 16] {
         self.serial
     }
+
+    fn is_efs_available(&self) -> bool {
+        true
+    }
 }
 
 fn main() {

@@ -69,7 +69,9 @@ pub trait Soc {
     fn device_uuid() -> &'static Self::UUID;
 }
 
-pub struct Runner;
+pub struct Runner {
+    pub is_efs_available: bool,
+}
 
 impl apps::Runner for Runner {
     type Syscall = RunnerSyscall;
@@ -82,6 +84,10 @@ impl apps::Runner for Runner {
 
     fn uuid(&self) -> [u8; 16] {
         *<SocT as Soc>::device_uuid()
+    }
+
+    fn is_efs_available(&self) -> bool {
+        self.is_efs_available
     }
 }
 

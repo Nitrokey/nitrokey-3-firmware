@@ -95,6 +95,7 @@ pub trait Runner {
     type Se050Timer: 'static;
 
     fn uuid(&self) -> [u8; 16];
+    fn is_efs_available(&self) -> bool;
 }
 
 pub struct Data<R: Runner> {
@@ -451,11 +452,19 @@ impl<R: Runner> App<R> for FidoApp<R> {
     type Data = ();
     type Config = FidoConfig;
 
-    fn with_client(_runner: &R, trussed: Client<R>, _: (), config: &Self::Config) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, _: (), config: &Self::Config) -> Self {
         let skip_up_timeout = if config.disable_skip_up_timeout {
             None
         } else {
             Some(core::time::Duration::from_secs(2))
+        };
+        let large_blobs = if cfg!(feature = "test") && runner.is_efs_available() {
+            Some(fido_authenticator::LargeBlobsConfig {
+                location: Location::External,
+                max_size: 4096,
+            })
+        } else {
+            None
         };
         fido_authenticator::Authenticator::new(
             trussed,
@@ -464,12 +473,17 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
                 skip_up_timeout,
                 max_resident_credential_count: Some(10),
+                large_blobs,
             },
         )
     }
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+
+    fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
+        &[BackendId::Custom(Backend::Staging), BackendId::Core]
     }
 }
 
