@@ -19,7 +19,7 @@ use trussed::{
     virt::StoreProvider,
 };
 
-const STORAGE_SIZE: usize = 512 * 128;
+const IFS_STORAGE_SIZE: usize = 512 * 128;
 
 static mut INTERNAL_STORAGE: Option<InternalStorage> = None;
 static mut INTERNAL_FS_ALLOC: Option<Allocation<InternalStorage>> = None;
@@ -33,7 +33,7 @@ static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-const_ram_storage!(InternalRamStorage, STORAGE_SIZE);
+const_ram_storage!(InternalRamStorage, IFS_STORAGE_SIZE);
 // Modelled after the actual external RAM, see src/flash.rs in the embedded runner
 const_ram_storage!(
     name=ExternalRamStorage,
@@ -49,7 +49,7 @@ const_ram_storage!(
     path_max_plus_one_ty=U256,
     result=LfsResult,
 );
-const_ram_storage!(VolatileStorage, STORAGE_SIZE);
+const_ram_storage!(VolatileStorage, IFS_STORAGE_SIZE);
 
 // TODO: use 256 -- would cause a panic because formatting fails
 type InternalStorage = FilesystemOrRamStorage<InternalRamStorage>;
@@ -100,7 +100,7 @@ impl<S: LfsStorage> LfsStorage for FilesystemStorage<S> {
     }
 
     fn write(&mut self, offset: usize, data: &[u8]) -> LfsResult<usize> {
-        if offset + data.len() > STORAGE_SIZE {
+        if offset + data.len() > Self::BLOCK_COUNT * Self::BLOCK_SIZE {
             return Err(littlefs2::io::Error::NoSpace);
         }
         let mut file = OpenOptions::new().write(true).open(&self.path).unwrap();
@@ -112,7 +112,7 @@ impl<S: LfsStorage> LfsStorage for FilesystemStorage<S> {
     }
 
     fn erase(&mut self, offset: usize, len: usize) -> LfsResult<usize> {
-        if offset + len > STORAGE_SIZE {
+        if offset + len > Self::BLOCK_COUNT * Self::BLOCK_SIZE {
             return Err(littlefs2::io::Error::NoSpace);
         }
         let mut file = OpenOptions::new().write(true).open(&self.path).unwrap();
