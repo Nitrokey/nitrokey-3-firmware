@@ -62,7 +62,7 @@ systick-monotonic = { version = "1.0.0", optional = true }
 ### Allocator
 alloc-cortex-m = { version = "0.4.3", optional = true }
 ref-swap = "0.1.0"
-se05x = { version = "0.0.1", optional = true }
+se05x = { version = "0.1.1", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -72,7 +72,7 @@ toml = "0.5"
 [features]
 default = ["alloc"]
 
-test = ["apps/test", "utils/test", "se050", "se050-test-app"]
+test = ["apps/test", "utils/test", "se050"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
@@ -101,7 +101,6 @@ soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "chacha20", "se05x?/nrf"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic", "se05x?/lpc55", "chacha20"]
 
 se050 = ["dep:se05x", "apps/se050"]
-se050-test-app = ["se050", "apps/se050-test-app"]
 
 extflash_qspi = []
 extflash_spi = []
