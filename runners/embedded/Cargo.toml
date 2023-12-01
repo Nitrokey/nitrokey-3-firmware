@@ -53,7 +53,7 @@ nrf52840-pac = { version = "0.11", optional = true }
 
 ### LPC55 specific dependencies
 cortex-m-semihosting = { version = "0.3.5", optional = true }
-lpc55-hal = { version = "0.3", features = ["littlefs", "rtic-peripherals"], optional = true }
+lpc55-hal = { version = "0.3", features = ["littlefs"], optional = true }
 lpc55-pac = { version = "0.4", optional = true }
 fm11nc08 = { path = "../../components/fm11nc08", optional = true }
 nb = "1"

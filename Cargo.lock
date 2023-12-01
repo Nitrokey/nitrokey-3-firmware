@@ -678,7 +678,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rtic-macros",
  "heapless 0.7.16",
- "rtic-core 1.0.0",
+ "rtic-core",
  "rtic-monotonic",
  "version_check",
 ]
@@ -692,7 +692,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "rtic-syntax 1.0.3",
+ "rtic-syntax",
  "syn 1.0.109",
 ]
 
@@ -1901,7 +1901,6 @@ dependencies = [
  "generic-array 0.14.7",
  "littlefs2",
  "lpc55-pac",
- "lpc55-rtic",
  "nb 1.1.0",
  "rand_core",
  "usb-device",
@@ -1918,32 +1917,6 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "vcell",
-]
-
-[[package]]
-name = "lpc55-rtic"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4472b3ed70fa24afef24fa55fd0ebd77fbc781a4c649bb48ca6b1b9fa6b90073"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "heapless 0.6.1",
- "lpc55-rtic-macros",
- "rtic-core 0.3.1",
- "version_check",
-]
-
-[[package]]
-name = "lpc55-rtic-macros"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c4958d6458bf70ef0789830bb2ed28e9a8d95d500e7cad2b1e9bd3a3169c680"
-dependencies = [
- "proc-macro2",
- "quote",
- "rtic-syntax 0.4.0",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2641,12 +2614,6 @@ dependencies = [
 
 [[package]]
 name = "rtic-core"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bd58a6949de8ff797a346a28d9f13f7b8f54fa61bb5e3cb0985a4efb497a5ef"
-
-[[package]]
-name = "rtic-core"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
@@ -2656,17 +2623,6 @@ name = "rtic-monotonic"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb8b0b822d1a366470b9cea83a1d4e788392db763539dc4ba022bcc787fece82"
-
-[[package]]
-name = "rtic-syntax"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8152fcaa845720d61e6cc570548b89144c2c307f18a480bbd97e55e9f6eeff04"
-dependencies = [
- "indexmap",
- "proc-macro2",
- "syn 1.0.109",
-]
 
 [[package]]
 name = "rtic-syntax"
