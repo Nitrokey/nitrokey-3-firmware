@@ -32,6 +32,7 @@ use interchange::Channel;
 use lpc55_hal as hal;
 #[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
+use rand_chacha::ChaCha8Rng;
 use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;
 
@@ -729,10 +730,10 @@ impl Stage5 {
                 );
                 (chacha_rng, Some(se050))
             } else {
-                (chacha20::ChaCha8Rng::from_seed(dev_rng.gen()), None)
+                (ChaCha8Rng::from_seed(dev_rng.gen()), None)
             };
             #[cfg(not(feature = "se050"))]
-            let res = (chacha20::ChaCha8Rng::from_seed(dev_rng.gen()),);
+            let res = (ChaCha8Rng::from_seed(dev_rng.gen()),);
             res
         };
 

@@ -453,17 +453,6 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chacha20"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f08493fa7707effc63254c66c6ea908675912493cd67952eda23c09fae2610b1"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "rand_core",
-]
-
-[[package]]
-name = "chacha20"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818"
@@ -480,7 +469,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35"
 dependencies = [
  "aead",
- "chacha20 0.9.1",
+ "chacha20",
  "cipher 0.4.4",
  "poly1305",
  "zeroize",
@@ -1124,7 +1113,6 @@ dependencies = [
  "apps",
  "cargo-lock",
  "cfg-if",
- "chacha20 0.7.3",
  "cortex-m",
  "cortex-m-rtic",
  "cortex-m-semihosting",
@@ -1148,6 +1136,7 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "rand",
+ "rand_chacha",
  "rand_core",
  "ref-swap",
  "rtt-target",
@@ -3351,7 +3340,7 @@ dependencies = [
  "cbc",
  "cbor-smol",
  "cfg-if",
- "chacha20 0.9.1",
+ "chacha20",
  "chacha20poly1305",
  "cosey 0.3.0",
  "delog",
