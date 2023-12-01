@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.7#c83c8a27c20b4b6820d60cb8ef2204c51f398db0"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.9#75c7c969cfa811aa774d1a08d48e8563f8732497"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -109,10 +109,12 @@ version = "1.6.0"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
+ "bitflags 1.3.2",
  "cbor-smol",
  "ctaphid-dispatch",
  "embedded-hal",
  "fido-authenticator",
+ "heapless 0.7.16",
  "hex",
  "if_chain",
  "littlefs2",
@@ -1065,7 +1067,6 @@ dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
- "bitflags 1.3.2",
  "cargo-lock",
  "cfg-if",
  "chacha20 0.7.3",

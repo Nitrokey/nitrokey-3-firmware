@@ -8,10 +8,12 @@ const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
+use bitflags::bitflags;
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
+use heapless::Vec;
 use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
@@ -166,7 +168,7 @@ pub struct Apps<R: Runner> {
     #[cfg(feature = "secrets-app")]
     oath: SecretsApp<R>,
     #[cfg(feature = "opcard")]
-    opcard: OpcardApp<R>,
+    opcard: Option<OpcardApp<R>>,
     #[cfg(feature = "piv-authenticator")]
     piv: PivApp<R>,
     #[cfg(feature = "provisioner-app")]
@@ -193,7 +195,7 @@ impl<R: Runner> Apps<R> {
             ..
         } = data;
 
-        let admin = AdminApp::<R>::new(runner, &mut make_client, admin, &());
+        let (admin, init_status) = Self::admin_app(runner, &mut make_client, admin);
 
         #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
@@ -209,7 +211,14 @@ impl<R: Runner> Apps<R> {
             #[cfg(feature = "secrets-app")]
             oath: App::new(runner, &mut make_client, (), &()),
             #[cfg(feature = "opcard")]
-            opcard: App::new(runner, &mut make_client, (), &()),
+            // Config errors can have security and stability implications for opcard as they select
+            // the backend to use (se050 or software).  Therefore we disable the app if a config
+            // error occured.
+            opcard: if init_status.contains(InitStatus::CONFIG_ERROR) {
+                None
+            } else {
+                Some(App::new(runner, &mut make_client, (), &()))
+            },
             #[cfg(feature = "piv-authenticator")]
             piv: App::new(runner, &mut make_client, (), &()),
             #[cfg(feature = "provisioner-app")]
@@ -218,6 +227,40 @@ impl<R: Runner> Apps<R> {
             webcrypt: webcrypt_fido_bypass,
             admin,
         }
+    }
+
+    fn admin_app(
+        runner: &R,
+        make_client: impl FnOnce(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
+        mut data: AdminData<R>,
+    ) -> (AdminApp<R>, InitStatus) {
+        let trussed = AdminApp::<R>::client(runner, make_client, &());
+        const VERSION: u32 = utils::VERSION.encode();
+        // TODO: use CLIENT_ID directly
+        let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
+        let app = AdminApp::<R>::load_config(
+            trussed,
+            &mut filestore,
+            runner.uuid(),
+            VERSION,
+            utils::VERSION_STRING,
+            data.status(),
+        )
+        .unwrap_or_else(|(trussed, _err)| {
+            data.init_status.insert(InitStatus::CONFIG_ERROR);
+            AdminApp::<R>::with_default_config(
+                trussed,
+                runner.uuid(),
+                VERSION,
+                utils::VERSION_STRING,
+                data.status(),
+            )
+        });
+        (app, data.init_status)
     }
 
     pub fn with_service<P: Platform>(
@@ -246,40 +289,65 @@ impl<R: Runner> Apps<R> {
     where
         F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T,
     {
-        f(&mut [
-            #[cfg(feature = "ndef-app")]
-            &mut self.ndef,
-            #[cfg(feature = "secrets-app")]
-            &mut self.oath,
-            #[cfg(feature = "opcard")]
-            &mut self.opcard,
-            #[cfg(feature = "piv-authenticator")]
-            &mut self.piv,
-            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            &mut self.fido,
-            &mut self.admin,
-            #[cfg(feature = "provisioner-app")]
-            &mut self.provisioner,
-            // #[cfg(feature = "webcrypt")]
-            // &mut self.webcrypt,
-        ])
+        let mut apps: Vec<&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>, 7> =
+            Default::default();
+
+        // App 1: ndef
+        #[cfg(feature = "ndef-app")]
+        apps.push(&mut self.ndef).ok().unwrap();
+
+        // App 2: secrets
+        #[cfg(feature = "secrets-app")]
+        apps.push(&mut self.oath).ok().unwrap();
+
+        // App 3: opcard
+        #[cfg(feature = "opcard")]
+        if let Some(opcard) = &mut self.opcard {
+            apps.push(opcard).ok().unwrap();
+        }
+
+        // App 4: piv
+        #[cfg(feature = "piv-authenticator")]
+        apps.push(&mut self.piv).ok().unwrap();
+
+        // App 5: fido
+        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        apps.push(&mut self.fido).ok().unwrap();
+
+        // App 6: admin
+        apps.push(&mut self.admin).ok().unwrap();
+
+        // App 7: provisioner
+        #[cfg(feature = "provisioner-app")]
+        apps.push(&mut self.provisioner).ok().unwrap();
+
+        f(&mut apps)
     }
 
     pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
     where
         F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
-        f(&mut [
-            #[cfg(feature = "webcrypt")]
-            &mut self.webcrypt,
-            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            &mut self.fido,
-            &mut self.admin,
-            #[cfg(feature = "secrets-app")]
-            &mut self.oath,
-            #[cfg(feature = "provisioner-app")]
-            &mut self.provisioner,
-        ])
+        let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
+
+        // App 1: webcrypt or fido
+        #[cfg(feature = "webcrypt")]
+        apps.push(&mut self.webcrypt).ok().unwrap();
+        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        apps.push(&mut self.fido).ok().unwrap();
+
+        // App 2: admin
+        apps.push(&mut self.admin).ok().unwrap();
+
+        // App 3: secrets
+        #[cfg(feature = "secrets-app")]
+        apps.push(&mut self.oath).ok().unwrap();
+
+        // App 4: provisioner
+        #[cfg(feature = "provisioner-app")]
+        apps.push(&mut self.provisioner).ok().unwrap();
+
+        f(&mut apps)
     }
 }
 
@@ -332,12 +400,23 @@ trait App<R: Runner>: Sized {
         data: Self::Data,
         config: &Self::Config,
     ) -> Self {
-        let backends = Self::backends(runner, config);
-        Self::with_client(
-            runner,
-            make_client(Self::CLIENT_ID, backends, Self::interrupt()),
-            data,
-            config,
+        let client = Self::client(runner, make_client, config);
+        Self::with_client(runner, client, data, config)
+    }
+
+    fn client(
+        runner: &R,
+        make_client: impl FnOnce(
+            &str,
+            &'static [BackendId<Backend>],
+            Option<&'static InterruptFlag>,
+        ) -> Client<R>,
+        config: &Self::Config,
+    ) -> Client<R> {
+        make_client(
+            Self::CLIENT_ID,
+            Self::backends(runner, config),
+            Self::interrupt(),
         )
     }
 
@@ -372,9 +451,21 @@ impl From<Variant> for u8 {
     }
 }
 
+bitflags! {
+    #[derive(Default)]
+    pub struct InitStatus: u8 {
+        const NFC_ERROR = 0b00000001;
+        const INTERNAL_FLASH_ERROR = 0b00000010;
+        const EXTERNAL_FLASH_ERROR = 0b00000100;
+        const MIGRATION_ERROR = 0b00001000;
+        const SE050_RAND_ERROR = 0b00010000;
+        const CONFIG_ERROR = 0b00100000;
+    }
+}
+
 pub struct AdminData<R: Runner> {
     pub store: R::Store,
-    pub init_status: u8,
+    pub init_status: InitStatus,
     pub ifs_blocks: u8,
     pub efs_blocks: u16,
     pub variant: Variant,
@@ -384,7 +475,7 @@ impl<R: Runner> AdminData<R> {
     pub fn new(store: R::Store, variant: Variant) -> Self {
         Self {
             store,
-            init_status: 0,
+            init_status: InitStatus::empty(),
             ifs_blocks: u8::MAX,
             efs_blocks: u16::MAX,
             variant,
@@ -398,7 +489,7 @@ impl<R: Runner> AdminData<R> {
     fn status(&self) -> AdminStatus {
         let efs_blocks = self.efs_blocks.to_be_bytes();
         [
-            self.init_status,
+            self.init_status.bits(),
             self.ifs_blocks,
             efs_blocks[0],
             efs_blocks[1],
@@ -416,18 +507,11 @@ impl<R: Runner> App<R> for AdminApp<R> {
     type Config = ();
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
-        const VERSION: u32 = utils::VERSION.encode();
-        // TODO: use CLIENT_ID directly
-        let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
-        Self::load(
-            trussed,
-            &mut filestore,
-            runner.uuid(),
-            VERSION,
-            utils::VERSION_STRING,
-            data.status(),
-        )
+        let _ = (runner, trussed, data);
+        // admin-app is a special case and should only be constructed using Apps::admin_app
+        unimplemented!();
     }
+
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)

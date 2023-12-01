@@ -1,7 +1,7 @@
 use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
-use apps::Dispatch;
+use apps::{Dispatch, InitStatus};
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -50,7 +50,7 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, InitStatus, Iso14443, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Iso14443, RunnerStore, Trussed},
 };
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;

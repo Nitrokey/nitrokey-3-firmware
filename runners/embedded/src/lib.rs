@@ -4,6 +4,7 @@ use apdu_dispatch::{
     dispatch::ApduDispatch,
     interchanges::{Channel as CcidChannel, Responder as CcidResponder},
 };
+use apps::InitStatus;
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use littlefs2::fs::Filesystem;
@@ -59,7 +60,7 @@ pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
     ext_flash: <SocT as Soc>::ExternalFlashStorage,
     simulated_efs: bool,
-    status: &mut types::InitStatus,
+    status: &mut InitStatus,
 ) -> types::RunnerStore {
     let volatile_storage = types::VolatileStorage::new();
 
@@ -89,7 +90,7 @@ pub fn init_store(
             info_now!("IFS mount failed - provisioner => formatting");
             let _fmt_int = Filesystem::format(ifs_storage);
         } else {
-            status.insert(types::InitStatus::INTERNAL_FLASH_ERROR);
+            status.insert(InitStatus::INTERNAL_FLASH_ERROR);
 
             // handle lpc55 boards
             #[cfg(feature = "board-nk3xn")]
@@ -148,7 +149,7 @@ pub fn init_store(
             info_now!("Formatting simulated EFS failed as expected");
         } else {
             error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
-            status.insert(types::InitStatus::EXTERNAL_FLASH_ERROR);
+            status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
         }
     };
     let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
@@ -238,14 +239,14 @@ pub fn init_usb_nfc(
 
 pub fn init_apps(
     trussed: &mut types::Trussed,
-    init_status: types::InitStatus,
+    init_status: InitStatus,
     store: &types::RunnerStore,
     nfc_powered: bool,
 ) -> types::Apps {
     use trussed::platform::Store as _;
 
     let mut admin = apps::AdminData::new(*store, <SocT as types::Soc>::VARIANT);
-    admin.init_status = init_status.bits();
+    admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
             if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
@@ -296,7 +297,7 @@ pub fn init_se050<
     i2c: I2C,
     delay: D,
     dev_rng: &mut R,
-    init_status: &mut types::InitStatus,
+    init_status: &mut InitStatus,
 ) -> (se05x::se05x::Se05X<I2C, D>, chacha20::ChaCha8Rng) {
     use chacha20::ChaCha8Rng;
     use rand::{Rng as _, SeedableRng};
@@ -319,7 +320,7 @@ pub fn init_se050<
     })()
     .unwrap_or_else(|_err| {
         debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
-        *init_status |= types::InitStatus::SE050_RAND_ERROR;
+        *init_status |= InitStatus::SE050_RAND_ERROR;
         seed
     });
     (se050, ChaCha8Rng::from_seed(seed))

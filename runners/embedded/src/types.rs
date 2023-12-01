@@ -5,7 +5,6 @@ pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
 use apps::{Dispatch, Variant};
-use bitflags::bitflags;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
@@ -151,17 +150,6 @@ pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;
 
 pub type Apps = apps::Apps<Runner>;
-
-bitflags! {
-    #[derive(Default)]
-    pub struct InitStatus: u8 {
-        const NFC_ERROR = 0b00000001;
-        const INTERNAL_FLASH_ERROR = 0b00000010;
-        const EXTERNAL_FLASH_ERROR = 0b00000100;
-        const MIGRATION_ERROR = 0b00001000;
-        const SE050_RAND_ERROR = 0b00010000;
-    }
-}
 
 #[derive(Debug)]
 pub struct DelogFlusher {}
