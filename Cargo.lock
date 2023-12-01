@@ -127,7 +127,7 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-se050-backend",
  "trussed-staging",
  "trussed-usbip",
@@ -2241,7 +2241,7 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
@@ -3386,20 +3386,6 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=2088e2f8a8d706276c1559717b4c6b6d4f270253#2088e2f8a8d706276c1559717b4c6b6d4f270253"
-dependencies = [
- "delog",
- "heapless-bytes 0.3.0",
- "num-bigint-dig",
- "postcard 0.7.3",
- "rsa",
- "serde",
- "trussed",
-]
-
-[[package]]
-name = "trussed-rsa-alloc"
-version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9#2f51478f0861ff8db19fdd5290f023ab6f4c2fb9"
 dependencies = [
  "delog",
@@ -3414,7 +3400,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=cb76fbff0bae365a474b8fbb12530d127ec995a9#cb76fbff0bae365a474b8fbb12530d127ec995a9"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=1bccc1d9ec9fafb9b769e32fcfe7476b9b034506#1bccc1d9ec9fafb9b769e32fcfe7476b9b034506"
 dependencies = [
  "cbor-smol",
  "crypto-bigint 0.5.5",
@@ -3437,7 +3423,7 @@ dependencies = [
  "sha2 0.10.8",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=2088e2f8a8d706276c1559717b4c6b6d4f270253)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
@@ -3787,7 +3773,7 @@ dependencies = [
  "serde-indexed",
  "serde_bytes",
  "trussed",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
