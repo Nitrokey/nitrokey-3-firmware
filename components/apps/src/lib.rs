@@ -104,7 +104,7 @@ impl admin_app::Config for FidoConfig {
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct OpcardConfig {
     #[cfg(feature = "se050")]
-    #[serde(default, rename = "t", skip_serializing_if = "is_default")]
+    #[serde(default, rename = "s", skip_serializing_if = "is_default")]
     use_se050_backend: bool,
 }
 
