@@ -17,6 +17,7 @@ dependencies = [
  "serde",
  "strum_macros",
  "trussed",
+ "trussed-se050-backend",
  "trussed-staging",
 ]
 
