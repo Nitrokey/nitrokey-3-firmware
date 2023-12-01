@@ -1,5 +1,5 @@
 use super::spi::Spi;
-use crate::types::InitStatus;
+use apps::InitStatus;
 use lpc55_hal::{
     self,
     drivers::{

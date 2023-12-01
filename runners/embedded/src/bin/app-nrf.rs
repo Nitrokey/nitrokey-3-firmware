@@ -53,7 +53,7 @@ mod app {
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
-        let mut init_status = ERL::types::InitStatus::default();
+        let mut init_status = apps::InitStatus::default();
 
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();

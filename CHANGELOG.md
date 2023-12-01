@@ -5,7 +5,9 @@
 - Add an SE050 driver and its tests ([#335][])
 - Use SE050 entropy to bootstrap the random number generator ([#335][])
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+- Report errors when loading the configuration during initialization and disable opcard if an error occured ([#394][])
 
+[#394]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/394
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 
 # 1.6.0 (2023-11-23)
