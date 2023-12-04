@@ -163,10 +163,14 @@ build-firmware-for-tests:
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
+    - make -C runners/embedded build-nk3xn FEATURES=test
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-test-lpc55.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
     - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nrf52.hex
+    - make -C runners/embedded build-nk3am.bl FEATURES=test
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-test-nrf52.hex
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
   artifacts:
