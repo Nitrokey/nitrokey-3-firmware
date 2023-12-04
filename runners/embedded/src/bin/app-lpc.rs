@@ -143,6 +143,8 @@ mod app {
                     perf_timer.start(60_000_000.microseconds());
                 }
             });
+
+            #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {
                 soc::Delogger::flush();
             }

@@ -72,10 +72,12 @@ toml = "0.5"
 [features]
 default = ["alloc"]
 
-test = ["apps/test", "utils/test", "se050"]
+test = ["apps/test", "utils/test"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
+
+no-delog = ["delog/knock-it-off"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = []
