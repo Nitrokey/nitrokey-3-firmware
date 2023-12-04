@@ -298,9 +298,9 @@ pub fn init_se050<
     delay: D,
     dev_rng: &mut R,
     init_status: &mut InitStatus,
-) -> (se05x::se05x::Se05X<I2C, D>, chacha20::ChaCha8Rng) {
-    use chacha20::ChaCha8Rng;
+) -> (se05x::se05x::Se05X<I2C, D>, rand_chacha::ChaCha8Rng) {
     use rand::{Rng as _, SeedableRng};
+    use rand_chacha::ChaCha8Rng;
     use se05x::se05x::commands::GetRandom;
 
     let seed: [u8; 32] = dev_rng.gen();

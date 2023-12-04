@@ -186,7 +186,7 @@ mod app {
         #[cfg(not(feature = "se050"))]
         use rand::{Rng as _, SeedableRng};
         #[cfg(not(feature = "se050"))]
-        let chacha_rng = chacha20::ChaCha8Rng::from_seed(dev_rng.gen());
+        let chacha_rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
 
         #[cfg(feature = "board-nk3am")]
         let ui = ERL::soc::board::init_ui(

@@ -127,7 +127,7 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-se050-backend",
  "trussed-staging",
  "trussed-usbip",
@@ -453,17 +453,6 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chacha20"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f08493fa7707effc63254c66c6ea908675912493cd67952eda23c09fae2610b1"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "rand_core",
-]
-
-[[package]]
-name = "chacha20"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818"
@@ -480,7 +469,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35"
 dependencies = [
  "aead",
- "chacha20 0.9.1",
+ "chacha20",
  "cipher 0.4.4",
  "poly1305",
  "zeroize",
@@ -689,7 +678,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rtic-macros",
  "heapless 0.7.16",
- "rtic-core 1.0.0",
+ "rtic-core",
  "rtic-monotonic",
  "version_check",
 ]
@@ -703,7 +692,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "rtic-syntax 1.0.3",
+ "rtic-syntax",
  "syn 1.0.109",
 ]
 
@@ -1124,7 +1113,6 @@ dependencies = [
  "apps",
  "cargo-lock",
  "cfg-if",
- "chacha20 0.7.3",
  "cortex-m",
  "cortex-m-rtic",
  "cortex-m-semihosting",
@@ -1148,6 +1136,7 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "rand",
+ "rand_chacha",
  "rand_core",
  "ref-swap",
  "rtt-target",
@@ -1912,7 +1901,6 @@ dependencies = [
  "generic-array 0.14.7",
  "littlefs2",
  "lpc55-pac",
- "lpc55-rtic",
  "nb 1.1.0",
  "rand_core",
  "usb-device",
@@ -1929,32 +1917,6 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "vcell",
-]
-
-[[package]]
-name = "lpc55-rtic"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4472b3ed70fa24afef24fa55fd0ebd77fbc781a4c649bb48ca6b1b9fa6b90073"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "heapless 0.6.1",
- "lpc55-rtic-macros",
- "rtic-core 0.3.1",
- "version_check",
-]
-
-[[package]]
-name = "lpc55-rtic-macros"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c4958d6458bf70ef0789830bb2ed28e9a8d95d500e7cad2b1e9bd3a3169c680"
-dependencies = [
- "proc-macro2",
- "quote",
- "rtic-syntax 0.4.0",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2252,7 +2214,7 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
@@ -2652,12 +2614,6 @@ dependencies = [
 
 [[package]]
 name = "rtic-core"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bd58a6949de8ff797a346a28d9f13f7b8f54fa61bb5e3cb0985a4efb497a5ef"
-
-[[package]]
-name = "rtic-core"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
@@ -2667,17 +2623,6 @@ name = "rtic-monotonic"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb8b0b822d1a366470b9cea83a1d4e788392db763539dc4ba022bcc787fece82"
-
-[[package]]
-name = "rtic-syntax"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8152fcaa845720d61e6cc570548b89144c2c307f18a480bbd97e55e9f6eeff04"
-dependencies = [
- "indexmap",
- "proc-macro2",
- "syn 1.0.109",
-]
 
 [[package]]
 name = "rtic-syntax"
@@ -3351,7 +3296,7 @@ dependencies = [
  "cbc",
  "cbor-smol",
  "cfg-if",
- "chacha20 0.9.1",
+ "chacha20",
  "chacha20poly1305",
  "cosey 0.3.0",
  "delog",
@@ -3397,20 +3342,6 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=2088e2f8a8d706276c1559717b4c6b6d4f270253#2088e2f8a8d706276c1559717b4c6b6d4f270253"
-dependencies = [
- "delog",
- "heapless-bytes 0.3.0",
- "num-bigint-dig",
- "postcard 0.7.3",
- "rsa",
- "serde",
- "trussed",
-]
-
-[[package]]
-name = "trussed-rsa-alloc"
-version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9#2f51478f0861ff8db19fdd5290f023ab6f4c2fb9"
 dependencies = [
  "delog",
@@ -3425,7 +3356,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=cb76fbff0bae365a474b8fbb12530d127ec995a9#cb76fbff0bae365a474b8fbb12530d127ec995a9"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=1bccc1d9ec9fafb9b769e32fcfe7476b9b034506#1bccc1d9ec9fafb9b769e32fcfe7476b9b034506"
 dependencies = [
  "cbor-smol",
  "crypto-bigint 0.5.5",
@@ -3448,7 +3379,7 @@ dependencies = [
  "sha2 0.10.8",
  "trussed",
  "trussed-auth",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/Nitrokey/trussed-rsa-backend.git?rev=2088e2f8a8d706276c1559717b4c6b6d4f270253)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
@@ -3798,7 +3729,7 @@ dependencies = [
  "serde-indexed",
  "serde_bytes",
  "trussed",
- "trussed-rsa-alloc 0.1.0 (git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=2f51478f0861ff8db19fdd5290f023ab6f4c2fb9)",
+ "trussed-rsa-alloc",
  "trussed-staging",
 ]
 
