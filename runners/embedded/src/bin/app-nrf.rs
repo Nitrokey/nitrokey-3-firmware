@@ -3,15 +3,18 @@
 
 use embedded_runner_lib as ERL;
 
-#[macro_use]
+#[cfg_attr(not(feature = "no-delog"), macro_use)]
 extern crate delog;
 delog::generate_macros!();
 
+#[cfg(not(feature = "no-delog"))]
 delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
-    use super::{Delogger, ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    #[cfg(not(feature = "no-delog"))]
+    use super::Delogger;
+    use super::{ERL, ERL::soc::rtic_monotonic::RtcDuration};
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
     use nrf52840_hal::{
@@ -63,6 +66,7 @@ mod app {
 
         #[cfg(feature = "log-rtt")]
         rtt_target::rtt_init_print!();
+        #[cfg(not(feature = "no-delog"))]
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
         ERL::banner();
 
@@ -257,6 +261,7 @@ mod app {
         // cortex_m::asm::wfi();
 
         loop {
+            #[cfg(not(feature = "no-delog"))]
             Delogger::flush();
 
             let (usb_activity, _nfc_activity) = apps.lock(|apps| {

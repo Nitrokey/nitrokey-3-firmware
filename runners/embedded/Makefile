@@ -32,14 +32,16 @@ OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
 CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
+NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(BUILD_FEATURES)'.split(',') and 'log-semihosting' not in '$(BUILD_FEATURES)'.split(',') and 'log-rtt' not in '$(BUILD_FEATURES)'.split(',') else None; ")
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
 # feature definition
 BUILD_FEATURES := board-$(BOARD) $(FEATURES)
+ALL_FEATURES = $(BUILD_FEATURES) $(NO_DELOG_FEATURE)
 # assemble comma-seperated list to pass to `cargo build`
 delim = ,
 space := $(null) #
-COMMA_FEATURES = $(subst $(space),$(delim),$(BUILD_FEATURES))
+COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
 
 .PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
 

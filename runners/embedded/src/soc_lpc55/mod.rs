@@ -14,6 +14,7 @@ pub mod board;
 
 use delog::delog;
 
+#[cfg(not(feature = "no-delog"))]
 delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
 const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
