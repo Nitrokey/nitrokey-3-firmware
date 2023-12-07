@@ -32,6 +32,15 @@ pub struct Config {
     pub usb_id_product: u16,
 }
 
+pub const INTERFACE_CONFIG: Config = Config {
+    // zero-padding for compatibility with previous implementations
+    card_issuer: b"Nitrokey\0\0\0\0\0",
+    usb_product: "Nitrokey 3",
+    usb_manufacturer: "Nitrokey",
+    usb_id_vendor: 0x20A0,
+    usb_id_product: 0x42B2,
+};
+
 pub trait Soc {
     type InternalFlashStorage;
     type ExternalFlashStorage;
@@ -60,7 +69,6 @@ pub trait Soc {
 
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;
-    const INTERFACE_CONFIG: &'static Config;
     const VARIANT: Variant;
 
     fn device_uuid() -> &'static Self::UUID;

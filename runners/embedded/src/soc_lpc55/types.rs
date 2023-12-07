@@ -45,14 +45,6 @@ pub use prince::InternalFilesystem;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
-const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
-    card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT,
-    usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
-    usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
-    usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
-};
-
 pub(super) type I2C = I2cMaster<
     Pio0_9,
     Pio1_14,
@@ -104,7 +96,6 @@ impl crate::types::Soc for Soc {
 
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
-    const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     const VARIANT: Variant = Variant::Lpc55;
 
     fn device_uuid() -> &'static [u8; 16] {

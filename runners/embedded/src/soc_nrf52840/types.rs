@@ -18,14 +18,6 @@ pub type OutPin = Pin<Output<PushPull>>;
 
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
 
-const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
-    card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT,
-    usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
-    usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
-    usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
-};
-
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = super::flash::FlashStorage;
@@ -53,7 +45,6 @@ impl crate::types::Soc for Soc {
 
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
-    const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     const VARIANT: Variant = Variant::Nrf52;
 
     fn device_uuid() -> &'static Self::UUID {

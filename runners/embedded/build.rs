@@ -4,7 +4,6 @@ use std::{env, error, fs::File, io::Write, path::Path};
 #[derive(serde::Deserialize)]
 struct Config {
     parameters: Parameters,
-    identifier: Identifier,
 }
 
 #[derive(serde::Deserialize)]
@@ -14,15 +13,6 @@ struct Parameters {
     flash_end: Option<u32>,
     filesystem_boundary: u32,
     filesystem_end: u32,
-}
-
-#[derive(serde::Deserialize)]
-struct Identifier {
-    usb_id_vendor: u16,
-    usb_id_product: u16,
-    usb_manufacturer: String,
-    usb_product: String,
-    ccid_issuer: String,
 }
 
 #[derive(Eq, PartialEq)]
@@ -145,32 +135,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     // write 'build_constants.rs' header
     writeln!(&mut f, "pub mod build_constants {{").expect("Could not write build_constants.rs.");
-
-    // USB Identifiers
-    add_build_variable!(
-        &mut f,
-        "USB_MANUFACTURER",
-        config.identifier.usb_manufacturer
-    );
-    add_build_variable!(&mut f, "USB_PRODUCT", config.identifier.usb_product);
-    add_build_variable!(
-        &mut f,
-        "USB_ID_VENDOR",
-        config.identifier.usb_id_vendor,
-        u16
-    );
-    add_build_variable!(
-        &mut f,
-        "USB_ID_PRODUCT",
-        config.identifier.usb_id_product,
-        u16
-    );
-
-    // convert ccid_issuer to bytes
-    let mut ccid_bytes: [u8; 13] = [0u8; 13];
-    let raw_issuer = config.identifier.ccid_issuer.as_bytes();
-    ccid_bytes[..raw_issuer.len()].clone_from_slice(raw_issuer);
-    add_build_variable!(&mut f, "CCID_ISSUER", ccid_bytes, [u8; 13]);
 
     add_build_variable!(
         &mut f,
