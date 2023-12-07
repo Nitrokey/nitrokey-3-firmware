@@ -1,4 +1,3 @@
-use std::process::Command;
 use std::str;
 use std::{env, error, fs::File, io::Write, path::Path};
 
@@ -6,8 +5,6 @@ use std::{env, error, fs::File, io::Write, path::Path};
 struct Config {
     parameters: Parameters,
     identifier: Identifier,
-    #[allow(dead_code)]
-    build: Build,
 }
 
 #[derive(serde::Deserialize)]
@@ -26,14 +23,6 @@ struct Identifier {
     usb_manufacturer: String,
     usb_product: String,
     ccid_issuer: String,
-}
-
-#[derive(serde::Deserialize)]
-struct Build {
-    #[allow(dead_code)]
-    build_profile: String,
-    #[allow(dead_code)]
-    board: String,
 }
 
 #[derive(Eq, PartialEq)]
@@ -154,25 +143,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let dest_path = Path::new(&out_dir).join("build_constants.rs");
     let mut f = File::create(&dest_path).expect("Could not create file");
 
-    let hash_long_cmd = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
-        .output()
-        .unwrap()
-        .stdout;
-    let hash_short_cmd = Command::new("git")
-        .args(&["rev-parse", "--short", "HEAD"])
-        .output()
-        .unwrap()
-        .stdout;
-
-    let hash_long = str::from_utf8(&hash_long_cmd).unwrap().trim();
-    let hash_short = str::from_utf8(&hash_short_cmd).unwrap().trim();
-
     // write 'build_constants.rs' header
     writeln!(&mut f, "pub mod build_constants {{").expect("Could not write build_constants.rs.");
-
-    add_build_variable!(&mut f, "CARGO_PKG_HASH", hash_long);
-    add_build_variable!(&mut f, "CARGO_PKG_HASH_SHORT", hash_short);
 
     // USB Identifiers
     add_build_variable!(

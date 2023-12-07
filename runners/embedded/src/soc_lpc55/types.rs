@@ -49,7 +49,6 @@ const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
     card_issuer: &crate::types::build_constants::CCID_ISSUER,
     usb_product: crate::types::build_constants::USB_PRODUCT,
     usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
-    usb_serial: "00000000-0000-0000-00000000",
     usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
     usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
 };
@@ -97,7 +96,6 @@ impl crate::types::Soc for Soc {
     #[cfg(not(feature = "se050"))]
     type Se050Timer = ();
 
-    type Instant = ();
     type Duration = Milliseconds;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {

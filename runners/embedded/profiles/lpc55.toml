@@ -1,6 +1,4 @@
 [platform]
-soc = "lpc55"
-boards = ["nk3xn"]
 target = "thumbv8m.main-none-eabi"
 
 [parameters]

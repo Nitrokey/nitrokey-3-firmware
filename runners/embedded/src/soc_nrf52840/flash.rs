@@ -4,8 +4,8 @@ use crate::types::build_constants::{
     CONFIG_FILESYSTEM_BOUNDARY as FS_BASE, CONFIG_FILESYSTEM_END as FS_CEIL,
 };
 
-pub const FLASH_BASE: *mut u8 = FS_BASE as *mut u8;
-pub const FLASH_SIZE: usize = FS_CEIL - FS_BASE;
+const FLASH_BASE: *mut u8 = FS_BASE as *mut u8;
+const FLASH_SIZE: usize = FS_CEIL - FS_BASE;
 
 const REAL_BLOCK_SIZE: usize = 4 * 1024;
 

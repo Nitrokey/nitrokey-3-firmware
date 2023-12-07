@@ -1,6 +1,4 @@
 [platform]
-soc = "nrf52"
-boards = ["nk3am"]
 target = "thumbv7em-none-eabihf"
 
 [parameters]

@@ -19,10 +19,6 @@ TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platfo
 # gnu binutils-prefix
 GNU_TARGET = arm-none-eabi
 
-### @TODO: ugly deluxe ? toml bash parser? dirty grep? 
-CFG_VAL_BOARDS = $(shell python3 -c 'import toml; print(" ".join(toml.load("$(CFG_PATH)")["platform"]["boards"]))')
-CFG_VAL_SOC = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["soc"])')
-
 # util fn/paths
 ARTIFACTS = artifacts
 LOG ?= build-$(BUILD_ID).err.log
