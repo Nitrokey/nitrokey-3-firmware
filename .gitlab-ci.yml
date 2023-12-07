@@ -39,7 +39,7 @@ metadata:
     - make manifest.json
   after_script:
     - mkdir -p artifacts
-    - cp commands.bd license.txt manifest.json artifacts
+    - cp commands.bd license.txt manifest.json artifacts || true
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - !reference [notify_github, script] # use notify_github from include
   artifacts:
