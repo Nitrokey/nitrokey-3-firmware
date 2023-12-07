@@ -1,6 +1,3 @@
-[platform]
-target = "thumbv8m.main-none-eabi"
-
 [parameters]
 flash_origin = 0x00000000
 flash_end = 0x92000

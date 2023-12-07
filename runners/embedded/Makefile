@@ -6,16 +6,15 @@ CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 CARGO_TARGET_DIR ?= ../../target
 
 ifeq ($(BOARD), nk3am)
-  SOC = nrf52
+  SOC := nrf52
+  TARGET := thumbv7em-none-eabihf
 else ifeq ($(BOARD), nk3xn)
-  SOC = lpc55
+  SOC := lpc55
+  TARGET := thumbv8m.main-none-eabi
 else ifneq ($(BOARD), )
   $(error Unsupported board $(BOARD))
 endif
 
-# rust triplet
-# This requires toml package installed: pip install toml
-TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
 # gnu binutils-prefix
 GNU_TARGET = arm-none-eabi
 

@@ -1,6 +1,3 @@
-[platform]
-target = "thumbv7em-none-eabihf"
-
 [parameters]
 flash_origin = 0x00001000
 filesystem_boundary = 0xD8000
