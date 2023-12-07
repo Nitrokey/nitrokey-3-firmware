@@ -7,11 +7,8 @@ use nrf52840_hal::{
 };
 use nrf52840_pac;
 
-#[cfg(feature = "extflash_spi")]
 use crate::flash::ExtFlashStorage;
-#[cfg(feature = "extflash_spi")]
 use nrf52840_hal::Spim;
-#[cfg(feature = "extflash_spi")]
 use nrf52840_pac::SPIM3;
 
 pub type OutPin = Pin<Output<PushPull>>;
@@ -34,22 +31,10 @@ const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
 and placed into build_constants::CONFIG_FILESYSTEM_END */
 pub const FILESYSTEM_END: usize = crate::types::build_constants::CONFIG_FILESYSTEM_END;
 
-#[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
-use littlefs2::const_ram_storage;
-#[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
-use trussed::types::{LfsResult, LfsStorage};
-#[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
-const_ram_storage!(ExternalStorage, 8192);
-
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = super::flash::FlashStorage;
-    #[cfg(feature = "extflash_qspi")]
-    type ExternalFlashStorage = super::qspiflash::QspiFlash;
-    #[cfg(feature = "extflash_spi")]
     type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
-    #[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
-    type ExternalFlashStorage = ExternalStorage;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
     type Rng = rand_chacha::ChaCha8Rng;

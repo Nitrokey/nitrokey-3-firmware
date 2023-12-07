@@ -5,10 +5,12 @@ CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
 
 CARGO_TARGET_DIR ?= ../../target
 
-ifeq ($(filter nk3am proto1 nrfdk,$(BOARD)), )
-  SOC = lpc55
-else
+ifeq ($(BOARD), nk3am)
   SOC = nrf52
+else ifeq ($(BOARD), nk3xn)
+  SOC = lpc55
+else ifneq ($(BOARD), )
+  $(error Unsupported board $(BOARD))
 endif
 
 # rust triplet
@@ -46,9 +48,9 @@ COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
 .PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
-all: build-nrfdk build-nk3am build-proto1 build-nk3xn $(ARTIFACTS)
+all: build-nk3am.bl build-nk3xn $(ARTIFACTS)
 
-check-all: check-nrfdk check-nk3am check-proto1 check-nk3xn
+check-all: check-nk3am.bl check-nk3xn
 
 $(ARTIFACTS):
 	mkdir -p $@
@@ -60,24 +62,18 @@ help:
 	## $ make build BUILD_PROFILE=blubla BOARD=foobar
 	##
 	## Or build using one of the pre-defined "target shortcuts" (see `make list`):
-	## $ make build-proto1
+	## $ make build-nk3am.bl
 	##
 	## AND pass FEATURES as build feature-variants
-	## $ make build-nk3am FEATURES=complete
+	## $ make build-nk3am.bl FEATURES=complete
 	###############################################################################
 	###############################################################################
 
 GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 
 # shortcut targets
-%-nrfdk: $(ARTIFACTS)
-	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=nrfdk FEATURES=$(FEATURES)
-%-nk3am: $(ARTIFACTS)
-	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3am.bl: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
-%-proto1: $(ARTIFACTS)
-	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52 BOARD=proto1 FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BUILD_PROFILE=lpc55 BOARD=nk3xn FEATURES=$(FEATURES)
 
@@ -108,9 +104,9 @@ list:
 	@echo "Available:"
 	@echo "  BOARD(s): $(shell find src/ -name 'board_*' | xargs -n1 basename | sed -E 's/board_([^.]*)(.rs)?/\1/g' | xargs)"
 	@echo "  BUILD_PROFILE(s): $(shell ls profiles -1 | sed -e 's/\.toml//g')"
-	@echo "  Makefile shortcuts: nrfdk, proto1, nk3xc, nk3am, nk3am.bl"
+	@echo "  Makefile shortcuts: nk3xn, nk3am.bl"
 	@echo ""
-	@echo "  Usage: make <target>-<something> e.g., build-nk3am, reset-proto1, ..." 
+	@echo "  Usage: make <target>-<something> e.g., build-nk3am.bl, reset-nk3xn, ..." 
 
 clean-all: 
 	rm -f ./$(OUT_BIN) ./$(OUT_IHEX) $(SYMBOLS) $(LOG)

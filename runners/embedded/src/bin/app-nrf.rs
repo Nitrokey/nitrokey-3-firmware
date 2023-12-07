@@ -72,8 +72,6 @@ mod app {
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
-        #[cfg(feature = "extflash_qspi")]
-        let mut delay_timer = Timer::<nrf52840_pac::TIMER0>::new(ctx.device.TIMER0);
         let se050_timer = Timer::<nrf52840_pac::TIMER1>::new(ctx.device.TIMER1);
 
         let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
@@ -101,29 +99,6 @@ mod app {
 
         let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
 
-        #[cfg(feature = "extflash_qspi")]
-        let extflash = {
-            let mut qspi_extflash = ERL::soc::qspiflash::QspiFlash::new(
-                ctx.device.QSPI,
-                board_gpio.flashnfc_spi.take().unwrap(),
-                board_gpio.flash_cs.take().unwrap(),
-                board_gpio.flash_power,
-                &mut delay_timer,
-            );
-            qspi_extflash.activate();
-            trace!(
-                "qspi jedec: {}",
-                delog::hex_str!(&qspi_extflash.read_jedec_id())
-            );
-            use littlefs2::driver::Storage;
-            let mut mybuf: [u8; 32] = [0u8; 32];
-            mybuf[2] = 0x5a;
-            qspi_extflash.read(0x400, &mut mybuf[0..16]).ok();
-            trace!("qspi read: {}", delog::hex_str!(&mybuf[0..16]));
-
-            qspi_extflash
-        };
-        #[cfg(feature = "extflash_spi")]
         let extflash = {
             use nrf52840_hal::Spim;
             //Spim::new(spi, pins, config.speed(), config.mode())
@@ -139,9 +114,6 @@ mod app {
 
             res.unwrap()
         };
-
-        #[cfg(not(any(feature = "extflash_qspi", feature = "extflash_spi")))]
-        let extflash = ERL::soc::types::ExternalStorage::new();
 
         let store: ERL::types::RunnerStore =
             ERL::init_store(internal_flash, extflash, false, &mut init_status);

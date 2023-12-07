@@ -1,6 +1,6 @@
 [platform]
 soc = "lpc55"
-boards = ["solo2", "okdoe1", "lpcxpresso55", "nk3xn"]
+boards = ["nk3xn"]
 target = "thumbv8m.main-none-eabi"
 
 [parameters]
