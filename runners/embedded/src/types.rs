@@ -1,5 +1,3 @@
-include!(concat!(env!("OUT_DIR"), "/build_constants.rs"));
-
 use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,

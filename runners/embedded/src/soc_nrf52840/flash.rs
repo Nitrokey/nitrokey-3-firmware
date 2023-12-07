@@ -1,8 +1,9 @@
 use embedded_storage::nor_flash::{NorFlash, ReadNorFlash};
 
-use crate::types::build_constants::{
-    CONFIG_FILESYSTEM_BOUNDARY as FS_BASE, CONFIG_FILESYSTEM_END as FS_CEIL,
-};
+use super::types::MEMORY_REGIONS;
+
+const FS_BASE: usize = MEMORY_REGIONS.filesystem.start;
+const FS_CEIL: usize = MEMORY_REGIONS.filesystem.end;
 
 const FLASH_BASE: *mut u8 = FS_BASE as *mut u8;
 const FLASH_SIZE: usize = FS_CEIL - FS_BASE;

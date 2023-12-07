@@ -1,61 +1,17 @@
-use core::ops::Range;
 use std::str;
-use std::{env, error, fs::File, io::Write, path::Path};
+use std::{env, error, path::Path};
 
-struct MemoryRegions {
-    firmware: Range<usize>,
-    filesystem: Range<usize>,
-}
+use memory_regions::MemoryRegions;
 
 #[cfg(feature = "soc-lpc55")]
-const MEMORY_REGIONS: MemoryRegions = MemoryRegions {
-    firmware: 0..0x92_000,
-    filesystem: 0x93_000..0x9D_E00,
-};
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::LPC55;
 #[cfg(feature = "soc-nrf52840")]
-const MEMORY_REGIONS: MemoryRegions = MemoryRegions {
-    firmware: 0x1_000..0xD8_000,
-    filesystem: 0xD8_000..0xEC_000,
-};
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NRF52;
 
 #[derive(Eq, PartialEq)]
 enum SocType {
     Lpc55,
     Nrf52840,
-}
-
-macro_rules! add_build_variable {
-    ($file:expr, $name:literal, u8) => {
-        let value = env!($name);
-        let value: u8 = str::parse(value).expect("Version components must be able to fit in a u8.");
-        writeln!($file, "pub const {}: u8 = {};", $name, value)
-            .expect("Could not write build_constants.rs file");
-    };
-
-    ($file:expr, $name:literal, $value:expr, u16) => {
-        writeln!($file, "pub const {}: u16 = {};", $name, $value)
-            .expect("Could not write build_constants.rs file");
-    };
-
-    ($file:expr, $name:literal, $value:expr, u32) => {
-        writeln!($file, "pub const {}: u32 = {};", $name, $value)
-            .expect("Could not write build_constants.rs file");
-    };
-
-    ($file:expr, $name:literal, $value:expr, usize) => {
-        writeln!($file, "pub const {}: usize = 0x{:x};", $name, $value)
-            .expect("Could not write build_constants.rs file");
-    };
-
-    ($file:expr, $name:literal, $value:expr, [u8; 13]) => {
-        writeln!($file, "pub const {}: [u8; 13] = {:?};", $name, $value)
-            .expect("Could not write build_constants.rs file");
-    };
-
-    ($file:expr, $name:literal, $value:expr) => {
-        writeln!($file, "pub const {}: &str = \"{}\";", $name, $value)
-            .expect("Could not write build_constants.rs file");
-    };
 }
 
 fn check_build_triplet() -> SocType {
@@ -104,48 +60,12 @@ fn generate_memory_x(outpath: &Path, template: &str, regions: &MemoryRegions) {
 }
 
 fn main() -> Result<(), Box<dyn error::Error>> {
-    let out_dir = env::var("OUT_DIR").expect("$OUT_DIR unset");
-
     // @todo: add profile 'platform' items and cross-check them here ...
     let soc_type = check_build_triplet();
 
     if MEMORY_REGIONS.filesystem.start & 0x3ff != 0 {
         panic!("filesystem boundary is not a multiple of the flash block size (1KB)");
     }
-
-    // open and prepare 'build_constants.rs' output
-    let dest_path = Path::new(&out_dir).join("build_constants.rs");
-    let mut f = File::create(&dest_path).expect("Could not create file");
-
-    // write 'build_constants.rs' header
-    writeln!(&mut f, "pub mod build_constants {{").expect("Could not write build_constants.rs.");
-
-    add_build_variable!(
-        &mut f,
-        "CONFIG_FILESYSTEM_BOUNDARY",
-        MEMORY_REGIONS.filesystem.start,
-        usize
-    );
-    add_build_variable!(
-        &mut f,
-        "CONFIG_FILESYSTEM_END",
-        MEMORY_REGIONS.filesystem.end,
-        usize
-    );
-    add_build_variable!(
-        &mut f,
-        "CONFIG_FLASH_BASE",
-        MEMORY_REGIONS.firmware.start,
-        usize
-    );
-    add_build_variable!(
-        &mut f,
-        "CONFIG_FLASH_END",
-        MEMORY_REGIONS.firmware.end,
-        usize
-    );
-
-    writeln!(&mut f, "}}").expect("Could not write build_constants.rs.");
 
     // @todo: move this decision into 'profile.cfg'
     let (memory_x_infix, template_file) = match soc_type {
@@ -162,7 +82,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     std::fs::create_dir(&memory_x_dir).ok();
     let memory_x = memory_x_dir.join("custom_memory.x");
 
-    generate_memory_x(&memory_x, template_file, &MEMORY_REGIONS);
+    generate_memory_x(&memory_x, template_file, MEMORY_REGIONS);
 
     println!("cargo:rustc-link-search={}/ld", env!("CARGO_MANIFEST_DIR"));
     println!(

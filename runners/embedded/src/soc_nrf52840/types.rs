@@ -1,5 +1,6 @@
 use crate::soc::types::pac::SCB;
 use apps::Variant;
+use memory_regions::MemoryRegions;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
     pac, spim, twim, uarte,
@@ -17,6 +18,8 @@ pub type OutPin = Pin<Output<PushPull>>;
 // Upper Interface (definitions towards ERL Core)
 
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
+
+pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {

@@ -26,6 +26,7 @@ use lpc55_hal::{
     I2cMaster,
 };
 
+use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -68,6 +69,8 @@ where
         nb::block!(self.0.wait()).unwrap();
     }
 }
+
+pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {
