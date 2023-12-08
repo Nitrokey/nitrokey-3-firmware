@@ -7,7 +7,7 @@ license = "Apache-2.0 or MIT"
 
 [dependencies]
 askama = "0.11.1"
-cargo-license = "0.4.2"
-cargo_metadata = "0.14.0"
+cargo-license = "0.5.1"
+cargo_metadata = "0.15.0"
 gumdrop = "0.8.1"
 spdx = { version = "0.9.0", features = ["text"] }
