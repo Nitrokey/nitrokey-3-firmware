@@ -993,15 +993,6 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91cff35c70bba8a626e3185d8cd48cc11b5437e1a5bcd15b9b5fa3c64b6dfee7"
-dependencies = [
- "signature 1.3.2",
-]
-
-[[package]]
-name = "ed25519"
 version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
@@ -2347,7 +2338,7 @@ dependencies = [
  "heapless-bytes",
  "littlefs2",
  "p256-cortex-m4",
- "salty 0.2.0",
+ "salty",
  "trussed",
 ]
 
@@ -2565,24 +2556,12 @@ checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
 
 [[package]]
 name = "salty"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77cdd38ed8bfe51e53ee991aae0791b94349d0a05cfdecd283835a8a965d4c37"
-dependencies = [
- "cosey",
- "ed25519 1.5.3",
- "subtle",
- "zeroize",
-]
-
-[[package]]
-name = "salty"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b947325a585e90733e0e9ec097228f40b637cc346f9bd68f84d5c6297d0fcfef"
 dependencies = [
  "cosey",
- "ed25519 2.2.3",
+ "ed25519",
  "subtle",
  "zeroize",
 ]
@@ -3196,7 +3175,7 @@ dependencies = [
  "postcard 0.7.3",
  "rand_chacha",
  "rand_core",
- "salty 0.3.0",
+ "salty",
  "serde",
  "serde-indexed",
  "sha-1",
@@ -3252,7 +3231,7 @@ dependencies = [
  "p256-cortex-m4",
  "postcard 0.7.3",
  "rand",
- "salty 0.3.0",
+ "salty",
  "se05x",
  "serde",
  "serde-byte-array",
