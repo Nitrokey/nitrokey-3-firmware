@@ -15,10 +15,8 @@ heapless-bytes = "0.3"
 littlefs2 = "0.4.0"
 salty = { version = "0.2", features = ["cose"] }
 trussed = "0.1"
+p256-cortex-m4 = "0.1.0-alpha.6"
 
-[dependencies.nisty]
-version = "0.1.0-alpha.5"
-features = ["asn1-der", "cose"]
 
 [features]
 log-all = []

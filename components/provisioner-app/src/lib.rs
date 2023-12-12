@@ -209,9 +209,24 @@ where
                 }
             }
             Instruction::GenerateP256Key => {
+                use p256_cortex_m4::{Keypair, SecretKey};
                 info!("GenerateP256Key");
                 let mut seed = [0u8; 32];
-                seed.copy_from_slice(syscall!(self.trussed.random_bytes(32)).bytes.as_slice());
+
+                // Generate a keypair with rejection sampling.
+                // This should use the proper `random` method but is not possible without a `CryptoRng` implementation, which trussed is not
+                let keypair = loop {
+                    seed.copy_from_slice(syscall!(self.trussed.random_bytes(32)).bytes.as_slice());
+                    match SecretKey::from_bytes(&seed) {
+                        Ok(secret) => {
+                            break Keypair {
+                                public: secret.public_key(),
+                                secret,
+                            }
+                        }
+                        Err(_) => continue,
+                    }
+                };
 
                 let serialized_key = Key {
                     flags: Flags::LOCAL | Flags::SENSITIVE,
@@ -233,9 +248,9 @@ where
                     core::str::from_utf8(FILENAME_P256_SECRET).unwrap()
                 );
 
-                let keypair = nisty::Keypair::generate_patiently(&seed);
-
-                reply.extend_from_slice(keypair.public.as_bytes()).unwrap();
+                reply
+                    .extend_from_slice(&keypair.public.to_untagged_bytes())
+                    .unwrap();
                 Ok(())
             }
             Instruction::GenerateEd255Key => {
