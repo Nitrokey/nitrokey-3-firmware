@@ -1,8 +1,9 @@
+use core::time::Duration;
+
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::prince;
 use super::spi::{FlashCs, Spi};
-use super::trussed::UserInterface;
-use crate::{flash::ExtFlashStorage, types::Uuid};
+use crate::{flash::ExtFlashStorage, traits::Clock, types::Uuid, ui::UserInterface};
 use apps::Variant;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
@@ -16,12 +17,15 @@ use lpc55_hal::{
         pins::{Pio0_9, Pio1_14},
         timer,
     },
-    peripherals::{ctimer, flash, flexcomm::I2c5, syscon},
+    peripherals::{ctimer, flash, flexcomm::I2c5, rtc::Rtc, syscon},
     raw::{Interrupt, SCB},
     traits::flash::WriteErase,
-    typestates::pin::{
-        function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
-        state::Special,
+    typestates::{
+        init_state,
+        pin::{
+            function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
+            state::Special,
+        },
     },
     I2cMaster,
 };
@@ -78,7 +82,7 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
-    type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
+    type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;
     #[cfg(feature = "se050")]
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
     #[cfg(feature = "se050")]
@@ -132,3 +136,11 @@ pub type NfcWaitExtender =
     timer::Timer<ctimer::Ctimer0<lpc55_hal::typestates::init_state::Enabled>>;
 pub type PerformanceTimer =
     timer::Timer<ctimer::Ctimer4<lpc55_hal::typestates::init_state::Enabled>>;
+
+pub type RtcClock = Rtc<init_state::Enabled>;
+
+impl Clock for RtcClock {
+    fn uptime(&mut self) -> Duration {
+        Rtc::uptime(self)
+    }
+}

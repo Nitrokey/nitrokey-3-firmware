@@ -1,5 +1,8 @@
 use core::convert::Infallible;
 use nb;
+use trussed::platform::consent;
+
+use super::Clock;
 
 /// Trio of buttons.
 ///
@@ -22,6 +25,10 @@ pub struct State {
     pub a: bool,
     pub b: bool,
     pub middle: bool,
+}
+
+pub trait UserPresence {
+    fn check_user_presence(&mut self, clock: &mut dyn Clock) -> consent::Level;
 }
 
 /// Implement on triple of buttons.

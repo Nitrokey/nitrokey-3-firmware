@@ -4,7 +4,6 @@ pub mod monotonic;
 pub mod nfc;
 pub mod prince;
 pub mod spi;
-pub mod trussed;
 pub mod types;
 
 // modules with path attribute *are* directory owners if their path

@@ -1,8 +1,16 @@
-use core::{ops::Range, time::Duration};
+use core::{
+    ops::Range,
+    sync::atomic::{AtomicBool, Ordering::Relaxed},
+    time::Duration,
+};
 
-use trussed::platform::ui;
+use trussed::platform::{self, consent, ui};
 
-use crate::traits::rgb_led::Intensities;
+use crate::traits::{
+    buttons::UserPresence,
+    rgb_led::{Intensities, RgbLed},
+    Clock,
+};
 
 const BLACK: Intensities = Intensities {
     red: 0,
@@ -24,6 +32,88 @@ const WHITE: Intensities = Intensities {
     green: u8::MAX,
     blue: u8::MAX,
 };
+
+static WAITING: AtomicBool = AtomicBool::new(false);
+
+fn set_waiting(waiting: bool) {
+    WAITING.store(waiting, Relaxed);
+}
+
+pub fn is_waiting() -> bool {
+    WAITING.load(Relaxed)
+}
+
+pub struct UserInterface<C: Clock, P: UserPresence, L: RgbLed> {
+    clock: C,
+    buttons: Option<P>,
+    rgb: Option<L>,
+    status: Status,
+    provisioner: bool,
+}
+
+impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
+    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>, provisioner: bool) -> Self {
+        let uptime = clock.uptime();
+        let status = Status::Startup(uptime);
+        let buttons = if cfg!(feature = "no-buttons") {
+            None
+        } else {
+            buttons
+        };
+
+        let mut ui = Self {
+            clock,
+            buttons,
+            status,
+            rgb,
+            provisioner,
+        };
+        ui.refresh_ui(uptime);
+        ui
+    }
+
+    fn refresh_ui(&mut self, uptime: Duration) {
+        if let Some(rgb) = &mut self.rgb {
+            self.status.refresh(uptime);
+            let mode = self.status.led_mode(self.provisioner);
+            rgb.set(mode.color(uptime));
+        }
+    }
+}
+
+impl<C: Clock, P: UserPresence, L: RgbLed> platform::UserInterface for UserInterface<C, P, L> {
+    fn check_user_presence(&mut self) -> consent::Level {
+        if let Some(buttons) = &mut self.buttons {
+            set_waiting(true);
+            let level = buttons.check_user_presence(&mut self.clock);
+            set_waiting(false);
+            level
+        } else {
+            consent::Level::Normal
+        }
+    }
+
+    fn set_status(&mut self, status: trussed::platform::ui::Status) {
+        let uptime = self.uptime();
+        self.status.update(status, uptime);
+        self.refresh_ui(uptime);
+    }
+
+    fn refresh(&mut self) {
+        let uptime = self.uptime();
+        self.refresh_ui(uptime);
+    }
+
+    fn uptime(&mut self) -> Duration {
+        self.clock.uptime()
+    }
+
+    fn wink(&mut self, duration: Duration) {
+        let uptime = self.uptime();
+        self.status = Status::Winking(uptime..uptime + duration);
+        self.refresh_ui(uptime);
+    }
+}
 
 pub struct CustomStatus(apps::CustomStatus);
 

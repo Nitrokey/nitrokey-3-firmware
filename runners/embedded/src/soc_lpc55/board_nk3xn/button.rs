@@ -1,4 +1,7 @@
-use crate::traits::buttons::{Button, Edge, Press, State};
+use crate::traits::{
+    buttons::{Button, Edge, Press, State, UserPresence},
+    Clock,
+};
 use core::convert::Infallible;
 use lpc55_hal::{
     drivers::{pins, timer},
@@ -7,6 +10,7 @@ use lpc55_hal::{
     traits::wg::{digital::v2::InputPin, timer::CountDown},
     typestates::{init_state, pin},
 };
+use trussed::platform::consent;
 
 pub type UserButtonPin = pins::Pio0_31;
 // pub type WakeupButtonPin = pins::Pio1_18;
@@ -68,6 +72,25 @@ where
             Button::A => self.user_button.is_low().ok().unwrap(),
             Button::B => self.user_button.is_low().ok().unwrap(),
             _ => self.user_button.is_low().ok().unwrap(),
+        }
+    }
+}
+
+impl<CTIMER> UserPresence for XpressoButtons<CTIMER>
+where
+    CTIMER: ctimer::Ctimer<init_state::Enabled>,
+{
+    fn check_user_presence(&mut self, _clock: &mut dyn Clock) -> consent::Level {
+        let state = self.state();
+        let press_result = self.wait_for_any_new_press();
+        if press_result.is_ok() {
+            if state.a && state.b {
+                consent::Level::Strong
+            } else {
+                consent::Level::Normal
+            }
+        } else {
+            consent::Level::None
         }
     }
 }

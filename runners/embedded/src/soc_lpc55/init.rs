@@ -44,7 +44,6 @@ use super::{
     clock_controller::DynamicClockController,
     nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-    trussed::UserInterface,
     types::I2C,
 };
 use crate::{
@@ -54,6 +53,7 @@ use crate::{
         rgb_led::RgbLed,
     },
     types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
+    ui::UserInterface,
 };
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;

@@ -1,27 +1,9 @@
-use crate::types::usbnfc::UsbClasses;
 use crate::types::*;
-
-use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
+use crate::{types::usbnfc::UsbClasses, ui};
 
 use apdu_dispatch::dispatch::Interface;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
-
-// I am pretty sure this does not belong here,
-// anyways better than having this both UIs:
-// dummy_ui.rs, trussed_ui.rs
-// so how about a `base_ui.rs` ?
-// -> also the whole RGB stuff and its "ecosystem" is widely hw-independant and could fit there....
-static WAITING: AtomicBool = AtomicBool::new(false);
-pub struct UserPresenceStatus {}
-impl UserPresenceStatus {
-    pub fn set_waiting(waiting: bool) {
-        WAITING.store(waiting, Relaxed);
-    }
-    pub fn waiting() -> bool {
-        WAITING.load(Relaxed)
-    }
-}
 
 pub fn poll_dispatchers(
     apdu_dispatch: &mut ApduDispatch,
@@ -94,9 +76,7 @@ where
         return;
     };
     maybe_spawn_ctaphid(
-        usb_classes
-            .ctaphid
-            .send_keepalive(UserPresenceStatus::waiting()),
+        usb_classes.ctaphid.send_keepalive(ui::is_waiting()),
         ctaphid_spawner,
     );
 }
