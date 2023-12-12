@@ -31,6 +31,8 @@ pub const INTERFACE_CONFIG: Config = Config {
     usb_id_product: 0x42B2,
 };
 
+pub type Uuid = [u8; 16];
+
 pub trait Soc {
     type InternalFlashStorage;
     type ExternalFlashStorage;
@@ -39,7 +41,6 @@ pub trait Soc {
     type NfcDevice;
     type TrussedUI;
     type Reboot;
-    type UUID;
 
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32>;
@@ -59,7 +60,7 @@ pub trait Soc {
     const BOARD_NAME: &'static str;
     const VARIANT: Variant;
 
-    fn device_uuid() -> &'static Self::UUID;
+    fn device_uuid() -> &'static Uuid;
 }
 
 pub struct Runner {

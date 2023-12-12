@@ -2,7 +2,7 @@ use super::board::{button::ThreeButtons, led::RgbLed};
 use super::prince;
 use super::spi::{FlashCs, Spi};
 use super::trussed::UserInterface;
-use crate::flash::ExtFlashStorage;
+use crate::{flash::ExtFlashStorage, types::Uuid};
 use apps::Variant;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
@@ -32,7 +32,7 @@ use utils::OptionalStorage;
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
-pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
+pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 #[cfg(feature = "no-encrypted-storage")]
 use lpc55_hal::littlefs2_filesystem;
@@ -80,7 +80,6 @@ impl crate::types::Soc for Soc {
     type NfcDevice = super::nfc::NfcChip;
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
-    type UUID = [u8; 16];
     #[cfg(feature = "se050")]
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
     #[cfg(feature = "se050")]
@@ -99,7 +98,7 @@ impl crate::types::Soc for Soc {
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const VARIANT: Variant = Variant::Lpc55;
 
-    fn device_uuid() -> &'static [u8; 16] {
+    fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
 }
