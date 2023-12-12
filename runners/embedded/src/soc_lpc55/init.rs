@@ -769,7 +769,7 @@ pub struct Stage6 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore,
-    trussed: Trussed,
+    trussed: Trussed<super::types::Soc>,
 }
 
 impl Stage6 {
@@ -866,8 +866,8 @@ impl Stage6 {
 pub struct All {
     pub basic: Basic,
     pub usb_nfc: UsbNfc<super::types::Soc>,
-    pub trussed: Trussed,
-    pub apps: Apps,
+    pub trussed: Trussed<super::types::Soc>,
+    pub apps: Apps<super::types::Soc>,
     pub clock_controller: Option<DynamicClockController>,
 }
 

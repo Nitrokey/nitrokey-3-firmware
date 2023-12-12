@@ -44,10 +44,10 @@ mod app {
         ctaphid_dispatch: types::CtaphidDispatch,
 
         /// The Trussed service, used by all applications.
-        trussed: types::Trussed,
+        trussed: types::Trussed<Soc>,
 
         /// All the applications that the device serves.
-        apps: types::Apps,
+        apps: types::Apps<Soc>,
 
         /// The USB driver classes
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,

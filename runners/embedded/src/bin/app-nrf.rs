@@ -37,8 +37,8 @@ mod app {
 
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed,
-        apps: ERL::types::Apps,
+        trussed: ERL::types::Trussed<Soc>,
+        apps: ERL::types::Apps<Soc>,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
         usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,

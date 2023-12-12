@@ -247,15 +247,15 @@ pub fn init_usb_nfc<S: Soc>(
     }
 }
 
-pub fn init_apps(
-    trussed: &mut types::Trussed,
+pub fn init_apps<S: Soc>(
+    trussed: &mut types::Trussed<S>,
     init_status: InitStatus,
     store: &types::RunnerStore,
     nfc_powered: bool,
-) -> types::Apps {
+) -> types::Apps<S> {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(*store, <SocT as types::Soc>::VARIANT);
+    let mut admin = apps::AdminData::new(*store, S::VARIANT);
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -272,11 +272,9 @@ pub fn init_apps(
 
     #[cfg(feature = "provisioner")]
     let provisioner = {
-        use apps::Reboot;
-
         let store = store.clone();
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
-        let rebooter: fn() -> ! = SocT::reboot_to_firmware_update;
+        let rebooter: fn() -> ! = S::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,
@@ -288,6 +286,7 @@ pub fn init_apps(
 
     let runner = types::Runner {
         is_efs_available: !nfc_powered,
+        _marker: Default::default(),
     };
     let data = apps::Data {
         admin,

@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
@@ -12,6 +14,7 @@ use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
+    platform::UserInterface,
     store,
     types::{LfsResult, LfsStorage},
     Platform,
@@ -46,16 +49,16 @@ pub trait Soc: Reboot {
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
-    type TrussedUI;
+    type TrussedUI: UserInterface;
 
     #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32>;
+    type Se050Timer: DelayUs<u32> + 'static;
     #[cfg(feature = "se050")]
-    type Twi: se05x::t1::I2CForT1;
+    type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(not(feature = "se050"))]
-    type Se050Timer;
+    type Se050Timer: 'static;
     #[cfg(not(feature = "se050"))]
-    type Twi;
+    type Twi: 'static;
 
     type Duration: From<Milliseconds>;
 
@@ -69,21 +72,22 @@ pub trait Soc: Reboot {
     fn device_uuid() -> &'static Uuid;
 }
 
-pub struct Runner {
+pub struct Runner<S> {
     pub is_efs_available: bool,
+    pub _marker: PhantomData<S>,
 }
 
-impl apps::Runner for Runner {
+impl<S: Soc> apps::Runner for Runner<S> {
     type Syscall = RunnerSyscall;
-    type Reboot = SocT;
+    type Reboot = S;
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
-    type Twi = <SocT as Soc>::Twi;
-    type Se050Timer = <SocT as Soc>::Se050Timer;
+    type Twi = S::Twi;
+    type Se050Timer = S::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
-        *<SocT as Soc>::device_uuid()
+        *S::device_uuid()
     }
 
     fn is_efs_available(&self) -> bool {
@@ -125,16 +129,16 @@ pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-pub struct RunnerPlatform {
+pub struct RunnerPlatform<S: Soc> {
     pub rng: ChaCha8Rng,
     pub store: RunnerStore,
-    pub user_interface: <SocT as Soc>::TrussedUI,
+    pub user_interface: S::TrussedUI,
 }
 
-unsafe impl Platform for RunnerPlatform {
+unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
     type R = ChaCha8Rng;
     type S = RunnerStore;
-    type UI = <SocT as Soc>::TrussedUI;
+    type UI = S::TrussedUI;
 
     fn user_interface(&mut self) -> &mut Self::UI {
         &mut self.user_interface
@@ -159,13 +163,13 @@ impl trussed::client::Syscall for RunnerSyscall {
     }
 }
 
-pub type Trussed =
-    trussed::Service<RunnerPlatform, Dispatch<<SocT as Soc>::Twi, <SocT as Soc>::Se050Timer>>;
+pub type Trussed<S> =
+    trussed::Service<RunnerPlatform<S>, Dispatch<<S as Soc>::Twi, <S as Soc>::Se050Timer>>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;
 
-pub type Apps = apps::Apps<Runner>;
+pub type Apps<S> = apps::Apps<Runner<S>>;
 
 #[derive(Debug)]
 pub struct DelogFlusher {}
