@@ -79,7 +79,6 @@ impl crate::types::Soc for Soc {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
-    type Reboot = Lpc55Reboot;
     #[cfg(feature = "se050")]
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
     #[cfg(feature = "se050")]
@@ -103,8 +102,7 @@ impl crate::types::Soc for Soc {
     }
 }
 
-pub struct Lpc55Reboot {}
-impl apps::Reboot for Lpc55Reboot {
+impl apps::Reboot for Soc {
     fn reboot() -> ! {
         SCB::sys_reset()
     }

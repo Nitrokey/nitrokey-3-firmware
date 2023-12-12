@@ -28,7 +28,6 @@ impl crate::types::Soc for Soc {
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
     type TrussedUI = super::board::TrussedUI;
-    type Reboot = self::Reboot;
     #[cfg(feature = "se050")]
     type Twi = twim::Twim<pac::TWIM1>;
     #[cfg(feature = "se050")]
@@ -68,9 +67,7 @@ impl nfc_device::traits::nfc::Device for DummyNfc {
     }
 }
 
-pub struct Reboot {}
-
-impl apps::Reboot for Reboot {
+impl apps::Reboot for Soc {
     fn reboot() -> ! {
         SCB::sys_reset()
     }

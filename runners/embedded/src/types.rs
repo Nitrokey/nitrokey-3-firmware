@@ -2,7 +2,7 @@ use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use apps::{Dispatch, Variant};
+use apps::{Dispatch, Reboot, Variant};
 use cortex_m::interrupt::InterruptNumber;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
@@ -35,14 +35,13 @@ pub const INTERFACE_CONFIG: Config = Config {
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc {
+pub trait Soc: Reboot {
     type InternalFlashStorage;
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice;
     type TrussedUI;
-    type Reboot;
 
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32>;
@@ -71,7 +70,7 @@ pub struct Runner {
 
 impl apps::Runner for Runner {
     type Syscall = RunnerSyscall;
-    type Reboot = <SocT as Soc>::Reboot;
+    type Reboot = SocT;
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
