@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 apdu-dispatch = "0.1"
-bitflags = "1.3.2"
+bitflags = "2"
 ctaphid-dispatch = "0.1"
 heapless = "0.7"
 serde = { version = "1.0.180", default-features = false }
