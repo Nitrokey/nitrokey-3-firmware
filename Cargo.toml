@@ -20,6 +20,7 @@ fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "v0.1.0-nitrokey.2" }
+p256-cortex-m4  = { git = "https://github.com/sosthene-nitrokey/p256-cortex-m4.git", rev = "50ff0366d66f294e1e3049e0c70ec67c218f011d" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
