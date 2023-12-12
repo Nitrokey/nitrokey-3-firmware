@@ -1112,7 +1112,6 @@ dependencies = [
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
- "usbd-serial",
  "utils",
 ]
 
@@ -3205,7 +3204,7 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=ebbe35483d9408e58a6a5f63ed348d1ca5780697#ebbe35483d9408e58a6a5f63ed348d1ca5780697"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=9732a9a3e98af72112286afdc9b7174c66c2869a#9732a9a3e98af72112286afdc9b7174c66c2869a"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3413,17 +3412,6 @@ dependencies = [
  "ref-swap",
  "serde",
  "trussed",
- "usb-device",
-]
-
-[[package]]
-name = "usbd-serial"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db75519b86287f12dcf0d171c7cf4ecc839149fe9f3b720ac4cfce52959e1dfe"
-dependencies = [
- "embedded-hal",
- "nb 0.1.3",
  "usb-device",
 ]
 
