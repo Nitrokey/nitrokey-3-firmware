@@ -5,6 +5,7 @@ use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
 
 use apdu_dispatch::dispatch::Interface;
 use embedded_time::duration::Milliseconds;
+use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
 
 // I am pretty sure this does not belong here,
 // anyways better than having this both UIs:
@@ -59,15 +60,15 @@ pub fn poll_usb<S, FA, FB, TA, TB, E>(
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
-pub fn poll_nfc<D, F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn poll_nfc<N, D, F, T, E>(contactless: &mut Option<Iso14443<N>>, nfc_spawner: F)
 where
+    N: NfcDevice,
     D: From<Milliseconds>,
     F: Fn(D) -> Result<T, E>,
 {
     let Some(contactless) = contactless.as_mut() else {
         return;
     };
-
     maybe_spawn_nfc(contactless.poll(), nfc_spawner);
 }
 
@@ -78,12 +79,9 @@ where
     S: Soc,
     F: Fn(S::Duration) -> Result<T, E>,
 {
-    if usb_classes.is_none() {
+    let Some(usb_classes) = usb_classes.as_mut() else {
         return;
-    }
-
-    let usb_classes = usb_classes.as_mut().unwrap();
-
+    };
     maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
 }
 
@@ -92,11 +90,9 @@ where
     S: Soc,
     F: Fn(S::Duration) -> Result<T, E>,
 {
-    if usb_classes.is_none() {
+    let Some(usb_classes) = usb_classes.as_mut() else {
         return;
-    }
-    let usb_classes = usb_classes.as_mut().unwrap();
-
+    };
     maybe_spawn_ctaphid(
         usb_classes
             .ctaphid
@@ -105,17 +101,15 @@ where
     );
 }
 
-pub fn nfc_keepalive<D, F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn nfc_keepalive<N, D, F, T, E>(contactless: &mut Option<Iso14443<N>>, nfc_spawner: F)
 where
+    N: NfcDevice,
     D: From<Milliseconds>,
     F: Fn(D) -> Result<T, E>,
 {
-    if contactless.is_none() {
+    let Some(contactless) = contactless.as_mut() else {
         return;
-    }
-
-    let contactless = contactless.as_mut().unwrap();
-
+    };
     maybe_spawn_nfc(contactless.poll_wait_extensions(), nfc_spawner);
 }
 

@@ -32,6 +32,7 @@ use interchange::Channel;
 use lpc55_hal as hal;
 #[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
+use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
 use trussed::{platform::UserInterface, service::Service, types::Location};
 use utils::OptionalStorage;
@@ -41,7 +42,7 @@ use super::types::TimerDelay;
 use super::{
     board,
     clock_controller::DynamicClockController,
-    nfc,
+    nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
     types::I2C,
 };
@@ -51,7 +52,7 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Iso14443, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
 };
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
@@ -356,7 +357,7 @@ impl Stage2 {
         inputmux: InputMux<Unknown>,
         pint: Pint<Unknown>,
         nfc_rq: CcidRequester<'static>,
-    ) -> Option<Iso14443> {
+    ) -> Option<Iso14443<NfcChip>> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
@@ -479,7 +480,7 @@ pub struct Stage3 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
@@ -530,7 +531,7 @@ pub struct Stage4 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     flash: Flash,
@@ -677,7 +678,7 @@ pub struct Stage5 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
@@ -763,7 +764,7 @@ pub struct Stage6 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore,
     trussed: Trussed,

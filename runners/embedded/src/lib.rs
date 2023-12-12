@@ -8,12 +8,13 @@ use apps::InitStatus;
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use littlefs2::fs::Filesystem;
+use nfc_device::Iso14443;
 use ref_swap::OptionRefSwap;
 use soc::types::Soc as SocT;
 use trussed::interrupt::InterruptFlag;
 use types::{
     usbnfc::{UsbClasses, UsbNfcInit},
-    Iso14443, Soc,
+    Soc,
 };
 use usb_device::{
     bus::UsbBusAllocator,
@@ -186,7 +187,7 @@ pub fn init_store(
 
 pub fn init_usb_nfc<S: Soc>(
     usbbus_opt: Option<&'static UsbBusAllocator<S::UsbBus>>,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<S::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfcInit<S> {
     let config = &types::INTERFACE_CONFIG;
@@ -275,7 +276,7 @@ pub fn init_apps(
 
         let store = store.clone();
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
-        let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
+        let rebooter: fn() -> ! = SocT::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,

@@ -16,10 +16,14 @@ mod app {
     use super::Delogger;
     use super::{
         ERL,
-        ERL::soc::{rtic_monotonic::RtcDuration, types::Soc},
+        ERL::soc::{
+            rtic_monotonic::RtcDuration,
+            types::{DummyNfc, Soc},
+        },
     };
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
+    use nfc_device::Iso14443;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
@@ -35,7 +39,7 @@ mod app {
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
         usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
-        contactless: Option<ERL::types::Iso14443>,
+        contactless: Option<Iso14443<DummyNfc>>,
         /* NRF specific elements */
         // (display UI)
         // (fingerprint sensor)

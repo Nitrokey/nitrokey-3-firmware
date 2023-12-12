@@ -9,6 +9,7 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_time::duration::Milliseconds;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
+use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
@@ -40,7 +41,7 @@ pub trait Soc: Reboot {
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
-    type NfcDevice;
+    type NfcDevice: NfcDevice;
     type TrussedUI;
 
     #[cfg(feature = "se050")]
@@ -139,8 +140,6 @@ impl trussed::client::Syscall for RunnerSyscall {
 
 pub type Trussed =
     trussed::Service<RunnerPlatform, Dispatch<<SocT as Soc>::Twi, <SocT as Soc>::Se050Timer>>;
-
-pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;

@@ -1,4 +1,5 @@
 use apdu_dispatch::interchanges::SIZE as CCID_SIZE;
+use nfc_device::Iso14443;
 use usb_device::device::UsbDevice;
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
@@ -26,5 +27,5 @@ pub struct UsbNfcInit<S: Soc> {
     pub usb_classes: Option<UsbClasses<S>>,
     pub apdu_dispatch: ApduDispatch,
     pub ctaphid_dispatch: CtaphidDispatch,
-    pub iso14443: Option<super::Iso14443>,
+    pub iso14443: Option<Iso14443<S::NfcDevice>>,
 }
