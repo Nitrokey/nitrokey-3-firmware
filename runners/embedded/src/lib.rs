@@ -46,11 +46,11 @@ pub mod soc;
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
-pub fn banner() {
+pub fn banner<S: Soc>() {
     info!(
         "Embedded Runner ({}:{}) using librunner {}",
-        <SocT as Soc>::SOC_NAME,
-        <SocT as Soc>::BOARD_NAME,
+        S::SOC_NAME,
+        S::BOARD_NAME,
         utils::VERSION_STRING,
     );
 }

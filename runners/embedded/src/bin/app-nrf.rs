@@ -78,7 +78,7 @@ mod app {
         rtt_target::rtt_init_print!();
         #[cfg(not(feature = "no-delog"))]
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner();
+        ERL::banner::<Soc>();
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
