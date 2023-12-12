@@ -14,7 +14,10 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 mod app {
     #[cfg(not(feature = "no-delog"))]
     use super::Delogger;
-    use super::{ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use super::{
+        ERL,
+        ERL::soc::{rtic_monotonic::RtcDuration, types::Soc},
+    };
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
     use nrf52840_hal::{
@@ -31,7 +34,7 @@ mod app {
         apps: ERL::types::Apps,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
-        usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
+        usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
         contactless: Option<ERL::types::Iso14443>,
         /* NRF specific elements */
         // (display UI)

@@ -11,8 +11,14 @@ use littlefs2::fs::Filesystem;
 use ref_swap::OptionRefSwap;
 use soc::types::Soc as SocT;
 use trussed::interrupt::InterruptFlag;
-use types::{Iso14443, Soc};
-use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
+use types::{
+    usbnfc::{UsbClasses, UsbNfcInit},
+    Iso14443, Soc,
+};
+use usb_device::{
+    bus::UsbBusAllocator,
+    device::{UsbDeviceBuilder, UsbVidPid},
+};
 
 #[cfg(feature = "board-nk3am")]
 use soc::migrations::ftl_journal;
@@ -178,11 +184,11 @@ pub fn init_store(
     types::RunnerStore::init_raw(ifs, efs, vfs)
 }
 
-pub fn init_usb_nfc(
-    usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
+pub fn init_usb_nfc<S: Soc>(
+    usbbus_opt: Option<&'static UsbBusAllocator<S::UsbBus>>,
     nfc: Option<Iso14443>,
     nfc_rp: CcidResponder<'static>,
-) -> types::usbnfc::UsbNfcInit {
+) -> UsbNfcInit<S> {
     let config = &types::INTERFACE_CONFIG;
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
@@ -215,7 +221,7 @@ pub fn init_usb_nfc(
         let serial = usbd_serial::SerialPort::new(usbbus);
 
         let vidpid = UsbVidPid(config.usb_id_vendor, config.usb_id_product);
-        let usbdev = UsbDeviceBuilder::new(usbbus, vidpid)
+        let usbd = UsbDeviceBuilder::new(usbbus, vidpid)
 			.product(config.usb_product)
 			.manufacturer(config.usb_manufacturer)
 			/*.serial_number(config.usb_serial)  <---- don't configure serial to not be identifiable */
@@ -224,12 +230,15 @@ pub fn init_usb_nfc(
 			.composite_with_iads()
 			.build();
 
-        usb_classes = Some(types::usbnfc::UsbClasses::new(
-            usbdev, ccid, ctaphid, serial,
-        ));
+        usb_classes = Some(UsbClasses {
+            usbd,
+            ccid,
+            ctaphid,
+            serial,
+        });
     }
 
-    types::usbnfc::UsbNfcInit {
+    UsbNfcInit {
         usb_classes,
         apdu_dispatch,
         ctaphid_dispatch,

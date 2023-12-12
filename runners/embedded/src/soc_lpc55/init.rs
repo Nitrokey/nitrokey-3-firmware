@@ -862,7 +862,7 @@ impl Stage6 {
 
 pub struct All {
     pub basic: Basic,
-    pub usb_nfc: UsbNfc,
+    pub usb_nfc: UsbNfc<super::types::Soc>,
     pub trussed: Trussed,
     pub apps: Apps,
     pub clock_controller: Option<DynamicClockController>,

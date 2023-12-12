@@ -1,7 +1,10 @@
 use crate::soc::types::Soc as SocT;
+use crate::types::usbnfc::UsbClasses;
 use crate::types::*;
 
 use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
+
+use embedded_time::duration::units::Milliseconds;
 
 // I am pretty sure this does not belong here,
 // anyways better than having this both UIs:
@@ -35,12 +38,13 @@ pub fn poll_dispatchers(
 
 /* ************************************************************************ */
 
-pub fn poll_usb<FA, FB, TA, TB, E>(
-    usb_classes: &mut Option<usbnfc::UsbClasses>,
+pub fn poll_usb<S, FA, FB, TA, TB, E>(
+    usb_classes: &mut Option<UsbClasses<S>>,
     ccid_spawner: FA,
     ctaphid_spawner: FB,
-    t_now: embedded_time::duration::units::Milliseconds,
+    t_now: Milliseconds,
 ) where
+    S: Soc,
     FA: Fn(<SocT as Soc>::Duration) -> Result<TA, E>,
     FB: Fn(<SocT as Soc>::Duration) -> Result<TB, E>,
 {
@@ -72,8 +76,9 @@ where
 
 /* ************************************************************************ */
 
-pub fn ccid_keepalive<F, T, E>(usb_classes: &mut Option<usbnfc::UsbClasses>, ccid_spawner: F)
+pub fn ccid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ccid_spawner: F)
 where
+    S: Soc,
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
     if usb_classes.is_none() {
@@ -85,8 +90,9 @@ where
     maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
 }
 
-pub fn ctaphid_keepalive<F, T, E>(usb_classes: &mut Option<usbnfc::UsbClasses>, ctaphid_spawner: F)
+pub fn ctaphid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ctaphid_spawner: F)
 where
+    S: Soc,
     F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
 {
     if usb_classes.is_none() {

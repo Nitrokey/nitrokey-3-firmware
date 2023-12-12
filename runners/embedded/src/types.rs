@@ -11,6 +11,7 @@ use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use rand_chacha::ChaCha8Rng;
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
+use usb_device::bus::UsbBus;
 pub mod usbnfc;
 
 pub struct Config {
@@ -37,7 +38,7 @@ pub trait Soc {
     type InternalFlashStorage;
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
-    type UsbBus;
+    type UsbBus: UsbBus + 'static;
     type NfcDevice;
     type TrussedUI;
     type Reboot;
