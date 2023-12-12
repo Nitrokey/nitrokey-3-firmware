@@ -1,10 +1,10 @@
-use crate::soc::types::Soc as SocT;
 use crate::types::usbnfc::UsbClasses;
 use crate::types::*;
 
 use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
 
-use embedded_time::duration::units::Milliseconds;
+use apdu_dispatch::dispatch::Interface;
+use embedded_time::duration::Milliseconds;
 
 // I am pretty sure this does not belong here,
 // anyways better than having this both UIs:
@@ -31,8 +31,8 @@ pub fn poll_dispatchers(
     let ctaphid_poll = apps.ctaphid_dispatch(|apps| ctaphid_dispatch.poll(apps));
 
     (
-        apdu_poll == Some(apdu_dispatch::dispatch::Interface::Contact) || ctaphid_poll,
-        apdu_poll == Some(apdu_dispatch::dispatch::Interface::Contactless),
+        apdu_poll == Some(Interface::Contact) || ctaphid_poll,
+        apdu_poll == Some(Interface::Contactless),
     )
 }
 
@@ -45,14 +45,12 @@ pub fn poll_usb<S, FA, FB, TA, TB, E>(
     t_now: Milliseconds,
 ) where
     S: Soc,
-    FA: Fn(<SocT as Soc>::Duration) -> Result<TA, E>,
-    FB: Fn(<SocT as Soc>::Duration) -> Result<TB, E>,
+    FA: Fn(S::Duration) -> Result<TA, E>,
+    FB: Fn(S::Duration) -> Result<TB, E>,
 {
-    if usb_classes.is_none() {
+    let Some(usb_classes) = usb_classes.as_mut() else {
         return;
-    }
-
-    let usb_classes = usb_classes.as_mut().unwrap();
+    };
 
     usb_classes.ctaphid.check_timeout(t_now.0);
     usb_classes.poll();
@@ -61,15 +59,14 @@ pub fn poll_usb<S, FA, FB, TA, TB, E>(
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
-pub fn poll_nfc<F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn poll_nfc<D, F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
-    if contactless.is_none() {
+    let Some(contactless) = contactless.as_mut() else {
         return;
-    }
-
-    let contactless = contactless.as_mut().unwrap();
+    };
 
     maybe_spawn_nfc(contactless.poll(), nfc_spawner);
 }
@@ -79,7 +76,7 @@ where
 pub fn ccid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ccid_spawner: F)
 where
     S: Soc,
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(S::Duration) -> Result<T, E>,
 {
     if usb_classes.is_none() {
         return;
@@ -93,7 +90,7 @@ where
 pub fn ctaphid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ctaphid_spawner: F)
 where
     S: Soc,
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    F: Fn(S::Duration) -> Result<T, E>,
 {
     if usb_classes.is_none() {
         return;
@@ -108,9 +105,10 @@ where
     );
 }
 
-pub fn nfc_keepalive<F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
+pub fn nfc_keepalive<D, F, T, E>(contactless: &mut Option<Iso14443>, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     if contactless.is_none() {
         return;
@@ -123,27 +121,30 @@ where
 
 /* ************************************************************************ */
 
-fn maybe_spawn_ccid<F, T, E>(status: usbd_ccid::Status, ccid_spawner: F)
+fn maybe_spawn_ccid<D, F, T, E>(status: usbd_ccid::Status, ccid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     if let usbd_ccid::Status::ReceivedData(ms) = status {
         ccid_spawner(ms.into()).ok();
     };
 }
 
-fn maybe_spawn_ctaphid<F, T, E>(status: usbd_ctaphid::types::Status, ctaphid_spawner: F)
+fn maybe_spawn_ctaphid<D, F, T, E>(status: usbd_ctaphid::types::Status, ctaphid_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     if let usbd_ctaphid::types::Status::ReceivedData(ms) = status {
         ctaphid_spawner(ms.into()).ok();
     };
 }
 
-fn maybe_spawn_nfc<F, T, E>(status: nfc_device::Iso14443Status, nfc_spawner: F)
+fn maybe_spawn_nfc<D, F, T, E>(status: nfc_device::Iso14443Status, nfc_spawner: F)
 where
-    F: Fn(<SocT as Soc>::Duration) -> Result<T, E>,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     if let nfc_device::Iso14443Status::ReceivedData(ms) = status {
         nfc_spawner(ms.into()).ok();

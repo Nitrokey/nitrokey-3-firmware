@@ -7,6 +7,7 @@ use cortex_m::interrupt::InterruptNumber;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
+use embedded_time::duration::Milliseconds;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use rand_chacha::ChaCha8Rng;
 use trussed::types::{LfsResult, LfsStorage};
@@ -52,7 +53,7 @@ pub trait Soc {
     #[cfg(not(feature = "se050"))]
     type Twi;
 
-    type Duration;
+    type Duration: From<Milliseconds>;
 
     type Interrupt: InterruptNumber;
     const SYSCALL_IRQ: Self::Interrupt;
