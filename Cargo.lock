@@ -996,6 +996,7 @@ dependencies = [
  "cargo-lock",
  "cfg-if",
  "cortex-m",
+ "cortex-m-rt",
  "cortex-m-rtic",
  "cortex-m-semihosting",
  "ctap-types",
@@ -1671,8 +1672,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c25e4f545f6ca5415c6325066260e764674d7893dcf0017a52a2ef456ba915f5"
+source = "git+https://github.com/sosthene-nitrokey/littlefs2-sys?rev=b5513fe73b088656bc78decf7e99aaed5f23228a#b5513fe73b088656bc78decf7e99aaed5f23228a"
 dependencies = [
  "bindgen",
  "cc",

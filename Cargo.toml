@@ -27,6 +27,7 @@ trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "91c59a707
 usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "e6c46e7ba5ae19129e457a2182e40a439c0322fe" }
+littlefs2-sys = { git = "https://github.com/sosthene-nitrokey/littlefs2-sys", rev = "b5513fe73b088656bc78decf7e99aaed5f23228a" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }

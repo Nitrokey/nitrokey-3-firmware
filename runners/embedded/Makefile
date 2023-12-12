@@ -35,6 +35,8 @@ OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
 CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
 NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(BUILD_FEATURES)'.split(',') and 'log-semihosting' not in '$(BUILD_FEATURES)'.split(',') and 'log-rtt' not in '$(BUILD_FEATURES)'.split(',') else None; ")
+BUILD_STD=$(shell python3 -c "p = '-Zbuild-std=core,alloc,panic_abort -Zbuild-std-features=panic_immediate_abort' if '$(BOARD)' == 'nk3xn' and 'test' in '$(COMMA_FEATURES)'.split(',') else ''; print(p)")
+TOOLCHAIN=$(shell python3 -c "p = 'RUSTUP_TOOLCHAIN=nightly-2023-12-12' if '$(BOARD)' == 'nk3xn' and 'test' in '$(COMMA_FEATURES)'.split(',') else ''; print(p)")
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
 # feature definition
@@ -126,8 +128,9 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	./create_cfg.sh $(CFG_PATH) $(BUILD_PROFILE) $(BOARD)
 
 	# NRF52/test -> "release-thin-lto", use "release" otherwise
-	cargo build --target $(TARGET) \
+	$(TOOLCHAIN) cargo build --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
+		$(BUILD_STD) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
 	cp $(RAW_OUT) ./$(OUT_ELF)

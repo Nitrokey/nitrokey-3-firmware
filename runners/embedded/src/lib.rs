@@ -330,3 +330,12 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
+
+#[cortex_m_rt::exception]
+fn HardFault(_ef: &cortex_m_rt::ExceptionFrame) -> ! {
+    error_now!("Hard Fault {:?}", _ef);
+    soc::board::set_panic_led();
+    loop {
+        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
+    }
+}
