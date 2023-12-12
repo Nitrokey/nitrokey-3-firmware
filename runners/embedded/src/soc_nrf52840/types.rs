@@ -6,7 +6,7 @@ use nrf52840_hal::{
     pac, spim, twim, uarte,
     usbd::{UsbPeripheral, Usbd},
 };
-use nrf52840_pac;
+use nrf52840_pac::{self, Interrupt};
 
 use crate::flash::ExtFlashStorage;
 use nrf52840_hal::Spim;
@@ -42,9 +42,8 @@ impl crate::types::Soc for Soc {
 
     type Duration = super::rtic_monotonic::RtcDuration;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16,
-    };
+    type Interrupt = Interrupt;
+    const SYSCALL_IRQ: Interrupt = Interrupt::SWI0_EGU0;
 
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;

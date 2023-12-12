@@ -3,6 +3,7 @@ pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
 use apps::{Dispatch, Variant};
+use cortex_m::interrupt::InterruptNumber;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
@@ -10,16 +11,6 @@ use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
 pub mod usbnfc;
-
-#[derive(Clone, Copy)]
-pub struct IrqNr {
-    pub i: u16,
-}
-unsafe impl cortex_m::interrupt::InterruptNumber for IrqNr {
-    fn number(self) -> u16 {
-        self.i
-    }
-}
 
 pub struct Config {
     pub card_issuer: &'static [u8; 13],
@@ -61,9 +52,8 @@ pub trait Soc {
 
     type Duration;
 
-    // cannot use dyn cortex_m::interrupt::Nr
-    // cannot use actual types, those are usually Enums exported by the soc PAC
-    const SYSCALL_IRQ: IrqNr;
+    type Interrupt: InterruptNumber;
+    const SYSCALL_IRQ: Self::Interrupt;
 
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;

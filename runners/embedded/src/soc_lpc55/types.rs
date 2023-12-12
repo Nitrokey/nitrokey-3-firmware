@@ -17,7 +17,7 @@ use lpc55_hal::{
         timer,
     },
     peripherals::{ctimer, flash, flexcomm::I2c5, syscon},
-    raw,
+    raw::{Interrupt, SCB},
     traits::flash::WriteErase,
     typestates::pin::{
         function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
@@ -93,9 +93,8 @@ impl crate::types::Soc for Soc {
 
     type Duration = Milliseconds;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: raw::Interrupt::OS_EVENT as u16,
-    };
+    type Interrupt = Interrupt;
+    const SYSCALL_IRQ: Interrupt = Interrupt::OS_EVENT;
 
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
@@ -109,7 +108,7 @@ impl crate::types::Soc for Soc {
 pub struct Lpc55Reboot {}
 impl apps::Reboot for Lpc55Reboot {
     fn reboot() -> ! {
-        raw::SCB::sys_reset()
+        SCB::sys_reset()
     }
     fn reboot_to_firmware_update() -> ! {
         lpc55_hal::boot_to_bootrom()
@@ -122,7 +121,7 @@ impl apps::Reboot for Lpc55Reboot {
         lpc55_hal::drivers::flash::FlashGordon::new(flash)
             .erase_page(0)
             .ok();
-        raw::SCB::sys_reset()
+        SCB::sys_reset()
     }
     fn locked() -> bool {
         let seal = &unsafe { lpc55_hal::raw::Peripherals::steal() }
