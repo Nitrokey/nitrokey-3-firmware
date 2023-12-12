@@ -43,7 +43,7 @@ pub const INTERFACE_CONFIG: Config = Config {
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc: Reboot {
+pub trait Soc: Reboot + 'static {
     type InternalFlashStorage;
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
@@ -78,7 +78,7 @@ pub struct Runner<S> {
 }
 
 impl<S: Soc> apps::Runner for Runner<S> {
-    type Syscall = RunnerSyscall;
+    type Syscall = RunnerSyscall<S>;
     type Reboot = S;
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
@@ -153,13 +153,22 @@ unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
     }
 }
 
-#[derive(Default)]
-pub struct RunnerSyscall {}
+pub struct RunnerSyscall<S: Soc> {
+    _marker: PhantomData<S>,
+}
 
-impl trussed::client::Syscall for RunnerSyscall {
+impl<S: Soc> Default for RunnerSyscall<S> {
+    fn default() -> Self {
+        Self {
+            _marker: Default::default(),
+        }
+    }
+}
+
+impl<S: Soc> trussed::client::Syscall for RunnerSyscall<S> {
     #[inline]
     fn syscall(&mut self) {
-        rtic::pend(<SocT as Soc>::SYSCALL_IRQ);
+        rtic::pend(S::SYSCALL_IRQ);
     }
 }
 
