@@ -211,9 +211,6 @@ pub fn init_usb_nfc(
                 .implements_ctap2()
                 .implements_wink();
 
-        /* Class #3: Serial */
-        let serial = usbd_serial::SerialPort::new(usbbus);
-
         let vidpid = UsbVidPid(config.usb_id_vendor, config.usb_id_product);
         let usbdev = UsbDeviceBuilder::new(usbbus, vidpid)
 			.product(config.usb_product)
@@ -224,9 +221,7 @@ pub fn init_usb_nfc(
 			.composite_with_iads()
 			.build();
 
-        usb_classes = Some(types::usbnfc::UsbClasses::new(
-            usbdev, ccid, ctaphid, serial,
-        ));
+        usb_classes = Some(types::usbnfc::UsbClasses::new(usbdev, ccid, ctaphid));
     }
 
     types::usbnfc::UsbNfcInit {
