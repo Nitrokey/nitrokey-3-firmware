@@ -8,6 +8,7 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
+use rand_chacha::ChaCha8Rng;
 use trussed::types::{LfsResult, LfsStorage};
 use trussed::{platform, store};
 pub mod usbnfc;
@@ -36,7 +37,6 @@ pub trait Soc {
     // VolatileStorage is always RAM
     type UsbBus;
     type NfcDevice;
-    type Rng;
     type TrussedUI;
     type Reboot;
     type UUID;
@@ -120,7 +120,7 @@ pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
 platform!(
     RunnerPlatform,
-    R: <SocT as Soc>::Rng,
+    R: ChaCha8Rng,
     S: RunnerStore,
     UI: <SocT as Soc>::TrussedUI,
 );

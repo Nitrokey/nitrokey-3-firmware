@@ -27,7 +27,6 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
-    type Rng = rand_chacha::ChaCha8Rng;
     type TrussedUI = super::board::TrussedUI;
     type Reboot = self::Reboot;
     type UUID = [u8; 16];

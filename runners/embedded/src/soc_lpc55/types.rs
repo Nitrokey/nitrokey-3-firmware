@@ -78,7 +78,6 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
-    type Rng = rand_chacha::ChaCha8Rng;
     type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
     type Reboot = Lpc55Reboot;
     type UUID = [u8; 16];
