@@ -34,7 +34,7 @@ use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
-use trussed::{platform::UserInterface, service::Service, types::Location};
+use trussed::{service::Service, types::Location};
 use utils::OptionalStorage;
 
 #[cfg(feature = "se050")]
@@ -44,6 +44,7 @@ use super::{
     clock_controller::DynamicClockController,
     nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+    trussed::UserInterface,
     types::I2C,
 };
 use crate::{
@@ -705,9 +706,7 @@ impl Stage5 {
         let three_buttons = self.basic.three_buttons.take();
 
         let provisioner = cfg!(feature = "provisioner-app");
-        let mut solobee_interface =
-            super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
-        solobee_interface.set_status(trussed::platform::ui::Status::Idle);
+        let user_interface = UserInterface::new(rtc, three_buttons, rgb, provisioner);
 
         use rand::{Rng as _, SeedableRng};
         let mut dev_rng = self.rng;
@@ -729,8 +728,11 @@ impl Stage5 {
             res
         };
 
-        let board =
-            types::RunnerPlatform::new(rng_and_maybe_se050.0, self.store, solobee_interface);
+        let board = types::RunnerPlatform {
+            rng: rng_and_maybe_se050.0,
+            store: self.store,
+            user_interface,
+        };
         let trussed = Service::with_dispatch(
             board,
             Dispatch::new(

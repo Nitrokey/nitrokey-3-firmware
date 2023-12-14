@@ -11,9 +11,13 @@ use embedded_time::duration::Milliseconds;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
-use trussed::types::{LfsResult, LfsStorage};
-use trussed::{platform, store};
+use trussed::{
+    store,
+    types::{LfsResult, LfsStorage},
+    Platform,
+};
 use usb_device::bus::UsbBus;
+
 pub mod usbnfc;
 
 pub struct Config {
@@ -121,12 +125,29 @@ pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-platform!(
-    RunnerPlatform,
-    R: ChaCha8Rng,
-    S: RunnerStore,
-    UI: <SocT as Soc>::TrussedUI,
-);
+pub struct RunnerPlatform {
+    pub rng: ChaCha8Rng,
+    pub store: RunnerStore,
+    pub user_interface: <SocT as Soc>::TrussedUI,
+}
+
+unsafe impl Platform for RunnerPlatform {
+    type R = ChaCha8Rng;
+    type S = RunnerStore;
+    type UI = <SocT as Soc>::TrussedUI;
+
+    fn user_interface(&mut self) -> &mut Self::UI {
+        &mut self.user_interface
+    }
+
+    fn rng(&mut self) -> &mut Self::R {
+        &mut self.rng
+    }
+
+    fn store(&self) -> Self::S {
+        self.store
+    }
+}
 
 #[derive(Default)]
 pub struct RunnerSyscall {}
