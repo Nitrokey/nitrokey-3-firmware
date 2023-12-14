@@ -1,9 +1,15 @@
+use core::{
+    marker::PhantomData,
+    mem::MaybeUninit,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
 use apps::InitStatus;
 use littlefs2::{
     fs::{Allocation, Filesystem},
     io::Result as LfsResult,
 };
-use trussed::store;
+use trussed::store::{Fs, Store};
 
 use crate::{
     soc::{self, types::Soc as SocT},
@@ -17,12 +23,63 @@ pub unsafe fn steal_internal_storage() -> &'static mut <SocT as Soc>::InternalFl
     INTERNAL_STORAGE.as_mut().unwrap()
 }
 
-store!(
-    RunnerStore,
-    Internal: <SocT as Soc>::InternalFlashStorage,
-    External: <SocT as Soc>::ExternalFlashStorage,
-    Volatile: VolatileStorage
-);
+#[derive(Clone, Copy)]
+pub struct RunnerStore {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl RunnerStore {
+    fn new(
+        ifs: &'static Filesystem<'static, <SocT as Soc>::InternalFlashStorage>,
+        efs: &'static Filesystem<'static, <SocT as Soc>::ExternalFlashStorage>,
+        vfs: &'static Filesystem<'static, VolatileStorage>,
+    ) -> Self {
+        unsafe {
+            Self::ifs_ptr().write(Fs::new(ifs));
+            Self::efs_ptr().write(Fs::new(efs));
+            Self::vfs_ptr().write(Fs::new(vfs));
+        }
+
+        Self {
+            _marker: Default::default(),
+        }
+    }
+
+    unsafe fn ifs_ptr() -> *mut Fs<<SocT as Soc>::InternalFlashStorage> {
+        static mut IFS: MaybeUninit<Fs<<SocT as Soc>::InternalFlashStorage>> =
+            MaybeUninit::uninit();
+        IFS.as_mut_ptr()
+    }
+
+    unsafe fn efs_ptr() -> *mut Fs<<SocT as Soc>::ExternalFlashStorage> {
+        static mut EFS: MaybeUninit<Fs<<SocT as Soc>::ExternalFlashStorage>> =
+            MaybeUninit::uninit();
+        EFS.as_mut_ptr()
+    }
+
+    unsafe fn vfs_ptr() -> *mut Fs<VolatileStorage> {
+        static mut VFS: MaybeUninit<Fs<VolatileStorage>> = MaybeUninit::uninit();
+        VFS.as_mut_ptr()
+    }
+}
+
+unsafe impl Store for RunnerStore {
+    type I = <SocT as Soc>::InternalFlashStorage;
+    type E = <SocT as Soc>::ExternalFlashStorage;
+    type V = VolatileStorage;
+
+    fn ifs(self) -> &'static Fs<Self::I> {
+        unsafe { &*Self::ifs_ptr() }
+    }
+
+    fn efs(self) -> &'static Fs<Self::E> {
+        unsafe { &*Self::efs_ptr() }
+    }
+
+    fn vfs(self) -> &'static Fs<Self::V> {
+        unsafe { &*Self::vfs_ptr() }
+    }
+}
 
 pub fn init_store(
     int_flash: <SocT as Soc>::InternalFlashStorage,
@@ -30,6 +87,11 @@ pub fn init_store(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> RunnerStore {
+    static CLAIMED: AtomicBool = AtomicBool::new(false);
+    CLAIMED
+        .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .expect("multiple instances of RunnerStore are not allowed");
+
     static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
     static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
     static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
@@ -66,7 +128,7 @@ pub fn init_store(
         let efs = EXTERNAL_FS.insert(efs);
         let vfs = VOLATILE_FS.insert(vfs);
 
-        RunnerStore::init_raw(ifs, efs, vfs)
+        RunnerStore::new(ifs, efs, vfs)
     }
 }
 
