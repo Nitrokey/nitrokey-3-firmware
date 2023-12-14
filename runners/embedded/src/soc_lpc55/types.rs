@@ -76,10 +76,13 @@ where
 
 pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
 
+pub type InternalFlashStorage = InternalFilesystem;
+pub type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
-    type InternalFlashStorage = InternalFilesystem;
-    type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
+    type InternalFlashStorage = InternalFlashStorage;
+    type ExternalFlashStorage = ExternalFlashStorage;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
     type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;

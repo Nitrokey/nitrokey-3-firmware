@@ -3,14 +3,9 @@ use littlefs2::fs::{Allocation, Filesystem};
 use trussed::store;
 
 use crate::{
-    soc::types::Soc as SocT,
+    soc::{self, types::Soc as SocT},
     types::{Soc, VolatileStorage},
 };
-
-#[cfg(feature = "board-nk3am")]
-use crate::soc::migrations::ftl_journal;
-#[cfg(feature = "board-nk3am")]
-use crate::soc::migrations::ftl_journal::ifs_flash_old::FlashStorage as OldFlashStorage;
 
 pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
 pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
@@ -61,57 +56,16 @@ pub fn init_store(
         // handle provisioner
         if cfg!(feature = "provisioner") {
             info_now!("IFS mount failed - provisioner => formatting");
-            let _fmt_int = Filesystem::format(ifs_storage);
+            Filesystem::format(ifs_storage).ok();
         } else {
             status.insert(InitStatus::INTERNAL_FLASH_ERROR);
+            error_now!("IFS mount-fail");
 
-            // handle lpc55 boards
-            #[cfg(feature = "board-nk3xn")]
-            {
-                let _fmt_int = Filesystem::format(ifs_storage);
-                error_now!("IFS (lpc55) mount-fail");
-            }
-
-            // handle nRF42 boards
-            #[cfg(feature = "board-nk3am")]
-            {
-                error_now!("IFS (nrf42) mount-fail");
-
-                // regular mount failed, try mounting "old" (pre-journaling) IFS
-                let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-                let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
-                let mut old_ifs_alloc: littlefs2::fs::Allocation<OldFlashStorage> =
-                    Filesystem::allocate();
-                let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
-
-                // we can mount the old ifs filesystem, thus we need to migrate
-                if old_mountable {
-                    let mounted_ifs = ftl_journal::migrate(
-                        &mut old_ifs_storage,
-                        &mut old_ifs_alloc,
-                        ifs_alloc,
-                        ifs_storage,
-                        efs_storage,
-                    );
-                    // migration went fine => use its resulting IFS
-                    if let Ok(()) = mounted_ifs {
-                        info_now!("migration ok, mounting IFS");
-                    // migration failed => format IFS
-                    } else {
-                        error_now!("failed migration, formatting IFS");
-                        let _fmt_ifs = Filesystem::format(ifs_storage);
-                    }
-                } else {
-                    info_now!("recovering from journal");
-                    // IFS and old-IFS cannot be mounted, try to recover from journal
-                    ifs_storage.recover_from_journal();
-                }
-            }
+            soc::recover_ifs(ifs_storage, ifs_alloc, efs_storage).ok();
         }
     }
 
-    #[cfg(feature = "board-nk3am")]
-    ifs_storage.format_journal_blocks();
+    soc::prepare_ifs(ifs_storage);
 
     let ifs_ = Filesystem::mount(ifs_alloc, ifs_storage).expect("Could not bring up IFS!");
     let ifs = transcend!(INTERNAL_FS, ifs_);

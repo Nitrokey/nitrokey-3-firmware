@@ -21,10 +21,13 @@ pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
 
+pub type InternalFlashStorage = super::flash::FlashStorage;
+pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
-    type InternalFlashStorage = super::flash::FlashStorage;
-    type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
+    type InternalFlashStorage = InternalFlashStorage;
+    type ExternalFlashStorage = ExternalFlashStorage;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
     type TrussedUI = super::board::TrussedUI;
