@@ -1,5 +1,3 @@
-include!(concat!(env!("OUT_DIR"), "/build_constants.rs"));
-
 use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
@@ -27,11 +25,19 @@ pub struct Config {
     pub card_issuer: &'static [u8; 13],
     pub usb_product: &'static str,
     pub usb_manufacturer: &'static str,
-    pub usb_serial: &'static str,
     // pub usb_release: u16 --> taken from utils::VERSION::usb_release()
     pub usb_id_vendor: u16,
     pub usb_id_product: u16,
 }
+
+pub const INTERFACE_CONFIG: Config = Config {
+    // zero-padding for compatibility with previous implementations
+    card_issuer: b"Nitrokey\0\0\0\0\0",
+    usb_product: "Nitrokey 3",
+    usb_manufacturer: "Nitrokey",
+    usb_id_vendor: 0x20A0,
+    usb_id_product: 0x42B2,
+};
 
 pub trait Soc {
     type InternalFlashStorage;
@@ -54,7 +60,6 @@ pub trait Soc {
     type Twi;
 
     type Duration;
-    type Instant;
 
     // cannot use dyn cortex_m::interrupt::Nr
     // cannot use actual types, those are usually Enums exported by the soc PAC
@@ -62,7 +67,6 @@ pub trait Soc {
 
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;
-    const INTERFACE_CONFIG: &'static Config;
     const VARIANT: Variant;
 
     fn device_uuid() -> &'static Self::UUID;
@@ -170,33 +174,3 @@ impl delog::Flusher for DelogFlusher {
 }
 
 pub static DELOG_FLUSHER: DelogFlusher = DelogFlusher {};
-
-#[derive(PartialEq)]
-pub enum BootMode {
-    NFCPassive,
-    Full,
-}
-
-pub struct DummyPinError {}
-pub struct DummyPin {}
-impl DummyPin {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Default for DummyPin {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl embedded_hal::digital::v2::OutputPin for DummyPin {
-    type Error = DummyPinError;
-    fn set_low(&mut self) -> Result<(), DummyPinError> {
-        Ok(())
-    }
-    fn set_high(&mut self) -> Result<(), DummyPinError> {
-        Ok(())
-    }
-}

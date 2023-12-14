@@ -1,5 +1,6 @@
 use crate::soc::types::pac::SCB;
 use apps::Variant;
+use memory_regions::MemoryRegions;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
     pac, spim, twim, uarte,
@@ -18,18 +19,7 @@ pub type OutPin = Pin<Output<PushPull>>;
 
 pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
 
-const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
-    card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT,
-    usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
-    usb_serial: "00000000-0000-0000-00000000",
-    usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
-    usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
-};
-
-/* the base address of the internal filesystem is compile-time configurable
-and placed into build_constants::CONFIG_FILESYSTEM_END */
-pub const FILESYSTEM_END: usize = crate::types::build_constants::CONFIG_FILESYSTEM_END;
+pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {
@@ -51,7 +41,6 @@ impl crate::types::Soc for Soc {
     type Se050Timer = ();
 
     type Duration = super::rtic_monotonic::RtcDuration;
-    type Instant = super::rtic_monotonic::RtcInstant;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
         i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16,
@@ -59,7 +48,6 @@ impl crate::types::Soc for Soc {
 
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
-    const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     const VARIANT: Variant = Variant::Nrf52;
 
     fn device_uuid() -> &'static Self::UUID {
@@ -141,18 +129,4 @@ pub struct BoardGPIO {
     pub flash_power: Option<Pin<Output<PushPull>>>,
     pub nfc_cs: Option<Pin<Output<PushPull>>>,
     pub nfc_irq: Option<Pin<Input<PullUp>>>,
-}
-
-pub fn is_pin_latched<T>(pin: &Pin<Input<T>>, latches: &[u32]) -> bool {
-    let pinport = match pin.port() {
-        nrf52840_hal::gpio::Port::Port0 => 0,
-        nrf52840_hal::gpio::Port::Port1 => 1,
-    };
-    let pinshift = pin.pin();
-
-    ((latches[pinport] >> pinshift) & 1) != 0
-}
-
-pub fn is_keepalive_pin(pinport: u32) -> bool {
-    super::board::KEEPALIVE_PINS.contains(&(pinport as u8))
 }

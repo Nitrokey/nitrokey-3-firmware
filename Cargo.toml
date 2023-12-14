@@ -11,6 +11,9 @@ resolver = "2"
 version = "1.6.0"
 
 [patch.crates-io]
+# components
+memory-regions = { path = "components/memory-regions" }
+
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.9" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }

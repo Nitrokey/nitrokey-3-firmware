@@ -17,12 +17,10 @@ use lpc55_hal::{
     typestates::init_state::Enabled,
 };
 
-use crate::types::build_constants::{
-    CONFIG_FILESYSTEM_BOUNDARY, CONFIG_FILESYSTEM_END, CONFIG_FLASH_END,
-};
+use super::types::MEMORY_REGIONS;
 
-pub const FS_START: usize = CONFIG_FILESYSTEM_BOUNDARY;
-pub const FS_END: usize = CONFIG_FILESYSTEM_END;
+pub const FS_START: usize = MEMORY_REGIONS.filesystem.start;
+pub const FS_END: usize = MEMORY_REGIONS.filesystem.end;
 pub const BLOCK_COUNT: usize = (FS_END - FS_START) / BLOCK_SIZE;
 const _FLASH_SIZE: usize = 631 * 1024 + 512;
 
@@ -41,7 +39,7 @@ const _: () = assert!(FS_START < FS_END);
 const _: () = assert!(FS_END <= _FLASH_SIZE);
 // Check that the firmware does not overlap with the PRINCE subregions used for the FS
 const _: () = assert!(
-    CONFIG_FLASH_END
+    MEMORY_REGIONS.firmware.end
         <= PRINCE_REGION2_START
             + (FS_START - PRINCE_REGION2_START) / PRINCE_SUBREGION_SIZE * PRINCE_SUBREGION_SIZE
 );

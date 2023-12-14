@@ -26,6 +26,7 @@ use lpc55_hal::{
     I2cMaster,
 };
 
+use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -44,15 +45,6 @@ littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT
 pub use prince::InternalFilesystem;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
-
-const INTERFACE_CONFIG: crate::types::Config = crate::types::Config {
-    card_issuer: &crate::types::build_constants::CCID_ISSUER,
-    usb_product: crate::types::build_constants::USB_PRODUCT,
-    usb_manufacturer: crate::types::build_constants::USB_MANUFACTURER,
-    usb_serial: "00000000-0000-0000-00000000",
-    usb_id_vendor: crate::types::build_constants::USB_ID_VENDOR,
-    usb_id_product: crate::types::build_constants::USB_ID_PRODUCT,
-};
 
 pub(super) type I2C = I2cMaster<
     Pio0_9,
@@ -78,6 +70,8 @@ where
     }
 }
 
+pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type InternalFlashStorage = InternalFilesystem;
@@ -97,7 +91,6 @@ impl crate::types::Soc for Soc {
     #[cfg(not(feature = "se050"))]
     type Se050Timer = ();
 
-    type Instant = ();
     type Duration = Milliseconds;
 
     const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
@@ -106,7 +99,6 @@ impl crate::types::Soc for Soc {
 
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
-    const INTERFACE_CONFIG: &'static crate::types::Config = &INTERFACE_CONFIG;
     const VARIANT: Variant = Variant::Lpc55;
 
     fn device_uuid() -> &'static [u8; 16] {

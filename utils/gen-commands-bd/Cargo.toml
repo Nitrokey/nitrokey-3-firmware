@@ -6,8 +6,5 @@ authors = ["Robin Krahl <robin@nitrokey.com>"]
 license = "Apache-2.0 or MIT"
 
 [dependencies]
-cargo_metadata = "0.14.0"
-gumdrop = "0.8.1"
-semver = "1.0.12"
-serde = { version = "1.0.141", features = ["derive"] }
-toml = "0.5.9"
+memory-regions = "1"
+utils = { path = "../../components/utils", default-features = false }

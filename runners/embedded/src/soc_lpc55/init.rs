@@ -645,18 +645,16 @@ impl Stage4 {
 /// reading from undefined flash.  To fix, we run a pass over all filesystem
 /// flash and set it to a defined value.
 fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<hal::Enabled>) {
-    use crate::types::build_constants;
     use lpc55_hal::traits::flash::{Read, WriteErase};
 
-    let page_count = ((631 * 1024 + 512) - build_constants::CONFIG_FILESYSTEM_BOUNDARY) / 512;
+    let offset = super::types::MEMORY_REGIONS.filesystem.start;
+
+    let page_count = ((631 * 1024 + 512) - offset) / 512;
 
     let mut page_data = [0u8; 512];
     for page in 0..page_count {
         // With prince turned off, this should read as encrypted bytes.
-        flash_gordon.read(
-            build_constants::CONFIG_FILESYSTEM_BOUNDARY + page * 512,
-            &mut page_data,
-        );
+        flash_gordon.read(offset + page * 512, &mut page_data);
 
         // But if it's zero, then that means the data is undefined and it doesn't bother.
         if page_data == [0u8; 512] {
@@ -664,17 +662,10 @@ fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<hal::
             // So we should write nonzero data to initialize flash.
             // We write it as encrypted, so it is in a known state when decrypted by the filesystem layer.
             page_data[0] = 1;
-            flash_gordon
-                .erase_page(build_constants::CONFIG_FILESYSTEM_BOUNDARY / 512 + page)
-                .ok();
+            flash_gordon.erase_page(offset / 512 + page).ok();
             prince.write_encrypted(|prince| {
                 prince.enable_region_2_for(|| {
-                    flash_gordon
-                        .write(
-                            build_constants::CONFIG_FILESYSTEM_BOUNDARY + page * 512,
-                            &page_data,
-                        )
-                        .unwrap();
+                    flash_gordon.write(offset + page * 512, &page_data).unwrap();
                 })
             });
         }

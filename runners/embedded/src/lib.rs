@@ -183,7 +183,7 @@ pub fn init_usb_nfc(
     nfc: Option<Iso14443>,
     nfc_rp: CcidResponder<'static>,
 ) -> types::usbnfc::UsbNfcInit {
-    let config = <SocT as Soc>::INTERFACE_CONFIG;
+    let config = &types::INTERFACE_CONFIG;
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel = Channel::new();

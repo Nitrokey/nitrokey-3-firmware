@@ -1,27 +1,23 @@
 
-
-BUILD_ID ?= $(BUILD_PROFILE)-$(BOARD)
-CFG_PATH ?= profiles/$(BUILD_PROFILE).toml
-
 CARGO_TARGET_DIR ?= ../../target
 
 ifeq ($(BOARD), nk3am)
-  SOC = nrf52
+  SOC := nrf52
+  TARGET := thumbv7em-none-eabihf
+  LEGACY_BUILD_PROFILE := nrf52-bootloader
 else ifeq ($(BOARD), nk3xn)
-  SOC = lpc55
+  SOC := lpc55
+  TARGET := thumbv8m.main-none-eabi
+  LEGACY_BUILD_PROFILE := lpc55
 else ifneq ($(BOARD), )
   $(error Unsupported board $(BOARD))
 endif
 
-# rust triplet
-# This requires toml package installed: pip install toml
-TARGET = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["target"])')
+
+BUILD_ID ?= $(LEGACY_BUILD_PROFILE)-$(BOARD)
+
 # gnu binutils-prefix
 GNU_TARGET = arm-none-eabi
-
-### @TODO: ugly deluxe ? toml bash parser? dirty grep? 
-CFG_VAL_BOARDS = $(shell python3 -c 'import toml; print(" ".join(toml.load("$(CFG_PATH)")["platform"]["boards"]))')
-CFG_VAL_SOC = $(shell python3 -c 'import toml; print(toml.load("$(CFG_PATH)")["platform"]["soc"])')
 
 # util fn/paths
 ARTIFACTS = artifacts
@@ -58,8 +54,8 @@ $(ARTIFACTS):
 help:
 	###############################################################################
 	###############################################################################
-	## To build a specific 'board' & 'build_profile' combination:
-	## $ make build BUILD_PROFILE=blubla BOARD=foobar
+	## To build a specific 'board':
+	## $ make build BOARD=nk3xn
 	##
 	## Or build using one of the pre-defined "target shortcuts" (see `make list`):
 	## $ make build-nk3am.bl
@@ -73,17 +69,9 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 
 # shortcut targets
 %-nk3am.bl: $(ARTIFACTS)
-	$(MAKE) $(GET_TARGET) BUILD_PROFILE=nrf52-bootloader BOARD=nk3am FEATURES=$(FEATURES)
+	$(MAKE) $(GET_TARGET) BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
-	$(MAKE) $(GET_TARGET) BUILD_PROFILE=lpc55 BOARD=nk3xn FEATURES=$(FEATURES)
-
-
-ifeq ($(BUILD_ID),)
-ifneq ($(shell stat $(CFG_PATH) | head -n1),File: $(CFG_PATH))
- $(error Configuration: $(CFG_PATH) not found!)
- $(shell exit 1)
-endif
-endif
+	$(MAKE) $(GET_TARGET) BOARD=nk3xn FEATURES=$(FEATURES)
 
 $(OUT_ELF): $(SRCS) build
 $(OUT_BIN): $(OUT_ELF)
@@ -96,14 +84,13 @@ check-var-%:
 	@echo "******************************************************************************************"
 	@echo "**** TARGET:    $(shell printf %18s $(GET_TARGET)) | BINARY:   $(OUT_BIN)(.ihex)"
 	@echo "**** BOARD:     $(shell printf %18s $(BOARD)) | SOC:      $(SOC)"
-	@echo "**** PROFILE:   $(shell printf %18s $(BUILD_PROFILE)) | BUILD_ID: $(BUILD_ID)"
+	@echo "**** BUILD_ID: $(BUILD_ID)"
 	@echo "**** FEATURES:  $(BUILD_FEATURES)"
 	@echo "******************************************************************************************"
 
 list:
 	@echo "Available:"
 	@echo "  BOARD(s): $(shell find src/ -name 'board_*' | xargs -n1 basename | sed -E 's/board_([^.]*)(.rs)?/\1/g' | xargs)"
-	@echo "  BUILD_PROFILE(s): $(shell ls profiles -1 | sed -e 's/\.toml//g')"
 	@echo "  Makefile shortcuts: nk3xn, nk3am.bl"
 	@echo ""
 	@echo "  Usage: make <target>-<something> e.g., build-nk3am.bl, reset-nk3xn, ..." 
@@ -119,11 +106,9 @@ clean-all:
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+build: build-banner $(SRCS) check-var-BOARD check-var-SOC
 
 	cargo --version
-
-	./create_cfg.sh $(CFG_PATH) $(BUILD_PROFILE) $(BOARD)
 
 	# NRF52/test -> "release-thin-lto", use "release" otherwise
 	cargo build --target $(TARGET) \
@@ -140,30 +125,22 @@ build: build-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SO
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
 	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
 
-check: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+check: check-banner $(SRCS) check-var-BOARD check-var-SOC
 
 	cargo --version
-
-	./create_cfg.sh $(CFG_PATH) $(BUILD_PROFILE) $(BOARD)
 
 	cargo check --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
-doc: check-banner $(SRCS) check-var-BOARD check-var-BUILD_PROFILE check-var-SOC
+doc: check-banner $(SRCS) check-var-BOARD check-var-SOC
 
 	cargo --version
-
-	cp -f $(CFG_PATH) cfg.toml
-	echo '' >> cfg.toml
-	echo '[build]' >> cfg.toml
-	echo 'build_profile = "$(BUILD_PROFILE)"' >> cfg.toml
-	echo 'board = "$(BOARD)"' >> cfg.toml
 
 	cargo doc --target $(TARGET) \
 		--features $(COMMA_FEATURES) \
 		--verbose
 
-clean: clean-banner check-var-BOARD check-var-BUILD_PROFILE
+clean: clean-banner check-var-BOARD
 	rm -f ./$(OUT_BIN) ./$(OUT_ELF) ./$(OUT_IHEX) $(RAW_OUT) $(SYMBOLS) $(LOG)
 

@@ -10,14 +10,11 @@ use nrf52840_hal::{
 
 pub const BOARD_NAME: &str = "NK3AM";
 
-// @todo: remove these, actually only needed for physical, literal, mechanical keep-alive
-pub const KEEPALIVE_PINS: &[u8] = &[0x0b, 0x0c, 0x18, 0x19, 0x25, 0x26, 0x27, 0x28];
-
 use crate::traits::buttons::{Button, Press};
 use crate::traits::rgb_led;
 use crate::traits::rgb_led::Color;
 
-pub type OutPin = Pin<Output<PushPull>>;
+type OutPin = Pin<Output<PushPull>>;
 
 use crate::soc::types::BoardGPIO;
 
@@ -228,39 +225,6 @@ pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Bo
         nfc_cs: None,
         nfc_irq: None,
     }
-}
-
-pub fn gpio_irq_sources(dir: &[u32]) -> u32 {
-    let mut src: u32 = 0;
-    fn bit_set(x: u32, y: u32) -> bool {
-        (x & (1u32 << y)) != 0
-    }
-
-    if !bit_set(dir[0], 11) {
-        src |= 0b0000_0001;
-    }
-    if !bit_set(dir[0], 12) {
-        src |= 0b0000_0010;
-    }
-    if !bit_set(dir[0], 24) {
-        src |= 0b0000_0100;
-    }
-    if !bit_set(dir[0], 25) {
-        src |= 0b0000_1000;
-    }
-    if !bit_set(dir[1], 8) {
-        src |= 0b0001_0000;
-    }
-    if !bit_set(dir[1], 7) {
-        src |= 0b0010_0000;
-    }
-    if !bit_set(dir[1], 6) {
-        src |= 0b0100_0000;
-    }
-    if !bit_set(dir[1], 5) {
-        src |= 0b1000_0000;
-    }
-    src
 }
 
 pub fn set_panic_led() {
