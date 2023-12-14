@@ -26,7 +26,6 @@
 - secrets-app: Update to v0.13.0-rc.1
   - Confirm credential removal with a touch ([trussed-secrets-app#92][])
   - Allow to update credential ([trussed-secrets-app#65][])
-  - Remove challenge response authentication method ([trussed-secrets-app#44][])
 - Improve stack usage of several components ([#353][])
 - Reject APDU commands from multiple transports ([apdu-dispatch#19][])
 
