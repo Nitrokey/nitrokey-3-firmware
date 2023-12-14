@@ -527,7 +527,7 @@ impl From<Variant> for u8 {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default, Clone, Copy)]
     pub struct InitStatus: u8 {
         const NFC_ERROR = 0b00000001;
         const INTERNAL_FLASH_ERROR = 0b00000010;

@@ -5,7 +5,6 @@ pub type CcidClass =
     usbd_ccid::Ccid<'static, 'static, <SocT as Soc>::UsbBus, { apdu_dispatch::interchanges::SIZE }>;
 pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, 'static, 'static, <SocT as Soc>::UsbBus>;
 // pub type KeyboardClass = usbd_hid::hid_class::HIDClass<'static, <SocT as Soc>::UsbBus>;
-pub type SerialClass = usbd_serial::SerialPort<'static, <SocT as Soc>::UsbBus>;
 
 type Usbd = usb_device::device::UsbDevice<'static, <SocT as Soc>::UsbBus>;
 
@@ -14,23 +13,20 @@ pub struct UsbClasses {
     pub ccid: CcidClass,
     pub ctaphid: CtapHidClass,
     // pub keyboard: KeyboardClass,
-    pub serial: SerialClass,
 }
 
 impl UsbClasses {
-    pub fn new(usbd: Usbd, ccid: CcidClass, ctaphid: CtapHidClass, serial: SerialClass) -> Self {
+    pub fn new(usbd: Usbd, ccid: CcidClass, ctaphid: CtapHidClass) -> Self {
         Self {
             usbd,
             ccid,
             ctaphid,
-            serial,
         }
     }
     pub fn poll(&mut self) {
         self.ctaphid.check_for_app_response();
         self.ccid.check_for_app_response();
-        self.usbd
-            .poll(&mut [&mut self.ccid, &mut self.ctaphid, &mut self.serial]);
+        self.usbd.poll(&mut [&mut self.ccid, &mut self.ctaphid]);
     }
 }
 
