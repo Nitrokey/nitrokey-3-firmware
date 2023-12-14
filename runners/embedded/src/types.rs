@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 
-use crate::soc::types::Soc as SocT;
+use crate::store::RunnerStore;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -10,12 +10,11 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_time::duration::Milliseconds;
-use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
+use littlefs2::const_ram_storage;
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
     platform::UserInterface,
-    store,
     types::{LfsResult, LfsStorage},
     Platform,
 };
@@ -82,7 +81,7 @@ impl<S: Soc> apps::Runner for Runner<S> {
     type Reboot = S;
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
-    type Filesystem = <SocT as Soc>::InternalFlashStorage;
+    type Filesystem = <crate::soc::types::Soc as Soc>::InternalFlashStorage;
     type Twi = S::Twi;
     type Se050Timer = S::Se050Timer;
 
@@ -111,23 +110,6 @@ const_ram_storage!(
     path_max_plus_one_ty = littlefs2::consts::U256,
     result = LfsResult,
 );
-
-store!(
-    RunnerStore,
-    Internal: <SocT as Soc>::InternalFlashStorage,
-    External: <SocT as Soc>::ExternalFlashStorage,
-    Volatile: VolatileStorage
-);
-
-pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
-pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
-pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
 pub struct RunnerPlatform<S: Soc> {
     pub rng: ChaCha8Rng,

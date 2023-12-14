@@ -48,11 +48,12 @@ use super::{
 };
 use crate::{
     flash::ExtFlashStorage,
+    store::RunnerStore,
     traits::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
     ui::UserInterface,
 };
 
@@ -606,7 +607,7 @@ impl Stage4 {
         );
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
-        let store = crate::init_store(internal, external, simulated_efs, &mut self.status);
+        let store = crate::store::init_store(internal, external, simulated_efs, &mut self.status);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
