@@ -143,7 +143,7 @@ pub fn init_apps<S: Soc>(
     #[cfg(feature = "provisioner")]
     let provisioner = {
         let store = store.clone();
-        let int_flash_ref = unsafe { store::INTERNAL_STORAGE.as_mut().unwrap() };
+        let int_flash_ref = unsafe { store::steal_internal_storage() };
         let rebooter: fn() -> ! = S::reboot_to_firmware_update;
 
         apps::ProvisionerData {

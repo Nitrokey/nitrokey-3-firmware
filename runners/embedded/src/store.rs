@@ -1,5 +1,8 @@
 use apps::InitStatus;
-use littlefs2::fs::{Allocation, Filesystem};
+use littlefs2::{
+    fs::{Allocation, Filesystem},
+    io::Result as LfsResult,
+};
 use trussed::store;
 
 use crate::{
@@ -7,15 +10,12 @@ use crate::{
     types::{Soc, VolatileStorage},
 };
 
-pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
-pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
-pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
+static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
+
+#[cfg(feature = "provisioner")]
+pub unsafe fn steal_internal_storage() -> &'static mut <SocT as Soc>::InternalFlashStorage {
+    INTERNAL_STORAGE.as_mut().unwrap()
+}
 
 store!(
     RunnerStore,
@@ -30,28 +30,53 @@ pub fn init_store(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> RunnerStore {
-    let volatile_storage = VolatileStorage::new();
+    static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
+    static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
+    static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
+    static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
+    static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
+    static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
+    static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
+    static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-    /* Step 1: let our stack-based filesystem objects transcend into higher
-    beings by blessing them with static lifetime
-    */
-    macro_rules! transcend {
-        ($global:expr, $content:expr) => {
-            unsafe {
-                $global.replace($content);
-                $global.as_mut().unwrap()
-            }
+    unsafe {
+        let ifs_storage = INTERNAL_STORAGE.insert(int_flash);
+        let ifs_alloc = INTERNAL_FS_ALLOC.insert(Filesystem::allocate());
+        let efs_storage = EXTERNAL_STORAGE.insert(ext_flash);
+        let efs_alloc = EXTERNAL_FS_ALLOC.insert(Filesystem::allocate());
+        let vfs_storage = VOLATILE_STORAGE.insert(VolatileStorage::new());
+        let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
+
+        let Ok(ifs) = init_ifs(ifs_storage, ifs_alloc, efs_storage, status) else {
+            error!("IFS Mount Error {:?}", _e);
+            panic!("IFS");
         };
+
+        let Ok(efs) = init_efs(efs_storage, efs_alloc, simulated_efs, status) else {
+            error!("EFS Mount Error {:?}", _e);
+            panic!("EFS");
+        };
+
+        let Ok(vfs) = init_vfs(vfs_storage, vfs_alloc) else {
+            error!("VFS Mount Error {:?}", _e);
+            panic!("VFS");
+        };
+
+        let ifs = INTERNAL_FS.insert(ifs);
+        let efs = EXTERNAL_FS.insert(efs);
+        let vfs = VOLATILE_FS.insert(vfs);
+
+        RunnerStore::init_raw(ifs, efs, vfs)
     }
+}
 
-    let ifs_storage = transcend!(INTERNAL_STORAGE, int_flash);
-    let ifs_alloc = transcend!(INTERNAL_FS_ALLOC, Filesystem::allocate());
-    let efs_storage = transcend!(EXTERNAL_STORAGE, ext_flash);
-    let efs_alloc = transcend!(EXTERNAL_FS_ALLOC, Filesystem::allocate());
-    let vfs_storage = transcend!(VOLATILE_STORAGE, volatile_storage);
-    let vfs_alloc = transcend!(VOLATILE_FS_ALLOC, Filesystem::allocate());
-
-    /* Step 2: try mounting each FS in turn */
+#[inline(always)]
+fn init_ifs(
+    ifs_storage: &'static mut <SocT as Soc>::InternalFlashStorage,
+    ifs_alloc: &'static mut Allocation<<SocT as Soc>::InternalFlashStorage>,
+    efs_storage: &mut <SocT as Soc>::ExternalFlashStorage,
+    status: &mut InitStatus,
+) -> LfsResult<Filesystem<'static, <SocT as Soc>::InternalFlashStorage>> {
     if !Filesystem::is_mountable(ifs_storage) {
         // handle provisioner
         if cfg!(feature = "provisioner") {
@@ -60,18 +85,24 @@ pub fn init_store(
         } else {
             status.insert(InitStatus::INTERNAL_FLASH_ERROR);
             error_now!("IFS mount-fail");
-
             soc::recover_ifs(ifs_storage, ifs_alloc, efs_storage).ok();
         }
     }
 
     soc::prepare_ifs(ifs_storage);
 
-    let ifs_ = Filesystem::mount(ifs_alloc, ifs_storage).expect("Could not bring up IFS!");
-    let ifs = transcend!(INTERNAL_FS, ifs_);
+    Filesystem::mount(ifs_alloc, ifs_storage)
+}
 
-    if !littlefs2::fs::Filesystem::is_mountable(efs_storage) {
-        let fmt_ext = littlefs2::fs::Filesystem::format(efs_storage);
+#[inline(always)]
+fn init_efs(
+    efs_storage: &'static mut <SocT as Soc>::ExternalFlashStorage,
+    efs_alloc: &'static mut Allocation<<SocT as Soc>::ExternalFlashStorage>,
+    simulated_efs: bool,
+    status: &mut InitStatus,
+) -> LfsResult<Filesystem<'static, <SocT as Soc>::ExternalFlashStorage>> {
+    if !Filesystem::is_mountable(efs_storage) {
+        let fmt_ext = Filesystem::format(efs_storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {
             info_now!("Formatting simulated EFS failed as expected");
         } else {
@@ -79,28 +110,16 @@ pub fn init_store(
             status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
         }
     };
-    let efs = match littlefs2::fs::Filesystem::mount(efs_alloc, efs_storage) {
-        Ok(efs_) => {
-            transcend!(EXTERNAL_FS, efs_)
-        }
-        Err(_e) => {
-            error!("EFS Mount Error {:?}", _e);
-            panic!("store");
-        }
-    };
+    Filesystem::mount(efs_alloc, efs_storage)
+}
 
-    if !littlefs2::fs::Filesystem::is_mountable(vfs_storage) {
-        littlefs2::fs::Filesystem::format(vfs_storage).ok();
+#[inline(always)]
+fn init_vfs(
+    vfs_storage: &'static mut VolatileStorage,
+    vfs_alloc: &'static mut Allocation<VolatileStorage>,
+) -> LfsResult<Filesystem<'static, VolatileStorage>> {
+    if !Filesystem::is_mountable(vfs_storage) {
+        Filesystem::format(vfs_storage).ok();
     }
-    let vfs = match littlefs2::fs::Filesystem::mount(vfs_alloc, vfs_storage) {
-        Ok(vfs_) => {
-            transcend!(VOLATILE_FS, vfs_)
-        }
-        Err(_e) => {
-            error!("VFS Mount Error {:?}", _e);
-            panic!("store");
-        }
-    };
-
-    RunnerStore::init_raw(ifs, efs, vfs)
+    Filesystem::mount(vfs_alloc, vfs_storage)
 }
