@@ -2316,6 +2316,7 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
+ "trussed-rsa-alloc",
  "trussed-staging",
  "untrusted",
 ]
