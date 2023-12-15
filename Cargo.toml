@@ -20,6 +20,7 @@ fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "v0.1.0-nitrokey.2" }
+p256-cortex-m4  = { git = "https://github.com/sosthene-nitrokey/p256-cortex-m4.git", rev = "50ff0366d66f294e1e3049e0c70ec67c218f011d" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
@@ -37,7 +38,7 @@ opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "8d3622f5c228352
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0-nitrokey-hmac256p256.2" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "4b8191f248c26cb074cdac887c7f3f48f9c449a4" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "2f51478f0861ff8db19fdd5290f023ab6f4c2fb9" }
+trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "9732a9a3e98af72112286afdc9b7174c66c2869a" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "1bccc1d9ec9fafb9b769e32fcfe7476b9b034506" }
 

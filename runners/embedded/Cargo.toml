@@ -44,7 +44,6 @@ littlefs2 = { version = "0.4", features = ["c-stubs"] }
 
 ### usb machinery
 usb-device = "0.2"
-usbd-serial = "0.1"
 usbd-ccid = "0.2"
 usbd-ctaphid = "0.1"
 
