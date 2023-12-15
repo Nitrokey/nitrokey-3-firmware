@@ -32,8 +32,9 @@ use interchange::Channel;
 use lpc55_hal as hal;
 #[cfg(feature = "log-info")]
 use lpc55_hal::drivers::timer::Elapsed as _;
+use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
-use trussed::{platform::UserInterface, service::Service, types::Location};
+use trussed::{service::Service, types::Location};
 use utils::OptionalStorage;
 
 #[cfg(feature = "se050")]
@@ -41,7 +42,7 @@ use super::types::TimerDelay;
 use super::{
     board,
     clock_controller::DynamicClockController,
-    nfc,
+    nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
     types::I2C,
 };
@@ -51,7 +52,8 @@ use crate::{
         buttons::{self, Press},
         rgb_led::RgbLed,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Iso14443, RunnerStore, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, RunnerStore, Trussed},
+    ui::UserInterface,
 };
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
@@ -356,7 +358,7 @@ impl Stage2 {
         inputmux: InputMux<Unknown>,
         pint: Pint<Unknown>,
         nfc_rq: CcidRequester<'static>,
-    ) -> Option<Iso14443> {
+    ) -> Option<Iso14443<NfcChip>> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
@@ -479,7 +481,7 @@ pub struct Stage3 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
@@ -530,7 +532,7 @@ pub struct Stage4 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     flash: Flash,
@@ -677,7 +679,7 @@ pub struct Stage5 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
     store: RunnerStore,
@@ -704,9 +706,7 @@ impl Stage5 {
         let three_buttons = self.basic.three_buttons.take();
 
         let provisioner = cfg!(feature = "provisioner-app");
-        let mut solobee_interface =
-            super::trussed::UserInterface::new(rtc, three_buttons, rgb, provisioner);
-        solobee_interface.set_status(trussed::platform::ui::Status::Idle);
+        let user_interface = UserInterface::new(rtc, three_buttons, rgb, provisioner);
 
         use rand::{Rng as _, SeedableRng};
         let mut dev_rng = self.rng;
@@ -728,8 +728,11 @@ impl Stage5 {
             res
         };
 
-        let board =
-            types::RunnerPlatform::new(rng_and_maybe_se050.0, self.store, solobee_interface);
+        let board = types::RunnerPlatform {
+            rng: rng_and_maybe_se050.0,
+            store: self.store,
+            user_interface,
+        };
         let trussed = Service::with_dispatch(
             board,
             Dispatch::new(
@@ -763,10 +766,10 @@ pub struct Stage6 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    nfc: Option<Iso14443>,
+    nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore,
-    trussed: Trussed,
+    trussed: Trussed<super::types::Soc>,
 }
 
 impl Stage6 {
@@ -862,9 +865,9 @@ impl Stage6 {
 
 pub struct All {
     pub basic: Basic,
-    pub usb_nfc: UsbNfc,
-    pub trussed: Trussed,
-    pub apps: Apps,
+    pub usb_nfc: UsbNfc<super::types::Soc>,
+    pub trussed: Trussed<super::types::Soc>,
+    pub apps: Apps<super::types::Soc>,
     pub clock_controller: Option<DynamicClockController>,
 }
 

@@ -1,8 +1,9 @@
+use core::time::Duration;
+
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::prince;
 use super::spi::{FlashCs, Spi};
-use super::trussed::UserInterface;
-use crate::flash::ExtFlashStorage;
+use crate::{flash::ExtFlashStorage, traits::Clock, types::Uuid, ui::UserInterface};
 use apps::Variant;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
@@ -16,12 +17,15 @@ use lpc55_hal::{
         pins::{Pio0_9, Pio1_14},
         timer,
     },
-    peripherals::{ctimer, flash, flexcomm::I2c5, syscon},
-    raw,
+    peripherals::{ctimer, flash, flexcomm::I2c5, rtc::Rtc, syscon},
+    raw::{Interrupt, SCB},
     traits::flash::WriteErase,
-    typestates::pin::{
-        function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
-        state::Special,
+    typestates::{
+        init_state,
+        pin::{
+            function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
+            state::Special,
+        },
     },
     I2cMaster,
 };
@@ -32,7 +36,7 @@ use utils::OptionalStorage;
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
-pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
+pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 #[cfg(feature = "no-encrypted-storage")]
 use lpc55_hal::littlefs2_filesystem;
@@ -78,10 +82,7 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
-    type Rng = rand_chacha::ChaCha8Rng;
-    type TrussedUI = UserInterface<ThreeButtons, RgbLed>;
-    type Reboot = Lpc55Reboot;
-    type UUID = [u8; 16];
+    type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;
     #[cfg(feature = "se050")]
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
     #[cfg(feature = "se050")]
@@ -93,23 +94,21 @@ impl crate::types::Soc for Soc {
 
     type Duration = Milliseconds;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: raw::Interrupt::OS_EVENT as u16,
-    };
+    type Interrupt = Interrupt;
+    const SYSCALL_IRQ: Interrupt = Interrupt::OS_EVENT;
 
     const SOC_NAME: &'static str = "LPC55";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const VARIANT: Variant = Variant::Lpc55;
 
-    fn device_uuid() -> &'static [u8; 16] {
+    fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
 }
 
-pub struct Lpc55Reboot {}
-impl apps::Reboot for Lpc55Reboot {
+impl apps::Reboot for Soc {
     fn reboot() -> ! {
-        raw::SCB::sys_reset()
+        SCB::sys_reset()
     }
     fn reboot_to_firmware_update() -> ! {
         lpc55_hal::boot_to_bootrom()
@@ -122,7 +121,7 @@ impl apps::Reboot for Lpc55Reboot {
         lpc55_hal::drivers::flash::FlashGordon::new(flash)
             .erase_page(0)
             .ok();
-        raw::SCB::sys_reset()
+        SCB::sys_reset()
     }
     fn locked() -> bool {
         let seal = &unsafe { lpc55_hal::raw::Peripherals::steal() }
@@ -137,3 +136,11 @@ pub type NfcWaitExtender =
     timer::Timer<ctimer::Ctimer0<lpc55_hal::typestates::init_state::Enabled>>;
 pub type PerformanceTimer =
     timer::Timer<ctimer::Ctimer4<lpc55_hal::typestates::init_state::Enabled>>;
+
+pub type RtcClock = Rtc<init_state::Enabled>;
+
+impl Clock for RtcClock {
+    fn uptime(&mut self) -> Duration {
+        Rtc::uptime(self)
+    }
+}

@@ -1,31 +1,20 @@
-use crate::soc::types::Soc as SocT;
-use crate::types::Soc;
+use apdu_dispatch::interchanges::SIZE as CCID_SIZE;
+use nfc_device::Iso14443;
+use usb_device::device::UsbDevice;
+use usbd_ccid::Ccid;
+use usbd_ctaphid::CtapHid;
+use usbd_serial::SerialPort;
 
-pub type CcidClass =
-    usbd_ccid::Ccid<'static, 'static, <SocT as Soc>::UsbBus, { apdu_dispatch::interchanges::SIZE }>;
-pub type CtapHidClass = usbd_ctaphid::CtapHid<'static, 'static, 'static, <SocT as Soc>::UsbBus>;
-// pub type KeyboardClass = usbd_hid::hid_class::HIDClass<'static, <SocT as Soc>::UsbBus>;
-pub type SerialClass = usbd_serial::SerialPort<'static, <SocT as Soc>::UsbBus>;
+use crate::types::{ApduDispatch, CtaphidDispatch, Soc};
 
-type Usbd = usb_device::device::UsbDevice<'static, <SocT as Soc>::UsbBus>;
-
-pub struct UsbClasses {
-    pub usbd: Usbd,
-    pub ccid: CcidClass,
-    pub ctaphid: CtapHidClass,
-    // pub keyboard: KeyboardClass,
-    pub serial: SerialClass,
+pub struct UsbClasses<S: Soc> {
+    pub usbd: UsbDevice<'static, S::UsbBus>,
+    pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
+    pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus>,
+    pub serial: SerialPort<'static, S::UsbBus>,
 }
 
-impl UsbClasses {
-    pub fn new(usbd: Usbd, ccid: CcidClass, ctaphid: CtapHidClass, serial: SerialClass) -> Self {
-        Self {
-            usbd,
-            ccid,
-            ctaphid,
-            serial,
-        }
-    }
+impl<S: Soc> UsbClasses<S> {
     pub fn poll(&mut self) {
         self.ctaphid.check_for_app_response();
         self.ccid.check_for_app_response();
@@ -34,9 +23,9 @@ impl UsbClasses {
     }
 }
 
-pub struct UsbNfcInit {
-    pub usb_classes: Option<UsbClasses>,
-    pub apdu_dispatch: apdu_dispatch::dispatch::ApduDispatch<'static>,
-    pub ctaphid_dispatch: ctaphid_dispatch::dispatch::Dispatch<'static, 'static>,
-    pub iso14443: Option<super::Iso14443>,
+pub struct UsbNfcInit<S: Soc> {
+    pub usb_classes: Option<UsbClasses<S>>,
+    pub apdu_dispatch: ApduDispatch,
+    pub ctaphid_dispatch: CtaphidDispatch,
+    pub iso14443: Option<Iso14443<S::NfcDevice>>,
 }

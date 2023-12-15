@@ -1,4 +1,11 @@
+use core::time::Duration;
+
+use embedded_time::{duration::Milliseconds, fixed_point::FixedPoint as _};
 use nrf52840_hal::rtc::{Rtc, RtcCompareReg, RtcInterrupt};
+use rtic::Monotonic;
+
+use crate::traits::Clock;
+
 type Rtc0 = Rtc<nrf52840_pac::RTC0>;
 
 const RTC_HZ: u64 = 200;
@@ -13,7 +20,7 @@ impl RtcInstant {
         (self.0 as u32) & 0xffffff_u32
     }
 }
-impl From<RtcInstant> for embedded_time::duration::units::Milliseconds {
+impl From<RtcInstant> for Milliseconds {
     fn from(i: RtcInstant) -> Self {
         Self(((i.0 * 1000) / RTC_HZ) as u32)
     }
@@ -26,8 +33,8 @@ impl RtcDuration {
         RtcDuration(((ms as u64) * RTC_HZ) / 1000)
     }
 }
-impl From<embedded_time::duration::units::Milliseconds> for RtcDuration {
-    fn from(ms: embedded_time::duration::units::Milliseconds) -> Self {
+impl From<Milliseconds> for RtcDuration {
+    fn from(ms: Milliseconds) -> Self {
         Self::from_ms(ms.0)
     }
 }
@@ -64,7 +71,13 @@ impl RtcMonotonic {
     }
 }
 
-impl rtic::Monotonic for RtcMonotonic {
+impl Clock for RtcMonotonic {
+    fn uptime(&mut self) -> Duration {
+        Duration::from_millis(Milliseconds::from(self.now()).integer().into())
+    }
+}
+
+impl Monotonic for RtcMonotonic {
     type Instant = RtcInstant;
     type Duration = RtcDuration;
 

@@ -8,11 +8,18 @@ use apps::InitStatus;
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use littlefs2::fs::Filesystem;
+use nfc_device::Iso14443;
 use ref_swap::OptionRefSwap;
 use soc::types::Soc as SocT;
 use trussed::interrupt::InterruptFlag;
-use types::{Iso14443, Soc};
-use usb_device::device::{UsbDeviceBuilder, UsbVidPid};
+use types::{
+    usbnfc::{UsbClasses, UsbNfcInit},
+    Soc,
+};
+use usb_device::{
+    bus::UsbBusAllocator,
+    device::{UsbDeviceBuilder, UsbVidPid},
+};
 
 #[cfg(feature = "board-nk3am")]
 use soc::migrations::ftl_journal;
@@ -39,11 +46,11 @@ pub mod soc;
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
-pub fn banner() {
+pub fn banner<S: Soc>() {
     info!(
         "Embedded Runner ({}:{}) using librunner {}",
-        <SocT as Soc>::SOC_NAME,
-        <SocT as Soc>::BOARD_NAME,
+        S::SOC_NAME,
+        S::BOARD_NAME,
         utils::VERSION_STRING,
     );
 }
@@ -178,11 +185,11 @@ pub fn init_store(
     types::RunnerStore::init_raw(ifs, efs, vfs)
 }
 
-pub fn init_usb_nfc(
-    usbbus_opt: Option<&'static usb_device::bus::UsbBusAllocator<<SocT as Soc>::UsbBus>>,
-    nfc: Option<Iso14443>,
+pub fn init_usb_nfc<S: Soc>(
+    usbbus_opt: Option<&'static UsbBusAllocator<S::UsbBus>>,
+    nfc: Option<Iso14443<S::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
-) -> types::usbnfc::UsbNfcInit {
+) -> UsbNfcInit<S> {
     let config = &types::INTERFACE_CONFIG;
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
@@ -215,7 +222,7 @@ pub fn init_usb_nfc(
         let serial = usbd_serial::SerialPort::new(usbbus);
 
         let vidpid = UsbVidPid(config.usb_id_vendor, config.usb_id_product);
-        let usbdev = UsbDeviceBuilder::new(usbbus, vidpid)
+        let usbd = UsbDeviceBuilder::new(usbbus, vidpid)
 			.product(config.usb_product)
 			.manufacturer(config.usb_manufacturer)
 			/*.serial_number(config.usb_serial)  <---- don't configure serial to not be identifiable */
@@ -224,12 +231,15 @@ pub fn init_usb_nfc(
 			.composite_with_iads()
 			.build();
 
-        usb_classes = Some(types::usbnfc::UsbClasses::new(
-            usbdev, ccid, ctaphid, serial,
-        ));
+        usb_classes = Some(UsbClasses {
+            usbd,
+            ccid,
+            ctaphid,
+            serial,
+        });
     }
 
-    types::usbnfc::UsbNfcInit {
+    UsbNfcInit {
         usb_classes,
         apdu_dispatch,
         ctaphid_dispatch,
@@ -237,15 +247,15 @@ pub fn init_usb_nfc(
     }
 }
 
-pub fn init_apps(
-    trussed: &mut types::Trussed,
+pub fn init_apps<S: Soc>(
+    trussed: &mut types::Trussed<S>,
     init_status: InitStatus,
     store: &types::RunnerStore,
     nfc_powered: bool,
-) -> types::Apps {
+) -> types::Apps<S> {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(*store, <SocT as types::Soc>::VARIANT);
+    let mut admin = apps::AdminData::new(*store, S::VARIANT);
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -262,11 +272,9 @@ pub fn init_apps(
 
     #[cfg(feature = "provisioner")]
     let provisioner = {
-        use apps::Reboot;
-
         let store = store.clone();
         let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
-        let rebooter: fn() -> ! = <SocT as types::Soc>::Reboot::reboot_to_firmware_update;
+        let rebooter: fn() -> ! = S::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,
@@ -278,6 +286,7 @@ pub fn init_apps(
 
     let runner = types::Runner {
         is_efs_available: !nfc_powered,
+        _marker: Default::default(),
     };
     let data = apps::Data {
         admin,

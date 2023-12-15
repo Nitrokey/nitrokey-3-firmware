@@ -14,9 +14,19 @@ delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
 mod app {
     #[cfg(not(feature = "no-delog"))]
     use super::Delogger;
-    use super::{ERL, ERL::soc::rtic_monotonic::RtcDuration};
+    use super::{
+        ERL,
+        ERL::{
+            soc::{
+                rtic_monotonic::RtcDuration,
+                types::{DummyNfc, Soc},
+            },
+            types::RunnerPlatform,
+        },
+    };
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
+    use nfc_device::Iso14443;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
@@ -27,12 +37,12 @@ mod app {
 
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed,
-        apps: ERL::types::Apps,
+        trussed: ERL::types::Trussed<Soc>,
+        apps: ERL::types::Apps<Soc>,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
-        usb_classes: Option<ERL::types::usbnfc::UsbClasses>,
-        contactless: Option<ERL::types::Iso14443>,
+        usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
+        contactless: Option<Iso14443<DummyNfc>>,
         /* NRF specific elements */
         // (display UI)
         // (fingerprint sensor)
@@ -68,7 +78,7 @@ mod app {
         rtt_target::rtt_init_print!();
         #[cfg(not(feature = "no-delog"))]
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner();
+        ERL::banner::<Soc>();
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
@@ -115,8 +125,7 @@ mod app {
             res.unwrap()
         };
 
-        let store: ERL::types::RunnerStore =
-            ERL::init_store(internal_flash, extflash, false, &mut init_status);
+        let store = ERL::init_store(internal_flash, extflash, false, &mut init_status);
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
@@ -152,16 +161,15 @@ mod app {
         let mut dev_rng = Rng::new(ctx.device.RNG);
 
         #[cfg(feature = "se050")]
-        let (se050, chacha_rng) =
-            ERL::init_se050(twim, se050_timer, &mut dev_rng, &mut init_status);
+        let (se050, rng) = ERL::init_se050(twim, se050_timer, &mut dev_rng, &mut init_status);
 
         #[cfg(not(feature = "se050"))]
         use rand::{Rng as _, SeedableRng};
         #[cfg(not(feature = "se050"))]
-        let chacha_rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
+        let rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
 
         #[cfg(feature = "board-nk3am")]
-        let ui = ERL::soc::board::init_ui(
+        let user_interface = ERL::soc::board::init_ui(
             board_gpio.rgb_led,
             ctx.device.PWM0,
             ctx.device.PWM1,
@@ -170,10 +178,13 @@ mod app {
         );
 
         #[cfg(not(feature = "board-nk3am"))]
-        let ui = ERL::soc::board::init_ui();
+        let user_interface = ERL::soc::board::init_ui();
 
-        let platform: ERL::types::RunnerPlatform =
-            ERL::types::RunnerPlatform::new(chacha_rng, store, ui);
+        let platform = RunnerPlatform {
+            rng,
+            store,
+            user_interface,
+        };
 
         let mut er = [0; 16];
         for (i, r) in ctx.device.FICR.er.iter().enumerate() {

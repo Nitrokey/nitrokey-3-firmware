@@ -16,13 +16,18 @@ pub fn msp() -> u32 {
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
-    use embedded_runner_lib::{runtime, soc, soc::monotonic::SystickMonotonic, types};
+    use embedded_runner_lib::{
+        runtime,
+        soc::{self, monotonic::SystickMonotonic, nfc::NfcChip, types::Soc},
+        types,
+    };
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
         time::{DurationExtensions, Microseconds, Milliseconds},
         traits::wg::timer::{Cancel, CountDown},
     };
+    use nfc_device::Iso14443;
     use systick_monotonic::Systick;
 
     const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
@@ -39,15 +44,15 @@ mod app {
         ctaphid_dispatch: types::CtaphidDispatch,
 
         /// The Trussed service, used by all applications.
-        trussed: types::Trussed,
+        trussed: types::Trussed<Soc>,
 
         /// All the applications that the device serves.
-        apps: types::Apps,
+        apps: types::Apps<Soc>,
 
         /// The USB driver classes
-        usb_classes: Option<types::usbnfc::UsbClasses>,
+        usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
         /// The NFC driver
-        contactless: Option<types::Iso14443>,
+        contactless: Option<Iso14443<NfcChip>>,
 
         /// This timer is used while developing NFC, to time how long things took,
         /// and to make sure logs are not flushed in the middle of NFC transactions.

@@ -4,7 +4,6 @@ pub mod monotonic;
 pub mod nfc;
 pub mod prince;
 pub mod spi;
-pub mod trussed;
 pub mod types;
 
 // modules with path attribute *are* directory owners if their path
@@ -33,7 +32,7 @@ pub fn init(
     ))]
     Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
 
-    crate::banner();
+    crate::banner::<types::Soc>();
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 

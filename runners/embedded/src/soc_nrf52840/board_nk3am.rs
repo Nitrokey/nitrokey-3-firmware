@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use nrf52840_hal::{
     gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
@@ -10,20 +12,73 @@ use nrf52840_hal::{
 
 pub const BOARD_NAME: &str = "NK3AM";
 
-use crate::traits::buttons::{Button, Press};
+use crate::traits::buttons::{Button, Press, UserPresence};
 use crate::traits::rgb_led;
 use crate::traits::rgb_led::Color;
+use crate::traits::Clock;
 
 type OutPin = Pin<Output<PushPull>>;
 
 use crate::soc::types::BoardGPIO;
 
-use crate::soc::trussed_ui::UserInterface;
+use crate::soc::rtic_monotonic::RtcMonotonic;
 
-pub type TrussedUI = UserInterface<HardwareButtons, RgbLed>;
+use crate::ui::UserInterface;
+
+use trussed::platform::consent;
+
+pub type TrussedUI = UserInterface<RtcMonotonic, HardwareButtons, RgbLed>;
 
 pub struct HardwareButtons {
     pub touch_button: Option<OutPin>,
+}
+
+impl UserPresence for HardwareButtons {
+    fn check_user_presence(&mut self, clock: &mut dyn Clock) -> consent::Level {
+        // essentially a blocking call for up to ~30secs
+        // this outer loop accumulates *presses* from the
+        // inner loop & maintains (loading) delays.
+
+        let mut counter: u8 = 0;
+        let threshold: u8 = 1;
+
+        let start_time = clock.uptime();
+        let timeout_at = start_time + Duration::from_millis(1_000);
+        let mut next_check = start_time + Duration::from_millis(25);
+
+        loop {
+            let cur_time = clock.uptime();
+
+            // timeout reached
+            if cur_time > timeout_at {
+                break;
+            }
+            // loop until next check shall be done
+            if cur_time < next_check {
+                continue;
+            }
+
+            if self.is_pressed(Button::A) {
+                counter += 1;
+                // with press -> delay 25ms
+                next_check = cur_time + Duration::from_millis(25);
+            } else {
+                // w/o press -> delay 100ms
+                next_check = cur_time + Duration::from_millis(100);
+            }
+
+            if counter >= threshold {
+                break;
+            }
+        }
+
+        // consent, if we've counted 3 "presses"
+        if counter >= threshold {
+            consent::Level::Normal
+        } else {
+            consent::Level::None
+        }
+    }
 }
 
 impl Press for HardwareButtons {
@@ -136,23 +191,23 @@ impl rgb_led::RgbLed for RgbLed {
 
 pub fn init_ui(
     leds: [Option<OutPin>; 3],
-
     pwm_red: pac::PWM0,
     pwm_green: pac::PWM1,
     pwm_blue: pac::PWM2,
     touch: OutPin,
 ) -> TrussedUI {
+    // TODO: safely share the RTC
+    let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+    let rtc_mono = RtcMonotonic::new(pac.RTC0);
+
     let rgb = RgbLed::new(leds, pwm_red, pwm_green, pwm_blue);
 
     let buttons = HardwareButtons {
         touch_button: Some(touch),
     };
 
-    #[cfg(feature = "provisioner")]
-    let ui = TrussedUI::new(Some(buttons), Some(rgb), true);
-
-    #[cfg(not(feature = "provisioner"))]
-    let ui = TrussedUI::new(Some(buttons), Some(rgb), false);
+    let provisioner = cfg!(feature = "provisioner");
+    let ui = TrussedUI::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
 
     ui
 }

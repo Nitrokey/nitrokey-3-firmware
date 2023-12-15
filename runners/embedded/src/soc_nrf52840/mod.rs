@@ -6,9 +6,6 @@ compile_error!("No NRF52840 board chosen!");
 #[cfg_attr(feature = "board-nk3am", path = "board_nk3am.rs")]
 pub mod board;
 
-#[cfg(feature = "board-nk3am")]
-pub mod trussed_ui;
-
 pub mod types;
 
 pub mod flash;

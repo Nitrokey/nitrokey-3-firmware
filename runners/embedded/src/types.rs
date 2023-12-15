@@ -1,25 +1,27 @@
+use core::marker::PhantomData;
+
 use crate::soc::types::Soc as SocT;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use apps::{Dispatch, Variant};
+use apps::{Dispatch, Reboot, Variant};
+use cortex_m::interrupt::InterruptNumber;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
+use embedded_time::duration::Milliseconds;
 use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
-use trussed::types::{LfsResult, LfsStorage};
-use trussed::{platform, store};
-pub mod usbnfc;
+use nfc_device::traits::nfc::Device as NfcDevice;
+use rand_chacha::ChaCha8Rng;
+use trussed::{
+    platform::UserInterface,
+    store,
+    types::{LfsResult, LfsStorage},
+    Platform,
+};
+use usb_device::bus::UsbBus;
 
-#[derive(Clone, Copy)]
-pub struct IrqNr {
-    pub i: u16,
-}
-unsafe impl cortex_m::interrupt::InterruptNumber for IrqNr {
-    fn number(self) -> u16 {
-        self.i
-    }
-}
+pub mod usbnfc;
 
 pub struct Config {
     pub card_issuer: &'static [u8; 13],
@@ -39,54 +41,53 @@ pub const INTERFACE_CONFIG: Config = Config {
     usb_id_product: 0x42B2,
 };
 
-pub trait Soc {
+pub type Uuid = [u8; 16];
+
+pub trait Soc: Reboot + 'static {
     type InternalFlashStorage;
     type ExternalFlashStorage;
     // VolatileStorage is always RAM
-    type UsbBus;
-    type NfcDevice;
-    type Rng;
-    type TrussedUI;
-    type Reboot;
-    type UUID;
+    type UsbBus: UsbBus + 'static;
+    type NfcDevice: NfcDevice;
+    type TrussedUI: UserInterface;
 
     #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32>;
+    type Se050Timer: DelayUs<u32> + 'static;
     #[cfg(feature = "se050")]
-    type Twi: se05x::t1::I2CForT1;
+    type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(not(feature = "se050"))]
-    type Se050Timer;
+    type Se050Timer: 'static;
     #[cfg(not(feature = "se050"))]
-    type Twi;
+    type Twi: 'static;
 
-    type Duration;
+    type Duration: From<Milliseconds>;
 
-    // cannot use dyn cortex_m::interrupt::Nr
-    // cannot use actual types, those are usually Enums exported by the soc PAC
-    const SYSCALL_IRQ: IrqNr;
+    type Interrupt: InterruptNumber;
+    const SYSCALL_IRQ: Self::Interrupt;
 
     const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;
     const VARIANT: Variant;
 
-    fn device_uuid() -> &'static Self::UUID;
+    fn device_uuid() -> &'static Uuid;
 }
 
-pub struct Runner {
+pub struct Runner<S> {
     pub is_efs_available: bool,
+    pub _marker: PhantomData<S>,
 }
 
-impl apps::Runner for Runner {
-    type Syscall = RunnerSyscall;
-    type Reboot = <SocT as Soc>::Reboot;
+impl<S: Soc> apps::Runner for Runner<S> {
+    type Syscall = RunnerSyscall<S>;
+    type Reboot = S;
     type Store = RunnerStore;
     #[cfg(feature = "provisioner")]
     type Filesystem = <SocT as Soc>::InternalFlashStorage;
-    type Twi = <SocT as Soc>::Twi;
-    type Se050Timer = <SocT as Soc>::Se050Timer;
+    type Twi = S::Twi;
+    type Se050Timer = S::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
-        *<SocT as Soc>::device_uuid()
+        *S::device_uuid()
     }
 
     fn is_efs_available(&self) -> bool {
@@ -128,32 +129,56 @@ pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
 pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
 pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
-platform!(
-    RunnerPlatform,
-    R: <SocT as Soc>::Rng,
-    S: RunnerStore,
-    UI: <SocT as Soc>::TrussedUI,
-);
+pub struct RunnerPlatform<S: Soc> {
+    pub rng: ChaCha8Rng,
+    pub store: RunnerStore,
+    pub user_interface: S::TrussedUI,
+}
 
-#[derive(Default)]
-pub struct RunnerSyscall {}
+unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
+    type R = ChaCha8Rng;
+    type S = RunnerStore;
+    type UI = S::TrussedUI;
 
-impl trussed::client::Syscall for RunnerSyscall {
-    #[inline]
-    fn syscall(&mut self) {
-        rtic::pend(<SocT as Soc>::SYSCALL_IRQ);
+    fn user_interface(&mut self) -> &mut Self::UI {
+        &mut self.user_interface
+    }
+
+    fn rng(&mut self) -> &mut Self::R {
+        &mut self.rng
+    }
+
+    fn store(&self) -> Self::S {
+        self.store
     }
 }
 
-pub type Trussed =
-    trussed::Service<RunnerPlatform, Dispatch<<SocT as Soc>::Twi, <SocT as Soc>::Se050Timer>>;
+pub struct RunnerSyscall<S: Soc> {
+    _marker: PhantomData<S>,
+}
 
-pub type Iso14443 = nfc_device::Iso14443<<SocT as Soc>::NfcDevice>;
+impl<S: Soc> Default for RunnerSyscall<S> {
+    fn default() -> Self {
+        Self {
+            _marker: Default::default(),
+        }
+    }
+}
+
+impl<S: Soc> trussed::client::Syscall for RunnerSyscall<S> {
+    #[inline]
+    fn syscall(&mut self) {
+        rtic::pend(S::SYSCALL_IRQ);
+    }
+}
+
+pub type Trussed<S> =
+    trussed::Service<RunnerPlatform<S>, Dispatch<<S as Soc>::Twi, <S as Soc>::Se050Timer>>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;
 
-pub type Apps = apps::Apps<Runner>;
+pub type Apps<S> = apps::Apps<Runner<S>>;
 
 #[derive(Debug)]
 pub struct DelogFlusher {}

@@ -6,9 +6,9 @@ use nrf52840_hal::{
     pac, spim, twim, uarte,
     usbd::{UsbPeripheral, Usbd},
 };
-use nrf52840_pac;
+use nrf52840_pac::{self, Interrupt};
 
-use crate::flash::ExtFlashStorage;
+use crate::{flash::ExtFlashStorage, types::Uuid};
 use nrf52840_hal::Spim;
 use nrf52840_pac::SPIM3;
 
@@ -17,7 +17,7 @@ pub type OutPin = Pin<Output<PushPull>>;
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
-pub static mut DEVICE_UUID: [u8; 16] = [0u8; 16];
+pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
 
@@ -27,10 +27,7 @@ impl crate::types::Soc for Soc {
     type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
-    type Rng = rand_chacha::ChaCha8Rng;
     type TrussedUI = super::board::TrussedUI;
-    type Reboot = self::Reboot;
-    type UUID = [u8; 16];
     #[cfg(feature = "se050")]
     type Twi = twim::Twim<pac::TWIM1>;
     #[cfg(feature = "se050")]
@@ -42,15 +39,14 @@ impl crate::types::Soc for Soc {
 
     type Duration = super::rtic_monotonic::RtcDuration;
 
-    const SYSCALL_IRQ: crate::types::IrqNr = crate::types::IrqNr {
-        i: nrf52840_pac::Interrupt::SWI0_EGU0 as u16,
-    };
+    type Interrupt = Interrupt;
+    const SYSCALL_IRQ: Interrupt = Interrupt::SWI0_EGU0;
 
     const SOC_NAME: &'static str = "NRF52840";
     const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const VARIANT: Variant = Variant::Nrf52;
 
-    fn device_uuid() -> &'static Self::UUID {
+    fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
 }
@@ -71,9 +67,7 @@ impl nfc_device::traits::nfc::Device for DummyNfc {
     }
 }
 
-pub struct Reboot {}
-
-impl apps::Reboot for Reboot {
+impl apps::Reboot for Soc {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
