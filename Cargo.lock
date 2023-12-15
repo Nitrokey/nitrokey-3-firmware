@@ -1754,7 +1754,7 @@ checksum = "969488b55f8ac402214f3f5fd243ebb7206cf82de60d3172994707a4bcc2b829"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2?rev=e6c46e7ba5ae19129e457a2182e40a439c0322fe#e6c46e7ba5ae19129e457a2182e40a439c0322fe"
+source = "git+https://github.com/trussed-dev/littlefs2?rev=ebd27e49ca321089d01d8c9b169c4aeb58ceeeca#ebd27e49ca321089d01d8c9b169c4aeb58ceeeca"
 dependencies = [
  "bitflags 1.3.2",
  "cstr_core",
@@ -3150,7 +3150,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.16#80c471381182c5263f8037800d7faf90e8ffd6b6"
+source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.17#419dd5c60aa9a59d5f31b9a88e96989e8d2da10d"
 dependencies = [
  "aes",
  "bitflags 2.4.1",
@@ -3247,7 +3247,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.2#a21f11a95254dee81c6534a1260b1318bfac87b5"
+source = "git+https://github.com/Nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.3#c4d701ff1fe2d169ccf9c4a75c414faeb75c75db"
 dependencies = [
  "chacha20poly1305",
  "delog",
