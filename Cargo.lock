@@ -455,8 +455,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d516e3e353d5fc5ee156028f43224033430fd08ef05f8d5dba18a57a4ee5df49"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.1#cdedd94cc62214f99f0e4bb35f9e7a67f50a45c1"
 dependencies = [
  "delog",
  "heapless",
@@ -3241,7 +3240,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=91c59a707220b7a060ca1b390fdeca69456f8c94#91c59a707220b7a060ca1b390fdeca69456f8c94"
+source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.16#80c471381182c5263f8037800d7faf90e8ffd6b6"
 dependencies = [
  "aes",
  "bitflags 2.4.1",
