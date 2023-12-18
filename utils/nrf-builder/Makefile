@@ -26,7 +26,7 @@ SH_SIGN := $(NK3_BL_DIR)/sign.sh
 SH_UPLOAD := $(NK3_BL_DIR)/upload.sh
 SH_BL_SIGN := $(NK3_BL_DIR)/sign-bootloader.sh
 
-GEN_COMMANDS_RUN := cd ../gen-commands-bd && cargo run -- ../../runners/embedded/Cargo.toml ../../runners/embedded/profiles/nrf52-bootloader.toml
+GEN_COMMANDS_RUN := cd ../gen-commands-bd && cargo run --
 
 FW_VERSION := $(shell $(GEN_COMMANDS_RUN) -o)
 SIGN_VERSION := $(shell $(GEN_COMMANDS_RUN) -O)
