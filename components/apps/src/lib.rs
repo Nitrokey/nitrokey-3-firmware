@@ -728,7 +728,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         #[cfg(feature = "se050")]
         {
             if config.use_se050_backend {
-                options.rsa_max_import = opcard::RsaKeySizes::Rsa4096;
+                options.rsa_max_gen = opcard::RsaKeySizes::Rsa4096;
             }
         }
 
