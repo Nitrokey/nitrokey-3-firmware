@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 
-use crate::store::RunnerStore;
+use crate::store::{RunnerStore, StoragePointers};
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -12,14 +12,12 @@ use embedded_hal::blocking::delay::DelayUs;
 use embedded_time::duration::Milliseconds;
 use littlefs2::{
     const_ram_storage,
-    driver::Storage,
     fs::{Allocation, Filesystem},
 };
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
     platform::UserInterface,
-    store::Fs,
     types::{LfsResult, LfsStorage},
     Platform,
 };
@@ -47,10 +45,7 @@ pub const INTERFACE_CONFIG: Config = Config {
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc: Reboot + 'static {
-    type InternalFlashStorage: Storage;
-    type ExternalFlashStorage: Storage;
-    // VolatileStorage is always RAM
+pub trait Soc: StoragePointers + Reboot + 'static {
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
     type TrussedUI: UserInterface;
@@ -75,25 +70,14 @@ pub trait Soc: Reboot + 'static {
 
     fn device_uuid() -> &'static Uuid;
 
-    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage>;
-    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage>;
-
-    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage>;
-    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>>;
-    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>>;
-
-    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage>;
-    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>>;
-    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>>;
-
-    fn prepare_ifs(ifs: &mut Self::InternalFlashStorage) {
+    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         let _ = ifs;
     }
 
     fn recover_ifs(
-        ifs_storage: &mut Self::InternalFlashStorage,
-        ifs_alloc: &mut Allocation<Self::InternalFlashStorage>,
-        efs_storage: &mut Self::ExternalFlashStorage,
+        ifs_storage: &mut Self::InternalStorage,
+        ifs_alloc: &mut Allocation<Self::InternalStorage>,
+        efs_storage: &mut Self::ExternalStorage,
     ) -> LfsResult<()> {
         let _ = (ifs_alloc, efs_storage);
         Filesystem::format(ifs_storage)
@@ -110,7 +94,7 @@ impl<S: Soc> apps::Runner for Runner<S> {
     type Reboot = S;
     type Store = RunnerStore<S>;
     #[cfg(feature = "provisioner")]
-    type Filesystem = S::InternalFlashStorage;
+    type Filesystem = S::InternalStorage;
     type Twi = S::Twi;
     type Se050Timer = S::Se050Timer;
 

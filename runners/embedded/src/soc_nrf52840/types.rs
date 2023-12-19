@@ -34,8 +34,6 @@ pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {
-    type InternalFlashStorage = InternalFlashStorage;
-    type ExternalFlashStorage = ExternalFlashStorage;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
     type TrussedUI = super::board::TrussedUI;
@@ -61,54 +59,14 @@ impl crate::types::Soc for Soc {
         unsafe { &DEVICE_UUID }
     }
 
-    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage> {
-        static mut IFS: MaybeUninit<Fs<InternalFlashStorage>> = MaybeUninit::uninit();
-        IFS.as_mut_ptr()
-    }
-
-    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage> {
-        static mut EFS: MaybeUninit<Fs<ExternalFlashStorage>> = MaybeUninit::uninit();
-        EFS.as_mut_ptr()
-    }
-
-    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage> {
-        static mut IFS_STORAGE: Option<InternalFlashStorage> = None;
-        &mut IFS_STORAGE
-    }
-
-    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>> {
-        static mut IFS_ALLOC: Option<Allocation<InternalFlashStorage>> = None;
-        &mut IFS_ALLOC
-    }
-
-    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>> {
-        static mut IFS: Option<Filesystem<InternalFlashStorage>> = None;
-        &mut IFS
-    }
-
-    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage> {
-        static mut EFS_STORAGE: Option<ExternalFlashStorage> = None;
-        &mut EFS_STORAGE
-    }
-
-    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>> {
-        static mut EFS_ALLOC: Option<Allocation<ExternalFlashStorage>> = None;
-        &mut EFS_ALLOC
-    }
-
-    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>> {
-        static mut EFS: Option<Filesystem<ExternalFlashStorage>> = None;
-        &mut EFS
-    }
-
-    fn prepare_ifs(ifs: &mut Self::InternalFlashStorage) {
+    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         ifs.format_journal_blocks();
     }
 
     fn recover_ifs(
-        ifs_storage: &mut Self::InternalFlashStorage,
-        ifs_alloc: &mut Allocation<Self::InternalFlashStorage>,
-        efs_storage: &mut Self::ExternalFlashStorage,
+        ifs_storage: &mut Self::InternalStorage,
+        ifs_alloc: &mut Allocation<Self::InternalStorage>,
+        efs_storage: &mut Self::ExternalStorage,
     ) -> LfsResult<()> {
         error_now!("IFS (nrf42) mount-fail");
 
@@ -144,6 +102,12 @@ impl crate::types::Soc for Soc {
         }
     }
 }
+
+impl_storage_pointers!(
+    Soc,
+    Internal = InternalFlashStorage,
+    External = ExternalFlashStorage,
+);
 
 pub struct DummyNfc;
 impl nfc_device::traits::nfc::Device for DummyNfc {

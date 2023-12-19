@@ -83,8 +83,6 @@ pub type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {
-    type InternalFlashStorage = InternalFlashStorage;
-    type ExternalFlashStorage = ExternalFlashStorage;
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
     type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;
@@ -109,47 +107,13 @@ impl crate::types::Soc for Soc {
     fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
-
-    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage> {
-        static mut IFS: MaybeUninit<Fs<InternalFlashStorage>> = MaybeUninit::uninit();
-        IFS.as_mut_ptr()
-    }
-
-    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage> {
-        static mut EFS: MaybeUninit<Fs<ExternalFlashStorage>> = MaybeUninit::uninit();
-        EFS.as_mut_ptr()
-    }
-
-    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage> {
-        static mut IFS_STORAGE: Option<InternalFlashStorage> = None;
-        &mut IFS_STORAGE
-    }
-
-    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>> {
-        static mut IFS_ALLOC: Option<Allocation<InternalFlashStorage>> = None;
-        &mut IFS_ALLOC
-    }
-
-    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>> {
-        static mut IFS: Option<Filesystem<InternalFlashStorage>> = None;
-        &mut IFS
-    }
-
-    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage> {
-        static mut EFS_STORAGE: Option<ExternalFlashStorage> = None;
-        &mut EFS_STORAGE
-    }
-
-    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>> {
-        static mut EFS_ALLOC: Option<Allocation<ExternalFlashStorage>> = None;
-        &mut EFS_ALLOC
-    }
-
-    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>> {
-        static mut EFS: Option<Filesystem<ExternalFlashStorage>> = None;
-        &mut EFS
-    }
 }
+
+impl_storage_pointers!(
+    Soc,
+    Internal = InternalFlashStorage,
+    External = ExternalFlashStorage,
+);
 
 impl apps::Reboot for Soc {
     fn reboot() -> ! {

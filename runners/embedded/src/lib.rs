@@ -26,6 +26,7 @@ delog::generate_macros!();
 
 pub mod flash;
 pub mod runtime;
+#[macro_use]
 pub mod store;
 pub mod traits;
 pub mod types;

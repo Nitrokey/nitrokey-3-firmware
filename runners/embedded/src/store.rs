@@ -6,6 +6,7 @@ use core::{
 
 use apps::InitStatus;
 use littlefs2::{
+    driver::Storage,
     fs::{Allocation, Filesystem},
     io::Result as LfsResult,
 };
@@ -14,8 +15,72 @@ use trussed::store::{Fs, Store};
 use crate::types::{Soc, VolatileStorage};
 
 #[cfg(feature = "provisioner")]
-pub unsafe fn steal_internal_storage<S: Soc>() -> &'static mut S::InternalFlashStorage {
+pub unsafe fn steal_internal_storage<S: Soc>() -> &'static mut S::InternalStorage {
     S::ifs_storage().as_mut().unwrap()
+}
+
+pub trait StoragePointers {
+    type InternalStorage: Storage;
+    type ExternalStorage: Storage;
+
+    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalStorage>;
+    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalStorage>>;
+    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalStorage>>;
+    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalStorage>;
+
+    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalStorage>;
+    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalStorage>>;
+    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalStorage>>;
+    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalStorage>;
+}
+
+macro_rules! impl_storage_pointers {
+    ($name:ident, Internal = $I:ty, External = $E:ty,) => {
+        impl $crate::store::StoragePointers for $name {
+            type InternalStorage = $I;
+            type ExternalStorage = $E;
+
+            unsafe fn ifs_storage() -> &'static mut Option<Self::InternalStorage> {
+                static mut IFS_STORAGE: Option<$I> = None;
+                &mut IFS_STORAGE
+            }
+
+            unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalStorage>> {
+                static mut IFS_ALLOC: Option<Allocation<$I>> = None;
+                &mut IFS_ALLOC
+            }
+
+            unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalStorage>> {
+                static mut IFS: Option<Filesystem<$I>> = None;
+                &mut IFS
+            }
+
+            unsafe fn ifs_ptr() -> *mut Fs<Self::InternalStorage> {
+                static mut IFS: MaybeUninit<Fs<$I>> = MaybeUninit::uninit();
+                IFS.as_mut_ptr()
+            }
+
+            unsafe fn efs_storage() -> &'static mut Option<Self::ExternalStorage> {
+                static mut EFS_STORAGE: Option<$E> = None;
+                &mut EFS_STORAGE
+            }
+
+            unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalStorage>> {
+                static mut EFS_ALLOC: Option<Allocation<$E>> = None;
+                &mut EFS_ALLOC
+            }
+
+            unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalStorage>> {
+                static mut EFS: Option<Filesystem<$E>> = None;
+                &mut EFS
+            }
+
+            unsafe fn efs_ptr() -> *mut Fs<Self::ExternalStorage> {
+                static mut EFS: MaybeUninit<Fs<$E>> = MaybeUninit::uninit();
+                EFS.as_mut_ptr()
+            }
+        }
+    };
 }
 
 pub struct RunnerStore<S: Soc> {
@@ -24,8 +89,8 @@ pub struct RunnerStore<S: Soc> {
 
 impl<S: Soc> RunnerStore<S> {
     fn new(
-        ifs: &'static Filesystem<'static, S::InternalFlashStorage>,
-        efs: &'static Filesystem<'static, S::ExternalFlashStorage>,
+        ifs: &'static Filesystem<'static, S::InternalStorage>,
+        efs: &'static Filesystem<'static, S::ExternalStorage>,
         vfs: &'static Filesystem<'static, VolatileStorage>,
     ) -> Self {
         unsafe {
@@ -56,8 +121,8 @@ impl<S: Soc> Clone for RunnerStore<S> {
 impl<S: Soc> Copy for RunnerStore<S> {}
 
 unsafe impl<S: Soc> Store for RunnerStore<S> {
-    type I = S::InternalFlashStorage;
-    type E = S::ExternalFlashStorage;
+    type I = S::InternalStorage;
+    type E = S::ExternalStorage;
     type V = VolatileStorage;
 
     fn ifs(self) -> &'static Fs<Self::I> {
@@ -74,8 +139,8 @@ unsafe impl<S: Soc> Store for RunnerStore<S> {
 }
 
 pub fn init_store<S: Soc>(
-    int_flash: S::InternalFlashStorage,
-    ext_flash: S::ExternalFlashStorage,
+    int_flash: S::InternalStorage,
+    ext_flash: S::ExternalStorage,
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> RunnerStore<S> {
@@ -126,11 +191,11 @@ pub fn init_store<S: Soc>(
 
 #[inline(always)]
 fn init_ifs<S: Soc>(
-    ifs_storage: &'static mut S::InternalFlashStorage,
-    ifs_alloc: &'static mut Allocation<S::InternalFlashStorage>,
-    efs_storage: &mut S::ExternalFlashStorage,
+    ifs_storage: &'static mut S::InternalStorage,
+    ifs_alloc: &'static mut Allocation<S::InternalStorage>,
+    efs_storage: &mut S::ExternalStorage,
     status: &mut InitStatus,
-) -> LfsResult<Filesystem<'static, S::InternalFlashStorage>> {
+) -> LfsResult<Filesystem<'static, S::InternalStorage>> {
     if !Filesystem::is_mountable(ifs_storage) {
         // handle provisioner
         if cfg!(feature = "provisioner") {
@@ -150,11 +215,11 @@ fn init_ifs<S: Soc>(
 
 #[inline(always)]
 fn init_efs<S: Soc>(
-    efs_storage: &'static mut S::ExternalFlashStorage,
-    efs_alloc: &'static mut Allocation<S::ExternalFlashStorage>,
+    efs_storage: &'static mut S::ExternalStorage,
+    efs_alloc: &'static mut Allocation<S::ExternalStorage>,
     simulated_efs: bool,
     status: &mut InitStatus,
-) -> LfsResult<Filesystem<'static, S::ExternalFlashStorage>> {
+) -> LfsResult<Filesystem<'static, S::ExternalStorage>> {
     if !Filesystem::is_mountable(efs_storage) {
         let fmt_ext = Filesystem::format(efs_storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {

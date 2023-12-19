@@ -3,22 +3,17 @@ use littlefs2::driver::Storage;
 
 use lfs_backup::{BackupBackend, FSBackupError, Result, MAX_DUMP_BLOB_LENGTH};
 
-use crate::soc::types::Soc as SocT;
-use crate::types::Soc;
+use crate::soc::types::ExternalFlashStorage;
 
 pub struct EFSBackupBackend<'a> {
-    extflash: &'a mut <SocT as Soc>::ExternalFlashStorage,
+    extflash: &'a mut ExternalFlashStorage,
     initial_offset: usize,
     offset: usize,
     len: usize,
 }
 
 impl<'a> EFSBackupBackend<'a> {
-    pub fn new(
-        extflash: &'a mut <SocT as Soc>::ExternalFlashStorage,
-        offset: usize,
-        len: usize,
-    ) -> Self {
+    pub fn new(extflash: &'a mut ExternalFlashStorage, offset: usize, len: usize) -> Self {
         Self {
             extflash,
             initial_offset: offset.clone(),
