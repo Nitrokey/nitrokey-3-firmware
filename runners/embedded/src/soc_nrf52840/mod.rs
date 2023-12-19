@@ -1,11 +1,4 @@
-use littlefs2::{
-    fs::{Allocation, Filesystem},
-    io::Result as LfsResult,
-};
 use nrf52840_hal::clocks::Clocks;
-
-use migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage};
-use types::{ExternalFlashStorage, InternalFlashStorage};
 
 #[cfg(not(any(feature = "board-nk3am")))]
 compile_error!("No NRF52840 board chosen!");
@@ -126,47 +119,4 @@ pub fn setup_usb_bus(
     let usbd_ref = unsafe { USBD.as_ref().unwrap() };
 
     usbd_ref
-}
-
-pub fn prepare_ifs(ifs: &mut flash::FlashStorage) {
-    ifs.format_journal_blocks();
-}
-
-pub fn recover_ifs(
-    ifs_storage: &mut InternalFlashStorage,
-    ifs_alloc: &mut Allocation<InternalFlashStorage>,
-    efs_storage: &mut ExternalFlashStorage,
-) -> LfsResult<()> {
-    error_now!("IFS (nrf42) mount-fail");
-
-    // regular mount failed, try mounting "old" (pre-journaling) IFS
-    let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-    let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
-    let mut old_ifs_alloc: littlefs2::fs::Allocation<OldFlashStorage> = Filesystem::allocate();
-    let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
-
-    // we can mount the old ifs filesystem, thus we need to migrate
-    if old_mountable {
-        let mounted_ifs = ftl_journal::migrate(
-            &mut old_ifs_storage,
-            &mut old_ifs_alloc,
-            ifs_alloc,
-            ifs_storage,
-            efs_storage,
-        );
-        // migration went fine => use its resulting IFS
-        if let Ok(()) = mounted_ifs {
-            info_now!("migration ok, mounting IFS");
-            Ok(())
-        // migration failed => format IFS
-        } else {
-            error_now!("failed migration, formatting IFS");
-            Filesystem::format(ifs_storage)
-        }
-    } else {
-        info_now!("recovering from journal");
-        // IFS and old-IFS cannot be mounted, try to recover from journal
-        ifs_storage.recover_from_journal();
-        Ok(())
-    }
 }

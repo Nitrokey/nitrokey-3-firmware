@@ -683,7 +683,7 @@ pub struct Stage5 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
-    store: RunnerStore,
+    store: RunnerStore<super::types::Soc>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
     se050_i2c: Option<I2C>,
 }
@@ -769,7 +769,7 @@ pub struct Stage6 {
     basic: Basic,
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
-    store: RunnerStore,
+    store: RunnerStore<super::types::Soc>,
     trussed: Trussed<super::types::Soc>,
 }
 

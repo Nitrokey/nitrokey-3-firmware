@@ -1,5 +1,11 @@
+use core::mem::MaybeUninit;
+
 use crate::soc::types::pac::SCB;
 use apps::Variant;
+use littlefs2::{
+    fs::{Allocation, Filesystem},
+    io::Result as LfsResult,
+};
 use memory_regions::MemoryRegions;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
@@ -7,7 +13,9 @@ use nrf52840_hal::{
     usbd::{UsbPeripheral, Usbd},
 };
 use nrf52840_pac::{self, Interrupt};
+use trussed::store::Fs;
 
+use super::migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage};
 use crate::{flash::ExtFlashStorage, types::Uuid};
 use nrf52840_hal::Spim;
 use nrf52840_pac::SPIM3;
@@ -51,6 +59,89 @@ impl crate::types::Soc for Soc {
 
     fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
+    }
+
+    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage> {
+        static mut IFS: MaybeUninit<Fs<InternalFlashStorage>> = MaybeUninit::uninit();
+        IFS.as_mut_ptr()
+    }
+
+    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage> {
+        static mut EFS: MaybeUninit<Fs<ExternalFlashStorage>> = MaybeUninit::uninit();
+        EFS.as_mut_ptr()
+    }
+
+    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage> {
+        static mut IFS_STORAGE: Option<InternalFlashStorage> = None;
+        &mut IFS_STORAGE
+    }
+
+    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>> {
+        static mut IFS_ALLOC: Option<Allocation<InternalFlashStorage>> = None;
+        &mut IFS_ALLOC
+    }
+
+    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>> {
+        static mut IFS: Option<Filesystem<InternalFlashStorage>> = None;
+        &mut IFS
+    }
+
+    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage> {
+        static mut EFS_STORAGE: Option<ExternalFlashStorage> = None;
+        &mut EFS_STORAGE
+    }
+
+    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>> {
+        static mut EFS_ALLOC: Option<Allocation<ExternalFlashStorage>> = None;
+        &mut EFS_ALLOC
+    }
+
+    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>> {
+        static mut EFS: Option<Filesystem<ExternalFlashStorage>> = None;
+        &mut EFS
+    }
+
+    fn prepare_ifs(ifs: &mut Self::InternalFlashStorage) {
+        ifs.format_journal_blocks();
+    }
+
+    fn recover_ifs(
+        ifs_storage: &mut Self::InternalFlashStorage,
+        ifs_alloc: &mut Allocation<Self::InternalFlashStorage>,
+        efs_storage: &mut Self::ExternalFlashStorage,
+    ) -> LfsResult<()> {
+        error_now!("IFS (nrf42) mount-fail");
+
+        // regular mount failed, try mounting "old" (pre-journaling) IFS
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
+        let mut old_ifs_alloc: Allocation<OldFlashStorage> = Filesystem::allocate();
+        let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
+
+        // we can mount the old ifs filesystem, thus we need to migrate
+        if old_mountable {
+            let mounted_ifs = ftl_journal::migrate(
+                &mut old_ifs_storage,
+                &mut old_ifs_alloc,
+                ifs_alloc,
+                ifs_storage,
+                efs_storage,
+            );
+            // migration went fine => use its resulting IFS
+            if let Ok(()) = mounted_ifs {
+                info_now!("migration ok, mounting IFS");
+                Ok(())
+            // migration failed => format IFS
+            } else {
+                error_now!("failed migration, formatting IFS");
+                Filesystem::format(ifs_storage)
+            }
+        } else {
+            info_now!("recovering from journal");
+            // IFS and old-IFS cannot be mounted, try to recover from journal
+            ifs_storage.recover_from_journal();
+            Ok(())
+        }
     }
 }
 

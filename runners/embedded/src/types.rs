@@ -10,11 +10,16 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_time::duration::Milliseconds;
-use littlefs2::const_ram_storage;
+use littlefs2::{
+    const_ram_storage,
+    driver::Storage,
+    fs::{Allocation, Filesystem},
+};
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
     platform::UserInterface,
+    store::Fs,
     types::{LfsResult, LfsStorage},
     Platform,
 };
@@ -43,8 +48,8 @@ pub const INTERFACE_CONFIG: Config = Config {
 pub type Uuid = [u8; 16];
 
 pub trait Soc: Reboot + 'static {
-    type InternalFlashStorage;
-    type ExternalFlashStorage;
+    type InternalFlashStorage: Storage;
+    type ExternalFlashStorage: Storage;
     // VolatileStorage is always RAM
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
@@ -69,6 +74,30 @@ pub trait Soc: Reboot + 'static {
     const VARIANT: Variant;
 
     fn device_uuid() -> &'static Uuid;
+
+    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage>;
+    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage>;
+
+    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage>;
+    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>>;
+    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>>;
+
+    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage>;
+    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>>;
+    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>>;
+
+    fn prepare_ifs(ifs: &mut Self::InternalFlashStorage) {
+        let _ = ifs;
+    }
+
+    fn recover_ifs(
+        ifs_storage: &mut Self::InternalFlashStorage,
+        ifs_alloc: &mut Allocation<Self::InternalFlashStorage>,
+        efs_storage: &mut Self::ExternalFlashStorage,
+    ) -> LfsResult<()> {
+        let _ = (ifs_alloc, efs_storage);
+        Filesystem::format(ifs_storage)
+    }
 }
 
 pub struct Runner<S> {
@@ -79,9 +108,9 @@ pub struct Runner<S> {
 impl<S: Soc> apps::Runner for Runner<S> {
     type Syscall = RunnerSyscall<S>;
     type Reboot = S;
-    type Store = RunnerStore;
+    type Store = RunnerStore<S>;
     #[cfg(feature = "provisioner")]
-    type Filesystem = <crate::soc::types::Soc as Soc>::InternalFlashStorage;
+    type Filesystem = S::InternalFlashStorage;
     type Twi = S::Twi;
     type Se050Timer = S::Se050Timer;
 
@@ -113,13 +142,13 @@ const_ram_storage!(
 
 pub struct RunnerPlatform<S: Soc> {
     pub rng: ChaCha8Rng,
-    pub store: RunnerStore,
+    pub store: RunnerStore<S>,
     pub user_interface: S::TrussedUI,
 }
 
 unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
     type R = ChaCha8Rng;
-    type S = RunnerStore;
+    type S = RunnerStore<S>;
     type UI = S::TrussedUI;
 
     fn user_interface(&mut self) -> &mut Self::UI {

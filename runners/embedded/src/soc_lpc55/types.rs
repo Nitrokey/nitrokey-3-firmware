@@ -1,4 +1,4 @@
-use core::time::Duration;
+use core::{mem::MaybeUninit, time::Duration};
 
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::prince;
@@ -10,6 +10,7 @@ use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
 #[cfg(feature = "se050")]
 use embedded_time::duration::Microseconds;
 use embedded_time::duration::Milliseconds;
+use littlefs2::fs::{Allocation, Filesystem};
 #[cfg(feature = "se050")]
 use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
@@ -29,6 +30,7 @@ use lpc55_hal::{
     },
     I2cMaster,
 };
+use trussed::store::Fs;
 
 use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
@@ -106,6 +108,46 @@ impl crate::types::Soc for Soc {
 
     fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
+    }
+
+    unsafe fn ifs_ptr() -> *mut Fs<Self::InternalFlashStorage> {
+        static mut IFS: MaybeUninit<Fs<InternalFlashStorage>> = MaybeUninit::uninit();
+        IFS.as_mut_ptr()
+    }
+
+    unsafe fn efs_ptr() -> *mut Fs<Self::ExternalFlashStorage> {
+        static mut EFS: MaybeUninit<Fs<ExternalFlashStorage>> = MaybeUninit::uninit();
+        EFS.as_mut_ptr()
+    }
+
+    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalFlashStorage> {
+        static mut IFS_STORAGE: Option<InternalFlashStorage> = None;
+        &mut IFS_STORAGE
+    }
+
+    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalFlashStorage>> {
+        static mut IFS_ALLOC: Option<Allocation<InternalFlashStorage>> = None;
+        &mut IFS_ALLOC
+    }
+
+    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalFlashStorage>> {
+        static mut IFS: Option<Filesystem<InternalFlashStorage>> = None;
+        &mut IFS
+    }
+
+    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalFlashStorage> {
+        static mut EFS_STORAGE: Option<ExternalFlashStorage> = None;
+        &mut EFS_STORAGE
+    }
+
+    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalFlashStorage>> {
+        static mut EFS_ALLOC: Option<Allocation<ExternalFlashStorage>> = None;
+        &mut EFS_ALLOC
+    }
+
+    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalFlashStorage>> {
+        static mut EFS: Option<Filesystem<ExternalFlashStorage>> = None;
+        &mut EFS
     }
 }
 

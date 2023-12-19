@@ -120,7 +120,7 @@ pub fn init_usb_nfc<S: Soc>(
 pub fn init_apps<S: Soc>(
     trussed: &mut types::Trussed<S>,
     init_status: InitStatus,
-    store: &RunnerStore,
+    store: &RunnerStore<S>,
     nfc_powered: bool,
 ) -> types::Apps<S> {
     use trussed::platform::Store as _;
@@ -143,7 +143,7 @@ pub fn init_apps<S: Soc>(
     #[cfg(feature = "provisioner")]
     let provisioner = {
         let store = store.clone();
-        let int_flash_ref = unsafe { store::steal_internal_storage() };
+        let int_flash_ref = unsafe { store::steal_internal_storage::<S>() };
         let rebooter: fn() -> ! = S::reboot_to_firmware_update;
 
         apps::ProvisionerData {

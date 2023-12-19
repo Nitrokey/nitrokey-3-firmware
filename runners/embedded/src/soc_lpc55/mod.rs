@@ -1,10 +1,3 @@
-use littlefs2::{
-    fs::{Allocation, Filesystem},
-    io::Result as LfsResult,
-};
-
-use types::{ExternalFlashStorage, InternalFlashStorage};
-
 pub mod clock_controller;
 pub mod init;
 pub mod monotonic;
@@ -73,14 +66,4 @@ pub fn init(
         .next()
         .next(hal.rtc)
         .next(hal.usbhs)
-}
-
-pub fn prepare_ifs(_ifs: &mut types::InternalFilesystem) {}
-
-pub fn recover_ifs(
-    ifs_storage: &mut InternalFlashStorage,
-    _ifs_alloc: &mut Allocation<InternalFlashStorage>,
-    _efs_storage: &mut ExternalFlashStorage,
-) -> LfsResult<()> {
-    Filesystem::format(ifs_storage)
 }
