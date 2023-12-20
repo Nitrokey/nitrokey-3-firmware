@@ -15,7 +15,11 @@ use nrf52840_hal::{
 use nrf52840_pac::{self, Interrupt};
 use trussed::store::Fs;
 
-use super::migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage};
+use super::{
+    board::{HardwareButtons, RgbLed},
+    migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage},
+    rtic_monotonic::{RtcDuration, RtcMonotonic},
+};
 use crate::{flash::ExtFlashStorage, types::Uuid};
 use nrf52840_hal::Spim;
 use nrf52840_pac::SPIM3;
@@ -36,7 +40,9 @@ pub struct Soc {}
 impl crate::types::Soc for Soc {
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
-    type TrussedUI = super::board::TrussedUI;
+    type Clock = RtcMonotonic;
+    type Buttons = HardwareButtons;
+    type Led = RgbLed;
     #[cfg(feature = "se050")]
     type Twi = twim::Twim<pac::TWIM1>;
     #[cfg(feature = "se050")]
@@ -46,7 +52,7 @@ impl crate::types::Soc for Soc {
     #[cfg(not(feature = "se050"))]
     type Se050Timer = ();
 
-    type Duration = super::rtic_monotonic::RtcDuration;
+    type Duration = RtcDuration;
 
     type Interrupt = Interrupt;
     const SYSCALL_IRQ: Interrupt = Interrupt::SWI0_EGU0;

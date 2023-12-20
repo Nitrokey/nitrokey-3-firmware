@@ -49,12 +49,12 @@ use super::{
 use crate::{
     flash::ExtFlashStorage,
     store::RunnerStore,
-    traits::{
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
+    ui::{
         buttons::{self, Press},
         rgb_led::RgbLed,
+        UserInterface,
     },
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
-    ui::UserInterface,
 };
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Soc as types::Soc>::UsbBus>;
