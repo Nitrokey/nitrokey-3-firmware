@@ -19,7 +19,7 @@ use usb_device::{
 use store::RunnerStore;
 use types::{
     usbnfc::{UsbClasses, UsbNfcInit},
-    Soc,
+    Board, Soc,
 };
 
 delog::generate_macros!();
@@ -42,11 +42,11 @@ pub mod soc;
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
-pub fn banner<S: Soc>() {
+pub fn banner<B: Board>() {
     info!(
         "Embedded Runner ({}:{}) using librunner {}",
-        S::SOC_NAME,
-        S::BOARD_NAME,
+        B::Soc::SOC_NAME,
+        B::BOARD_NAME,
         utils::VERSION_STRING,
     );
 }
@@ -59,11 +59,11 @@ pub fn init_alloc() {
     unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
 }
 
-pub fn init_usb_nfc<S: Soc>(
-    usbbus_opt: Option<&'static UsbBusAllocator<S::UsbBus>>,
-    nfc: Option<Iso14443<S::NfcDevice>>,
+pub fn init_usb_nfc<B: Board>(
+    usbbus_opt: Option<&'static UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
-) -> UsbNfcInit<S> {
+) -> UsbNfcInit<B> {
     let config = &types::INTERFACE_CONFIG;
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
@@ -117,15 +117,15 @@ pub fn init_usb_nfc<S: Soc>(
     }
 }
 
-pub fn init_apps<S: Soc>(
-    trussed: &mut types::Trussed<S>,
+pub fn init_apps<B: Board>(
+    trussed: &mut types::Trussed<B>,
     init_status: InitStatus,
-    store: &RunnerStore<S>,
+    store: &RunnerStore<B>,
     nfc_powered: bool,
-) -> types::Apps<S> {
+) -> types::Apps<B> {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(*store, S::VARIANT);
+    let mut admin = apps::AdminData::new(*store, B::Soc::VARIANT);
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -142,9 +142,10 @@ pub fn init_apps<S: Soc>(
 
     #[cfg(feature = "provisioner")]
     let provisioner = {
+        use apps::Reboot as _;
         let store = store.clone();
-        let int_flash_ref = unsafe { store::steal_internal_storage::<S>() };
-        let rebooter: fn() -> ! = S::reboot_to_firmware_update;
+        let int_flash_ref = unsafe { store::steal_internal_storage::<B>() };
+        let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,

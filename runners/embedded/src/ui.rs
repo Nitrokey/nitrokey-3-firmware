@@ -6,6 +6,7 @@ use core::{
 
 use trussed::platform::{self, consent, ui};
 
+use crate::types::{Board, Soc};
 use buttons::UserPresence;
 use rgb_led::{Intensities, RgbLed};
 
@@ -47,16 +48,21 @@ pub trait Clock {
     fn uptime(&mut self) -> Duration;
 }
 
-pub struct UserInterface<C: Clock, P: UserPresence, L: RgbLed> {
-    clock: C,
-    buttons: Option<P>,
-    rgb: Option<L>,
+pub struct UserInterface<B: Board> {
+    clock: <B::Soc as Soc>::Clock,
+    buttons: Option<B::Buttons>,
+    rgb: Option<B::Led>,
     status: Status,
     provisioner: bool,
 }
 
-impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
-    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>, provisioner: bool) -> Self {
+impl<B: Board> UserInterface<B> {
+    pub fn new(
+        mut clock: <B::Soc as Soc>::Clock,
+        buttons: Option<B::Buttons>,
+        rgb: Option<B::Led>,
+        provisioner: bool,
+    ) -> Self {
         let uptime = clock.uptime();
         let status = Status::Startup(uptime);
         let buttons = if cfg!(feature = "no-buttons") {
@@ -85,7 +91,7 @@ impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
     }
 }
 
-impl<C: Clock, P: UserPresence, L: RgbLed> platform::UserInterface for UserInterface<C, P, L> {
+impl<B: Board> platform::UserInterface for UserInterface<B> {
     fn check_user_presence(&mut self) -> consent::Level {
         if let Some(buttons) = &mut self.buttons {
             set_waiting(true);
