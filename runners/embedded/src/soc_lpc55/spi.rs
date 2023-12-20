@@ -1,3 +1,4 @@
+use delog_panic::DelogPanic as _;
 use lpc55_hal::{
     self,
     drivers::{
@@ -52,9 +53,9 @@ impl SpiConfig {
 }
 
 pub fn init(spi: Spi0<Enabled>, iocon: &mut Iocon<Enabled>, config: SpiConfig) -> Spi {
-    let sck = SckPin::take().unwrap().into_spi0_sck_pin(iocon);
-    let mosi = MosiPin::take().unwrap().into_spi0_mosi_pin(iocon);
-    let miso = MisoPin::take().unwrap().into_spi0_miso_pin(iocon);
+    let sck = SckPin::take().delog_unwrap().into_spi0_sck_pin(iocon);
+    let mosi = MosiPin::take().delog_unwrap().into_spi0_mosi_pin(iocon);
+    let miso = MisoPin::take().delog_unwrap().into_spi0_miso_pin(iocon);
     configure(spi, (sck, mosi, miso, NoCs), config)
 }
 

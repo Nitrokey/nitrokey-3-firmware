@@ -1,5 +1,6 @@
 use core::cell::RefCell;
 
+use delog_panic::DelogPanic as _;
 use embedded_hal::{blocking::spi::Transfer, digital::v2::OutputPin};
 use littlefs2::{driver::Storage, io::Error};
 use spi_memory::{BlockDevice, Read};
@@ -103,9 +104,9 @@ where
     CS: OutputPin,
 {
     fn raw_command(spim: &mut SPI, cs: &mut CS, buf: &mut [u8]) {
-        cs.set_low().ok().unwrap();
-        spim.transfer(buf).ok().unwrap();
-        cs.set_high().ok().unwrap();
+        cs.set_low().ok().delog_unwrap();
+        spim.transfer(buf).ok().delog_unwrap();
+        cs.set_high().ok().delog_unwrap();
     }
 
     pub fn try_new(mut spim: SPI, mut cs: CS) -> Option<Self> {

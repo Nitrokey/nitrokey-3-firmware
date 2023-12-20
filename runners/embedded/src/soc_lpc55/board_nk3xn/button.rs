@@ -3,6 +3,7 @@ use crate::traits::{
     Clock,
 };
 use core::convert::Infallible;
+use delog_panic::DelogPanic as _;
 use lpc55_hal::{
     drivers::{pins, timer},
     peripherals::ctimer,
@@ -44,14 +45,14 @@ where
         iocon: &mut lpc55_hal::Iocon<lpc55_hal::Enabled>,
     ) -> XpressoButtons<CTIMER> {
         let user_button = UserButtonPin::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(iocon, gpio)
             .into_input();
         // let wakeup_button = WakeupButtonPin::take().unwrap().into_gpio_pin(iocon, gpio).into_input();
         let buts = State {
-            a: user_button.is_high().ok().unwrap(),
-            b: user_button.is_high().ok().unwrap(),
-            middle: user_button.is_high().ok().unwrap(),
+            a: user_button.is_high().ok().delog_unwrap(),
+            b: user_button.is_high().ok().delog_unwrap(),
+            middle: user_button.is_high().ok().delog_unwrap(),
         };
         Self {
             user_button: user_button,
@@ -69,9 +70,9 @@ where
     // A minimal button implementation for Xpresso
     fn is_pressed(&mut self, but: Button) -> bool {
         match but {
-            Button::A => self.user_button.is_low().ok().unwrap(),
-            Button::B => self.user_button.is_low().ok().unwrap(),
-            _ => self.user_button.is_low().ok().unwrap(),
+            Button::A => self.user_button.is_low().ok().delog_unwrap(),
+            Button::B => self.user_button.is_low().ok().delog_unwrap(),
+            _ => self.user_button.is_low().ok().delog_unwrap(),
         }
     }
 }

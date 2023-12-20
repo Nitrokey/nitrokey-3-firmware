@@ -1,3 +1,4 @@
+use delog_panic::DelogPanic as _;
 use lpc55_hal::{
     drivers::{
         clocks::Clocks,
@@ -45,7 +46,7 @@ impl DynamicClockController {
         iocon: &mut Iocon<Enabled>,
     ) -> DynamicClockController {
         let signal_button = SignalPin::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(iocon, gpio)
             .into_output_high();
 

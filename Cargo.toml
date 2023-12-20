@@ -11,13 +11,15 @@ resolver = "2"
 version = "1.6.0"
 
 [patch.crates-io]
+delog-panic = { path = "../delog-panic" }
+
 # components
 memory-regions = { path = "components/memory-regions" }
 
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.9" }
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.1" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }
+fido-authenticator = { path = "../fido-authenticator" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.17" }
@@ -35,7 +37,7 @@ littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "ebd27e49c
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc5" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "8d3622f5c228352cdb57453c1d0b02da22da7f7b" }
+opcard = { path = "../opcard-rs" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0-nitrokey-hmac256p256.3" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "4b8191f248c26cb074cdac887c7f3f48f9c449a4" }

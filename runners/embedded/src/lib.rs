@@ -6,6 +6,7 @@ use apdu_dispatch::{
 };
 use apps::InitStatus;
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
+use delog_panic::DelogPanic as _;
 use interchange::Channel;
 use littlefs2::fs::Filesystem;
 use nfc_device::Iso14443;
@@ -78,7 +79,7 @@ pub fn init_store(
         ($global:expr, $content:expr) => {
             unsafe {
                 $global.replace($content);
-                $global.as_mut().unwrap()
+                $global.as_mut().delog_unwrap()
             }
         };
     }
@@ -197,8 +198,8 @@ pub fn init_usb_nfc<S: Soc>(
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
-    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().delog_unwrap();
+    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().delog_unwrap();
 
     /* initialize dispatchers */
     let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);
@@ -269,7 +270,7 @@ pub fn init_apps<S: Soc>(
     #[cfg(feature = "provisioner")]
     let provisioner = {
         let store = store.clone();
-        let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().unwrap() };
+        let int_flash_ref = unsafe { types::INTERNAL_STORAGE.as_mut().delog_unwrap() };
         let rebooter: fn() -> ! = S::reboot_to_firmware_update;
 
         apps::ProvisionerData {

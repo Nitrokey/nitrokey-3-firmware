@@ -13,6 +13,7 @@ license = "MIT"
 apps = { path = "../../components/apps" }
 cfg-if = "*"
 delog = "0.1"
+delog-panic = "0.1"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 embedded-storage = "0.3"

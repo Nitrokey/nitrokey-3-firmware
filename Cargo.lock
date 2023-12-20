@@ -944,6 +944,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "delog-panic"
+version = "0.1.0"
+dependencies = [
+ "delog",
+]
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1080,6 +1087,7 @@ dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
+ "delog-panic",
  "embedded-hal",
  "embedded-storage",
  "embedded-time",
@@ -1194,12 +1202,12 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.10#8c26ab39201191296ec6cc95c7409410bf12ee32"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
+ "delog-panic",
  "heapless",
  "interchange 0.2.2",
  "iso7816",
@@ -1249,6 +1257,7 @@ name = "fm11nc08"
 version = "0.1.0"
 dependencies = [
  "delog",
+ "delog-panic",
  "embedded-hal",
  "embedded-time",
  "nb 1.1.0",
@@ -2097,12 +2106,12 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "1.2.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=8d3622f5c228352cdb57453c1d0b02da22da7f7b#8d3622f5c228352cdb57453c1d0b02da22da7f7b"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
  "cfg-if",
  "delog",
+ "delog-panic",
  "heapless",
  "heapless-bytes",
  "hex-literal 0.4.1",

@@ -1,5 +1,6 @@
 use nb::block;
 
+use delog_panic::DelogPanic as _;
 use embedded_hal as hal;
 use embedded_time::duration::{Extensions, Microseconds};
 
@@ -147,7 +148,7 @@ where
         block!(self.spi.send(0)).ok();
 
         block!(self.spi.read()).ok();
-        let data = block!(self.spi.read()).ok().unwrap();
+        let data = block!(self.spi.read()).ok().delog_unwrap();
 
         self.cs.set_high().ok();
 
@@ -161,7 +162,7 @@ where
         block!(self.spi.send(0)).ok();
 
         block!(self.spi.read()).ok();
-        let data = block!(self.spi.read()).ok().unwrap();
+        let data = block!(self.spi.read()).ok().delog_unwrap();
 
         self.cs.set_high().ok();
 
@@ -178,7 +179,7 @@ where
         block!(self.spi.send(0b01010101u8)).ok();
 
         for _ in 0..2 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         self.cs.set_high().ok();
@@ -188,7 +189,7 @@ where
         block!(self.spi.send(addr as u8)).ok();
 
         for _ in 0..2 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
     }
 
@@ -227,7 +228,7 @@ where
         block!(self.spi.send(config.regu)).ok();
         block!(self.spi.send(config.regu)).ok();
         for _ in 0..2 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         self.end_write(timer)?;
@@ -240,7 +241,7 @@ where
         block!(self.spi.send(config.sak2)).ok();
 
         for _ in 0..4 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         self.end_write(timer)?;
@@ -253,7 +254,7 @@ where
         block!(self.spi.send(0xA8)).ok(); // use I2C addr as magic marker
 
         for _ in 0..4 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         block!(self.spi.send(config.ta)).ok();
@@ -261,7 +262,7 @@ where
         block!(self.spi.send(config.tc)).ok();
 
         for _ in 0..3 {
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         self.end_write(timer)
@@ -276,12 +277,12 @@ where
         block!(self.spi.send(cmd)).ok();
         block!(self.spi.send(addr)).ok();
 
-        block!(self.spi.read()).ok().unwrap();
-        block!(self.spi.read()).ok().unwrap();
+        block!(self.spi.read()).ok().delog_unwrap();
+        block!(self.spi.read()).ok().delog_unwrap();
 
         for i in 0..array.len() {
             block!(self.spi.send(0)).ok();
-            array[i] = block!(self.spi.read()).ok().unwrap();
+            array[i] = block!(self.spi.read()).ok().delog_unwrap();
         }
         self.cs.set_high().ok();
     }
@@ -291,7 +292,7 @@ where
     }
 
     pub fn has_interrupt(&mut self) -> nb::Result<(), nfc::Error> {
-        if self.int.is_low().ok().unwrap() {
+        if self.int.is_low().ok().delog_unwrap() {
             Ok(())
         } else {
             Err(nb::Error::WouldBlock)
@@ -313,12 +314,12 @@ where
 
         for i in 1..buf.len() {
             block!(self.spi.send(buf[i as usize])).ok();
-            block!(self.spi.read()).ok().unwrap();
+            block!(self.spi.read()).ok().delog_unwrap();
         }
 
         // for header + that extra byte.
-        block!(self.spi.read()).ok().unwrap();
-        block!(self.spi.read()).ok().unwrap();
+        block!(self.spi.read()).ok().delog_unwrap();
+        block!(self.spi.read()).ok().delog_unwrap();
 
         self.cs.set_high().ok();
     }
@@ -335,15 +336,15 @@ where
         block!(self.spi.send(0)).ok();
 
         // Skip first byte
-        block!(self.spi.read()).ok().unwrap();
+        block!(self.spi.read()).ok().delog_unwrap();
 
         for i in 0..(count - 1) {
             block!(self.spi.send(0)).ok();
-            buf[i as usize] = block!(self.spi.read()).ok().unwrap();
+            buf[i as usize] = block!(self.spi.read()).ok().delog_unwrap();
         }
 
         // for that extra byte.
-        buf[(count - 1) as usize] = block!(self.spi.read()).ok().unwrap();
+        buf[(count - 1) as usize] = block!(self.spi.read()).ok().delog_unwrap();
 
         self.cs.set_high().ok();
     }

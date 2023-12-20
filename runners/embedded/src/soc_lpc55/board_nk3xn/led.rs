@@ -1,4 +1,5 @@
 use crate::traits::rgb_led;
+use delog_panic::DelogPanic as _;
 use lpc55_hal::{
     drivers::pins,
     drivers::pwm,
@@ -42,9 +43,9 @@ pub struct RgbLed {
 
 impl RgbLed {
     pub fn new(mut pwm: PwmDriver, iocon: &mut Iocon<init_state::Enabled>) -> RgbLed {
-        let red = RedLedPin::take().unwrap();
-        let green = GreenLedPin::take().unwrap();
-        let blue = BlueLedPin::take().unwrap();
+        let red = RedLedPin::take().delog_unwrap();
+        let green = GreenLedPin::take().delog_unwrap();
+        let blue = BlueLedPin::take().delog_unwrap();
 
         pwm.set_duty(RedLed::CHANNEL, 0);
         pwm.set_duty(GreenLed::CHANNEL, 0);

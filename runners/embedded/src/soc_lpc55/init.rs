@@ -2,6 +2,7 @@ use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
 use apps::{Dispatch, InitStatus};
+use delog_panic::{delog_panic, DelogPanic as _};
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -104,14 +105,14 @@ impl Stage0 {
         bool,
     ) {
         let nfc_irq = nfc::NfcIrqPin::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(&mut iocon, gpio)
             .into_input();
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
-        let is_passive_mode = nfc_irq.is_low().ok().unwrap();
+        let is_passive_mode = nfc_irq.is_low().ok().delog_unwrap();
 
         (iocon, nfc_irq, is_passive_mode)
     }
@@ -126,7 +127,7 @@ impl Stage0 {
                 &mut self.peripherals.pmc,
                 &mut self.peripherals.syscon,
             )
-            .expect("Clock configuration failed")
+            .delog_expect("Clock configuration failed")
     }
 
     #[inline(never)]
@@ -176,7 +177,7 @@ impl Stage1 {
         current_version_maybe: Option<u32>,
         require_prince: bool,
     ) -> u32 {
-        let mut cfpa = pfr.read_latest_cfpa().unwrap();
+        let mut cfpa = pfr.read_latest_cfpa().delog_unwrap();
         let old_version = cfpa.secure_fw_version;
         if let Some(current_version) = current_version_maybe {
             if cfpa.secure_fw_version < current_version || cfpa.ns_fw_version < current_version {
@@ -189,7 +190,7 @@ impl Stage1 {
                 cfpa.version += 1;
                 cfpa.secure_fw_version = current_version;
                 cfpa.ns_fw_version = current_version;
-                pfr.write_cfpa(&cfpa).unwrap();
+                pfr.write_cfpa(&cfpa).delog_unwrap();
             } else {
                 info!(
                     "do not need to update cfpa version {}",
@@ -233,7 +234,7 @@ impl Stage1 {
             board::led::RgbLed::new(
                 hal::drivers::Pwm::new(ctimer.enabled(
                     &mut self.peripherals.syscon,
-                    self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+                    self.clocks.clocks.support_1mhz_fro_token().delog_unwrap(),
                 )),
                 &mut self.clocks.iocon,
             )
@@ -246,7 +247,7 @@ impl Stage1 {
             board::button::ThreeButtons::new(
                 Timer::new(ctimer.enabled(
                     &mut self.peripherals.syscon,
-                    self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+                    self.clocks.clocks.support_1mhz_fro_token().delog_unwrap(),
                 )),
                 &mut self.clocks.gpio,
                 &mut self.clocks.iocon,
@@ -283,13 +284,13 @@ impl Stage1 {
         });
 
         let mut delay_timer = Timer::new(
-            delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
+            delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().delog_unwrap()),
         );
         let se050_timer = Timer::new(
-            ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
+            ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().delog_unwrap()),
         );
         let mut perf_timer = Timer::new(
-            perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
+            perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().delog_unwrap()),
         );
         perf_timer.start(60_000_000.microseconds());
 
@@ -301,13 +302,13 @@ impl Stage1 {
             None
         };
 
-        let mut pfr = pfr.enabled(&self.clocks.clocks).unwrap();
+        let mut pfr = pfr.enabled(&self.clocks.clocks).delog_unwrap();
         let old_firmware_version =
             Self::validate_cfpa(&mut pfr, secure_firmware_version, require_prince);
 
         if boot_to_bootrom && three_buttons.is_some() {
             info!("bootrom request start {}", perf_timer.elapsed().0 / 1000);
-            if self.is_bootrom_requested(three_buttons.as_mut().unwrap(), &mut delay_timer) {
+            if self.is_bootrom_requested(three_buttons.as_mut().delog_unwrap(), &mut delay_timer) {
                 // Give a small red blink show success
                 rgb.red(200);
                 rgb.green(200);
@@ -347,7 +348,7 @@ pub struct Stage2 {
 
 impl Stage2 {
     fn setup_spi(&mut self, flexcomm0: Flexcomm0<Unknown>, config: SpiConfig) -> Spi {
-        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        let token = self.clocks.clocks.support_flexcomm_token().delog_unwrap();
         let spi = flexcomm0.enabled_as_spi(&mut self.peripherals.syscon, &token);
         spi::init(spi, &mut self.clocks.iocon, config)
     }
@@ -362,7 +363,7 @@ impl Stage2 {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
-        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        let nfc_irq = self.clocks.nfc_irq.take().delog_unwrap();
         pint.enable_interrupt(
             &mut mux,
             &nfc_irq,
@@ -393,25 +394,25 @@ impl Stage2 {
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_output_high();
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
 
-        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        let token = self.clocks.clocks.support_flexcomm_token().delog_unwrap();
         let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
         let scl = pins::Pio0_9::take()
-            .unwrap()
+            .delog_unwrap()
             .into_i2c5_scl_pin(&mut self.clocks.iocon);
         let sda = pins::Pio1_14::take()
-            .unwrap()
+            .delog_unwrap()
             .into_i2c5_sda_pin(&mut self.clocks.iocon);
         let mut i2c = hal::I2cMaster::new(
             i2c,
             (scl, sda),
-            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+            hal::time::Hertz::try_from(100_u32.kHz()).delog_unwrap(),
         );
 
         self.basic.delay_timer.start(100_000.microseconds());
@@ -420,7 +421,7 @@ impl Stage2 {
         // RESYNC command
         let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
         i2c.write(0x48, &command)
-            .expect("failed to send RESYNC command");
+            .delog_expect("failed to send RESYNC command");
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
@@ -428,10 +429,10 @@ impl Stage2 {
         // RESYNC response
         let mut response = [0; 5];
         i2c.read(0x48, &mut response)
-            .expect("failed to read RESYNC response");
+            .delog_expect("failed to read RESYNC response");
 
         if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
-            panic!("Unexpected RESYNC response: {:?}", response);
+            delog_panic!("Unexpected RESYNC response: {:?}", response);
         }
 
         info_now!("hardware checks successful");
@@ -448,7 +449,7 @@ impl Stage2 {
         nfc_enabled: bool,
     ) -> Stage3 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
-        let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+        let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().delog_unwrap();
 
         let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
 
@@ -543,11 +544,11 @@ pub struct Stage4 {
 impl Stage4 {
     fn setup_external_flash(&mut self, spi: Spi) -> OptionalStorage<ExtFlashStorage<Spi, FlashCs>> {
         let flash_cs = FlashCsPin::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_output_high();
         let _power = pins::Pio0_21::take()
-            .unwrap()
+            .delog_unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_output_high();
 
@@ -667,7 +668,7 @@ fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<hal::
             flash_gordon.erase_page(offset / 512 + page).ok();
             prince.write_encrypted(|prince| {
                 prince.enable_region_2_for(|| {
-                    flash_gordon.write(offset + page * 512, &page_data).unwrap();
+                    flash_gordon.write(offset + page * 512, &page_data).delog_unwrap();
                 })
             });
         }
@@ -794,7 +795,7 @@ impl Stage6 {
         static mut USBD: Option<UsbBusType> = None;
 
         let vbus_pin = pins::Pio0_22::take()
-            .unwrap()
+            .delog_unwrap()
             .into_usb0_vbus_pin(&mut self.clocks.iocon);
 
         let mut usb = usbp.enabled_as_device(
@@ -802,7 +803,7 @@ impl Stage6 {
             &mut self.peripherals.pmc,
             &mut self.peripherals.syscon,
             &mut self.basic.delay_timer,
-            self.clocks.clocks.support_usbhs_token().unwrap(),
+            self.clocks.clocks.support_usbhs_token().delog_unwrap(),
         );
         // TODO: do we need this one?
         usb.disable_high_speed();
@@ -843,7 +844,7 @@ impl Stage6 {
             let iocon = &mut self.clocks.iocon;
 
             let mut new_clock_controller =
-                DynamicClockController::new(adc.unwrap(), clocks, pmc, syscon, gpio, iocon);
+                DynamicClockController::new(adc.delog_unwrap(), clocks, pmc, syscon, gpio, iocon);
             new_clock_controller.start_high_voltage_compare();
 
             Some(new_clock_controller)

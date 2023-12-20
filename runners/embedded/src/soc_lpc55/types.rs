@@ -69,8 +69,9 @@ where
     T: CountDown<Time = Microseconds<u32>>,
 {
     fn delay_us(&mut self, delay: u32) {
+        use delog_panic::DelogPanic as _;
         self.0.start(Microseconds::new(delay));
-        nb::block!(self.0.wait()).unwrap();
+        nb::block!(self.0.wait()).delog_unwrap();
     }
 }
 
