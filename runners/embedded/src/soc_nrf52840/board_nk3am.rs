@@ -1,5 +1,9 @@
 use core::time::Duration;
 
+use littlefs2::{
+    fs::{Allocation, Filesystem},
+    io::Result as LfsResult,
+};
 use nrf52840_hal::{
     gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
@@ -7,26 +11,117 @@ use nrf52840_hal::{
     prelude::InputPin,
     pwm,
     pwm::Pwm,
-    spim,
+    spim, Spim,
 };
+use nrf52840_pac::SPIM3;
+use trussed::platform::consent;
 
-pub const BOARD_NAME: &str = "NK3AM";
-
-use crate::ui::{
-    buttons::{Button, Press, UserPresence},
-    rgb_led::{self, Color},
-    Clock,
+use super::{
+    migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage},
+    types::Soc,
+};
+use crate::{
+    flash::ExtFlashStorage,
+    soc::{rtic_monotonic::RtcMonotonic, types::BoardGPIO},
+    types::Board,
+    ui::{
+        buttons::{Button, Press, UserPresence},
+        rgb_led::{self, Color},
+        Clock, UserInterface,
+    },
 };
 
 type OutPin = Pin<Output<PushPull>>;
 
-use crate::soc::types::BoardGPIO;
+pub struct NK3AM;
 
-use crate::soc::rtic_monotonic::RtcMonotonic;
+impl Board for NK3AM {
+    type Soc = Soc;
 
-use crate::ui::UserInterface;
+    type NfcDevice = DummyNfc;
+    type Buttons = HardwareButtons;
+    type Led = RgbLed;
 
-use trussed::platform::consent;
+    #[cfg(feature = "se050")]
+    type Twi = nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>;
+    #[cfg(feature = "se050")]
+    type Se050Timer = nrf52840_hal::Timer<nrf52840_pac::TIMER1>;
+    #[cfg(not(feature = "se050"))]
+    type Twi = ();
+    #[cfg(not(feature = "se050"))]
+    type Se050Timer = ();
+
+    const BOARD_NAME: &'static str = "NK3AM";
+
+    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
+        ifs.format_journal_blocks();
+    }
+
+    fn recover_ifs(
+        ifs_storage: &mut Self::InternalStorage,
+        ifs_alloc: &mut Allocation<Self::InternalStorage>,
+        efs_storage: &mut Self::ExternalStorage,
+    ) -> LfsResult<()> {
+        error_now!("IFS (nrf42) mount-fail");
+
+        // regular mount failed, try mounting "old" (pre-journaling) IFS
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
+        let mut old_ifs_alloc: Allocation<OldFlashStorage> = Filesystem::allocate();
+        let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
+
+        // we can mount the old ifs filesystem, thus we need to migrate
+        if old_mountable {
+            let mounted_ifs = ftl_journal::migrate(
+                &mut old_ifs_storage,
+                &mut old_ifs_alloc,
+                ifs_alloc,
+                ifs_storage,
+                efs_storage,
+            );
+            // migration went fine => use its resulting IFS
+            if let Ok(()) = mounted_ifs {
+                info_now!("migration ok, mounting IFS");
+                Ok(())
+            // migration failed => format IFS
+            } else {
+                error_now!("failed migration, formatting IFS");
+                Filesystem::format(ifs_storage)
+            }
+        } else {
+            info_now!("recovering from journal");
+            // IFS and old-IFS cannot be mounted, try to recover from journal
+            ifs_storage.recover_from_journal();
+            Ok(())
+        }
+    }
+}
+
+pub type InternalFlashStorage = super::flash::FlashStorage;
+pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
+
+impl_storage_pointers!(
+    NK3AM,
+    Internal = InternalFlashStorage,
+    External = ExternalFlashStorage,
+);
+
+pub struct DummyNfc;
+
+impl nfc_device::traits::nfc::Device for DummyNfc {
+    fn read(
+        &mut self,
+        _buf: &mut [u8],
+    ) -> Result<nfc_device::traits::nfc::State, nfc_device::traits::nfc::Error> {
+        Err(nfc_device::traits::nfc::Error::NoActivity)
+    }
+    fn send(&mut self, _buf: &[u8]) -> Result<(), nfc_device::traits::nfc::Error> {
+        Err(nfc_device::traits::nfc::Error::NoActivity)
+    }
+    fn frame_size(&self) -> usize {
+        0
+    }
+}
 
 pub struct HardwareButtons {
     pub touch_button: Option<OutPin>,
@@ -205,10 +300,7 @@ pub fn init_ui(
         touch_button: Some(touch),
     };
 
-    let provisioner = cfg!(feature = "provisioner");
-    let ui = UserInterface::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
-
-    ui
+    UserInterface::new(rtc_mono, Some(buttons), Some(rgb))
 }
 
 pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {

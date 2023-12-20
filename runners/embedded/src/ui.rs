@@ -47,7 +47,7 @@ pub trait Clock {
     fn uptime(&mut self) -> Duration;
 }
 
-pub struct UserInterface<C: Clock, P: UserPresence, L: RgbLed> {
+pub struct UserInterface<C, P, L> {
     clock: C,
     buttons: Option<P>,
     rgb: Option<L>,
@@ -56,7 +56,7 @@ pub struct UserInterface<C: Clock, P: UserPresence, L: RgbLed> {
 }
 
 impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
-    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>, provisioner: bool) -> Self {
+    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>) -> Self {
         let uptime = clock.uptime();
         let status = Status::Startup(uptime);
         let buttons = if cfg!(feature = "no-buttons") {
@@ -64,6 +64,7 @@ impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
         } else {
             buttons
         };
+        let provisioner = cfg!(feature = "provisioner");
 
         let mut ui = Self {
             clock,

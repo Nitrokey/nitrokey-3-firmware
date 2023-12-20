@@ -1,16 +1,8 @@
-use core::{mem::MaybeUninit, time::Duration};
+use core::time::Duration;
 
-use super::board::{button::ThreeButtons, led::RgbLed};
-use super::prince;
-use super::spi::{FlashCs, Spi};
-use crate::{flash::ExtFlashStorage, types::Uuid, ui::Clock};
+use crate::{types::Uuid, ui::Clock};
 use apps::Variant;
-#[cfg(feature = "se050")]
-use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
-#[cfg(feature = "se050")]
-use embedded_time::duration::Microseconds;
 use embedded_time::duration::Milliseconds;
-use littlefs2::fs::{Allocation, Filesystem};
 use lpc55_hal::{
     drivers::{
         pins::{Pio0_9, Pio1_14},
@@ -28,25 +20,12 @@ use lpc55_hal::{
     },
     I2cMaster,
 };
-use trussed::store::Fs;
-
 use memory_regions::MemoryRegions;
-use utils::OptionalStorage;
 
 //////////////////////////////////////////////////////////////////////////////
 // Upper Interface (definitions towards ERL Core)
 
 pub static mut DEVICE_UUID: Uuid = [0u8; 16];
-
-#[cfg(feature = "no-encrypted-storage")]
-use lpc55_hal::littlefs2_filesystem;
-#[cfg(feature = "no-encrypted-storage")]
-use trussed::types::LfsResult;
-
-#[cfg(feature = "no-encrypted-storage")]
-littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT));
-#[cfg(not(feature = "no-encrypted-storage"))]
-pub use prince::InternalFilesystem;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
@@ -60,40 +39,12 @@ pub(super) type I2C = I2cMaster<
     ),
 >;
 
-#[cfg(feature = "se050")]
-pub struct TimerDelay<T>(pub T);
-
-#[cfg(feature = "se050")]
-impl<T> DelayUs<u32> for TimerDelay<T>
-where
-    T: CountDown<Time = Microseconds<u32>>,
-{
-    fn delay_us(&mut self, delay: u32) {
-        self.0.start(Microseconds::new(delay));
-        nb::block!(self.0.wait()).unwrap();
-    }
-}
-
 pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
-
-pub type InternalFlashStorage = InternalFilesystem;
-pub type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;
 
 pub struct Soc {}
 impl crate::types::Soc for Soc {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
-    type NfcDevice = super::nfc::NfcChip;
     type Clock = RtcClock;
-    type Buttons = ThreeButtons;
-    type Led = RgbLed;
-    #[cfg(feature = "se050")]
-    type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<Enabled>>>;
-    #[cfg(feature = "se050")]
-    type Twi = I2C;
-    #[cfg(not(feature = "se050"))]
-    type Twi = ();
-    #[cfg(not(feature = "se050"))]
-    type Se050Timer = ();
 
     type Duration = Milliseconds;
 
@@ -101,19 +52,12 @@ impl crate::types::Soc for Soc {
     const SYSCALL_IRQ: Interrupt = Interrupt::OS_EVENT;
 
     const SOC_NAME: &'static str = "LPC55";
-    const BOARD_NAME: &'static str = super::board::BOARD_NAME;
     const VARIANT: Variant = Variant::Lpc55;
 
     fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
 }
-
-impl_storage_pointers!(
-    Soc,
-    Internal = InternalFlashStorage,
-    External = ExternalFlashStorage,
-);
 
 impl apps::Reboot for Soc {
     fn reboot() -> ! {
