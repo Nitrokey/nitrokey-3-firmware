@@ -11,10 +11,8 @@ pub mod types;
 #[cfg_attr(feature = "board-nk3xn", path = "board_nk3xn/mod.rs")]
 pub mod board;
 
-use delog::delog;
-
 #[cfg(not(feature = "no-delog"))]
-delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
+delog::delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
 const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
 
@@ -25,11 +23,7 @@ pub fn init(
     #[cfg(feature = "log-rtt")]
     rtt_target::rtt_init_print!();
 
-    #[cfg(any(
-        feature = "log-rtt",
-        feature = "log-semihosting",
-        feature = "log-serial"
-    ))]
+    #[cfg(not(feature = "no-delog"))]
     Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
 
     crate::banner::<types::Soc>();

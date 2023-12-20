@@ -11,18 +11,16 @@ use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
 use embedded_time::duration::Microseconds;
 use embedded_time::duration::Milliseconds;
 use littlefs2::fs::{Allocation, Filesystem};
-#[cfg(feature = "se050")]
-use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
     drivers::{
         pins::{Pio0_9, Pio1_14},
-        timer,
+        timer::Timer,
     },
     peripherals::{ctimer, flash, flexcomm::I2c5, rtc::Rtc, syscon},
     raw::{Interrupt, SCB},
     traits::flash::WriteErase,
     typestates::{
-        init_state,
+        init_state::Enabled,
         pin::{
             function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
             state::Special,
@@ -87,7 +85,7 @@ impl crate::types::Soc for Soc {
     type NfcDevice = super::nfc::NfcChip;
     type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;
     #[cfg(feature = "se050")]
-    type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
+    type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<Enabled>>>;
     #[cfg(feature = "se050")]
     type Twi = I2C;
     #[cfg(not(feature = "se050"))]
@@ -141,12 +139,10 @@ impl apps::Reboot for Soc {
 }
 
 pub type DynamicClockController = super::clock_controller::DynamicClockController;
-pub type NfcWaitExtender =
-    timer::Timer<ctimer::Ctimer0<lpc55_hal::typestates::init_state::Enabled>>;
-pub type PerformanceTimer =
-    timer::Timer<ctimer::Ctimer4<lpc55_hal::typestates::init_state::Enabled>>;
+pub type NfcWaitExtender = Timer<ctimer::Ctimer0<Enabled>>;
+pub type PerformanceTimer = Timer<ctimer::Ctimer4<Enabled>>;
 
-pub type RtcClock = Rtc<init_state::Enabled>;
+pub type RtcClock = Rtc<Enabled>;
 
 impl Clock for RtcClock {
     fn uptime(&mut self) -> Duration {

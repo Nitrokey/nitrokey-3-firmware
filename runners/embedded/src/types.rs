@@ -185,11 +185,6 @@ impl delog::Flusher for DelogFlusher {
 
         #[cfg(feature = "log-semihosting")]
         cortex_m_semihosting::hprint!(_msg).ok();
-
-        // TODO: re-enable?
-        // #[cfg(feature = "log-serial")]
-        // see https://git.io/JLARR for the plan on how to improve this once we switch to RTIC 0.6
-        // rtic::pend(hal::raw::Interrupt::MAILBOX);
     }
 }
 

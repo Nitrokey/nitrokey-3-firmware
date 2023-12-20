@@ -1,4 +1,5 @@
 #![no_std]
+#![warn(trivial_casts, unused, unused_qualifications)]
 
 use apdu_dispatch::{
     dispatch::ApduDispatch,
@@ -21,7 +22,6 @@ use types::{
     Soc,
 };
 
-extern crate delog;
 delog::generate_macros!();
 
 pub mod flash;

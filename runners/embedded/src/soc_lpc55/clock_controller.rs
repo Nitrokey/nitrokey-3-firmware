@@ -37,7 +37,7 @@ impl DynamicClockController {
         config
     }
     pub fn new(
-        adc: Adc<lpc55_hal::typestates::init_state::Enabled>,
+        adc: Adc<Enabled>,
         clocks: Clocks,
         pmc: Pmc,
         syscon: Syscon,

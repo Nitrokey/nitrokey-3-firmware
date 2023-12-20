@@ -44,7 +44,7 @@ use super::{
     clock_controller::DynamicClockController,
     nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-    types::I2C,
+    types::{Soc, I2C},
 };
 use crate::{
     flash::ExtFlashStorage,
@@ -57,7 +57,7 @@ use crate::{
     ui::UserInterface,
 };
 
-type UsbBusType = usb_device::bus::UsbBusAllocator<<super::types::Soc as types::Soc>::UsbBus>;
+type UsbBusType = usb_device::bus::UsbBusAllocator<<Soc as types::Soc>::UsbBus>;
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -493,8 +493,8 @@ impl Stage3 {
     #[inline(never)]
     pub fn next(
         mut self,
-        rng: hal::peripherals::rng::Rng<Unknown>,
-        prince: hal::peripherals::prince::Prince<Unknown>,
+        rng: Rng<Unknown>,
+        prince: Prince<Unknown>,
         flash: hal::peripherals::flash::Flash<Unknown>,
     ) -> Stage4 {
         info_now!("making flash");
@@ -683,7 +683,7 @@ pub struct Stage5 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
-    store: RunnerStore<super::types::Soc>,
+    store: RunnerStore<Soc>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
     se050_i2c: Option<I2C>,
 }
@@ -769,8 +769,8 @@ pub struct Stage6 {
     basic: Basic,
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
-    store: RunnerStore<super::types::Soc>,
-    trussed: Trussed<super::types::Soc>,
+    store: RunnerStore<Soc>,
+    trussed: Trussed<Soc>,
 }
 
 impl Stage6 {
@@ -866,9 +866,9 @@ impl Stage6 {
 
 pub struct All {
     pub basic: Basic,
-    pub usb_nfc: UsbNfc<super::types::Soc>,
-    pub trussed: Trussed<super::types::Soc>,
-    pub apps: Apps<super::types::Soc>,
+    pub usb_nfc: UsbNfc<Soc>,
+    pub trussed: Trussed<Soc>,
+    pub apps: Apps<Soc>,
     pub clock_controller: Option<DynamicClockController>,
 }
 
