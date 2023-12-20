@@ -26,7 +26,7 @@ pub fn init(
     #[cfg(not(feature = "no-delog"))]
     Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
 
-    crate::banner::<types::Soc>();
+    crate::banner::<board::NK3xN>();
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 

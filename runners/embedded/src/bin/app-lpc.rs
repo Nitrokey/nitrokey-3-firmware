@@ -18,7 +18,7 @@ pub fn msp() -> u32 {
 mod app {
     use embedded_runner_lib::{
         runtime,
-        soc::{self, monotonic::SystickMonotonic, nfc::NfcChip, types::Soc},
+        soc::{self, board, monotonic::SystickMonotonic, nfc::NfcChip},
         types,
     };
     use lpc55_hal::{
@@ -29,6 +29,11 @@ mod app {
     };
     use nfc_device::Iso14443;
     use systick_monotonic::Systick;
+
+    #[cfg(feature = "board-nk3xn")]
+    type Board = board::NK3xN;
+
+    type Soc = <Board as types::Board>::Soc;
 
     const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
 
@@ -44,10 +49,10 @@ mod app {
         ctaphid_dispatch: types::CtaphidDispatch,
 
         /// The Trussed service, used by all applications.
-        trussed: types::Trussed<Soc>,
+        trussed: types::Trussed<Board>,
 
         /// All the applications that the device serves.
-        apps: types::Apps<Soc>,
+        apps: types::Apps<Board>,
 
         /// The USB driver classes
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,

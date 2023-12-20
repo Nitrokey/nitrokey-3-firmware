@@ -4,7 +4,7 @@ use usb_device::device::UsbDevice;
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
 
-use crate::types::{ApduDispatch, CtaphidDispatch, Soc};
+use crate::types::{ApduDispatch, Board, CtaphidDispatch, Soc};
 
 pub struct UsbClasses<S: Soc> {
     pub usbd: UsbDevice<'static, S::UsbBus>,
@@ -20,9 +20,9 @@ impl<S: Soc> UsbClasses<S> {
     }
 }
 
-pub struct UsbNfcInit<S: Soc> {
-    pub usb_classes: Option<UsbClasses<S>>,
+pub struct UsbNfcInit<B: Board> {
+    pub usb_classes: Option<UsbClasses<B::Soc>>,
     pub apdu_dispatch: ApduDispatch,
     pub ctaphid_dispatch: CtaphidDispatch,
-    pub iso14443: Option<Iso14443<S::NfcDevice>>,
+    pub iso14443: Option<Iso14443<B::NfcDevice>>,
 }

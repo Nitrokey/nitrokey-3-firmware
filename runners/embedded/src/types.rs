@@ -48,10 +48,10 @@ pub const INTERFACE_CONFIG: Config = Config {
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc: StoragePointers + Reboot + 'static {
-    type UsbBus: UsbBus + 'static;
+pub trait Board: StoragePointers {
+    type Soc: Soc;
+
     type NfcDevice: NfcDevice;
-    type Clock: Clock;
     type Buttons: UserPresence;
     type Led: RgbLed;
 
@@ -64,16 +64,7 @@ pub trait Soc: StoragePointers + Reboot + 'static {
     #[cfg(not(feature = "se050"))]
     type Twi: 'static;
 
-    type Duration: From<Milliseconds>;
-
-    type Interrupt: InterruptNumber;
-    const SYSCALL_IRQ: Self::Interrupt;
-
-    const SOC_NAME: &'static str;
     const BOARD_NAME: &'static str;
-    const VARIANT: Variant;
-
-    fn device_uuid() -> &'static Uuid;
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         let _ = ifs;
@@ -89,22 +80,37 @@ pub trait Soc: StoragePointers + Reboot + 'static {
     }
 }
 
-pub struct Runner<S> {
-    pub is_efs_available: bool,
-    pub _marker: PhantomData<S>,
+pub trait Soc: Reboot + 'static {
+    type UsbBus: UsbBus + 'static;
+    type Clock: Clock;
+
+    type Duration: From<Milliseconds>;
+
+    type Interrupt: InterruptNumber;
+    const SYSCALL_IRQ: Self::Interrupt;
+
+    const SOC_NAME: &'static str;
+    const VARIANT: Variant;
+
+    fn device_uuid() -> &'static Uuid;
 }
 
-impl<S: Soc> apps::Runner for Runner<S> {
-    type Syscall = RunnerSyscall<S>;
-    type Reboot = S;
-    type Store = RunnerStore<S>;
+pub struct Runner<B> {
+    pub is_efs_available: bool,
+    pub _marker: PhantomData<B>,
+}
+
+impl<B: Board> apps::Runner for Runner<B> {
+    type Syscall = RunnerSyscall<B::Soc>;
+    type Reboot = B::Soc;
+    type Store = RunnerStore<B>;
     #[cfg(feature = "provisioner")]
-    type Filesystem = S::InternalStorage;
-    type Twi = S::Twi;
-    type Se050Timer = S::Se050Timer;
+    type Filesystem = B::InternalStorage;
+    type Twi = B::Twi;
+    type Se050Timer = B::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
-        *S::device_uuid()
+        *B::Soc::device_uuid()
     }
 
     fn is_efs_available(&self) -> bool {
@@ -129,16 +135,16 @@ const_ram_storage!(
     result = LfsResult,
 );
 
-pub struct RunnerPlatform<S: Soc> {
+pub struct RunnerPlatform<B: Board> {
     pub rng: ChaCha8Rng,
-    pub store: RunnerStore<S>,
-    pub user_interface: UserInterface<S::Clock, S::Buttons, S::Led>,
+    pub store: RunnerStore<B>,
+    pub user_interface: UserInterface<B>,
 }
 
-unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
+unsafe impl<B: Board> Platform for RunnerPlatform<B> {
     type R = ChaCha8Rng;
-    type S = RunnerStore<S>;
-    type UI = UserInterface<S::Clock, S::Buttons, S::Led>;
+    type S = RunnerStore<B>;
+    type UI = UserInterface<B>;
 
     fn user_interface(&mut self) -> &mut Self::UI {
         &mut self.user_interface
@@ -172,8 +178,8 @@ impl<S: Soc> trussed::client::Syscall for RunnerSyscall<S> {
     }
 }
 
-pub type Trussed<S> =
-    trussed::Service<RunnerPlatform<S>, Dispatch<<S as Soc>::Twi, <S as Soc>::Se050Timer>>;
+pub type Trussed<B> =
+    trussed::Service<RunnerPlatform<B>, Dispatch<<B as Board>::Twi, <B as Board>::Se050Timer>>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;

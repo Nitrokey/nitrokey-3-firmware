@@ -30,7 +30,7 @@ use hal::{
 };
 use interchange::Channel;
 use lpc55_hal as hal;
-#[cfg(feature = "log-info")]
+#[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
@@ -38,9 +38,9 @@ use trussed::{service::Service, types::Location};
 use utils::OptionalStorage;
 
 #[cfg(feature = "se050")]
-use super::types::TimerDelay;
+use super::board::TimerDelay;
 use super::{
-    board,
+    board::{self, InternalFlashStorage, NK3xN},
     clock_controller::DynamicClockController,
     nfc::{self, NfcChip},
     spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
@@ -582,11 +582,11 @@ impl Stage4 {
             #[cfg(feature = "write-undefined-flash")]
             initialize_fs_flash(&mut self.flash.flash_gordon, &mut self.flash.prince);
 
-            super::types::InternalFilesystem::new(self.flash.flash_gordon, self.flash.prince)
+            InternalFlashStorage::new(self.flash.flash_gordon, self.flash.prince)
         };
 
         #[cfg(feature = "no-encrypted-storage")]
-        let internal = super::types::InternalFilesystem::new(self.flash.flash_gordon);
+        let internal = InternalFlashStorage::new(self.flash.flash_gordon);
 
         // temporarily increase clock for the storage mounting or else it takes a long time.
         if self.clocks.is_nfc_passive {
@@ -683,7 +683,7 @@ pub struct Stage5 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     rng: Rng<hal::Enabled>,
-    store: RunnerStore<Soc>,
+    store: RunnerStore<NK3xN>,
     se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
     se050_i2c: Option<I2C>,
 }
@@ -769,8 +769,8 @@ pub struct Stage6 {
     basic: Basic,
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
-    store: RunnerStore<Soc>,
-    trussed: Trussed<Soc>,
+    store: RunnerStore<NK3xN>,
+    trussed: Trussed<NK3xN>,
 }
 
 impl Stage6 {
@@ -866,9 +866,9 @@ impl Stage6 {
 
 pub struct All {
     pub basic: Basic,
-    pub usb_nfc: UsbNfc<Soc>,
-    pub trussed: Trussed<Soc>,
-    pub apps: Apps<Soc>,
+    pub usb_nfc: UsbNfc<NK3xN>,
+    pub trussed: Trussed<NK3xN>,
+    pub apps: Apps<NK3xN>,
     pub clock_controller: Option<DynamicClockController>,
 }
 

@@ -16,13 +16,7 @@ mod app {
     use super::Delogger;
     use super::{
         ERL,
-        ERL::{
-            soc::{
-                rtic_monotonic::RtcDuration,
-                types::{DummyNfc, Soc},
-            },
-            types::RunnerPlatform,
-        },
+        ERL::{soc::rtic_monotonic::RtcDuration, types::RunnerPlatform},
     };
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
@@ -35,10 +29,20 @@ mod app {
     };
     use trussed::types::{Bytes, Location};
 
+    use embedded_runner_lib::{
+        soc::board::{self, DummyNfc},
+        types,
+    };
+
+    #[cfg(feature = "board-nk3am")]
+    type Board = board::NK3AM;
+
+    type Soc = <Board as types::Board>::Soc;
+
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed<Soc>,
-        apps: ERL::types::Apps<Soc>,
+        trussed: ERL::types::Trussed<Board>,
+        apps: ERL::types::Apps<Board>,
         apdu_dispatch: ERL::types::ApduDispatch,
         ctaphid_dispatch: ERL::types::CtaphidDispatch,
         usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
@@ -78,7 +82,7 @@ mod app {
         rtt_target::rtt_init_print!();
         #[cfg(not(feature = "no-delog"))]
         Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner::<Soc>();
+        ERL::banner::<Board>();
 
         ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
@@ -129,7 +133,7 @@ mod app {
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
-        let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None, nfc_rp);
+        let usbnfcinit = ERL::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
         /* TODO: set up fingerprint device */
         /* TODO: set up SE050 device */
         use nrf52840_hal::prelude::OutputPin;
