@@ -1,4 +1,4 @@
-use crate::traits::rgb_led;
+use crate::ui::rgb_led;
 use lpc55_hal::{
     drivers::pins,
     drivers::pwm,

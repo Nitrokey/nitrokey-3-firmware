@@ -4,7 +4,7 @@ use embedded_time::{duration::Milliseconds, fixed_point::FixedPoint as _};
 use nrf52840_hal::rtc::{Rtc, RtcCompareReg, RtcInterrupt};
 use rtic::Monotonic;
 
-use crate::traits::Clock;
+use crate::ui::Clock;
 
 type Rtc0 = Rtc<nrf52840_pac::RTC0>;
 

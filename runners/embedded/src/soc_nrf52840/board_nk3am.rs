@@ -12,10 +12,11 @@ use nrf52840_hal::{
 
 pub const BOARD_NAME: &str = "NK3AM";
 
-use crate::traits::buttons::{Button, Press, UserPresence};
-use crate::traits::rgb_led;
-use crate::traits::rgb_led::Color;
-use crate::traits::Clock;
+use crate::ui::{
+    buttons::{Button, Press, UserPresence},
+    rgb_led::{self, Color},
+    Clock,
+};
 
 type OutPin = Pin<Output<PushPull>>;
 
@@ -26,8 +27,6 @@ use crate::soc::rtic_monotonic::RtcMonotonic;
 use crate::ui::UserInterface;
 
 use trussed::platform::consent;
-
-pub type TrussedUI = UserInterface<RtcMonotonic, HardwareButtons, RgbLed>;
 
 pub struct HardwareButtons {
     pub touch_button: Option<OutPin>,
@@ -195,7 +194,7 @@ pub fn init_ui(
     pwm_green: pac::PWM1,
     pwm_blue: pac::PWM2,
     touch: OutPin,
-) -> TrussedUI {
+) -> UserInterface<RtcMonotonic, HardwareButtons, RgbLed> {
     // TODO: safely share the RTC
     let pac = unsafe { nrf52840_pac::Peripherals::steal() };
     let rtc_mono = RtcMonotonic::new(pac.RTC0);
@@ -207,7 +206,7 @@ pub fn init_ui(
     };
 
     let provisioner = cfg!(feature = "provisioner");
-    let ui = TrussedUI::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
+    let ui = UserInterface::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
 
     ui
 }
