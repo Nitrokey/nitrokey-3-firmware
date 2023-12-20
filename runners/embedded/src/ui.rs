@@ -6,11 +6,11 @@ use core::{
 
 use trussed::platform::{self, consent, ui};
 
-use crate::traits::{
-    buttons::UserPresence,
-    rgb_led::{Intensities, RgbLed},
-    Clock,
-};
+use buttons::UserPresence;
+use rgb_led::{Intensities, RgbLed};
+
+pub mod buttons;
+pub mod rgb_led;
 
 const BLACK: Intensities = Intensities {
     red: 0,
@@ -41,6 +41,10 @@ fn set_waiting(waiting: bool) {
 
 pub fn is_waiting() -> bool {
     WAITING.load(Relaxed)
+}
+
+pub trait Clock {
+    fn uptime(&mut self) -> Duration;
 }
 
 pub struct UserInterface<C: Clock, P: UserPresence, L: RgbLed> {

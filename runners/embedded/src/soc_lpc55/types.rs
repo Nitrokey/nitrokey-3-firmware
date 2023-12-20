@@ -3,7 +3,7 @@ use core::{mem::MaybeUninit, time::Duration};
 use super::board::{button::ThreeButtons, led::RgbLed};
 use super::prince;
 use super::spi::{FlashCs, Spi};
-use crate::{flash::ExtFlashStorage, traits::Clock, types::Uuid, ui::UserInterface};
+use crate::{flash::ExtFlashStorage, types::Uuid, ui::Clock};
 use apps::Variant;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
@@ -83,7 +83,9 @@ pub struct Soc {}
 impl crate::types::Soc for Soc {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type NfcDevice = super::nfc::NfcChip;
-    type TrussedUI = UserInterface<RtcClock, ThreeButtons, RgbLed>;
+    type Clock = RtcClock;
+    type Buttons = ThreeButtons;
+    type Led = RgbLed;
     #[cfg(feature = "se050")]
     type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<Enabled>>>;
     #[cfg(feature = "se050")]

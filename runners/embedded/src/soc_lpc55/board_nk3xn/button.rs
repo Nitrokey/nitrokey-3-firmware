@@ -1,4 +1,4 @@
-use crate::traits::{
+use crate::ui::{
     buttons::{Button, Edge, Press, State, UserPresence},
     Clock,
 };

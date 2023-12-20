@@ -1,6 +1,5 @@
 use core::marker::PhantomData;
 
-use crate::store::{RunnerStore, StoragePointers};
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -17,11 +16,15 @@ use littlefs2::{
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
-    platform::UserInterface,
     types::{LfsResult, LfsStorage},
     Platform,
 };
 use usb_device::bus::UsbBus;
+
+use crate::{
+    store::{RunnerStore, StoragePointers},
+    ui::{buttons::UserPresence, rgb_led::RgbLed, Clock, UserInterface},
+};
 
 pub mod usbnfc;
 
@@ -48,7 +51,9 @@ pub type Uuid = [u8; 16];
 pub trait Soc: StoragePointers + Reboot + 'static {
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
-    type TrussedUI: UserInterface;
+    type Clock: Clock;
+    type Buttons: UserPresence;
+    type Led: RgbLed;
 
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32> + 'static;
@@ -127,13 +132,13 @@ const_ram_storage!(
 pub struct RunnerPlatform<S: Soc> {
     pub rng: ChaCha8Rng,
     pub store: RunnerStore<S>,
-    pub user_interface: S::TrussedUI,
+    pub user_interface: UserInterface<S::Clock, S::Buttons, S::Led>,
 }
 
 unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
     type R = ChaCha8Rng;
     type S = RunnerStore<S>;
-    type UI = S::TrussedUI;
+    type UI = UserInterface<S::Clock, S::Buttons, S::Led>;
 
     fn user_interface(&mut self) -> &mut Self::UI {
         &mut self.user_interface
