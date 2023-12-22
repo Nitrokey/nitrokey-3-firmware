@@ -21,6 +21,7 @@ variables:
   IMAGE_NAME: nitrokey3
   COMMON_UPDATE_DOCKER: "false"
   COMMON_UPLOAD_FILES: "false"
+  COMMON_UPLOAD_NIGHTLY: "false"
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
 
@@ -38,7 +39,7 @@ metadata:
     - make manifest.json
   after_script:
     - mkdir -p artifacts
-    - cp commands.bd license.txt manifest.json artifacts
+    - cp commands.bd license.txt manifest.json artifacts || true
     - git archive --format zip --output artifacts/nitrokey-3-firmware.zip --prefix nitrokey-3-firmware/ HEAD
     - !reference [notify_github, script] # use notify_github from include
   artifacts:
@@ -162,10 +163,14 @@ build-firmware-for-tests:
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
+    - make -C runners/embedded build-nk3xn FEATURES=test
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-test-lpc55.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
     - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nrf52.hex
+    - make -C runners/embedded build-nk3am.bl FEATURES=test
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-test-nrf52.hex
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
   artifacts:
@@ -196,7 +201,7 @@ hardware-tests:
   stage: test
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - git -C nitrokey-hardware-test checkout v1.0.3
+    - git -C nitrokey-hardware-test checkout v1.1
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
   dependencies:
