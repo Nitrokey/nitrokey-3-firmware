@@ -36,7 +36,7 @@ littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "ebd27e49c
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc5" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "8d3622f5c228352cdb57453c1d0b02da22da7f7b" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.3" }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.4" }
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0-nitrokey-hmac256p256.3" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "4b8191f248c26cb074cdac887c7f3f48f9c449a4" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "9732a9a3e98af72112286afdc9b7174c66c2869a" }
