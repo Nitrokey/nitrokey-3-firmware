@@ -1,18 +1,57 @@
-use nrf52840_hal::clocks::Clocks;
+use apps::Variant;
+use nrf52840_hal::{
+    clocks::Clocks,
+    usbd::{UsbPeripheral, Usbd},
+};
+use nrf52840_pac::{self, Interrupt, SCB};
 
-#[cfg(not(any(feature = "board-nk3am")))]
-compile_error!("No NRF52840 board chosen!");
-
-#[cfg_attr(feature = "board-nk3am", path = "board_nk3am.rs")]
-pub mod board;
-
-pub mod types;
+use super::{Soc, Uuid};
+use rtic_monotonic::{RtcDuration, RtcMonotonic};
 
 pub mod flash;
 pub mod rtic_monotonic;
 
-#[cfg(feature = "board-nk3am")]
-pub mod migrations;
+static mut DEVICE_UUID: Uuid = [0u8; 16];
+
+pub struct Nrf52;
+
+impl Soc for Nrf52 {
+    type UsbBus = Usbd<UsbPeripheral<'static>>;
+    type Clock = RtcMonotonic;
+
+    type Duration = RtcDuration;
+
+    type Interrupt = Interrupt;
+    const SYSCALL_IRQ: Interrupt = Interrupt::SWI0_EGU0;
+
+    const SOC_NAME: &'static str = "nrf52";
+    const VARIANT: Variant = Variant::Nrf52;
+
+    fn device_uuid() -> &'static Uuid {
+        unsafe { &DEVICE_UUID }
+    }
+}
+
+impl apps::Reboot for Nrf52 {
+    fn reboot() -> ! {
+        SCB::sys_reset()
+    }
+    fn reboot_to_firmware_update() -> ! {
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        pac.POWER.gpregret.write(|w| unsafe { w.bits(0xb1_u32) });
+
+        SCB::sys_reset()
+    }
+    fn reboot_to_firmware_update_destructive() -> ! {
+        // @TODO: come up with an idea how to
+        // factory reset, and apply!
+        SCB::sys_reset()
+    }
+    fn locked() -> bool {
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        pac.UICR.approtect.read().pall().is_enabled()
+    }
+}
 
 pub fn init_bootup(
     ficr: &nrf52840_pac::FICR,
@@ -22,12 +61,12 @@ pub fn init_bootup(
     let deviceid0 = ficr.deviceid[0].read().bits();
     let deviceid1 = ficr.deviceid[1].read().bits();
     unsafe {
-        types::DEVICE_UUID[0..4].copy_from_slice(&deviceid0.to_be_bytes());
-        types::DEVICE_UUID[4..8].copy_from_slice(&deviceid1.to_be_bytes());
+        DEVICE_UUID[0..4].copy_from_slice(&deviceid0.to_be_bytes());
+        DEVICE_UUID[4..8].copy_from_slice(&deviceid1.to_be_bytes());
         #[cfg(feature = "alpha")]
         {
-            types::DEVICE_UUID[14] = 0xa1;
-            types::DEVICE_UUID[15] = 0xfa;
+            DEVICE_UUID[14] = 0xa1;
+            DEVICE_UUID[15] = 0xfa;
         }
     }
 
@@ -73,16 +112,12 @@ pub fn init_bootup(
     };
 }
 
-pub fn init_internal_flash(nvmc: nrf52840_pac::NVMC) -> flash::FlashStorage {
-    flash::FlashStorage::new(nvmc)
-}
-
 type UsbClockType = Clocks<
     nrf52840_hal::clocks::ExternalOscillator,
     nrf52840_hal::clocks::Internal,
     nrf52840_hal::clocks::LfOscStarted,
 >;
-type UsbBusType = usb_device::bus::UsbBusAllocator<<types::Soc as crate::types::Soc>::UsbBus>;
+type UsbBusType = usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
 
 static mut USB_CLOCK: Option<UsbClockType> = None;
 static mut USBD: Option<UsbBusType> = None;

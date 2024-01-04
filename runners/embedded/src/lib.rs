@@ -16,17 +16,18 @@ use usb_device::{
     device::{UsbDeviceBuilder, UsbVidPid},
 };
 
+use board::Board;
+use soc::Soc;
 use store::RunnerStore;
-use types::{
-    usbnfc::{UsbClasses, UsbNfcInit},
-    Board, Soc,
-};
+use types::usbnfc::{UsbClasses, UsbNfcInit};
+use ui::rgb_led::RgbLed as __;
 
 delog::generate_macros!();
 
+pub mod board;
 pub mod flash;
 pub mod runtime;
-#[macro_use]
+pub mod soc;
 pub mod store;
 pub mod types;
 pub mod ui;
@@ -34,15 +35,20 @@ pub mod ui;
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52840")))]
 compile_error!("No SoC chosen!");
 
-#[cfg_attr(feature = "soc-nrf52840", path = "soc_nrf52840/mod.rs")]
-#[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
-pub mod soc;
+#[cfg(not(feature = "no-delog"))]
+delog::delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
 #[cfg(feature = "alloc")]
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
-pub fn banner<B: Board>() {
+pub fn init_logger<B: Board>() {
+    #[cfg(feature = "log-rtt")]
+    rtt_target::rtt_init_print!();
+
+    #[cfg(not(feature = "no-delog"))]
+    Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
+
     info!(
         "Embedded Runner ({}:{}) using librunner {}",
         B::Soc::SOC_NAME,
@@ -206,11 +212,9 @@ pub fn init_se050<
     (se050, ChaCha8Rng::from_seed(seed))
 }
 
-#[inline(never)]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+pub fn handle_panic<B: Board>(_info: &core::panic::PanicInfo) -> ! {
     error_now!("{}", _info);
-    soc::board::set_panic_led();
+    B::Led::set_panic_led();
     loop {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }

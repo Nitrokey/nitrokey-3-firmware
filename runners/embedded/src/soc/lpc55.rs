@@ -1,48 +1,27 @@
 use core::time::Duration;
 
-use crate::{types::Uuid, ui::Clock};
+use super::{Soc, Uuid};
+use crate::ui::Clock;
 use apps::Variant;
 use embedded_time::duration::Milliseconds;
 use lpc55_hal::{
-    drivers::{
-        pins::{Pio0_9, Pio1_14},
-        timer::Timer,
-    },
-    peripherals::{ctimer, flash, flexcomm::I2c5, rtc::Rtc, syscon},
+    drivers::timer::Timer,
+    peripherals::{ctimer, flash, rtc::Rtc, syscon},
     raw::{Interrupt, SCB},
     traits::flash::WriteErase,
-    typestates::{
-        init_state::Enabled,
-        pin::{
-            function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
-            state::Special,
-        },
-    },
-    I2cMaster,
+    typestates::init_state::Enabled,
 };
-use memory_regions::MemoryRegions;
 
-//////////////////////////////////////////////////////////////////////////////
-// Upper Interface (definitions towards ERL Core)
+pub mod clock_controller;
+pub mod monotonic;
 
 pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
-pub(super) type I2C = I2cMaster<
-    Pio0_9,
-    Pio1_14,
-    I2c5,
-    (
-        lpc55_hal::Pin<Pio0_9, Special<FC5_TXD_SCL_MISO_WS>>,
-        lpc55_hal::Pin<Pio1_14, Special<FC5_CTS_SDA_SSEL0>>,
-    ),
->;
+pub struct Lpc55;
 
-pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
-
-pub struct Soc {}
-impl crate::types::Soc for Soc {
+impl Soc for Lpc55 {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type Clock = RtcClock;
 
@@ -51,7 +30,7 @@ impl crate::types::Soc for Soc {
     type Interrupt = Interrupt;
     const SYSCALL_IRQ: Interrupt = Interrupt::OS_EVENT;
 
-    const SOC_NAME: &'static str = "LPC55";
+    const SOC_NAME: &'static str = "lpc55";
     const VARIANT: Variant = Variant::Lpc55;
 
     fn device_uuid() -> &'static Uuid {
@@ -59,7 +38,7 @@ impl crate::types::Soc for Soc {
     }
 }
 
-impl apps::Reboot for Soc {
+impl apps::Reboot for Lpc55 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
@@ -84,7 +63,7 @@ impl apps::Reboot for Soc {
     }
 }
 
-pub type DynamicClockController = super::clock_controller::DynamicClockController;
+pub type DynamicClockController = clock_controller::DynamicClockController;
 pub type NfcWaitExtender = Timer<ctimer::Ctimer0<Enabled>>;
 pub type PerformanceTimer = Timer<ctimer::Ctimer4<Enabled>>;
 
