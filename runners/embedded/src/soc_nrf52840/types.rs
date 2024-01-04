@@ -1,5 +1,11 @@
+use core::mem::MaybeUninit;
+
 use crate::soc::types::pac::SCB;
 use apps::Variant;
+use littlefs2::{
+    fs::{Allocation, Filesystem},
+    io::Result as LfsResult,
+};
 use memory_regions::MemoryRegions;
 use nrf52840_hal::{
     gpio::{Input, Output, Pin, PullDown, PullUp, PushPull},
@@ -7,7 +13,9 @@ use nrf52840_hal::{
     usbd::{UsbPeripheral, Usbd},
 };
 use nrf52840_pac::{self, Interrupt};
+use trussed::store::Fs;
 
+use super::migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage};
 use crate::{flash::ExtFlashStorage, types::Uuid};
 use nrf52840_hal::Spim;
 use nrf52840_pac::SPIM3;
@@ -21,10 +29,11 @@ pub static mut DEVICE_UUID: Uuid = [0u8; 16];
 
 pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
 
+pub type InternalFlashStorage = super::flash::FlashStorage;
+pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
+
 pub struct Soc {}
 impl crate::types::Soc for Soc {
-    type InternalFlashStorage = super::flash::FlashStorage;
-    type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
     type UsbBus = Usbd<UsbPeripheral<'static>>;
     type NfcDevice = DummyNfc;
     type TrussedUI = super::board::TrussedUI;
@@ -49,7 +58,56 @@ impl crate::types::Soc for Soc {
     fn device_uuid() -> &'static Uuid {
         unsafe { &DEVICE_UUID }
     }
+
+    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
+        ifs.format_journal_blocks();
+    }
+
+    fn recover_ifs(
+        ifs_storage: &mut Self::InternalStorage,
+        ifs_alloc: &mut Allocation<Self::InternalStorage>,
+        efs_storage: &mut Self::ExternalStorage,
+    ) -> LfsResult<()> {
+        error_now!("IFS (nrf42) mount-fail");
+
+        // regular mount failed, try mounting "old" (pre-journaling) IFS
+        let pac = unsafe { nrf52840_pac::Peripherals::steal() };
+        let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
+        let mut old_ifs_alloc: Allocation<OldFlashStorage> = Filesystem::allocate();
+        let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
+
+        // we can mount the old ifs filesystem, thus we need to migrate
+        if old_mountable {
+            let mounted_ifs = ftl_journal::migrate(
+                &mut old_ifs_storage,
+                &mut old_ifs_alloc,
+                ifs_alloc,
+                ifs_storage,
+                efs_storage,
+            );
+            // migration went fine => use its resulting IFS
+            if let Ok(()) = mounted_ifs {
+                info_now!("migration ok, mounting IFS");
+                Ok(())
+            // migration failed => format IFS
+            } else {
+                error_now!("failed migration, formatting IFS");
+                Filesystem::format(ifs_storage)
+            }
+        } else {
+            info_now!("recovering from journal");
+            // IFS and old-IFS cannot be mounted, try to recover from journal
+            ifs_storage.recover_from_journal();
+            Ok(())
+        }
+    }
 }
+
+impl_storage_pointers!(
+    Soc,
+    Internal = InternalFlashStorage,
+    External = ExternalFlashStorage,
+);
 
 pub struct DummyNfc;
 impl nfc_device::traits::nfc::Device for DummyNfc {

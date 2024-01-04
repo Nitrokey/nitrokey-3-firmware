@@ -260,30 +260,6 @@ mod app {
         });
     }
 
-    #[task(binds = MAILBOX, shared = [usb_classes], priority = 5)]
-    #[allow(unused_mut, unused_variables)]
-    fn mailbox(mut c: mailbox::Context) {
-        // debug_now!("mailbox: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
-        #[cfg(feature = "log-serial")]
-        c.shared.usb_classes.lock(|usb_classes_maybe| {
-            match usb_classes_maybe.as_mut() {
-                Some(usb_classes) => {
-                    // usb_classes.serial.write(logs.as_bytes()).ok();
-                    usb_classes.serial.write(b"dummy test string\n").ok();
-                    // app::drain_log_to_serial(&mut usb_classes.serial);
-                }
-                _ => {}
-            }
-        });
-        // // let usb_classes = c.shared.usb_classes.as_mut().unwrap();
-
-        // let mailbox::Resources { usb_classes } = c.shared;
-        // let x: () = usb_classes;
-        // // if let Some(usb_classes) = usb_classes.as_mut() {
-        // //     usb_classes.serial.write(b"dummy test string\n").ok();
-        // // }
-    }
-
     #[task(binds = OS_EVENT, shared = [trussed], priority = 5)]
     fn os_event(mut c: os_event::Context) {
         // debug_now!("os event: remaining stack size: {} bytes", super::msp() - 0x2000_0000);

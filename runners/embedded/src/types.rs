@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 
-use crate::soc::types::Soc as SocT;
+use crate::store::{RunnerStore, StoragePointers};
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -10,12 +10,14 @@ pub use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_time::duration::Milliseconds;
-use littlefs2::{const_ram_storage, fs::Allocation, fs::Filesystem};
+use littlefs2::{
+    const_ram_storage,
+    fs::{Allocation, Filesystem},
+};
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
     platform::UserInterface,
-    store,
     types::{LfsResult, LfsStorage},
     Platform,
 };
@@ -43,10 +45,7 @@ pub const INTERFACE_CONFIG: Config = Config {
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc: Reboot + 'static {
-    type InternalFlashStorage;
-    type ExternalFlashStorage;
-    // VolatileStorage is always RAM
+pub trait Soc: StoragePointers + Reboot + 'static {
     type UsbBus: UsbBus + 'static;
     type NfcDevice: NfcDevice;
     type TrussedUI: UserInterface;
@@ -70,6 +69,19 @@ pub trait Soc: Reboot + 'static {
     const VARIANT: Variant;
 
     fn device_uuid() -> &'static Uuid;
+
+    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
+        let _ = ifs;
+    }
+
+    fn recover_ifs(
+        ifs_storage: &mut Self::InternalStorage,
+        ifs_alloc: &mut Allocation<Self::InternalStorage>,
+        efs_storage: &mut Self::ExternalStorage,
+    ) -> LfsResult<()> {
+        let _ = (ifs_alloc, efs_storage);
+        Filesystem::format(ifs_storage)
+    }
 }
 
 pub struct Runner<S> {
@@ -80,9 +92,9 @@ pub struct Runner<S> {
 impl<S: Soc> apps::Runner for Runner<S> {
     type Syscall = RunnerSyscall<S>;
     type Reboot = S;
-    type Store = RunnerStore;
+    type Store = RunnerStore<S>;
     #[cfg(feature = "provisioner")]
-    type Filesystem = <SocT as Soc>::InternalFlashStorage;
+    type Filesystem = S::InternalStorage;
     type Twi = S::Twi;
     type Se050Timer = S::Se050Timer;
 
@@ -112,32 +124,15 @@ const_ram_storage!(
     result = LfsResult,
 );
 
-store!(
-    RunnerStore,
-    Internal: <SocT as Soc>::InternalFlashStorage,
-    External: <SocT as Soc>::ExternalFlashStorage,
-    Volatile: VolatileStorage
-);
-
-pub static mut INTERNAL_STORAGE: Option<<SocT as Soc>::InternalFlashStorage> = None;
-pub static mut INTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut INTERNAL_FS: Option<Filesystem<<SocT as Soc>::InternalFlashStorage>> = None;
-pub static mut EXTERNAL_STORAGE: Option<<SocT as Soc>::ExternalFlashStorage> = None;
-pub static mut EXTERNAL_FS_ALLOC: Option<Allocation<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut EXTERNAL_FS: Option<Filesystem<<SocT as Soc>::ExternalFlashStorage>> = None;
-pub static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-pub static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-pub static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
-
 pub struct RunnerPlatform<S: Soc> {
     pub rng: ChaCha8Rng,
-    pub store: RunnerStore,
+    pub store: RunnerStore<S>,
     pub user_interface: S::TrussedUI,
 }
 
 unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
     type R = ChaCha8Rng;
-    type S = RunnerStore;
+    type S = RunnerStore<S>;
     type UI = S::TrussedUI;
 
     fn user_interface(&mut self) -> &mut Self::UI {
@@ -190,11 +185,6 @@ impl delog::Flusher for DelogFlusher {
 
         #[cfg(feature = "log-semihosting")]
         cortex_m_semihosting::hprint!(_msg).ok();
-
-        // TODO: re-enable?
-        // #[cfg(feature = "log-serial")]
-        // see https://git.io/JLARR for the plan on how to improve this once we switch to RTIC 0.6
-        // rtic::pend(hal::raw::Interrupt::MAILBOX);
     }
 }
 

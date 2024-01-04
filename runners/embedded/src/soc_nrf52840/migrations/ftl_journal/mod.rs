@@ -7,15 +7,14 @@ use backends::EFSBackupBackend;
 use ifs_flash_old::FlashStorage as OldFlashStorage;
 use lfs_backup::{BackupBackend, FSBackupError, Result};
 
-use crate::soc::{flash::FlashStorage, types::Soc as SocT};
-use crate::types::Soc;
+use crate::soc::{flash::FlashStorage, types::ExternalFlashStorage};
 
 pub fn migrate<'a>(
     old_ifs_storage: &mut OldFlashStorage,
     old_ifs_alloc: &mut littlefs2::fs::Allocation<OldFlashStorage>,
     ifs_alloc: &mut littlefs2::fs::Allocation<FlashStorage>,
     ifs_storage: &mut FlashStorage,
-    efs_storage: &mut <SocT as Soc>::ExternalFlashStorage,
+    efs_storage: &mut ExternalFlashStorage,
 ) -> Result<()> {
     let old_mounted = littlefs2::fs::Filesystem::mount(old_ifs_alloc, old_ifs_storage)
         .map_err(|_| FSBackupError::LittleFs2Err)?;

@@ -125,7 +125,7 @@ mod app {
             res.unwrap()
         };
 
-        let store = ERL::init_store(internal_flash, extflash, false, &mut init_status);
+        let store = ERL::store::init_store(internal_flash, extflash, false, &mut init_status);
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();

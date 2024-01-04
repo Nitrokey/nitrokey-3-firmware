@@ -14,7 +14,6 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
-use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
@@ -147,9 +146,9 @@ impl admin_app::Config for OpcardConfig {
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         match key {
             #[cfg(feature = "factory-reset")]
-            "" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            "" => Some((littlefs2::path!("opcard"), &OPCARD_RESET_SIGNAL)),
             #[cfg(feature = "se050")]
-            "use_se050_backend" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            "use_se050_backend" => Some((littlefs2::path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
         }
     }
