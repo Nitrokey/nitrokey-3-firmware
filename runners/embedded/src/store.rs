@@ -12,7 +12,7 @@ use littlefs2::{
 };
 use trussed::store::{Fs, Store};
 
-use crate::types::{Board, VolatileStorage};
+use crate::{board::Board, types::VolatileStorage};
 
 #[cfg(feature = "provisioner")]
 pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
@@ -90,6 +90,8 @@ macro_rules! impl_storage_pointers {
         }
     };
 }
+
+pub(crate) use impl_storage_pointers;
 
 pub struct RunnerStore<S> {
     _marker: PhantomData<*mut S>,

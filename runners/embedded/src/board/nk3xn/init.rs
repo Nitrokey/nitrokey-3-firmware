@@ -25,8 +25,11 @@ use hal::{
     },
     time::{DurationExtensions as _, RateExtensions as _},
     traits::wg::digital::v2::InputPin,
-    typestates::init_state::Unknown,
-    typestates::pin::state::Gpio,
+    typestates::{
+        init_state::{Enabled, Unknown},
+        pin::state::Gpio,
+    },
+    Pin,
 };
 use interchange::Channel;
 use lpc55_hal as hal;
@@ -38,26 +41,30 @@ use trussed::{service::Service, types::Location};
 use utils::OptionalStorage;
 
 #[cfg(feature = "se050")]
-use super::board::TimerDelay;
-use super::{
-    board::{self, InternalFlashStorage, NK3xN},
-    clock_controller::DynamicClockController,
-    nfc::{self, NfcChip},
-    spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-    types::{Soc, I2C},
-};
+use super::TimerDelay;
 use crate::{
+    board::nk3xn::{
+        button::ThreeButtons,
+        led::RgbLed,
+        nfc::{self, NfcChip},
+        spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+    },
     flash::ExtFlashStorage,
+    soc::{
+        lpc55::{clock_controller::DynamicClockController, Lpc55, DEVICE_UUID},
+        Soc,
+    },
     store::RunnerStore,
     types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
     ui::{
         buttons::{self, Press},
-        rgb_led::RgbLed,
+        rgb_led::RgbLed as _,
         UserInterface,
     },
 };
 
-type UsbBusType = usb_device::bus::UsbBusAllocator<<Soc as types::Soc>::UsbBus>;
+type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -68,25 +75,25 @@ struct Peripherals {
 struct Clocks {
     is_nfc_passive: bool,
     clocks: clocks::Clocks,
-    nfc_irq: Option<hal::Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
-    iocon: hal::Iocon<hal::Enabled>,
-    gpio: hal::Gpio<hal::Enabled>,
+    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
+    iocon: hal::Iocon<Enabled>,
+    gpio: hal::Gpio<Enabled>,
 }
 
 pub struct Basic {
-    pub delay_timer: Timer<ctimer::Ctimer0<hal::Enabled>>,
-    pub perf_timer: Timer<ctimer::Ctimer4<hal::Enabled>>,
-    adc: Option<hal::Adc<hal::Enabled>>,
-    three_buttons: Option<board::button::ThreeButtons>,
-    rgb: Option<board::led::RgbLed>,
+    pub delay_timer: Timer<ctimer::Ctimer0<Enabled>>,
+    pub perf_timer: Timer<ctimer::Ctimer4<Enabled>>,
+    adc: Option<hal::Adc<Enabled>>,
+    three_buttons: Option<ThreeButtons>,
+    rgb: Option<RgbLed>,
     old_firmware_version: u32,
 }
 
 struct Flash {
     flash_gordon: FlashGordon,
     #[allow(unused)]
-    prince: Prince<hal::Enabled>,
-    rng: Rng<hal::Enabled>,
+    prince: Prince<Enabled>,
+    rng: Rng<Enabled>,
 }
 
 pub struct Stage0 {
@@ -97,11 +104,11 @@ pub struct Stage0 {
 impl Stage0 {
     fn enable_low_speed_for_passive_nfc(
         &mut self,
-        mut iocon: hal::Iocon<hal::Enabled>,
-        gpio: &mut hal::Gpio<hal::Enabled>,
+        mut iocon: hal::Iocon<Enabled>,
+        gpio: &mut hal::Gpio<Enabled>,
     ) -> (
-        hal::Iocon<hal::Enabled>,
-        hal::Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
+        hal::Iocon<Enabled>,
+        Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
         bool,
     ) {
         let nfc_irq = nfc::NfcIrqPin::take()
@@ -133,11 +140,11 @@ impl Stage0 {
     #[inline(never)]
     pub fn next(mut self, iocon: hal::Iocon<Unknown>, gpio: hal::Gpio<Unknown>) -> Stage1 {
         unsafe {
-            super::types::DEVICE_UUID.copy_from_slice(&hal::uuid());
+            DEVICE_UUID.copy_from_slice(&hal::uuid());
             #[cfg(feature = "alpha")]
             {
-                super::types::DEVICE_UUID[14] = 0xa1;
-                super::types::DEVICE_UUID[15] = 0xfa;
+                DEVICE_UUID[14] = 0xa1;
+                DEVICE_UUID[15] = 0xfa;
             }
         };
 
@@ -173,7 +180,7 @@ pub struct Stage1 {
 
 impl Stage1 {
     fn validate_cfpa(
-        pfr: &mut Pfr<hal::Enabled>,
+        pfr: &mut Pfr<Enabled>,
         current_version_maybe: Option<u32>,
         require_prince: bool,
     ) -> u32 {
@@ -207,9 +214,9 @@ impl Stage1 {
         old_version
     }
 
-    fn is_bootrom_requested<T: Ctimer<hal::Enabled>>(
+    fn is_bootrom_requested<T: Ctimer<Enabled>>(
         &mut self,
-        three_buttons: &mut board::button::ThreeButtons,
+        three_buttons: &mut ThreeButtons,
         timer: &mut Timer<T>,
     ) -> bool {
         // Boot to bootrom if buttons are all held for 5s
@@ -228,10 +235,10 @@ impl Stage1 {
         false
     }
 
-    fn init_rgb(&mut self, ctimer: board::PwmTimer) -> board::led::RgbLed {
+    fn init_rgb(&mut self, ctimer: PwmTimer) -> RgbLed {
         #[cfg(feature = "board-nk3xn")]
         {
-            board::led::RgbLed::new(
+            RgbLed::new(
                 hal::drivers::Pwm::new(ctimer.enabled(
                     &mut self.peripherals.syscon,
                     self.clocks.clocks.support_1mhz_fro_token().unwrap(),
@@ -241,10 +248,10 @@ impl Stage1 {
         }
     }
 
-    fn init_buttons(&mut self, ctimer: board::ButtonsTimer) -> board::button::ThreeButtons {
+    fn init_buttons(&mut self, ctimer: ButtonsTimer) -> ThreeButtons {
         #[cfg(feature = "board-nk3xn")]
         {
-            board::button::ThreeButtons::new(
+            ThreeButtons::new(
                 Timer::new(ctimer.enabled(
                     &mut self.peripherals.syscon,
                     self.clocks.clocks.support_1mhz_fro_token().unwrap(),
@@ -343,7 +350,7 @@ pub struct Stage2 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
 }
 
 impl Stage2 {
@@ -485,7 +492,7 @@ pub struct Stage3 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
-    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
 }
 
@@ -537,7 +544,7 @@ pub struct Stage4 {
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     flash: Flash,
-    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
 }
 
@@ -647,10 +654,10 @@ impl Stage4 {
 /// after it was first provisioned.  In this case, there can be an exception
 /// reading from undefined flash.  To fix, we run a pass over all filesystem
 /// flash and set it to a defined value.
-fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<hal::Enabled>) {
+fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<Enabled>) {
     use lpc55_hal::traits::flash::{Read, WriteErase};
 
-    let offset = super::types::MEMORY_REGIONS.filesystem.start;
+    let offset = super::MEMORY_REGIONS.filesystem.start;
 
     let page_count = ((631 * 1024 + 512) - offset) / 512;
 
@@ -682,9 +689,9 @@ pub struct Stage5 {
     basic: Basic,
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
-    rng: Rng<hal::Enabled>,
+    rng: Rng<Enabled>,
     store: RunnerStore<NK3xN>,
-    se050_timer: Timer<ctimer::Ctimer2<hal::Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
 }
 
@@ -781,7 +788,7 @@ impl Stage6 {
                 self.store,
                 trussed::types::Location::Internal,
                 &littlefs2::path::PathBuf::from("fido/x5c/00"),
-                include_bytes!("../../data/fido-cert.der"),
+                include_bytes!("../../../data/fido-cert.der"),
             );
             if res.is_err() {
                 self.status.insert(InitStatus::MIGRATION_ERROR);

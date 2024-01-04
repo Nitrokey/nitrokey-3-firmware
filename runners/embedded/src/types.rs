@@ -3,28 +3,16 @@ use core::marker::PhantomData;
 pub use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
-use apps::{Dispatch, Reboot, Variant};
-use cortex_m::interrupt::InterruptNumber;
+use apps::Dispatch;
 pub use ctaphid_dispatch::app::App as CtaphidApp;
-#[cfg(feature = "se050")]
-use embedded_hal::blocking::delay::DelayUs;
-use embedded_time::duration::Milliseconds;
-use littlefs2::{
-    const_ram_storage,
-    fs::{Allocation, Filesystem},
-};
-use nfc_device::traits::nfc::Device as NfcDevice;
+use littlefs2::const_ram_storage;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
     types::{LfsResult, LfsStorage},
     Platform,
 };
-use usb_device::bus::UsbBus;
 
-use crate::{
-    store::{RunnerStore, StoragePointers},
-    ui::{buttons::UserPresence, rgb_led::RgbLed, Clock, UserInterface},
-};
+use crate::{board::Board, soc::Soc, store::RunnerStore, ui::UserInterface};
 
 pub mod usbnfc;
 
@@ -45,55 +33,6 @@ pub const INTERFACE_CONFIG: Config = Config {
     usb_id_vendor: 0x20A0,
     usb_id_product: 0x42B2,
 };
-
-pub type Uuid = [u8; 16];
-
-pub trait Board: StoragePointers {
-    type Soc: Soc;
-
-    type NfcDevice: NfcDevice;
-    type Buttons: UserPresence;
-    type Led: RgbLed;
-
-    #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32> + 'static;
-    #[cfg(feature = "se050")]
-    type Twi: se05x::t1::I2CForT1 + 'static;
-    #[cfg(not(feature = "se050"))]
-    type Se050Timer: 'static;
-    #[cfg(not(feature = "se050"))]
-    type Twi: 'static;
-
-    const BOARD_NAME: &'static str;
-
-    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
-        let _ = ifs;
-    }
-
-    fn recover_ifs(
-        ifs_storage: &mut Self::InternalStorage,
-        ifs_alloc: &mut Allocation<Self::InternalStorage>,
-        efs_storage: &mut Self::ExternalStorage,
-    ) -> LfsResult<()> {
-        let _ = (ifs_alloc, efs_storage);
-        Filesystem::format(ifs_storage)
-    }
-}
-
-pub trait Soc: Reboot + 'static {
-    type UsbBus: UsbBus + 'static;
-    type Clock: Clock;
-
-    type Duration: From<Milliseconds>;
-
-    type Interrupt: InterruptNumber;
-    const SYSCALL_IRQ: Self::Interrupt;
-
-    const SOC_NAME: &'static str;
-    const VARIANT: Variant;
-
-    fn device_uuid() -> &'static Uuid;
-}
 
 pub struct Runner<B> {
     pub is_efs_available: bool,

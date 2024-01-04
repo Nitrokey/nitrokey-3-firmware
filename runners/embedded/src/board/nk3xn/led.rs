@@ -65,6 +65,24 @@ impl RgbLed {
 }
 
 impl rgb_led::RgbLed for RgbLed {
+    fn set_panic_led() {
+        unsafe {
+            let mut syscon = lpc55_hal::Syscon::steal();
+            let mut iocon = lpc55_hal::Iocon::steal().enabled(&mut syscon);
+            let mut gpio = lpc55_hal::Gpio::steal().enabled(&mut syscon);
+
+            RedLedPin::steal()
+                .into_gpio_pin(&mut iocon, &mut gpio)
+                .into_output_low();
+            GreenLedPin::steal()
+                .into_gpio_pin(&mut iocon, &mut gpio)
+                .into_output_high();
+            BlueLedPin::steal()
+                .into_gpio_pin(&mut iocon, &mut gpio)
+                .into_output_high();
+        }
+    }
+
     fn red(&mut self, intensity: u8) {
         self.pwm.set_duty(RedLed::CHANNEL, (intensity / 2) as u16);
     }
@@ -75,23 +93,5 @@ impl rgb_led::RgbLed for RgbLed {
 
     fn blue(&mut self, intensity: u8) {
         self.pwm.set_duty(BlueLed::CHANNEL, (intensity as u16) * 8);
-    }
-}
-
-pub fn set_panic_led() {
-    unsafe {
-        let mut syscon = lpc55_hal::Syscon::steal();
-        let mut iocon = lpc55_hal::Iocon::steal().enabled(&mut syscon);
-        let mut gpio = lpc55_hal::Gpio::steal().enabled(&mut syscon);
-
-        RedLedPin::steal()
-            .into_gpio_pin(&mut iocon, &mut gpio)
-            .into_output_low();
-        GreenLedPin::steal()
-            .into_gpio_pin(&mut iocon, &mut gpio)
-            .into_output_high();
-        BlueLedPin::steal()
-            .into_gpio_pin(&mut iocon, &mut gpio)
-            .into_output_high();
     }
 }

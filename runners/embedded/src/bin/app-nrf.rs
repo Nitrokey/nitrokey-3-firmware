@@ -1,23 +1,12 @@
 #![no_std]
 #![no_main]
 
-use embedded_runner_lib as ERL;
-
 #[cfg_attr(not(feature = "no-delog"), macro_use)]
 extern crate delog;
 delog::generate_macros!();
 
-#[cfg(not(feature = "no-delog"))]
-delog!(Delogger, 3 * 1024, 512, ERL::types::DelogFlusher);
-
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
-    #[cfg(not(feature = "no-delog"))]
-    use super::Delogger;
-    use super::{
-        ERL,
-        ERL::{soc::rtic_monotonic::RtcDuration, types::RunnerPlatform},
-    };
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
     use nfc_device::Iso14443;
@@ -30,22 +19,28 @@ mod app {
     use trussed::types::{Bytes, Location};
 
     use embedded_runner_lib::{
-        soc::board::{self, DummyNfc},
-        types,
+        board::{
+            self,
+            nk3am::{self, DummyNfc, InternalFlashStorage, NK3AM},
+        },
+        flash::ExtFlashStorage,
+        runtime,
+        soc::nrf52::{self, rtic_monotonic::RtcDuration},
+        store,
+        types::{self, RunnerPlatform},
     };
 
-    #[cfg(feature = "board-nk3am")]
-    type Board = board::NK3AM;
+    type Board = NK3AM;
 
-    type Soc = <Board as types::Board>::Soc;
+    type Soc = <Board as board::Board>::Soc;
 
     #[shared]
     struct SharedResources {
-        trussed: ERL::types::Trussed<Board>,
-        apps: ERL::types::Apps<Board>,
-        apdu_dispatch: ERL::types::ApduDispatch,
-        ctaphid_dispatch: ERL::types::CtaphidDispatch,
-        usb_classes: Option<ERL::types::usbnfc::UsbClasses<Soc>>,
+        trussed: types::Trussed<Board>,
+        apps: types::Apps<Board>,
+        apdu_dispatch: types::ApduDispatch,
+        ctaphid_dispatch: types::CtaphidDispatch,
+        usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
         contactless: Option<Iso14443<DummyNfc>>,
         /* NRF specific elements */
         // (display UI)
@@ -66,7 +61,7 @@ mod app {
     }
 
     #[monotonic(binds = RTC0, default = true)]
-    type RtcMonotonic = ERL::soc::rtic_monotonic::RtcMonotonic;
+    type RtcMonotonic = nrf52::rtic_monotonic::RtcMonotonic;
 
     #[init()]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
@@ -78,13 +73,9 @@ mod app {
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
 
-        #[cfg(feature = "log-rtt")]
-        rtt_target::rtt_init_print!();
-        #[cfg(not(feature = "no-delog"))]
-        Delogger::init_default(delog::LevelFilter::Trace, &ERL::types::DELOG_FLUSHER).ok();
-        ERL::banner::<Board>();
+        embedded_runner_lib::init_logger::<Board>();
 
-        ERL::soc::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
+        nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
         let se050_timer = Timer::<nrf52840_pac::TIMER1>::new(ctx.device.TIMER1);
 
@@ -92,7 +83,7 @@ mod app {
         let mut board_gpio = {
             let dev_gpio_p0 = p0::Parts::new(ctx.device.P0);
             let dev_gpio_p1 = p1::Parts::new(ctx.device.P1);
-            ERL::soc::board::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
+            nk3am::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
         };
         dev_gpiote.reset_events();
 
@@ -103,7 +94,7 @@ mod app {
 
         let usbd_ref = {
             if powered_by_usb {
-                Some(ERL::soc::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
+                Some(nrf52::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
             } else {
                 None
             }
@@ -111,7 +102,7 @@ mod app {
         /* TODO: set up NFC chip */
         // let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 
-        let internal_flash = ERL::soc::init_internal_flash(ctx.device.NVMC);
+        let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
 
         let extflash = {
             use nrf52840_hal::Spim;
@@ -123,17 +114,16 @@ mod app {
                 nrf52840_hal::spim::MODE_0,
                 0x00u8,
             );
-            use crate::ERL::flash::ExtFlashStorage;
             let res = ExtFlashStorage::try_new(spim, board_gpio.flash_cs.take().unwrap());
 
             res.unwrap()
         };
 
-        let store = ERL::store::init_store(internal_flash, extflash, false, &mut init_status);
+        let store = store::init_store(internal_flash, extflash, false, &mut init_status);
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
-        let usbnfcinit = ERL::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
+        let usbnfcinit = embedded_runner_lib::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
         /* TODO: set up fingerprint device */
         /* TODO: set up SE050 device */
         use nrf52840_hal::prelude::OutputPin;
@@ -165,7 +155,8 @@ mod app {
         let mut dev_rng = Rng::new(ctx.device.RNG);
 
         #[cfg(feature = "se050")]
-        let (se050, rng) = ERL::init_se050(twim, se050_timer, &mut dev_rng, &mut init_status);
+        let (se050, rng) =
+            embedded_runner_lib::init_se050(twim, se050_timer, &mut dev_rng, &mut init_status);
 
         #[cfg(not(feature = "se050"))]
         use rand::{Rng as _, SeedableRng};
@@ -173,16 +164,13 @@ mod app {
         let rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
 
         #[cfg(feature = "board-nk3am")]
-        let user_interface = ERL::soc::board::init_ui(
+        let user_interface = nk3am::init_ui(
             board_gpio.rgb_led,
             ctx.device.PWM0,
             ctx.device.PWM1,
             ctx.device.PWM2,
             board_gpio.touch.unwrap(),
         );
-
-        #[cfg(not(feature = "board-nk3am"))]
-        let user_interface = ERL::soc::board::init_ui();
 
         let platform = RunnerPlatform {
             rng,
@@ -209,7 +197,12 @@ mod app {
             ),
         );
 
-        let apps = ERL::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
+        let apps = embedded_runner_lib::init_apps(
+            &mut trussed_service,
+            init_status,
+            &store,
+            !powered_by_usb,
+        );
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
@@ -254,7 +247,7 @@ mod app {
             let (usb_activity, _nfc_activity) = apps.lock(|apps| {
                 apdu_dispatch.lock(|apdu_dispatch| {
                     ctaphid_dispatch.lock(|ctaphid_dispatch| {
-                        ERL::runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
+                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
                     })
                 })
             });
@@ -264,7 +257,7 @@ mod app {
             }
 
             usb_classes.lock(|usb_classes| {
-                ERL::runtime::poll_usb(
+                runtime::poll_usb(
                     usb_classes,
                     ccid_keepalive::spawn_after,
                     ctaphid_keepalive::spawn_after,
@@ -273,7 +266,7 @@ mod app {
             });
 
             contactless.lock(|contactless| {
-                ERL::runtime::poll_nfc(contactless, nfc_keepalive::spawn_after);
+                runtime::poll_nfc(contactless, nfc_keepalive::spawn_after);
             });
         }
         // loop {}
@@ -285,7 +278,7 @@ mod app {
 
         //trace!("irq SWI0_EGU0");
         trussed.lock(|trussed| {
-            ERL::runtime::run_trussed(trussed);
+            runtime::run_trussed(trussed);
         });
     }
 
@@ -300,7 +293,7 @@ mod app {
         let mut usb_classes = ctx.shared.usb_classes;
 
         usb_classes.lock(|usb_classes| {
-            ERL::runtime::poll_usb(
+            runtime::poll_usb(
                 usb_classes,
                 ccid_keepalive::spawn_after,
                 ctaphid_keepalive::spawn_after,
@@ -314,7 +307,7 @@ mod app {
         let mut usb_classes = ctx.shared.usb_classes;
 
         usb_classes.lock(|usb_classes| {
-            ERL::runtime::ccid_keepalive(usb_classes, ccid_keepalive::spawn_after);
+            runtime::ccid_keepalive(usb_classes, ccid_keepalive::spawn_after);
         });
     }
 
@@ -323,7 +316,7 @@ mod app {
         let mut usb_classes = ctx.shared.usb_classes;
 
         usb_classes.lock(|usb_classes| {
-            ERL::runtime::ctaphid_keepalive(usb_classes, ctaphid_keepalive::spawn_after);
+            runtime::ctaphid_keepalive(usb_classes, ctaphid_keepalive::spawn_after);
         });
     }
 
@@ -332,7 +325,7 @@ mod app {
         let mut contactless = ctx.shared.contactless;
 
         contactless.lock(|contactless| {
-            ERL::runtime::nfc_keepalive(contactless, nfc_keepalive::spawn_after);
+            runtime::nfc_keepalive(contactless, nfc_keepalive::spawn_after);
         });
     }
 
@@ -372,4 +365,10 @@ mod app {
         });
         ui::spawn_after(RtcDuration::from_ms(125)).ok();
     }
+}
+
+#[inline(never)]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    embedded_runner_lib::handle_panic::<embedded_runner_lib::board::nk3am::NK3AM>(info)
 }

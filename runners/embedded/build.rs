@@ -5,7 +5,7 @@ use memory_regions::MemoryRegions;
 
 #[cfg(feature = "soc-lpc55")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::LPC55;
-#[cfg(feature = "soc-nrf52840")]
+#[cfg(feature = "soc-nrf52")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NRF52;
 
 #[derive(Eq, PartialEq)]
@@ -17,7 +17,7 @@ enum SocType {
 fn check_build_triplet() -> SocType {
     let target = env::var("TARGET").expect("$TARGET unset");
     let soc_is_lpc55 = env::var_os("CARGO_FEATURE_SOC_LPC55").is_some();
-    let soc_is_nrf52840 = env::var_os("CARGO_FEATURE_SOC_NRF52840").is_some();
+    let soc_is_nrf52840 = env::var_os("CARGO_FEATURE_SOC_NRF52").is_some();
 
     if soc_is_lpc55 && !soc_is_nrf52840 {
         if target != "thumbv8m.main-none-eabi" {

@@ -17,7 +17,7 @@ use lpc55_hal::{
     typestates::init_state::Enabled,
 };
 
-use super::types::MEMORY_REGIONS;
+use super::MEMORY_REGIONS;
 
 pub const FS_START: usize = MEMORY_REGIONS.filesystem.start;
 pub const FS_END: usize = MEMORY_REGIONS.filesystem.end;
