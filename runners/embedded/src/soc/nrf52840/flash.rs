@@ -1,13 +1,5 @@
 use embedded_storage::nor_flash::{NorFlash, ReadNorFlash};
 
-use super::types::MEMORY_REGIONS;
-
-const FS_BASE: usize = MEMORY_REGIONS.filesystem.start;
-const FS_CEIL: usize = MEMORY_REGIONS.filesystem.end;
-
-const FLASH_BASE: *mut u8 = FS_BASE as *mut u8;
-const FLASH_SIZE: usize = FS_CEIL - FS_BASE;
-
 const REAL_BLOCK_SIZE: usize = 4 * 1024;
 
 const FTL_BLOCK_SIZE: usize = 256;
@@ -23,12 +15,12 @@ pub struct JournalInfo {
     pub cnt: u32,
 }
 
-pub struct FlashStorage {
+pub struct FlashStorage<const START: usize, const END: usize> {
     pub nvmc: nrf52840_hal::nvmc::Nvmc<nrf52840_pac::NVMC>,
     next_journal: Option<JournalInfo>,
 }
 
-impl FlashStorage {
+impl<const START: usize, const END: usize> FlashStorage<START, END> {
     pub fn format_journal_blocks(&mut self) {
         // erase entire journal region
         self.nvmc
@@ -209,12 +201,12 @@ impl FlashStorage {
     }
 }
 
-impl littlefs2::driver::Storage for FlashStorage {
+impl<const START: usize, const END: usize> littlefs2::driver::Storage for FlashStorage<START, END> {
     const BLOCK_SIZE: usize = FTL_BLOCK_SIZE;
     const READ_SIZE: usize = 4;
     const WRITE_SIZE: usize = FTL_BLOCK_SIZE;
     const BLOCK_COUNT: usize =
-        (FLASH_SIZE / Self::BLOCK_SIZE) - (FTL_BLOCKS_IN_REAL * FTL_JOURNAL_BLOCKS);
+        ((END - START) / Self::BLOCK_SIZE) - (FTL_BLOCKS_IN_REAL * FTL_JOURNAL_BLOCKS);
 
     type CACHE_SIZE = generic_array::typenum::U256;
     type LOOKAHEAD_SIZE = generic_array::typenum::U1;
@@ -283,9 +275,9 @@ fn nvmc_to_lfs_return(
         .map_err(|_| littlefs2::io::Error::Unknown(0x4e56_4d43)) // 'NVMC'
 }
 
-impl FlashStorage {
+impl<const START: usize, const END: usize> FlashStorage<START, END> {
     pub fn new(nvmc_pac: nrf52840_hal::pac::NVMC) -> Self {
-        let buf = unsafe { core::slice::from_raw_parts_mut(FLASH_BASE, FLASH_SIZE) };
+        let buf = unsafe { core::slice::from_raw_parts_mut(START as *mut u8, END - START) };
         let nvmc = nrf52840_hal::nvmc::Nvmc::new(nvmc_pac, buf);
 
         Self {

@@ -6,7 +6,7 @@ use core::{
 
 use trussed::platform::{self, consent, ui};
 
-use crate::types::{Board, Soc};
+use crate::{board::Board, soc::Soc};
 use buttons::UserPresence;
 use rgb_led::{Intensities, RgbLed};
 

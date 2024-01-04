@@ -1,5 +1,9 @@
-use crate::types::*;
-use crate::{types::usbnfc::UsbClasses, ui};
+use crate::{
+    board::Board,
+    soc::Soc,
+    types::{usbnfc::UsbClasses, ApduDispatch, Apps, CtaphidDispatch, Trussed},
+    ui,
+};
 
 use apdu_dispatch::dispatch::Interface;
 use embedded_time::duration::Milliseconds;

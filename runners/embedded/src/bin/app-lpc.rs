@@ -17,8 +17,12 @@ pub fn msp() -> u32 {
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
     use embedded_runner_lib::{
+        board::{
+            self,
+            nk3xn::{self, nfc::NfcChip, NK3xN},
+        },
         runtime,
-        soc::{self, board, monotonic::SystickMonotonic, nfc::NfcChip},
+        soc::lpc55::{self, monotonic::SystickMonotonic},
         types,
     };
     use lpc55_hal::{
@@ -30,10 +34,8 @@ mod app {
     use nfc_device::Iso14443;
     use systick_monotonic::Systick;
 
-    #[cfg(feature = "board-nk3xn")]
-    type Board = board::NK3xN;
-
-    type Soc = <Board as types::Board>::Soc;
+    type Board = NK3xN;
+    type Soc = <Board as board::Board>::Soc;
 
     const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
 
@@ -63,14 +65,14 @@ mod app {
         /// and to make sure logs are not flushed in the middle of NFC transactions.
         ///
         /// It could and should be behind some kind of `debug-nfc-timer` feature flag.
-        perf_timer: soc::types::PerformanceTimer,
+        perf_timer: lpc55::PerformanceTimer,
 
         /// When using passive power (i.e. NFC), we switch between 12MHz
         /// and 48Mhz, trying to optimize speed while keeping power high enough.
         ///
         /// In principle, we could just run at 12MHz constantly, and then
         /// there would be no need for a system-speed independent wait extender.
-        clock_ctrl: Option<soc::types::DynamicClockController>,
+        clock_ctrl: Option<lpc55::DynamicClockController>,
 
         /// Applications must respond to NFC requests within a certain time frame (~40ms)
         /// or send a "wait extension" to the NFC reader. This timer is responsible
@@ -86,7 +88,7 @@ mod app {
         /// NB: CCID + CTAPHID also have a sort of "wait extension" implemented, however
         /// since the system runs at constant speed when powered over USB, there is no
         /// need for such an independent timer.
-        wait_extender: soc::types::NfcWaitExtender,
+        wait_extender: lpc55::NfcWaitExtender,
     }
 
     #[local]
@@ -101,13 +103,13 @@ mod app {
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
 
-        let soc::init::All {
+        let nk3xn::init::All {
             basic,
             usb_nfc,
             trussed,
             apps,
             clock_controller,
-        } = soc::init(c.device, c.core);
+        } = nk3xn::init(c.device, c.core);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
 
@@ -156,7 +158,7 @@ mod app {
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {
-                soc::Delogger::flush();
+                lpc55::Delogger::flush();
             }
 
             let (usb_activity, nfc_activity) = apps.lock(|apps| {
@@ -337,4 +339,10 @@ mod app {
             .clock_ctrl
             .lock(|clock_ctrl| clock_ctrl.as_mut().unwrap().handle());
     }
+}
+
+#[inline(never)]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    embedded_runner_lib::handle_panic::<embedded_runner_lib::board::nk3xn::NK3xN>(info)
 }
