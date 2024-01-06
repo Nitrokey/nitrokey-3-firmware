@@ -20,16 +20,23 @@ mod app {
     use embedded_runner_lib::{
         board::{
             self,
-            nk3am::{self, DummyNfc, InternalFlashStorage, NK3AM},
+            nk3am::{
+                self,
+                ui::{HardwareButtons, RgbLed},
+                DummyNfc, InternalFlashStorage,
+            },
         },
-        flash::ExtFlashStorage,
         runtime,
         soc::nrf52840::{self, rtic_monotonic::RtcDuration},
         store,
         types::{self, RunnerPlatform},
+        ui::UserInterface,
     };
 
-    type Board = NK3AM;
+    #[cfg(all(feature = "board-nk3am", not(feature = "board-nkpk")))]
+    pub type Board = board::nk3am::NK3AM;
+    #[cfg(feature = "board-nkpk")]
+    pub type Board = board::nkpk::NKPK;
 
     type Soc = <Board as board::Board>::Soc;
 
@@ -91,7 +98,9 @@ mod app {
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
 
-        let extflash = {
+        #[cfg(all(feature = "board-nk3am", not(feature = "board-nkpk")))]
+        let (extflash, simulated_efs) = {
+            use embedded_runner_lib::flash::ExtFlashStorage;
             use nrf52840_hal::Spim;
             //Spim::new(spi, pins, config.speed(), config.mode())
             let spim = Spim::new(
@@ -103,10 +112,12 @@ mod app {
             );
             let res = ExtFlashStorage::try_new(spim, board_gpio.flash_cs.take().unwrap());
 
-            res.unwrap()
+            (res.unwrap(), false)
         };
+        #[cfg(feature = "board-nkpk")]
+        let (extflash, simulated_efs) = (Default::default(), true);
 
-        let store = store::init_store(internal_flash, extflash, false, &mut init_status);
+        let store = store::init_store(internal_flash, extflash, simulated_efs, &mut init_status);
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
@@ -145,14 +156,20 @@ mod app {
         #[cfg(not(feature = "se050"))]
         let rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
 
-        #[cfg(feature = "board-nk3am")]
-        let user_interface = nk3am::ui::init_ui(
+        let ui_clock = unsafe {
+            // TODO: safely share the RTC
+            let pac = nrf52840_pac::Peripherals::steal();
+            RtcMonotonic::new(pac.RTC0)
+        };
+        let led = RgbLed::new(
             board_gpio.rgb_led,
             ctx.device.PWM0,
             ctx.device.PWM1,
             ctx.device.PWM2,
-            board_gpio.touch.unwrap(),
         );
+        let buttons = HardwareButtons::new(board_gpio.touch.unwrap());
+        let provisioner = cfg!(feature = "provisioner");
+        let user_interface = UserInterface::new(ui_clock, Some(buttons), Some(led), provisioner);
 
         let platform = RunnerPlatform {
             rng,
@@ -352,5 +369,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    embedded_runner_lib::handle_panic::<embedded_runner_lib::board::nk3am::NK3AM>(info)
+    embedded_runner_lib::handle_panic::<app::Board>(info)
 }
