@@ -1,9 +1,7 @@
 #![no_std]
 #![no_main]
 
-#[macro_use]
-extern crate delog;
-generate_macros!();
+delog::generate_macros!();
 
 use core::arch::asm;
 

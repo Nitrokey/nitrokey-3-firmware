@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub struct HardwareButtons {
-    pub touch_button: Option<OutPin>,
+    touch_button: Option<OutPin>,
 }
 
 impl UserPresence for HardwareButtons {
