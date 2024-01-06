@@ -3,18 +3,23 @@ use core::time::Duration;
 use nrf52840_hal::{gpio::Level, pac, prelude::InputPin, pwm, pwm::Pwm};
 use trussed::platform::consent;
 
-use super::{OutPin, NK3AM};
-use crate::{
-    soc::nrf52840::rtic_monotonic::RtcMonotonic,
-    ui::{
-        buttons::{Button, Press, UserPresence},
-        rgb_led::{self, Color},
-        Clock, UserInterface,
-    },
+use super::OutPin;
+use crate::ui::{
+    buttons::{Button, Press, UserPresence},
+    rgb_led::{self, Color},
+    Clock,
 };
 
 pub struct HardwareButtons {
     touch_button: Option<OutPin>,
+}
+
+impl HardwareButtons {
+    pub fn new(touch_button: OutPin) -> Self {
+        Self {
+            touch_button: Some(touch_button),
+        }
+    }
 }
 
 impl UserPresence for HardwareButtons {
@@ -186,27 +191,4 @@ impl rgb_led::RgbLed for RgbLed {
     fn blue(&mut self, intensity: u8) {
         self.set_led(Color::Blue, pwm::Channel::C2, intensity);
     }
-}
-
-pub fn init_ui(
-    leds: [Option<OutPin>; 3],
-    pwm_red: pac::PWM0,
-    pwm_green: pac::PWM1,
-    pwm_blue: pac::PWM2,
-    touch: OutPin,
-) -> UserInterface<NK3AM> {
-    // TODO: safely share the RTC
-    let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-    let rtc_mono = RtcMonotonic::new(pac.RTC0);
-
-    let rgb = RgbLed::new(leds, pwm_red, pwm_green, pwm_blue);
-
-    let buttons = HardwareButtons {
-        touch_button: Some(touch),
-    };
-
-    let provisioner = cfg!(feature = "provisioner");
-    let ui = UserInterface::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
-
-    ui
 }

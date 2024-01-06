@@ -95,8 +95,8 @@ format-filesystem = []
 alloc = ["alloc-cortex-m"]
 
 board-nk3am = ["soc-nrf52840"]
-
 board-nk3xn = ["soc-lpc55"]
+board-nkpk = ["board-nk3am"]
 
 soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "rand_chacha", "se05x?/nrf"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic", "se05x?/lpc55", "rand_chacha"]

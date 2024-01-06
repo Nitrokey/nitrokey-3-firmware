@@ -56,7 +56,8 @@ check-firmware:
   script:
     - make -C runners/embedded check-all
     - make -C runners/embedded check-all FEATURES=provisioner
-    - make -C runners/embedded check-all FEATURES=test
+    - make -C runners/embedded check-nk3am.bl FEATURES=test
+    - make -C runners/embedded check-nk3xn FEATURES=test
 
 check-usbip:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest

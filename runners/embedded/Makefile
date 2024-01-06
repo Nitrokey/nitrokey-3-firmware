@@ -5,6 +5,10 @@ ifeq ($(BOARD), nk3am)
   SOC := nrf52
   TARGET := thumbv7em-none-eabihf
   LEGACY_BUILD_PROFILE := nrf52-bootloader
+else ifeq ($(BOARD), nkpk)
+  SOC := nrf52
+  TARGET := thumbv7em-none-eabihf
+  LEGACY_BUILD_PROFILE := nkpk
 else ifeq ($(BOARD), nk3xn)
   SOC := lpc55
   TARGET := thumbv8m.main-none-eabi
@@ -44,9 +48,9 @@ COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
 .PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
-all: build-nk3am.bl build-nk3xn $(ARTIFACTS)
+all: build-nk3am.bl build-nk3xn build-nkpk $(ARTIFACTS)
 
-check-all: check-nk3am.bl check-nk3xn
+check-all: check-nk3am.bl check-nk3xn check-nkpk
 
 $(ARTIFACTS):
 	mkdir -p $@
@@ -72,6 +76,8 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 	$(MAKE) $(GET_TARGET) BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BOARD=nk3xn FEATURES=$(FEATURES)
+%-nkpk: $(ARTIFACTS)
+	$(MAKE) $(GET_TARGET) BOARD=nkpk FEATURES=$(FEATURES)
 
 $(OUT_ELF): $(SRCS) build
 $(OUT_BIN): $(OUT_ELF)

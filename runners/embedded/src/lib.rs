@@ -149,6 +149,7 @@ pub fn init_apps<B: Board>(
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot as _;
+
         let store = store.clone();
         let int_flash_ref = unsafe { store::steal_internal_storage::<B>() };
         let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
