@@ -75,7 +75,7 @@ pub fn init_bootup(
 
     info!(
         "FICR DeviceID {}",
-        delog::hex_str!(unsafe { &types::DEVICE_UUID[0..8] })
+        delog::hex_str!(unsafe { &DEVICE_UUID[0..8] })
     );
     info!(
         "FICR IdtRoot  {:08x} {:08x} {:08x} {:08x}",

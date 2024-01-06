@@ -5,9 +5,9 @@ use littlefs2::{
 use memory_regions::MemoryRegions;
 use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as NfcState};
 use nrf52840_hal::{
-    gpio::{p0, p1, Input, Level, Output, Pin, PullDown, PullUp, PushPull},
+    gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
-    spim, twim, uarte, Spim,
+    spim, twim, Spim,
 };
 use nrf52840_pac::SPIM3;
 
@@ -119,25 +119,8 @@ impl NfcDevice for DummyNfc {
 
 pub struct BoardGPIO {
     /* interactive elements */
-    pub buttons: [Option<Pin<Input<PullUp>>>; 8],
-    pub leds: [Option<Pin<Output<PushPull>>>; 4],
     pub rgb_led: [Option<Pin<Output<PushPull>>>; 3],
     pub touch: Option<Pin<Output<PushPull>>>,
-
-    /* UARTE0 */
-    pub uart_pins: Option<uarte::Pins>,
-
-    /* Fingerprint Reader (through UARTE0) */
-    pub fpr_detect: Option<Pin<Input<PullDown>>>,
-    pub fpr_power: Option<Pin<Output<PushPull>>>,
-
-    /* LCD (through SPIM0) */
-    pub display_spi: Option<spim::Pins>,
-    pub display_cs: Option<Pin<Output<PushPull>>>,
-    pub display_reset: Option<Pin<Output<PushPull>>>,
-    pub display_dc: Option<Pin<Output<PushPull>>>,
-    pub display_backlight: Option<Pin<Output<PushPull>>>,
-    pub display_power: Option<Pin<Output<PushPull>>>,
 
     /* Secure Element (through TWIM1) */
     pub se_pins: Option<twim::Pins>,
@@ -146,9 +129,6 @@ pub struct BoardGPIO {
     /* External Flash & NFC (through SxPIM3) */
     pub flashnfc_spi: Option<spim::Pins>,
     pub flash_cs: Option<Pin<Output<PushPull>>>,
-    pub flash_power: Option<Pin<Output<PushPull>>>,
-    pub nfc_cs: Option<Pin<Output<PushPull>>>,
-    pub nfc_irq: Option<Pin<Input<PullUp>>>,
 }
 
 pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
@@ -156,15 +136,6 @@ pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Bo
     let touch = gpio_p0.p0_04.into_push_pull_output(Level::High).degrade();
     // not used, just ensure output + low
     gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
-
-    /* irq configuration */
-
-    // gpiote.port().input_pin(&btn3).low();
-    // gpiote.port().input_pin(&btn4).low();
-    // gpiote.port().input_pin(&btn5).low();
-    // gpiote.port().input_pin(&btn6).low();
-    // gpiote.port().input_pin(&btn7).low();
-    // gpiote.port().input_pin(&btn8).low();
 
     /* RGB LED */
     let led_r = gpio_p0.p0_09.into_push_pull_output(Level::Low).degrade();
@@ -198,25 +169,11 @@ pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Bo
     };
 
     BoardGPIO {
-        buttons: [None, None, None, None, None, None, None, None],
-        leds: [None, None, None, None],
         rgb_led: [Some(led_r), Some(led_g), Some(led_b)],
         touch: Some(touch),
-        uart_pins: None,
-        fpr_detect: None,
-        fpr_power: None,
-        display_spi: None,
-        display_cs: None,
-        display_reset: None,
-        display_dc: None,
-        display_backlight: None,
-        display_power: None,
         se_pins: Some(se_pins),
         se_power: Some(se_pwr),
         flashnfc_spi: Some(flash_spi),
         flash_cs: Some(flash_spi_cs),
-        flash_power: None,
-        nfc_cs: None,
-        nfc_irq: None,
     }
 }

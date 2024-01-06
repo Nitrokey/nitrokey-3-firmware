@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-#[cfg_attr(not(feature = "no-delog"), macro_use)]
-extern crate delog;
 delog::generate_macros!();
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
@@ -13,6 +11,7 @@ mod app {
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
+        prelude::OutputPin,
         rng::Rng,
         timer::Timer,
     };
@@ -42,16 +41,6 @@ mod app {
         ctaphid_dispatch: types::CtaphidDispatch,
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
         contactless: Option<Iso14443<DummyNfc>>,
-        /* NRF specific elements */
-        // (display UI)
-        // (fingerprint sensor)
-        // (SE050)
-        /* NRF specific device peripherals */
-
-        /* LPC55 specific elements */
-        // perf_timer
-        // clock_ctrl
-        // wait_extender
     }
 
     #[local]
@@ -99,8 +88,6 @@ mod app {
                 None
             }
         };
-        /* TODO: set up NFC chip */
-        // let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
 
@@ -124,9 +111,6 @@ mod app {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usbnfcinit = embedded_runner_lib::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
-        /* TODO: set up fingerprint device */
-        /* TODO: set up SE050 device */
-        use nrf52840_hal::prelude::OutputPin;
 
         if let Some(se_ena) = &mut board_gpio.se_power {
             match se_ena.set_high() {
@@ -150,8 +134,6 @@ mod app {
             let _ = twim;
         }
 
-        /* TODO: set up display */
-
         let mut dev_rng = Rng::new(ctx.device.RNG);
 
         #[cfg(feature = "se050")]
@@ -171,9 +153,6 @@ mod app {
             ctx.device.PWM2,
             board_gpio.touch.unwrap(),
         );
-
-        #[cfg(not(feature = "board-nk3am"))]
-        let user_interface = nk3am::ui::init_ui();
 
         let platform = RunnerPlatform {
             rng,
