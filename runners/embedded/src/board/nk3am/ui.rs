@@ -11,7 +11,15 @@ use crate::ui::{
 };
 
 pub struct HardwareButtons {
-    pub touch_button: Option<OutPin>,
+    touch_button: Option<OutPin>,
+}
+
+impl HardwareButtons {
+    pub fn new(pin: OutPin) -> Self {
+        Self {
+            touch_button: Some(pin),
+        }
+    }
 }
 
 impl UserPresence for HardwareButtons {
@@ -137,16 +145,16 @@ impl RgbLed {
 
 impl RgbLed {
     pub fn new(
-        leds: [Option<OutPin>; 3],
+        leds: [OutPin; 3],
         pwm_red: pac::PWM0,
         pwm_green: pac::PWM1,
         pwm_blue: pac::PWM2,
     ) -> RgbLed {
         let [red, green, blue] = leds;
 
-        let red_pwm_obj = RgbLed::init_led(red.unwrap(), pwm_red, pwm::Channel::C0);
-        let green_pwm_obj = RgbLed::init_led(green.unwrap(), pwm_green, pwm::Channel::C1);
-        let blue_pwm_obj = RgbLed::init_led(blue.unwrap(), pwm_blue, pwm::Channel::C2);
+        let red_pwm_obj = RgbLed::init_led(red, pwm_red, pwm::Channel::C0);
+        let green_pwm_obj = RgbLed::init_led(green, pwm_green, pwm::Channel::C1);
+        let blue_pwm_obj = RgbLed::init_led(blue, pwm_blue, pwm::Channel::C2);
 
         Self {
             pwm_red: red_pwm_obj,

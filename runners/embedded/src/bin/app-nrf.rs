@@ -1,18 +1,16 @@
 #![no_std]
 #![no_main]
 
-#[cfg_attr(not(feature = "no-delog"), macro_use)]
-extern crate delog;
 delog::generate_macros!();
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::interchanges::Channel as CcidChannel;
     use interchange::Channel;
-    use nfc_device::Iso14443;
     use nrf52840_hal::{
         gpio::{p0, p1},
         gpiote::Gpiote,
+        prelude::OutputPin,
         rng::Rng,
         timer::Timer,
     };
@@ -21,7 +19,7 @@ mod app {
     use embedded_runner_lib::{
         board::{
             self,
-            nk3am::{self, DummyNfc, InternalFlashStorage, NK3AM},
+            nk3am::{self, InternalFlashStorage, NK3AM},
         },
         flash::ExtFlashStorage,
         runtime,
@@ -41,17 +39,6 @@ mod app {
         apdu_dispatch: types::ApduDispatch,
         ctaphid_dispatch: types::CtaphidDispatch,
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
-        contactless: Option<Iso14443<DummyNfc>>,
-        /* NRF specific elements */
-        // (display UI)
-        // (fingerprint sensor)
-        // (SE050)
-        /* NRF specific device peripherals */
-
-        /* LPC55 specific elements */
-        // perf_timer
-        // clock_ctrl
-        // wait_extender
     }
 
     #[local]
@@ -99,8 +86,6 @@ mod app {
                 None
             }
         };
-        /* TODO: set up NFC chip */
-        // let usbnfcinit = ERL::init_usb_nfc(usbd_ref, None);
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
 
@@ -124,9 +109,6 @@ mod app {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usbnfcinit = embedded_runner_lib::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
-        /* TODO: set up fingerprint device */
-        /* TODO: set up SE050 device */
-        use nrf52840_hal::prelude::OutputPin;
 
         if let Some(se_ena) = &mut board_gpio.se_power {
             match se_ena.set_high() {
@@ -150,8 +132,6 @@ mod app {
             let _ = twim;
         }
 
-        /* TODO: set up display */
-
         let mut dev_rng = Rng::new(ctx.device.RNG);
 
         #[cfg(feature = "se050")]
@@ -169,7 +149,7 @@ mod app {
             ctx.device.PWM0,
             ctx.device.PWM1,
             ctx.device.PWM2,
-            board_gpio.touch.unwrap(),
+            board_gpio.touch,
         );
 
         let platform = RunnerPlatform {
@@ -216,7 +196,6 @@ mod app {
                 apdu_dispatch: usbnfcinit.apdu_dispatch,
                 ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
                 usb_classes: usbnfcinit.usb_classes,
-                contactless: usbnfcinit.iso14443,
             },
             LocalResources {
                 gpiote: dev_gpiote,
@@ -226,14 +205,13 @@ mod app {
         )
     }
 
-    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes, contactless])]
+    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes])]
     fn idle(ctx: idle::Context) -> ! {
         let idle::SharedResources {
             mut apps,
             mut apdu_dispatch,
             mut ctaphid_dispatch,
             mut usb_classes,
-            mut contactless,
         } = ctx.shared;
 
         trace!("idle");
@@ -263,10 +241,6 @@ mod app {
                     ctaphid_keepalive::spawn_after,
                     monotonics::now().into(),
                 );
-            });
-
-            contactless.lock(|contactless| {
-                runtime::poll_nfc(contactless, nfc_keepalive::spawn_after);
             });
         }
         // loop {}
@@ -317,15 +291,6 @@ mod app {
 
         usb_classes.lock(|usb_classes| {
             runtime::ctaphid_keepalive(usb_classes, ctaphid_keepalive::spawn_after);
-        });
-    }
-
-    #[task(priority = 4, shared = [contactless])]
-    fn nfc_keepalive(ctx: nfc_keepalive::Context) {
-        let mut contactless = ctx.shared.contactless;
-
-        contactless.lock(|contactless| {
-            runtime::nfc_keepalive(contactless, nfc_keepalive::spawn_after);
         });
     }
 
