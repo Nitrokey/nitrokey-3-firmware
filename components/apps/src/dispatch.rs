@@ -61,7 +61,7 @@ pub struct DispatchContext {
     se050: Se050Context,
 }
 
-fn should_preserve_file(file: &Path) -> bool {
+pub fn should_preserve_file(file: &Path) -> bool {
     // We save all "special" objects, with an ID that is representable by a `u8`
 
     const DIRS: &[&Path] = &[path!("x5c"), path!("ctr"), path!("sec"), path!("pub")];

@@ -1069,6 +1069,7 @@ dependencies = [
 name = "embedded-runner-lib"
 version = "1.6.0"
 dependencies = [
+ "admin-app",
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
@@ -1083,6 +1084,7 @@ dependencies = [
  "embedded-hal",
  "embedded-storage",
  "embedded-time",
+ "fido-authenticator",
  "fm11nc08",
  "generic-array",
  "heapless",
@@ -1097,6 +1099,7 @@ dependencies = [
  "nfc-device",
  "nrf52840-hal",
  "nrf52840-pac",
+ "provisioner-app",
  "rand",
  "rand_chacha",
  "rand_core",
@@ -1108,6 +1111,7 @@ dependencies = [
  "systick-monotonic",
  "toml",
  "trussed",
+ "trussed-staging",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
