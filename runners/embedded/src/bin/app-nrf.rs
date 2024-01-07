@@ -25,11 +25,12 @@ mod app {
                 ui::{HardwareButtons, RgbLed},
                 DummyNfc, InternalFlashStorage,
             },
+            Board as _,
         },
         runtime,
         soc::nrf52840::{self, rtic_monotonic::RtcDuration},
         store,
-        types::{self, RunnerPlatform},
+        types::{self, Apps as _, RunnerPlatform},
         ui::UserInterface,
     };
 
@@ -39,11 +40,12 @@ mod app {
     pub type Board = board::nkpk::NKPK;
 
     type Soc = <Board as board::Board>::Soc;
+    type Apps = <Board as board::Board>::Apps;
 
     #[shared]
     struct SharedResources {
         trussed: types::Trussed<Board>,
-        apps: types::Apps<Board>,
+        apps: Apps,
         apdu_dispatch: types::ApduDispatch,
         ctaphid_dispatch: types::CtaphidDispatch,
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
@@ -196,12 +198,7 @@ mod app {
             ),
         );
 
-        let apps = embedded_runner_lib::init_apps(
-            &mut trussed_service,
-            init_status,
-            &store,
-            !powered_by_usb,
-        );
+        let apps = Board::init_apps(&mut trussed_service, init_status, &store, !powered_by_usb);
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
@@ -246,7 +243,7 @@ mod app {
             let (usb_activity, _nfc_activity) = apps.lock(|apps| {
                 apdu_dispatch.lock(|apdu_dispatch| {
                     ctaphid_dispatch.lock(|ctaphid_dispatch| {
-                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
+                        apps.poll_dispatchers(apdu_dispatch, ctaphid_dispatch)
                     })
                 })
             });

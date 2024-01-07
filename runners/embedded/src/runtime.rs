@@ -1,27 +1,12 @@
 use crate::{
     board::Board,
     soc::Soc,
-    types::{usbnfc::UsbClasses, ApduDispatch, Apps, CtaphidDispatch, Trussed},
+    types::{usbnfc::UsbClasses, Trussed},
     ui,
 };
 
-use apdu_dispatch::dispatch::Interface;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
-
-pub fn poll_dispatchers<B: Board>(
-    apdu_dispatch: &mut ApduDispatch,
-    ctaphid_dispatch: &mut CtaphidDispatch,
-    apps: &mut Apps<B>,
-) -> (bool, bool) {
-    let apdu_poll = apps.apdu_dispatch(|apps| apdu_dispatch.poll(apps));
-    let ctaphid_poll = apps.ctaphid_dispatch(|apps| ctaphid_dispatch.poll(apps));
-
-    (
-        apdu_poll == Some(Interface::Contact) || ctaphid_poll,
-        apdu_poll == Some(Interface::Contactless),
-    )
-}
 
 /* ************************************************************************ */
 

@@ -17,11 +17,16 @@ use lpc55_hal::{
     I2cMaster, Pin,
 };
 
+use apps::{Apps, Dispatch, InitStatus};
 use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
 
 use crate::{
-    board::Board, flash::ExtFlashStorage, soc::lpc55::Lpc55, store::impl_storage_pointers,
+    board::Board,
+    flash::ExtFlashStorage,
+    soc::lpc55::Lpc55,
+    store::{impl_storage_pointers, RunnerStore},
+    types::{Runner, Trussed},
 };
 
 pub mod button;
@@ -62,6 +67,9 @@ pub struct NK3xN;
 impl Board for NK3xN {
     type Soc = Lpc55;
 
+    type Apps = Apps<Runner<Self>>;
+    type Dispatch = Dispatch<Self::Twi, Self::Se050Timer>;
+
     type NfcDevice = NfcChip;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;
@@ -76,6 +84,30 @@ impl Board for NK3xN {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "nk3xn";
+
+    fn init_apps(
+        trussed: &mut Trussed<Self>,
+        init_status: InitStatus,
+        store: &RunnerStore<Self>,
+        nfc_powered: bool,
+    ) -> Self::Apps
+    where
+        Self: Sized,
+    {
+        let (runner, data) = super::init_nk3_apps(init_status, store, nfc_powered);
+        Apps::with_service(&runner, trussed, data)
+    }
+
+    fn init_dispatch(
+        hw_key: Option<&[u8]>,
+        #[cfg(feature = "se050")] se050: Option<se05x::se05x::Se05X<Self::Twi, Self::Se050Timer>>,
+    ) -> Self::Dispatch {
+        super::init_nk3_dispatch::<Self>(
+            hw_key,
+            #[cfg(feature = "se050")]
+            se050,
+        )
+    }
 }
 
 pub type InternalFlashStorage = InternalFilesystem;
