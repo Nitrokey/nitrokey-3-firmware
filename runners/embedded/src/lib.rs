@@ -17,7 +17,10 @@ use usb_device::{
 
 use board::Board;
 use soc::Soc;
-use types::usbnfc::{UsbClasses, UsbNfcInit};
+use types::{
+    usbnfc::{UsbClasses, UsbNfcInit},
+    Config,
+};
 use ui::rgb_led::RgbLed as __;
 
 delog::generate_macros!();
@@ -68,7 +71,14 @@ pub fn init_usb_nfc<B: Board>(
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfcInit<B> {
-    let config = &types::INTERFACE_CONFIG;
+    let config = &Config {
+        // zero-padding for compatibility with previous implementations
+        card_issuer: b"Nitrokey\0\0\0\0\0",
+        usb_product: B::USB_PRODUCT,
+        usb_manufacturer: "Nitrokey",
+        usb_id_vendor: 0x20A0,
+        usb_id_product: 0x42B2,
+    };
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel = Channel::new();

@@ -46,6 +46,7 @@ pub trait Board: StoragePointers {
     type Twi: 'static;
 
     const BOARD_NAME: &'static str;
+    const USB_PRODUCT: &'static str;
 
     fn init_apps(
         trussed: &mut Trussed<Self>,

@@ -53,6 +53,7 @@ impl Board for NK3AM {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NK3AM";
+    const USB_PRODUCT: &'static str = "Nitrokey 3";
 
     fn init_apps(
         trussed: &mut Trussed<Self>,
