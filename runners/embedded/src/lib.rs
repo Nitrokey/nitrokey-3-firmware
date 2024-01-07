@@ -5,7 +5,6 @@ use apdu_dispatch::{
     dispatch::ApduDispatch,
     interchanges::{Channel as CcidChannel, Responder as CcidResponder},
 };
-use apps::InitStatus;
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use nfc_device::Iso14443;
@@ -18,7 +17,6 @@ use usb_device::{
 
 use board::Board;
 use soc::Soc;
-use store::RunnerStore;
 use types::usbnfc::{UsbClasses, UsbNfcInit};
 use ui::rgb_led::RgbLed as __;
 
@@ -123,58 +121,6 @@ pub fn init_usb_nfc<B: Board>(
     }
 }
 
-pub fn init_apps<B: Board>(
-    trussed: &mut types::Trussed<B>,
-    init_status: InitStatus,
-    store: &RunnerStore<B>,
-    nfc_powered: bool,
-) -> types::Apps<B> {
-    use trussed::platform::Store as _;
-
-    let mut admin = apps::AdminData::new(*store, B::Soc::VARIANT);
-    admin.init_status = init_status;
-    if !nfc_powered {
-        if let Ok(ifs_blocks) = store.ifs().available_blocks() {
-            if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
-                admin.ifs_blocks = ifs_blocks;
-            }
-        }
-        if let Ok(efs_blocks) = store.efs().available_blocks() {
-            if let Ok(efs_blocks) = u16::try_from(efs_blocks) {
-                admin.efs_blocks = efs_blocks;
-            }
-        }
-    }
-
-    #[cfg(feature = "provisioner")]
-    let provisioner = {
-        use apps::Reboot as _;
-
-        let store = store.clone();
-        let int_flash_ref = unsafe { store::steal_internal_storage::<B>() };
-        let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
-
-        apps::ProvisionerData {
-            store,
-            stolen_filesystem: int_flash_ref,
-            nfc_powered,
-            rebooter,
-        }
-    };
-
-    let runner = types::Runner {
-        is_efs_available: !nfc_powered,
-        _marker: Default::default(),
-    };
-    let data = apps::Data {
-        admin,
-        #[cfg(feature = "provisioner")]
-        provisioner,
-        _marker: Default::default(),
-    };
-    types::Apps::with_service(&runner, trussed, data)
-}
-
 #[cfg(feature = "se050")]
 pub fn init_se050<
     I2C: se05x::t1::I2CForT1,
@@ -184,7 +130,7 @@ pub fn init_se050<
     i2c: I2C,
     delay: D,
     dev_rng: &mut R,
-    init_status: &mut InitStatus,
+    init_status: &mut apps::InitStatus,
 ) -> (se05x::se05x::Se05X<I2C, D>, rand_chacha::ChaCha8Rng) {
     use rand::{Rng as _, SeedableRng};
     use rand_chacha::ChaCha8Rng;
@@ -207,7 +153,7 @@ pub fn init_se050<
     })()
     .unwrap_or_else(|_err| {
         debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
-        *init_status |= InitStatus::SE050_RAND_ERROR;
+        *init_status |= apps::InitStatus::SE050_RAND_ERROR;
         seed
     });
     (se050, ChaCha8Rng::from_seed(seed))

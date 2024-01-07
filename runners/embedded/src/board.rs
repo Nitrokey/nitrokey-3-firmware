@@ -5,10 +5,17 @@ use littlefs2::{
     io::Result as LfsResult,
 };
 use nfc_device::traits::nfc::Device as NfcDevice;
+use trussed::{
+    backend::Dispatch,
+    types::{Bytes, Location},
+};
+
+use apps::InitStatus;
 
 use crate::{
     soc::Soc,
-    store::StoragePointers,
+    store::{RunnerStore, StoragePointers},
+    types::{Apps, Runner, Trussed},
     ui::{buttons::UserPresence, rgb_led::RgbLed},
 };
 
@@ -21,6 +28,9 @@ pub mod nkpk;
 
 pub trait Board: StoragePointers {
     type Soc: Soc;
+
+    type Apps: Apps;
+    type Dispatch: Dispatch;
 
     type NfcDevice: NfcDevice;
     type Buttons: UserPresence;
@@ -37,6 +47,20 @@ pub trait Board: StoragePointers {
 
     const BOARD_NAME: &'static str;
 
+    fn init_apps(
+        trussed: &mut Trussed<Self>,
+        init_status: InitStatus,
+        store: &RunnerStore<Self>,
+        nfc_powered: bool,
+    ) -> Self::Apps
+    where
+        Self: Sized;
+
+    fn init_dispatch(
+        hw_key: Option<&[u8]>,
+        #[cfg(feature = "se050")] se050: Option<se05x::se05x::Se05X<Self::Twi, Self::Se050Timer>>,
+    ) -> Self::Dispatch;
+
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         let _ = ifs;
     }
@@ -48,5 +72,76 @@ pub trait Board: StoragePointers {
     ) -> LfsResult<()> {
         let _ = (ifs_alloc, efs_storage);
         Filesystem::format(ifs_storage)
+    }
+}
+
+fn init_nk3_apps<B: Board>(
+    init_status: InitStatus,
+    store: &RunnerStore<B>,
+    nfc_powered: bool,
+) -> (Runner<B>, apps::Data<Runner<B>>) {
+    use trussed::platform::Store as _;
+
+    let mut admin = apps::AdminData::new(*store, B::Soc::VARIANT);
+    admin.init_status = init_status;
+    if !nfc_powered {
+        if let Ok(ifs_blocks) = store.ifs().available_blocks() {
+            if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
+                admin.ifs_blocks = ifs_blocks;
+            }
+        }
+        if let Ok(efs_blocks) = store.efs().available_blocks() {
+            if let Ok(efs_blocks) = u16::try_from(efs_blocks) {
+                admin.efs_blocks = efs_blocks;
+            }
+        }
+    }
+
+    #[cfg(feature = "provisioner")]
+    let provisioner = {
+        use apps::Reboot as _;
+
+        let store = store.clone();
+        let int_flash_ref = unsafe { crate::store::steal_internal_storage::<B>() };
+        let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
+
+        apps::ProvisionerData {
+            store,
+            stolen_filesystem: int_flash_ref,
+            nfc_powered,
+            rebooter,
+        }
+    };
+
+    let runner = Runner {
+        is_efs_available: !nfc_powered,
+        _marker: Default::default(),
+    };
+    let data = apps::Data {
+        admin,
+        #[cfg(feature = "provisioner")]
+        provisioner,
+        _marker: Default::default(),
+    };
+    (runner, data)
+}
+
+fn init_nk3_dispatch<B: Board>(
+    hw_key: Option<&[u8]>,
+    #[cfg(feature = "se050")] se050: Option<se05x::se05x::Se05X<B::Twi, B::Se050Timer>>,
+) -> apps::Dispatch<B::Twi, B::Se050Timer> {
+    if let Some(hw_key) = hw_key {
+        apps::Dispatch::with_hw_key(
+            Location::Internal,
+            Bytes::from_slice(&hw_key).unwrap(),
+            #[cfg(feature = "se050")]
+            se050,
+        )
+    } else {
+        apps::Dispatch::new(
+            Location::Internal,
+            #[cfg(feature = "se050")]
+            se050,
+        )
     }
 }

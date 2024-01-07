@@ -1,10 +1,10 @@
 use core::marker::PhantomData;
 
-pub use apdu_dispatch::{
-    command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
+use apdu_dispatch::{
+    command::SIZE as ApduCommandSize, dispatch::Interface, response::SIZE as ApduResponseSize,
+    App as ApduApp,
 };
-use apps::Dispatch;
-pub use ctaphid_dispatch::app::App as CtaphidApp;
+use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::const_ram_storage;
 use rand_chacha::ChaCha8Rng;
 use trussed::{
@@ -117,13 +117,50 @@ impl<S: Soc> trussed::client::Syscall for RunnerSyscall<S> {
     }
 }
 
-pub type Trussed<B> =
-    trussed::Service<RunnerPlatform<B>, Dispatch<<B as Board>::Twi, <B as Board>::Se050Timer>>;
+pub type Trussed<B> = trussed::Service<RunnerPlatform<B>, <B as Board>::Dispatch>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;
 
-pub type Apps<S> = apps::Apps<Runner<S>>;
+pub trait Apps {
+    fn apdu_dispatch<F, T>(&mut self, f: F) -> T
+    where
+        F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T;
+
+    fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
+    where
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T;
+
+    fn poll_dispatchers(
+        &mut self,
+        apdu_dispatch: &mut ApduDispatch,
+        ctaphid_dispatch: &mut CtaphidDispatch,
+    ) -> (bool, bool) {
+        let apdu_poll = self.apdu_dispatch(|apps| apdu_dispatch.poll(apps));
+        let ctaphid_poll = self.ctaphid_dispatch(|apps| ctaphid_dispatch.poll(apps));
+
+        (
+            apdu_poll == Some(Interface::Contact) || ctaphid_poll,
+            apdu_poll == Some(Interface::Contactless),
+        )
+    }
+}
+
+impl<B: Board> Apps for apps::Apps<Runner<B>> {
+    fn apdu_dispatch<F, T>(&mut self, f: F) -> T
+    where
+        F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T,
+    {
+        apps::Apps::apdu_dispatch(self, f)
+    }
+
+    fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
+    where
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
+    {
+        apps::Apps::ctaphid_dispatch(self, f)
+    }
+}
 
 #[derive(Debug)]
 pub struct DelogFlusher {}

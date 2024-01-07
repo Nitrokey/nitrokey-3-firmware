@@ -43,12 +43,15 @@ use utils::OptionalStorage;
 #[cfg(feature = "se050")]
 use super::TimerDelay;
 use crate::{
-    board::nk3xn::{
-        button::ThreeButtons,
-        led::RgbLed,
-        nfc::{self, NfcChip},
-        spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+    board::{
+        nk3xn::{
+            button::ThreeButtons,
+            led::RgbLed,
+            nfc::{self, NfcChip},
+            spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+            ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+        },
+        Board,
     },
     flash::ExtFlashStorage,
     soc::{
@@ -56,13 +59,15 @@ use crate::{
         Soc,
     },
     store::RunnerStore,
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
+    types::{self, usbnfc::UsbNfcInit as UsbNfc, Trussed},
     ui::{
         buttons::{self, Press},
         rgb_led::RgbLed as _,
         UserInterface,
     },
 };
+
+type Apps = <NK3xN as Board>::Apps;
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
@@ -822,7 +827,7 @@ impl Stage6 {
     #[inline(never)]
     pub fn next(mut self, usbhs: Usbhs<Unknown>) -> All {
         self.perform_data_migrations();
-        let apps = crate::init_apps(
+        let apps = NK3xN::init_apps(
             &mut self.trussed,
             self.status,
             &self.store,
@@ -875,7 +880,7 @@ pub struct All {
     pub basic: Basic,
     pub usb_nfc: UsbNfc<NK3xN>,
     pub trussed: Trussed<NK3xN>,
-    pub apps: Apps<NK3xN>,
+    pub apps: Apps,
     pub clock_controller: Option<DynamicClockController>,
 }
 

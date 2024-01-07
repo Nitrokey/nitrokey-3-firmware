@@ -21,7 +21,7 @@ mod app {
         },
         runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
-        types,
+        types::{self, Apps as _},
     };
     use lpc55_hal::{
         drivers::timer::Elapsed,
@@ -34,6 +34,7 @@ mod app {
 
     type Board = NK3xN;
     type Soc = <Board as board::Board>::Soc;
+    type Apps = <Board as board::Board>::Apps;
 
     const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
 
@@ -52,7 +53,7 @@ mod app {
         trussed: types::Trussed<Board>,
 
         /// All the applications that the device serves.
-        apps: types::Apps<Board>,
+        apps: Apps,
 
         /// The USB driver classes
         usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
@@ -162,7 +163,7 @@ mod app {
             let (usb_activity, nfc_activity) = apps.lock(|apps| {
                 apdu_dispatch.lock(|apdu_dispatch| {
                     ctaphid_dispatch.lock(|ctaphid_dispatch| {
-                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
+                        apps.poll_dispatchers(apdu_dispatch, ctaphid_dispatch)
                     })
                 })
             });
