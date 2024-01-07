@@ -54,6 +54,7 @@ impl Board for NKPK {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NKPK";
+    const USB_PRODUCT: &'static str = "Nitrokey Passkey";
 
     fn init_apps(
         trussed: &mut Trussed<Self>,
