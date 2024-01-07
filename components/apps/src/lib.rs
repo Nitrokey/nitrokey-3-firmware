@@ -27,7 +27,7 @@ use trussed::types::Location;
 #[cfg(feature = "webcrypt")]
 use webcrypt::{PeekingBypass, Webcrypt};
 
-mod dispatch;
+pub mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
 

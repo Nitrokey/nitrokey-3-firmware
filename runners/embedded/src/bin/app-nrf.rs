@@ -15,7 +15,6 @@ mod app {
         rng::Rng,
         timer::Timer,
     };
-    use trussed::types::{Bytes, Location};
 
     use embedded_runner_lib::{
         board::{
@@ -190,9 +189,8 @@ mod app {
 
         let mut trussed_service = trussed::service::Service::with_dispatch(
             platform,
-            apps::Dispatch::with_hw_key(
-                Location::Internal,
-                Bytes::from_slice(&er).unwrap(),
+            Board::init_dispatch(
+                Some(&er),
                 #[cfg(feature = "se050")]
                 Some(se050),
             ),

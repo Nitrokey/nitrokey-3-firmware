@@ -64,6 +64,12 @@ alloc-cortex-m = { version = "0.4.3", optional = true }
 ref-swap = "0.1.0"
 se05x = { version = "0.1.1", optional = true }
 
+# NKPK apps
+admin-app = { version = "0.1.0", optional = true }
+fido-authenticator = { version = "0.1.1", features = ["chunked", "dispatch"], optional = true }
+provisioner-app = { path = "../../components/provisioner-app", optional = true }
+trussed-staging = { version = "0.1.0", features = ["chunked", "encrypted-chunked", "manage"], optional = true }
+
 [build-dependencies]
 cargo-lock = "7"
 memory-regions = "1"
@@ -96,7 +102,7 @@ alloc = ["alloc-cortex-m"]
 
 board-nk3am = ["soc-nrf52840"]
 board-nk3xn = ["soc-lpc55"]
-board-nkpk = ["board-nk3am"]
+board-nkpk = ["board-nk3am", "admin-app", "fido-authenticator", "provisioner-app", "trussed-staging"]
 
 soc-nrf52840 = ["nrf52840-hal", "nrf52840-pac", "rand_chacha", "se05x?/nrf"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "fm11nc08", "systick-monotonic", "se05x?/lpc55", "rand_chacha"]

@@ -1,7 +1,7 @@
 use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
-use apps::{Dispatch, InitStatus};
+use apps::InitStatus;
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -37,7 +37,7 @@ use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
-use trussed::{service::Service, types::Location};
+use trussed::service::Service;
 use utils::OptionalStorage;
 
 #[cfg(feature = "se050")]
@@ -748,8 +748,8 @@ impl Stage5 {
         };
         let trussed = Service::with_dispatch(
             board,
-            Dispatch::new(
-                Location::Internal,
+            NK3xN::init_dispatch(
+                None,
                 #[cfg(feature = "se050")]
                 rng_and_maybe_se050.1,
             ),
