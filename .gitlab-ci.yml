@@ -174,6 +174,10 @@ build-firmware-for-tests:
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-test-nrf52.hex
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
+    - make -C runners/embedded build-nkpk FEATURES=no-buttons
+    - cp runners/embedded/artifacts/runner-nkpk-nkpk.bin.ihex artifacts/firmware-nkpk.hex
+    - make -C runners/embedded build-nkpk FEATURES=provisioner,no-buttons
+    - cp runners/embedded/artifacts/runner-nkpk-nkpk.bin.ihex artifacts/provisioner-nkpk.hex
   artifacts:
     paths:
       - artifacts
@@ -198,7 +202,7 @@ hardware-tests:
     - nk3-hw
   parallel:
     matrix:
-      - MODEL: [ nrf52, lpc55 ]
+      - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
