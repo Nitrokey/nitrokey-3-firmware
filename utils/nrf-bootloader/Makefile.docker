@@ -3,7 +3,7 @@
 #NRF_SDK_ROOT := /opt/nrf5-sdk
 
 
-all: bootloader.hex mbr.hex
+all: bootloader.hex mbr.hex config/nk_sdk_config.h
 
 
 bootloader.hex: Makefile.bootloader config/sdk_config.h config/nk_sdk_config.h

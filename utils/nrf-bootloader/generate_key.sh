@@ -15,6 +15,7 @@ target=$1
 
 privkey="${target}/dfu_private.key"
 pubkey="${target}/dfu_public_key.c"
+pubkey_pem="${target}/dfu_public_key.pem"
 
 if [ -r "${privkey}" ] | [ -r "${pubkey}" ]; then
 
@@ -29,7 +30,7 @@ nrfutil keys generate ${privkey}
 
 # Generate C source file containing the public key
 nrfutil keys display --key pk --format code ${privkey} --out_file ${pubkey}
-
+nrfutil keys display --key pk --format pem ${privkey} --out_file ${pubkey_pem}
 
 stat ${pubkey}
 stat ${privkey}

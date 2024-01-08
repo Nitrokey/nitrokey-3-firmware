@@ -16,10 +16,11 @@ TTYDEV := $(wildcard /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*)
 KEY_DIR ?= $(BL_DIR)/signing-key
 SIGNING_KEY = $(KEY_DIR)/dfu_private.key
 PUBLIC_KEY = $(KEY_DIR)/dfu_public_key.c
+BOOTLOADER_INCLUDE = $(BL_DIR)/config/nk_sdk_config.h
 
-.PHONY: all enter clean verify
+.PHONY: all build enter clean verify
 
-all: $(IMAGE_NAME).built verify $(SIGNING_KEY)
+build: $(IMAGE_NAME).built verify $(SIGNING_KEY) check-var-TARGET $(BOOTLOADER_INCLUDE)
 	docker run -it \
 		-v $(shell pwd):/work \
 		$(IMAGE_NAME) \
@@ -44,6 +45,20 @@ $(IMAGE_NAME).built: Dockerfile
 clean:
 	rm -rf build
 	rm -f mbr.hex bootloader.hex $(IMAGE_NAME).built output.zip
+
+.PHONY: $(BOOTLOADER_INCLUDE)
+$(BOOTLOADER_INCLUDE): config/$(TARGET)_sdk_config.h check-var-TARGET 
+	cp $< $@
+
+
+.PHONY: nk3am nkpk
+nk3am:
+	$(MAKE) TARGET=nk3am
+nkpk:
+	$(MAKE) TARGET=nkpk
+
+check-var-%:
+	@if [ -z '${${*}}' ]; then echo 'FAIL: var: TARGET required (either "nkpk" or "nk3am")' && exit 1; fi                        
 
 ############################################
 ############################################  NRF52 Bootloader stuff
@@ -70,7 +85,8 @@ $(KEY_DIR) $(SIGNING_KEY) $(PUBLIC_KEY): copy-test-certs
 
 .PHONY: copy-test-certs
 copy-test-certs:
-	cp -r ../test-certificates/firmware-nrf52 $(KEY_DIR)
+	rm -rf $(KEY_DIR)
+	cp -r ../test-certificates/firmware-$(TARGET) $(KEY_DIR)
 
 $(FW_SIGNED): $(FW_RAW) $(SIGN_SH) $(KEY_DIR) 
 	bash $(SIGN_SH) $(FIRMWARE_VERSION) $(FW_SIGNED) $(FW_RAW) $(SIGNING_KEY)
@@ -100,10 +116,11 @@ lazy-fw:
 	$(MAKE) fw-assemble-dfu
 	$(MAKE) fw-upload-dfu TTYDEV=`ls -1rt | tail -n1`
 
+.PHONY: build-bootloader reset-bootloader program-bootloader
 
-build-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
+build-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX) check-var-TARGET
 
-reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
+reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX) check-var-TARGET
 	nrfjprog -f NRF52 --recover
 	nrfjprog -f NRF52 --eraseall
 	nrfjprog -f NRF52 --program mbr.hex --sectorerase --verify
@@ -119,7 +136,7 @@ reset-bootloader: $(BOOTLOADER_HEX) $(MBR_HEX)
 	
 	nrfjprog -f NRF52 --reset
 
-program-bootloader:	$(BOOTLOADER_HEX) $(MBR_HEX)
+program-bootloader:	$(BOOTLOADER_HEX) $(MBR_HEX) check-var-TARGET
 	nrfjprog -f NRF52 --program mbr.hex --sectorerase --verify
 	nrfjprog -f NRF52 --program bootloader.hex --sectorerase --verify
 	nrfjprog -f NRF52 --reset

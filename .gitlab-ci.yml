@@ -201,7 +201,7 @@ hardware-tests:
   stage: test
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive
-    - git -C nitrokey-hardware-test checkout v1.1
+    - git -C nitrokey-hardware-test checkout v1.1.1
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml
   dependencies:

@@ -9,7 +9,7 @@ NK3_FW_DIR := nk3-fw
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
 
-KEY_DIR := $(TEST_CERTS_DIR)/firmware-nrf52
+KEY_DIR := $(TEST_CERTS_DIR)/firmware-nk3am
 PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.key
 
 BL_OUTPUT := mbr.hex bootloader.hex
@@ -142,7 +142,7 @@ $(NK3_BL_KEY_DIR): $(KEY_DIR)
 	cp -r $< $(NK3_BL_KEY_DIR)
 
 $(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR)
-	$(MAKE) -C $(NK3_BL_DIR) build-bootloader
+	$(MAKE) -C $(NK3_BL_DIR) build-bootloader TARGET=nk3am
 	cp $(NK3_BL_DIR)/mbr.hex mbr.hex
 	cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
 
