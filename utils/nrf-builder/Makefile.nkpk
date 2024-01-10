@@ -85,7 +85,7 @@ build: $(ALL_ARTIFACTS)
 
 flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	./wait_for_usb.sh 20a0:42e8
+	./wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_RELEASE) $(TTY)
 	
@@ -93,7 +93,7 @@ flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 
 flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	./wait_for_usb.sh 20a0:42e8
+	./wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_DEVELOP) $(TTY)
 	
@@ -101,7 +101,7 @@ flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 
 flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	./wait_for_usb.sh 20a0:42e8
+	./wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_PROVISIONER) $(TTY)
 	
@@ -109,7 +109,7 @@ flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 
 flash-bootloader: $(BL_OUTPUT)
 	$(MAKE) -C $(NK3_BL_DIR) reset-bootloader
-	./wait_for_usb.sh 20a0:42e8
+	./wait_for_usb.sh 20a0:42f4
 
 provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 	./wait_for_usb.sh 20a0:42b2
@@ -117,20 +117,20 @@ provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 	solo2 app provision write-file $(TEST_FIDO_KEY) fido/sec/00
 
 full-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-provisioner
-	$(MAKE) provision-keys
-	$(MAKE) flash-release
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-provisioner
+	$(MAKE) -f Makefile.nkpk  provision-keys
+	$(MAKE) -f Makefile.nkpk  flash-release
 
 dev-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-provisioner
-	$(MAKE) provision-keys
-	$(MAKE) flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-provisioner
+	$(MAKE) -f Makefile.nkpk  provision-keys
+	$(MAKE) -f Makefile.nkpk  flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
 
 fast-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-release
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-release
 
 clean:
 	rm -rf $(ALL_ARTIFACTS)
