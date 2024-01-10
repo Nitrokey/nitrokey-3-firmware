@@ -1,16 +1,19 @@
+use admin_app::ConfigValueMut;
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
 use ctaphid_dispatch::app::App as CtaphidApp;
 use littlefs2::{fs::Allocation, io::Result as LfsResult};
+use serde::{Deserialize, Serialize};
 use trussed::{
     api::{reply, request, Reply, Request},
     backend::{Backend as _, BackendId},
     client::{ClientBuilder, ClientImplementation},
     interrupt::InterruptFlag,
-    platform::{Platform, Store},
+    platform::Platform,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
     service::ServiceResources,
+    store::filestore::ClientFilestore,
     types::Context,
     Error as TrussedError,
 };
@@ -18,7 +21,7 @@ use trussed_staging::{
     manage::ManageExtension, streaming::ChunkedExtension, StagingBackend, StagingContext,
 };
 
-use apps::InitStatus;
+use apps::{is_default, AdminData, FidoConfig, InitStatus, Variant};
 use utils::RamStorage;
 
 use super::{
@@ -32,7 +35,7 @@ use super::{
 use crate::{
     soc::{nrf52840::Nrf52, Soc as _},
     store::{impl_storage_pointers, RunnerStore},
-    types::{self, RunnerSyscall, Trussed},
+    types::{self, Runner, RunnerSyscall, Trussed},
 };
 
 #[cfg(feature = "se050")]
@@ -99,10 +102,26 @@ impl_storage_pointers!(
 );
 
 type Client = ClientImplementation<RunnerSyscall<Nrf52>, Dispatch>;
-type AdminApp = admin_app::App<Client, Nrf52, apps::AdminStatus, ()>;
+type AdminApp = admin_app::App<Client, Nrf52, apps::AdminStatus, Config>;
 type FidoApp = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client>;
 #[cfg(feature = "provisioner")]
 type ProvisionerApp = provisioner_app::Provisioner<RunnerStore<NKPK>, InternalFlashStorage, Client>;
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct Config {
+    #[serde(default, rename = "f", skip_serializing_if = "is_default")]
+    fido: FidoConfig,
+}
+
+impl admin_app::Config for Config {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        let (app, key) = key.split_once('.')?;
+        match app {
+            "fido" => self.fido.field(key),
+            _ => None,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum Backend {
@@ -245,7 +264,7 @@ impl Apps {
         nfc_powered: bool,
     ) -> Self {
         let admin = Self::admin(trussed, init_status, store, nfc_powered);
-        let fido = Self::fido(trussed);
+        let fido = Self::fido(trussed, &admin.config().fido);
         #[cfg(feature = "provisioner")]
         let provisioner = Self::provisioner(trussed, store, nfc_powered);
 
@@ -277,53 +296,50 @@ impl Apps {
         store: &RunnerStore<NKPK>,
         nfc_powered: bool,
     ) -> AdminApp {
+        const CLIENT_ID: &str = "admin";
         const VERSION: u32 = utils::VERSION.encode();
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         let backends = &[BackendId::Custom(Backend::StagingManage), BackendId::Core];
-        let client = Self::client(trussed, "admin", backends, Some(&INTERRUPT));
+        let client = Self::client(trussed, CLIENT_ID, backends, Some(&INTERRUPT));
+        let mut filestore = ClientFilestore::new(CLIENT_ID.into(), *store);
 
-        let mut ifs_blocks = u8::MAX;
-        let mut efs_blocks = u16::MAX;
+        let mut data = AdminData::<Runner<NKPK>>::new(*store, Variant::Nrf52);
+        data.init_status = init_status;
         if !nfc_powered {
-            if let Ok(n) = store.ifs().available_blocks() {
-                if let Ok(n) = u8::try_from(n) {
-                    ifs_blocks = n;
-                }
-            }
-            if let Ok(n) = store.efs().available_blocks() {
-                if let Ok(n) = u16::try_from(n) {
-                    efs_blocks = n;
-                }
-            }
+            data.update_blocks();
         }
-        let efs_blocks = efs_blocks.to_be_bytes();
 
-        let status = [
-            init_status.bits(),
-            ifs_blocks,
-            efs_blocks[0],
-            efs_blocks[1],
-            apps::Variant::Nrf52.into(),
-        ];
-        AdminApp::with_default_config(
+        AdminApp::load_config(
             client,
+            &mut filestore,
             *Nrf52::device_uuid(),
             VERSION,
             utils::VERSION_STRING,
-            status,
+            data.status(),
         )
+        .unwrap_or_else(|(client, _err)| {
+            data.init_status.insert(InitStatus::CONFIG_ERROR);
+            AdminApp::with_default_config(
+                client,
+                *Nrf52::device_uuid(),
+                VERSION,
+                utils::VERSION_STRING,
+                data.status(),
+            )
+        })
     }
 
-    fn fido(trussed: &mut Trussed<NKPK>) -> FidoApp {
+    fn fido(trussed: &mut Trussed<NKPK>, config: &FidoConfig) -> FidoApp {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         let backends = &[BackendId::Custom(Backend::Staging), BackendId::Core];
         let client = Self::client(trussed, "fido", backends, Some(&INTERRUPT));
+
         FidoApp::new(
             client,
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
-                skip_up_timeout: Some(core::time::Duration::from_secs(2)),
+                skip_up_timeout: config.skip_up_timeout(),
                 max_resident_credential_count: Some(10),
                 large_blobs: None,
             },

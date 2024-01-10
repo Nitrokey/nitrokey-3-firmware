@@ -81,21 +81,10 @@ fn init_nk3_apps<B: Board>(
     store: &RunnerStore<B>,
     nfc_powered: bool,
 ) -> (Runner<B>, apps::Data<Runner<B>>) {
-    use trussed::platform::Store as _;
-
     let mut admin = apps::AdminData::new(*store, B::Soc::VARIANT);
     admin.init_status = init_status;
     if !nfc_powered {
-        if let Ok(ifs_blocks) = store.ifs().available_blocks() {
-            if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
-                admin.ifs_blocks = ifs_blocks;
-            }
-        }
-        if let Ok(efs_blocks) = store.efs().available_blocks() {
-            if let Ok(efs_blocks) = u16::try_from(efs_blocks) {
-                admin.efs_blocks = efs_blocks;
-            }
-        }
+        admin.update_blocks();
     }
 
     #[cfg(feature = "provisioner")]

@@ -5,6 +5,8 @@ const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 #[cfg(feature = "webcrypt")]
 const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
+use core::time::Duration;
+
 use apdu_dispatch::{
     command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
 };
@@ -16,8 +18,13 @@ use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
 use serde::{Deserialize, Serialize};
 use trussed::{
-    backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
-    store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
+    backend::BackendId,
+    client::ClientBuilder,
+    interrupt::InterruptFlag,
+    platform::Syscall,
+    store::{filestore::ClientFilestore, Store as _},
+    types::Path,
+    ClientImplementation, Platform, Service,
 };
 
 pub use admin_app::Reboot;
@@ -31,7 +38,7 @@ pub mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
 
-fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     value == &Default::default()
 }
 
@@ -80,6 +87,16 @@ impl admin_app::Config for Config {
 pub struct FidoConfig {
     #[serde(default, rename = "t", skip_serializing_if = "is_default")]
     disable_skip_up_timeout: bool,
+}
+
+impl FidoConfig {
+    pub fn skip_up_timeout(&self) -> Option<Duration> {
+        if self.disable_skip_up_timeout {
+            None
+        } else {
+            Some(Duration::from_secs(2))
+        }
+    }
 }
 
 impl admin_app::Config for FidoConfig {
@@ -555,12 +572,25 @@ impl<R: Runner> AdminData<R> {
             variant,
         }
     }
+
+    pub fn update_blocks(&mut self) {
+        if let Ok(n) = self.store.ifs().available_blocks() {
+            if let Ok(n) = u8::try_from(n) {
+                self.ifs_blocks = n;
+            }
+        }
+        if let Ok(n) = self.store.efs().available_blocks() {
+            if let Ok(n) = u16::try_from(n) {
+                self.efs_blocks = n;
+            }
+        }
+    }
 }
 
 pub type AdminStatus = [u8; 5];
 
 impl<R: Runner> AdminData<R> {
-    fn status(&self) -> AdminStatus {
+    pub fn status(&self) -> AdminStatus {
         let efs_blocks = self.efs_blocks.to_be_bytes();
         [
             self.init_status.bits(),
@@ -611,11 +641,6 @@ impl<R: Runner> App<R> for FidoApp<R> {
     type Config = FidoConfig;
 
     fn with_client(runner: &R, trussed: Client<R>, _: (), config: &Self::Config) -> Self {
-        let skip_up_timeout = if config.disable_skip_up_timeout {
-            None
-        } else {
-            Some(core::time::Duration::from_secs(2))
-        };
         let large_blobs = if cfg!(feature = "test") && runner.is_efs_available() {
             Some(fido_authenticator::LargeBlobsConfig {
                 location: Location::External,
@@ -629,7 +654,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
-                skip_up_timeout,
+                skip_up_timeout: config.skip_up_timeout(),
                 max_resident_credential_count: Some(10),
                 large_blobs,
             },
