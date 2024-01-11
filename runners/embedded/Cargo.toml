@@ -10,7 +10,7 @@ license = "MIT"
 
 [dependencies]
 ### base dependencies
-apps = { path = "../../components/apps" }
+apps = { path = "../../components/apps", features = ["nk3"] }
 boards = { path = "../../components/boards" }
 cfg-if = "*"
 delog = "0.1"
@@ -67,10 +67,10 @@ toml = "0.5"
 [features]
 default = ["alloc"]
 
-test = ["apps/test", "utils/test", "se050"]
+test = ["apps/nk3-test", "utils/test", "se050"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
-provisioner = ["apps/provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
+provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
 
 no-delog = ["delog/knock-it-off"]
 

@@ -16,7 +16,6 @@ use trussed::{
     api::{reply, request},
     backend::Backend as _,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
-    Bytes,
 };
 
 #[cfg(feature = "se050")]
@@ -126,7 +125,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
     #[cfg(feature = "backend-auth")]
     pub fn with_hw_key(
         auth_location: Location,
-        hw_key: Bytes<MAX_HW_KEY_LEN>,
+        hw_key: trussed::Bytes<MAX_HW_KEY_LEN>,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,
     ) -> Self {
         #[cfg(feature = "se050")]

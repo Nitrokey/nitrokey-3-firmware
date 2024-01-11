@@ -22,7 +22,6 @@ use trussed::{
 
 pub use admin_app::Reboot;
 use admin_app::{ConfigValueMut, ResetSignalAllocation};
-use trussed::types::Location;
 
 #[cfg(feature = "webcrypt")]
 use webcrypt::{PeekingBypass, Webcrypt};
@@ -107,6 +106,7 @@ pub struct OpcardConfig {
     use_se050_backend: bool,
 }
 
+#[cfg(feature = "opcard")]
 impl OpcardConfig {
     fn backends(&self) -> &'static [BackendId<Backend>] {
         const BACKENDS_OPCARD_DEFAULT: &[BackendId<Backend>] = &[
@@ -205,9 +205,7 @@ type ProvisionerApp<R> =
 
 #[repr(u8)]
 pub enum CustomStatus {
-    #[cfg(feature = "secrets-app")]
     ReverseHotpSuccess = 0,
-    #[cfg(feature = "secrets-app")]
     ReverseHotpError = 1,
 }
 
@@ -222,9 +220,7 @@ impl TryFrom<u8> for CustomStatus {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            #[cfg(feature = "secrets-app")]
             0 => Ok(Self::ReverseHotpSuccess),
-            #[cfg(feature = "secrets-app")]
             1 => Ok(Self::ReverseHotpError),
             _ => Err(UnknownStatusError(value)),
         }
@@ -270,6 +266,8 @@ impl<R: Runner> Apps<R> {
         } = data;
 
         let (admin, init_status) = Self::admin_app(runner, &mut make_client, admin);
+        #[cfg(not(feature = "opcard"))]
+        let _ = init_status;
 
         #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
@@ -618,7 +616,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
         };
         let large_blobs = if cfg!(feature = "test") && runner.is_efs_available() {
             Some(fido_authenticator::LargeBlobsConfig {
-                location: Location::External,
+                location: trussed::types::Location::External,
                 max_size: 4096,
             })
         } else {
@@ -657,7 +655,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
         Webcrypt::new_with_options(
             trussed,
             webcrypt::Options::new(
-                Location::External,
+                trussed::types::Location::External,
                 [uuid[0], uuid[1], uuid[2], uuid[3]],
                 WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT,
             ),
@@ -685,7 +683,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         let uuid = runner.uuid();
         let options = secrets_app::Options::new(
-            Location::External,
+            trussed::types::Location::External,
             CustomStatus::ReverseHotpSuccess.into(),
             CustomStatus::ReverseHotpError.into(),
             [uuid[0], uuid[1], uuid[2], uuid[3]],
