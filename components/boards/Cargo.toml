@@ -1,0 +1,52 @@
+[package]
+name = "boards"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
+apps = { path = "../apps" }
+cortex-m = "0.7"
+cortex-m-rtic = "1.0"
+delog = "0.1"
+embedded-hal = "0.2.3"
+embedded-time = "0.12"
+generic-array = "0.14"
+littlefs2 = { version = "0.4", features = ["c-stubs"] }
+memory-regions = { path = "../memory-regions" }
+nb = "1"
+nfc-device = { path = "../nfc-device" }
+trussed = "0.1"
+spi-memory = "0.2.0"
+usb-device = "0.2"
+
+# soc-lpc55
+lpc55-hal = { version = "0.3", features = ["littlefs"], optional = true }
+lpc55-pac = { version = "0.4", optional = true }
+systick-monotonic = { version = "1.0.0", optional = true }
+
+# soc-nrf52
+embedded-storage = { version = "0.3", optional = true }
+nrf52840-hal = { version = "0.15.1", optional = true }
+nrf52840-pac = { version = "0.11", optional = true }
+
+# board-nk3am
+lfs-backup = { path = "../lfs-backup", optional = true }
+fm11nc08 = { path = "../fm11nc08", optional = true }
+
+# board-nk3xn
+utils = { path = "../utils", optional = true }
+
+# se050
+se05x = { version = "0.1.1", optional = true }
+
+[features]
+board-nk3am = ["soc-nrf52", "lfs-backup"]
+board-nk3xn = ["soc-lpc55", "fm11nc08", "utils"]
+
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55", "systick-monotonic"]
+soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
+
+no-buttons = []
+no-encrypted-storage = []
+provisioner = []
+se050 = ["se05x"]

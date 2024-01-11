@@ -12,11 +12,11 @@ use nrf52840_hal::{
 use nrf52840_pac::{PWM0, PWM1, PWM2, SPIM3};
 
 use crate::{
-    board::Board,
     flash::ExtFlashStorage,
     soc::nrf52::{flash::FlashStorage, rtic_monotonic::RtcMonotonic, Nrf52},
     store::impl_storage_pointers,
     ui::UserInterface,
+    Board,
 };
 
 use migrations::ftl_journal::{self, ifs_flash_old::FlashStorage as OldFlashStorage};
@@ -191,7 +191,6 @@ pub fn init_ui(
     let rtc_mono = RtcMonotonic::new(pac.RTC0);
 
     let rgb = RgbLed::new(leds, pwm_red, pwm_green, pwm_blue);
-
     let buttons = HardwareButtons::new(touch);
 
     UserInterface::new(rtc_mono, Some(buttons), Some(rgb))

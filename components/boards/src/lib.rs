@@ -1,3 +1,18 @@
+#![no_std]
+#![warn(trivial_casts, unused, unused_qualifications)]
+
+delog::generate_macros!();
+
+pub mod flash;
+pub mod soc;
+pub mod store;
+pub mod ui;
+
+#[cfg(feature = "board-nk3am")]
+pub mod nk3am;
+#[cfg(feature = "board-nk3xn")]
+pub mod nk3xn;
+
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{
@@ -11,11 +26,6 @@ use crate::{
     store::StoragePointers,
     ui::{buttons::UserPresence, rgb_led::RgbLed},
 };
-
-#[cfg(feature = "board-nk3am")]
-pub mod nk3am;
-#[cfg(feature = "board-nk3xn")]
-pub mod nk3xn;
 
 pub trait Board: StoragePointers {
     type Soc: Soc;

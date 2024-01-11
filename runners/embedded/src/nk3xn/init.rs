@@ -2,6 +2,29 @@ use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
 use apps::{Dispatch, InitStatus};
+#[cfg(feature = "se050")]
+use boards::nk3xn::TimerDelay;
+use boards::{
+    flash::ExtFlashStorage,
+    nk3xn::{
+        button::ThreeButtons,
+        led::RgbLed,
+        nfc::{self, NfcChip},
+        prince,
+        spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+    },
+    soc::{
+        lpc55::{clock_controller::DynamicClockController, Lpc55, DEVICE_UUID},
+        Soc,
+    },
+    store::{self, RunnerStore},
+    ui::{
+        buttons::{self, Press},
+        rgb_led::RgbLed as _,
+        UserInterface,
+    },
+};
 use embedded_hal::{
     blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
@@ -37,32 +60,13 @@ use lpc55_hal as hal;
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
 use rand_chacha::ChaCha8Rng;
-use trussed::{service::Service, types::Location};
+use trussed::{
+    service::Service,
+    types::{Location, PathBuf},
+};
 use utils::OptionalStorage;
 
-#[cfg(feature = "se050")]
-use super::TimerDelay;
-use crate::{
-    board::nk3xn::{
-        button::ThreeButtons,
-        led::RgbLed,
-        nfc::{self, NfcChip},
-        spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
-    },
-    flash::ExtFlashStorage,
-    soc::{
-        lpc55::{clock_controller::DynamicClockController, Lpc55, DEVICE_UUID},
-        Soc,
-    },
-    store::RunnerStore,
-    types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed},
-    ui::{
-        buttons::{self, Press},
-        rgb_led::RgbLed as _,
-        UserInterface,
-    },
-};
+use crate::types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed};
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
@@ -511,7 +515,7 @@ impl Stage3 {
         let mut rng = rng.enabled(syscon);
 
         let mut prince = prince.enabled(&mut rng);
-        super::prince::disable(&mut prince);
+        prince::disable(&mut prince);
 
         let flash_gordon = FlashGordon::new(flash.enabled(syscon));
 
@@ -614,7 +618,7 @@ impl Stage4 {
         );
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
-        let store = crate::store::init_store(internal, external, simulated_efs, &mut self.status);
+        let store = store::init_store(internal, external, simulated_efs, &mut self.status);
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -655,9 +659,10 @@ impl Stage4 {
 /// reading from undefined flash.  To fix, we run a pass over all filesystem
 /// flash and set it to a defined value.
 fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<Enabled>) {
+    use boards::nk3xn::MEMORY_REGIONS;
     use lpc55_hal::traits::flash::{Read, WriteErase};
 
-    let offset = super::MEMORY_REGIONS.filesystem.start;
+    let offset = MEMORY_REGIONS.filesystem.start;
 
     let page_count = ((631 * 1024 + 512) - offset) / 512;
 
@@ -786,9 +791,9 @@ impl Stage6 {
             debug!("data migration: updating FIDO2 attestation cert");
             let res = trussed::store::store(
                 self.store,
-                trussed::types::Location::Internal,
-                &littlefs2::path::PathBuf::from("fido/x5c/00"),
-                include_bytes!("../../../data/fido-cert.der"),
+                Location::Internal,
+                &PathBuf::from("fido/x5c/00"),
+                include_bytes!("../../data/fido-cert.der"),
             );
             if res.is_err() {
                 self.status.insert(InitStatus::MIGRATION_ERROR);

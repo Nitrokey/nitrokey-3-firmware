@@ -1,18 +1,9 @@
 use core::marker::PhantomData;
 
-pub use apdu_dispatch::{
-    command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
-};
 use apps::Dispatch;
-pub use ctaphid_dispatch::app::App as CtaphidApp;
-use littlefs2::const_ram_storage;
+use boards::{soc::Soc, store::RunnerStore, ui::UserInterface, Board};
 use rand_chacha::ChaCha8Rng;
-use trussed::{
-    types::{LfsResult, LfsStorage},
-    Platform,
-};
-
-use crate::{board::Board, soc::Soc, store::RunnerStore, ui::UserInterface};
+use trussed::Platform;
 
 pub mod usbnfc;
 
@@ -56,23 +47,6 @@ impl<B: Board> apps::Runner for Runner<B> {
         self.is_efs_available
     }
 }
-
-// 8KB of RAM
-const_ram_storage!(
-    name = VolatileStorage,
-    trait = LfsStorage,
-    erase_value = 0xff,
-    read_size = 16,
-    write_size = 256,
-    cache_size_ty = littlefs2::consts::U256,
-    // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
-    block_size = 256,
-    block_count = 8192/256,
-    lookahead_size_ty = littlefs2::consts::U1,
-    filename_max_plus_one_ty = littlefs2::consts::U256,
-    path_max_plus_one_ty = littlefs2::consts::U256,
-    result = LfsResult,
-);
 
 pub struct RunnerPlatform<B: Board> {
     pub rng: ChaCha8Rng,

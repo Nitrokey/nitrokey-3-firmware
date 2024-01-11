@@ -6,6 +6,7 @@ use apdu_dispatch::{
     interchanges::{Channel as CcidChannel, Responder as CcidResponder},
 };
 use apps::InitStatus;
+use boards::{soc::Soc, store::RunnerStore, ui::rgb_led::RgbLed as _, Board};
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use nfc_device::Iso14443;
@@ -16,21 +17,14 @@ use usb_device::{
     device::{UsbDeviceBuilder, UsbVidPid},
 };
 
-use board::Board;
-use soc::Soc;
-use store::RunnerStore;
 use types::usbnfc::{UsbClasses, UsbNfcInit};
-use ui::rgb_led::RgbLed as __;
 
 delog::generate_macros!();
 
-pub mod board;
-pub mod flash;
+#[cfg(feature = "board-nk3xn")]
+pub mod nk3xn;
 pub mod runtime;
-pub mod soc;
-pub mod store;
 pub mod types;
-pub mod ui;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
 compile_error!("No SoC chosen!");
@@ -150,7 +144,7 @@ pub fn init_apps<B: Board>(
     let provisioner = {
         use apps::Reboot as _;
         let store = store.clone();
-        let int_flash_ref = unsafe { store::steal_internal_storage::<B>() };
+        let int_flash_ref = unsafe { boards::store::steal_internal_storage::<B>() };
         let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
 
         apps::ProvisionerData {

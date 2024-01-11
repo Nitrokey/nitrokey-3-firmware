@@ -1,13 +1,10 @@
-use crate::{
-    board::Board,
-    soc::Soc,
-    types::{usbnfc::UsbClasses, ApduDispatch, Apps, CtaphidDispatch, Trussed},
-    ui,
-};
+use boards::{soc::Soc, ui, Board};
 
 use apdu_dispatch::dispatch::Interface;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
+
+use crate::types::{usbnfc::UsbClasses, ApduDispatch, Apps, CtaphidDispatch, Trussed};
 
 pub fn poll_dispatchers<B: Board>(
     apdu_dispatch: &mut ApduDispatch,

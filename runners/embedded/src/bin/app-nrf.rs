@@ -6,6 +6,12 @@ delog::generate_macros!();
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::interchanges::Channel as CcidChannel;
+    use boards::{
+        flash::ExtFlashStorage,
+        nk3am::{self, InternalFlashStorage, NK3AM},
+        soc::nrf52::{self, rtic_monotonic::RtcDuration},
+        store,
+    };
     use interchange::Channel;
     use nrf52840_hal::{
         gpio::{p0, p1},
@@ -17,20 +23,13 @@ mod app {
     use trussed::types::{Bytes, Location};
 
     use embedded_runner_lib::{
-        board::{
-            self,
-            nk3am::{self, InternalFlashStorage, NK3AM},
-        },
-        flash::ExtFlashStorage,
         runtime,
-        soc::nrf52::{self, rtic_monotonic::RtcDuration},
-        store,
         types::{self, RunnerPlatform},
     };
 
     type Board = NK3AM;
 
-    type Soc = <Board as board::Board>::Soc;
+    type Soc = <Board as boards::Board>::Soc;
 
     #[shared]
     struct SharedResources {
@@ -335,5 +334,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    embedded_runner_lib::handle_panic::<embedded_runner_lib::board::nk3am::NK3AM>(info)
+    embedded_runner_lib::handle_panic::<boards::nk3am::NK3AM>(info)
 }

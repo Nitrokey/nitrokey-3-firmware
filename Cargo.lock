@@ -356,6 +356,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "boards"
+version = "1.6.0"
+dependencies = [
+ "apps",
+ "cortex-m",
+ "cortex-m-rtic",
+ "delog",
+ "embedded-hal",
+ "embedded-storage",
+ "embedded-time",
+ "fm11nc08",
+ "generic-array",
+ "lfs-backup",
+ "littlefs2",
+ "lpc55-hal",
+ "lpc55-pac",
+ "memory-regions",
+ "nb 1.1.0",
+ "nfc-device",
+ "nrf52840-hal",
+ "nrf52840-pac",
+ "se05x",
+ "spi-memory",
+ "systick-monotonic",
+ "trussed",
+ "usb-device",
+ "utils",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1072,6 +1102,7 @@ dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
  "apps",
+ "boards",
  "cargo-lock",
  "cfg-if",
  "cortex-m",
@@ -1081,15 +1112,10 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-hal",
- "embedded-storage",
  "embedded-time",
- "fm11nc08",
- "generic-array",
  "heapless",
  "heapless-bytes",
  "interchange 0.3.0",
- "lfs-backup",
- "littlefs2",
  "lpc55-hal",
  "lpc55-pac",
  "memory-regions",
@@ -1104,7 +1130,6 @@ dependencies = [
  "rtt-target",
  "se05x",
  "serde",
- "spi-memory",
  "systick-monotonic",
  "toml",
  "trussed",

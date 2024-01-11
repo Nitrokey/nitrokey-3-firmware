@@ -6,13 +6,32 @@ use core::{
 
 use apps::InitStatus;
 use littlefs2::{
+    const_ram_storage,
     driver::Storage,
+    driver::Storage as LfsStorage,
     fs::{Allocation, Filesystem},
     io::Result as LfsResult,
 };
 use trussed::store::{Fs, Store};
 
-use crate::{board::Board, types::VolatileStorage};
+use crate::Board;
+
+// 8KB of RAM
+const_ram_storage!(
+    name = VolatileStorage,
+    trait = LfsStorage,
+    erase_value = 0xff,
+    read_size = 16,
+    write_size = 256,
+    cache_size_ty = littlefs2::consts::U256,
+    // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
+    block_size = 256,
+    block_count = 8192/256,
+    lookahead_size_ty = littlefs2::consts::U1,
+    filename_max_plus_one_ty = littlefs2::consts::U256,
+    path_max_plus_one_ty = littlefs2::consts::U256,
+    result = LfsResult,
+);
 
 #[cfg(feature = "provisioner")]
 pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
@@ -34,6 +53,10 @@ pub trait StoragePointers: 'static {
     unsafe fn efs_ptr() -> *mut Fs<Self::ExternalStorage>;
 }
 
+#[cfg_attr(
+    not(any(feature = "board-nk3am", feature = "board-nk3xn")),
+    allow(unused)
+)]
 macro_rules! impl_storage_pointers {
     ($name:ident, Internal = $I:ty, External = $E:ty,) => {
         impl $crate::store::StoragePointers for $name {
@@ -91,6 +114,10 @@ macro_rules! impl_storage_pointers {
     };
 }
 
+#[cfg_attr(
+    not(any(feature = "board-nk3am", feature = "board-nk3xn")),
+    allow(unused)
+)]
 pub(crate) use impl_storage_pointers;
 
 pub struct RunnerStore<S> {

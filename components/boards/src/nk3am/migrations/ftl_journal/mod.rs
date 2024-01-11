@@ -7,7 +7,7 @@ use backends::EFSBackupBackend;
 use ifs_flash_old::FlashStorage as OldFlashStorage;
 use lfs_backup::{BackupBackend, FSBackupError, Result};
 
-use crate::board::nk3am::{ExternalFlashStorage, InternalFlashStorage};
+use crate::nk3am::{ExternalFlashStorage, InternalFlashStorage};
 
 pub fn migrate<'a>(
     old_ifs_storage: &mut OldFlashStorage,

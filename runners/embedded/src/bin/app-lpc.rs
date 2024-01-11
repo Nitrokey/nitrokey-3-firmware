@@ -14,15 +14,11 @@ pub fn msp() -> u32 {
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
-    use embedded_runner_lib::{
-        board::{
-            self,
-            nk3xn::{self, nfc::NfcChip, NK3xN},
-        },
-        runtime,
+    use boards::{
+        nk3xn::{nfc::NfcChip, NK3xN},
         soc::lpc55::{self, monotonic::SystickMonotonic},
-        types,
     };
+    use embedded_runner_lib::{nk3xn, runtime, types};
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
@@ -33,7 +29,7 @@ mod app {
     use systick_monotonic::Systick;
 
     type Board = NK3xN;
-    type Soc = <Board as board::Board>::Soc;
+    type Soc = <Board as boards::Board>::Soc;
 
     const REFRESH_MILLISECS: Milliseconds = Milliseconds(50);
 
@@ -342,5 +338,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    embedded_runner_lib::handle_panic::<embedded_runner_lib::board::nk3xn::NK3xN>(info)
+    embedded_runner_lib::handle_panic::<boards::nk3xn::NK3xN>(info)
 }
