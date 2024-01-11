@@ -5,6 +5,7 @@ delog::generate_macros!();
 
 pub mod flash;
 pub mod init;
+pub mod runtime;
 pub mod soc;
 pub mod store;
 pub mod ui;

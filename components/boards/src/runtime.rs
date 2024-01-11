@@ -3,7 +3,7 @@ use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
 
-use boards::{init::UsbClasses, soc::Soc, ui, Apps, Board, Trussed};
+use crate::{init::UsbClasses, soc::Soc, ui, Apps, Board, Trussed};
 
 pub fn poll_dispatchers<B: Board>(
     apdu_dispatch: &mut ApduDispatch<'_>,
@@ -18,8 +18,6 @@ pub fn poll_dispatchers<B: Board>(
         apdu_poll == Some(Interface::Contactless),
     )
 }
-
-/* ************************************************************************ */
 
 pub fn poll_usb<S, FA, FB, TA, TB, E>(
     usb_classes: &mut Option<UsbClasses<S>>,
@@ -53,8 +51,6 @@ where
     };
     maybe_spawn_nfc(contactless.poll(), nfc_spawner);
 }
-
-/* ************************************************************************ */
 
 pub fn ccid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ccid_spawner: F)
 where
@@ -93,8 +89,6 @@ where
     maybe_spawn_nfc(contactless.poll_wait_extensions(), nfc_spawner);
 }
 
-/* ************************************************************************ */
-
 fn maybe_spawn_ccid<D, F, T, E>(status: usbd_ccid::Status, ccid_spawner: F)
 where
     D: From<Milliseconds>,
@@ -124,8 +118,6 @@ where
         nfc_spawner(ms.into()).ok();
     };
 }
-
-/* ************************************************************************ */
 
 pub fn run_trussed<B: Board>(trussed: &mut Trussed<B>) {
     trussed.process();

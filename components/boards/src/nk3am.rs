@@ -12,7 +12,7 @@ use nrf52840_hal::{
     timer::Timer,
     twim, Spim, Twim,
 };
-use nrf52840_pac::{FICR, GPIOTE, P0, P1, PWM0, PWM1, PWM2, SPIM3, TIMER1, TWIM1};
+use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3, TIMER1, TWIM1};
 
 use crate::{
     flash::ExtFlashStorage,
@@ -235,4 +235,26 @@ pub fn hw_key(ficr: &FICR) -> [u8; 16] {
     }
     trace!("ER: {:02x?}", er);
     er
+}
+
+pub fn power_handler(power: &mut POWER) {
+    trace!(
+        "irq PWR {:x} {:x} {:x}",
+        power.mainregstatus.read().bits(),
+        power.usbregstatus.read().bits(),
+        power.pofcon.read().bits()
+    );
+
+    if power.events_usbdetected.read().events_usbdetected().bits() {
+        power.events_usbdetected.write(|w| unsafe { w.bits(0) });
+        trace!("usb+");
+    }
+    if power.events_usbpwrrdy.read().events_usbpwrrdy().bits() {
+        power.events_usbpwrrdy.write(|w| unsafe { w.bits(0) });
+        trace!("usbY");
+    }
+    if power.events_usbremoved.read().events_usbremoved().bits() {
+        power.events_usbremoved.write(|w| unsafe { w.bits(0) });
+        trace!("usb-");
+    }
 }

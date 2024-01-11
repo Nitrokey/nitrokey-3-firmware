@@ -16,7 +16,6 @@ delog = "0.1"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
-embedded-time = "0.12"
 nfc-device = { path = "../../components/nfc-device" }
 utils = { path = "../../components/utils" }
 
@@ -30,8 +29,6 @@ interchange = "0.3"
 
 ### usb machinery
 usb-device = "0.2"
-usbd-ccid = "0.2"
-usbd-ctaphid = "0.1"
 
 ### NRF52 specific dependencies
 nrf52840-hal = { version = "0.15.1", optional = true }

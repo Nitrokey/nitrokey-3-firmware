@@ -1076,7 +1076,6 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-hal",
- "embedded-time",
  "interchange 0.3.0",
  "lpc55-hal",
  "lpc55-pac",
@@ -1090,8 +1089,6 @@ dependencies = [
  "toml 0.5.11",
  "trussed",
  "usb-device",
- "usbd-ccid",
- "usbd-ctaphid",
  "utils",
 ]
 

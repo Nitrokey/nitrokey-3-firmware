@@ -9,14 +9,13 @@ mod app {
     use boards::{
         init::UsbClasses,
         nk3am::{self, InternalFlashStorage, NK3AM},
+        runtime,
         soc::nrf52::{self, rtic_monotonic::RtcDuration},
         store, Apps, Trussed,
     };
     use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
     use interchange::Channel;
     use nrf52840_hal::{gpiote::Gpiote, rng::Rng};
-
-    use embedded_runner_lib::runtime;
 
     type Board = NK3AM;
 
@@ -212,27 +211,7 @@ mod app {
 
     #[task(priority = 5, binds = POWER_CLOCK, local = [power])]
     fn power_handler(ctx: power_handler::Context) {
-        let power = ctx.local.power;
-
-        trace!(
-            "irq PWR {:x} {:x} {:x}",
-            power.mainregstatus.read().bits(),
-            power.usbregstatus.read().bits(),
-            power.pofcon.read().bits()
-        );
-
-        if power.events_usbdetected.read().events_usbdetected().bits() {
-            power.events_usbdetected.write(|w| unsafe { w.bits(0) });
-            trace!("usb+");
-        }
-        if power.events_usbpwrrdy.read().events_usbpwrrdy().bits() {
-            power.events_usbpwrrdy.write(|w| unsafe { w.bits(0) });
-            trace!("usbY");
-        }
-        if power.events_usbremoved.read().events_usbremoved().bits() {
-            power.events_usbremoved.write(|w| unsafe { w.bits(0) });
-            trace!("usb-");
-        }
+        nk3am::power_handler(ctx.local.power);
     }
 
     #[task(priority = 1, shared = [trussed])]

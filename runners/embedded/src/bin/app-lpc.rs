@@ -18,11 +18,12 @@ mod app {
     use boards::{
         init::UsbClasses,
         nk3xn::{nfc::NfcChip, NK3xN},
+        runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
         Apps, Trussed,
     };
     use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
-    use embedded_runner_lib::{nk3xn, runtime};
+    use embedded_runner_lib::nk3xn;
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
