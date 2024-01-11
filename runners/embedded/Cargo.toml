@@ -11,27 +11,18 @@ license = "MIT"
 [dependencies]
 ### base dependencies
 apps = { path = "../../components/apps", features = ["nk3"] }
-boards = { path = "../../components/boards" }
-cfg-if = "*"
+boards = { path = "../../components/boards", features = ["trussed-auth"] }
 delog = "0.1"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
 embedded-time = "0.12"
 nfc-device = { path = "../../components/nfc-device" }
-rand_chacha = { version = "0.3.1", default-features = false, optional = true }
-rand_core = "0.6"
-rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
 utils = { path = "../../components/utils" }
-serde = { version = "1.0", default-features = false }
-heapless = "0.7"
-heapless-bytes = { version = "0.3.0", features = ["cbor"] }
-rand = { version =  "0.8.5", default-features = false }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
 ctaphid-dispatch = "0.1"
-ctap-types = "0.1"
 
 ### trussed core
 trussed = "0.1"
@@ -47,16 +38,13 @@ nrf52840-hal = { version = "0.15.1", optional = true }
 nrf52840-pac = { version = "0.11", optional = true }
 
 ### LPC55 specific dependencies
-cortex-m-semihosting = { version = "0.3.5", optional = true }
 lpc55-hal = { version = "0.3", features = ["littlefs"], optional = true }
 lpc55-pac = { version = "0.4", optional = true }
-nb = "1"
+nb = { version = "1", optional = true }
 systick-monotonic = { version = "1.0.0", optional = true }
 
 ### Allocator
 alloc-cortex-m = { version = "0.4.3", optional = true }
-ref-swap = "0.1.0"
-se05x = { version = "0.1.1", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -72,7 +60,7 @@ develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
 
-no-delog = ["delog/knock-it-off"]
+no-delog = ["boards/no-delog", "delog/knock-it-off"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = ["boards/no-encrypted-storage"]
@@ -91,10 +79,10 @@ alloc = ["alloc-cortex-m"]
 board-nk3am = ["boards/board-nk3am", "soc-nrf52"]
 board-nk3xn = ["boards/board-nk3xn", "soc-lpc55"]
 
-soc-nrf52 = ["nrf52840-hal", "nrf52840-pac", "rand_chacha", "se05x?/nrf"]
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "systick-monotonic", "se05x?/lpc55", "rand_chacha"]
+soc-nrf52 = ["nrf52840-hal", "nrf52840-pac"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "nb", "systick-monotonic"]
 
-se050 = ["dep:se05x", "apps/se050", "boards/se050"]
+se050 = ["apps/se050", "boards/se050"]
 
 lpc55-hardware-checks = []
 
@@ -111,8 +99,8 @@ log-debugP = [ "log-debug", "log-info", "log-warn", "log-error" ]
 log-infoP = [ "log-info", "log-warn", "log-error" ]
 log-warnP = [ "log-warn", "log-error" ]
 
-log-rtt = ["rtt-target"]
-log-semihosting = ["cortex-m-semihosting"]
+log-rtt = ["boards/log-rtt"]
+log-semihosting = ["boards/log-semihosting"]
 
 [[bin]]
 name = "nrf52_runner"

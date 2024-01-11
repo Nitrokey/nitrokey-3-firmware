@@ -1,11 +1,12 @@
 use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
-use apps::{Dispatch, InitStatus};
+use apps::InitStatus;
 #[cfg(feature = "se050")]
 use boards::nk3xn::TimerDelay;
 use boards::{
     flash::ExtFlashStorage,
+    init::{self, UsbNfc},
     nk3xn::{
         button::ThreeButtons,
         led::RgbLed,
@@ -24,6 +25,7 @@ use boards::{
         rgb_led::RgbLed as _,
         UserInterface,
     },
+    Apps, Trussed,
 };
 use embedded_hal::{
     blocking::i2c::{Read, Write},
@@ -59,14 +61,8 @@ use lpc55_hal as hal;
 #[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
-use rand_chacha::ChaCha8Rng;
-use trussed::{
-    service::Service,
-    types::{Location, PathBuf},
-};
+use trussed::types::{Location, PathBuf};
 use utils::OptionalStorage;
-
-use crate::types::{self, usbnfc::UsbNfcInit as UsbNfc, Apps, Trussed};
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
@@ -720,38 +716,15 @@ impl Stage5 {
 
         let user_interface = UserInterface::new(rtc, three_buttons, rgb);
 
-        use rand::{Rng as _, SeedableRng};
-        let mut dev_rng = self.rng;
-        let rng_and_maybe_se050 = {
-            #[cfg(feature = "se050")]
-            let res = if let Some(i2c) = self.se050_i2c {
-                let (se050, chacha_rng) = crate::init_se050(
-                    i2c,
-                    TimerDelay(self.se050_timer),
-                    &mut dev_rng,
-                    &mut self.status,
-                );
-                (chacha_rng, Some(se050))
-            } else {
-                (ChaCha8Rng::from_seed(dev_rng.gen()), None)
-            };
-            #[cfg(not(feature = "se050"))]
-            let res = (ChaCha8Rng::from_seed(dev_rng.gen()),);
-            res
-        };
-
-        let board = types::RunnerPlatform {
-            rng: rng_and_maybe_se050.0,
-            store: self.store,
+        let trussed = boards::init::init_trussed(
+            &mut self.rng,
+            self.store,
             user_interface,
-        };
-        let trussed = Service::with_dispatch(
-            board,
-            Dispatch::new(
-                Location::Internal,
-                #[cfg(feature = "se050")]
-                rng_and_maybe_se050.1,
-            ),
+            &mut self.status,
+            None,
+            #[cfg(feature = "se050")]
+            self.se050_i2c
+                .map(|i2c| (i2c, TimerDelay(self.se050_timer))),
         );
 
         #[cfg(not(feature = "se050"))]
@@ -826,7 +799,7 @@ impl Stage6 {
     #[inline(never)]
     pub fn next(mut self, usbhs: Usbhs<Unknown>) -> All {
         self.perform_data_migrations();
-        let apps = crate::init_apps(
+        let apps = init::init_apps(
             &mut self.trussed,
             self.status,
             &self.store,

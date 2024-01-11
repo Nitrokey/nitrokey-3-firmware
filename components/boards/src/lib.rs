@@ -4,6 +4,7 @@
 delog::generate_macros!();
 
 pub mod flash;
+pub mod init;
 pub mod soc;
 pub mod store;
 pub mod ui;
@@ -13,6 +14,9 @@ pub mod nk3am;
 #[cfg(feature = "board-nk3xn")]
 pub mod nk3xn;
 
+use core::marker::PhantomData;
+
+use apps::Dispatch;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{
@@ -20,12 +24,18 @@ use littlefs2::{
     io::Result as LfsResult,
 };
 use nfc_device::traits::nfc::Device as NfcDevice;
+use rand_chacha::ChaCha8Rng;
+use trussed::{client::Syscall, Platform};
 
 use crate::{
     soc::Soc,
-    store::StoragePointers,
-    ui::{buttons::UserPresence, rgb_led::RgbLed},
+    store::{RunnerStore, StoragePointers},
+    ui::{buttons::UserPresence, rgb_led::RgbLed, UserInterface},
 };
+
+pub type Trussed<B> =
+    trussed::Service<RunnerPlatform<B>, Dispatch<<B as Board>::Twi, <B as Board>::Se050Timer>>;
+pub type Apps<B> = apps::Apps<Runner<B>>;
 
 pub trait Board: StoragePointers {
     type Soc: Soc;
@@ -56,5 +66,79 @@ pub trait Board: StoragePointers {
     ) -> LfsResult<()> {
         let _ = (ifs_alloc, efs_storage);
         Filesystem::format(ifs_storage)
+    }
+}
+
+pub struct Runner<B> {
+    pub is_efs_available: bool,
+    pub _marker: PhantomData<B>,
+}
+
+impl<B: Board> apps::Runner for Runner<B> {
+    type Syscall = RunnerSyscall<B::Soc>;
+    type Reboot = B::Soc;
+    type Store = RunnerStore<B>;
+    #[cfg(feature = "provisioner")]
+    type Filesystem = B::InternalStorage;
+    type Twi = B::Twi;
+    type Se050Timer = B::Se050Timer;
+
+    fn uuid(&self) -> [u8; 16] {
+        *B::Soc::device_uuid()
+    }
+
+    fn is_efs_available(&self) -> bool {
+        self.is_efs_available
+    }
+}
+
+pub struct RunnerPlatform<B: Board> {
+    pub rng: ChaCha8Rng,
+    pub store: RunnerStore<B>,
+    pub user_interface: UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>,
+}
+
+unsafe impl<B: Board> Platform for RunnerPlatform<B> {
+    type R = ChaCha8Rng;
+    type S = RunnerStore<B>;
+    type UI = UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>;
+
+    fn user_interface(&mut self) -> &mut Self::UI {
+        &mut self.user_interface
+    }
+
+    fn rng(&mut self) -> &mut Self::R {
+        &mut self.rng
+    }
+
+    fn store(&self) -> Self::S {
+        self.store
+    }
+}
+
+pub struct RunnerSyscall<S: Soc> {
+    _marker: PhantomData<S>,
+}
+
+impl<S: Soc> Default for RunnerSyscall<S> {
+    fn default() -> Self {
+        Self {
+            _marker: Default::default(),
+        }
+    }
+}
+
+impl<S: Soc> Syscall for RunnerSyscall<S> {
+    #[inline]
+    fn syscall(&mut self) {
+        rtic::pend(S::SYSCALL_IRQ);
+    }
+}
+
+pub fn handle_panic<B: Board>(_info: &core::panic::PanicInfo) -> ! {
+    error_now!("{}", _info);
+    B::Led::set_panic_led();
+    loop {
+        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }

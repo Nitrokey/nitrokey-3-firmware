@@ -7,9 +7,12 @@ use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as N
 use nrf52840_hal::{
     gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
-    spim, twim, Spim,
+    prelude::OutputPin as _,
+    spim,
+    timer::Timer,
+    twim, Spim, Twim,
 };
-use nrf52840_pac::{PWM0, PWM1, PWM2, SPIM3};
+use nrf52840_pac::{FICR, GPIOTE, P0, P1, PWM0, PWM1, PWM2, SPIM3, TIMER1, TWIM1};
 
 use crate::{
     flash::ExtFlashStorage,
@@ -40,9 +43,9 @@ impl Board for NK3AM {
     type Led = RgbLed;
 
     #[cfg(feature = "se050")]
-    type Twi = nrf52840_hal::twim::Twim<nrf52840_pac::TWIM1>;
+    type Twi = Twim<TWIM1>;
     #[cfg(feature = "se050")]
-    type Se050Timer = nrf52840_hal::Timer<nrf52840_pac::TIMER1>;
+    type Se050Timer = Timer<TIMER1>;
     #[cfg(not(feature = "se050"))]
     type Twi = ();
     #[cfg(not(feature = "se050"))]
@@ -119,20 +122,26 @@ impl NfcDevice for DummyNfc {
 }
 
 pub struct BoardGPIO {
+    pub gpiote: Gpiote,
+
     /* interactive elements */
-    pub rgb_led: [Pin<Output<PushPull>>; 3],
-    pub touch: Pin<Output<PushPull>>,
+    pub rgb_led: [OutPin; 3],
+    pub touch: OutPin,
 
     /* Secure Element (through TWIM1) */
     pub se_pins: Option<twim::Pins>,
-    pub se_power: Option<Pin<Output<PushPull>>>,
+    pub se_power: Option<OutPin>,
 
     /* External Flash & NFC (through SxPIM3) */
     pub flashnfc_spi: Option<spim::Pins>,
-    pub flash_cs: Option<Pin<Output<PushPull>>>,
+    pub flash_cs: Option<OutPin>,
 }
 
-pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
+pub fn init_pins(gpiote: GPIOTE, p0: P0, p1: P1) -> BoardGPIO {
+    let gpiote = Gpiote::new(gpiote);
+    let gpio_p0 = p0::Parts::new(p0);
+    let gpio_p1 = p1::Parts::new(p1);
+
     /* touch sensor */
     let touch = gpio_p0.p0_04.into_push_pull_output(Level::High).degrade();
     // not used, just ensure output + low
@@ -169,7 +178,10 @@ pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> Bo
         mosi: Some(flash_spi_mosi),
     };
 
+    gpiote.reset_events();
+
     BoardGPIO {
+        gpiote,
         rgb_led: [led_r, led_g, led_b],
         touch: touch,
         se_pins: Some(se_pins),
@@ -194,4 +206,33 @@ pub fn init_ui(
     let buttons = HardwareButtons::new(touch);
 
     UserInterface::new(rtc_mono, Some(buttons), Some(rgb))
+}
+
+pub fn init_external_flash(spim3: SPIM3, spi: spim::Pins, cs: OutPin) -> ExternalFlashStorage {
+    let spim = Spim::new(spim3, spi, spim::Frequency::M2, spim::MODE_0, 0x00u8);
+    ExtFlashStorage::try_new(spim, cs).unwrap()
+}
+
+pub fn init_se050(
+    twim1: TWIM1,
+    pins: twim::Pins,
+    mut power: OutPin,
+    timer1: TIMER1,
+) -> (Twim<TWIM1>, Timer<TIMER1>) {
+    power.set_high().unwrap();
+    let twim = Twim::new(twim1, pins, twim::Frequency::K400);
+    let timer = Timer::new(timer1);
+    (twim, timer)
+}
+
+pub fn hw_key(ficr: &FICR) -> [u8; 16] {
+    let mut er = [0; 16];
+    for (i, r) in ficr.er.iter().enumerate() {
+        let v = r.read().bits().to_be_bytes();
+        for (j, w) in v.into_iter().enumerate() {
+            er[i * 4 + j] = w;
+        }
+    }
+    trace!("ER: {:02x?}", er);
+    er
 }

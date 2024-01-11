@@ -4,20 +4,29 @@ edition = "2021"
 version.workspace = true
 
 [dependencies]
+apdu-dispatch = "0.1"
 apps = { path = "../apps" }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
+ctaphid-dispatch = "0.1"
 delog = "0.1"
 embedded-hal = "0.2.3"
 embedded-time = "0.12"
 generic-array = "0.14"
+interchange = "0.3"
 littlefs2 = { version = "0.4", features = ["c-stubs"] }
 memory-regions = { path = "../memory-regions" }
 nb = "1"
 nfc-device = { path = "../nfc-device" }
-trussed = "0.1"
+rand = { version =  "0.8.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+ref-swap = "0.1.0"
 spi-memory = "0.2.0"
+trussed = "0.1"
 usb-device = "0.2"
+usbd-ccid = "0.2"
+usbd-ctaphid = "0.1"
+utils = { path = "../utils" }
 
 # soc-lpc55
 lpc55-hal = { version = "0.3", features = ["littlefs"], optional = true }
@@ -31,22 +40,38 @@ nrf52840-pac = { version = "0.11", optional = true }
 
 # board-nk3am
 lfs-backup = { path = "../lfs-backup", optional = true }
-fm11nc08 = { path = "../fm11nc08", optional = true }
 
 # board-nk3xn
-utils = { path = "../utils", optional = true }
+fm11nc08 = { path = "../fm11nc08", optional = true }
+
+# logging
+cortex-m-semihosting = { version = "0.3.5", optional = true }
+rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
 
 # se050
 se05x = { version = "0.1.1", optional = true }
 
 [features]
 board-nk3am = ["soc-nrf52", "lfs-backup"]
-board-nk3xn = ["soc-lpc55", "fm11nc08", "utils"]
+board-nk3xn = ["soc-lpc55", "fm11nc08"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
+log-all = []
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []
+log-none = []
+
+log-rtt = ["rtt-target"]
+log-semihosting = ["cortex-m-semihosting"]
+
 no-buttons = []
+no-delog = []
 no-encrypted-storage = []
-provisioner = []
-se050 = ["se05x"]
+provisioner = ["apps/provisioner-app"]
+se050 = ["se05x", "apps/se050"]
+trussed-auth = ["apps/backend-auth"]

@@ -5,27 +5,18 @@ delog::generate_macros!();
 
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
-    use apdu_dispatch::interchanges::Channel as CcidChannel;
+    use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
     use boards::{
-        flash::ExtFlashStorage,
+        init::UsbClasses,
         nk3am::{self, InternalFlashStorage, NK3AM},
         soc::nrf52::{self, rtic_monotonic::RtcDuration},
-        store,
+        store, Apps, Trussed,
     };
+    use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
     use interchange::Channel;
-    use nrf52840_hal::{
-        gpio::{p0, p1},
-        gpiote::Gpiote,
-        prelude::OutputPin,
-        rng::Rng,
-        timer::Timer,
-    };
-    use trussed::types::{Bytes, Location};
+    use nrf52840_hal::{gpiote::Gpiote, rng::Rng};
 
-    use embedded_runner_lib::{
-        runtime,
-        types::{self, RunnerPlatform},
-    };
+    use embedded_runner_lib::runtime;
 
     type Board = NK3AM;
 
@@ -33,11 +24,11 @@ mod app {
 
     #[shared]
     struct SharedResources {
-        trussed: types::Trussed<Board>,
-        apps: types::Apps<Board>,
-        apdu_dispatch: types::ApduDispatch,
-        ctaphid_dispatch: types::CtaphidDispatch,
-        usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
+        trussed: Trussed<Board>,
+        apps: Apps<Board>,
+        apdu_dispatch: ApduDispatch<'static>,
+        ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
+        usb_classes: Option<UsbClasses<Soc>>,
     }
 
     #[local]
@@ -59,88 +50,33 @@ mod app {
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
 
-        embedded_runner_lib::init_logger::<Board>();
+        boards::init::init_logger::<Board>(utils::VERSION_STRING);
 
         nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
-        let se050_timer = Timer::<nrf52840_pac::TIMER1>::new(ctx.device.TIMER1);
+        let mut board_gpio = nk3am::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
-        let dev_gpiote = Gpiote::new(ctx.device.GPIOTE);
-        let mut board_gpio = {
-            let dev_gpio_p0 = p0::Parts::new(ctx.device.P0);
-            let dev_gpio_p1 = p1::Parts::new(ctx.device.P1);
-            nk3am::init_pins(&dev_gpiote, dev_gpio_p0, dev_gpio_p1)
-        };
-        dev_gpiote.reset_events();
-
-        /* check reason for booting */
-        let powered_by_usb: bool = true;
-        /* a) powered through NFC: enable NFC, keep external oscillator off, don't start USB */
-        /* b) powered through USB: start external oscillator, start USB, keep NFC off(?) */
-
-        let usbd_ref = {
-            if powered_by_usb {
-                Some(nrf52::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD))
-            } else {
-                None
-            }
-        };
+        let usb_bus = nrf52::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD);
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
-
-        let extflash = {
-            use nrf52840_hal::Spim;
-            //Spim::new(spi, pins, config.speed(), config.mode())
-            let spim = Spim::new(
-                ctx.device.SPIM3,
-                board_gpio.flashnfc_spi.take().unwrap(),
-                nrf52840_hal::spim::Frequency::M2,
-                nrf52840_hal::spim::MODE_0,
-                0x00u8,
-            );
-            let res = ExtFlashStorage::try_new(spim, board_gpio.flash_cs.take().unwrap());
-
-            res.unwrap()
-        };
-
-        let store = store::init_store(internal_flash, extflash, false, &mut init_status);
+        let external_flash = nk3am::init_external_flash(
+            ctx.device.SPIM3,
+            board_gpio.flashnfc_spi.take().unwrap(),
+            board_gpio.flash_cs.take().unwrap(),
+        );
+        let store = store::init_store(internal_flash, external_flash, false, &mut init_status);
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
-        let usbnfcinit = embedded_runner_lib::init_usb_nfc::<Board>(usbd_ref, None, nfc_rp);
-
-        if let Some(se_ena) = &mut board_gpio.se_power {
-            match se_ena.set_high() {
-                Err(e) => {
-                    panic!("failed setting se_power high {:?}", e);
-                }
-                Ok(_) => {
-                    debug!("setting se_power high");
-                }
-            }
-        }
-
-        let twim = nrf52840_hal::twim::Twim::new(
-            ctx.device.TWIM1,
-            board_gpio.se_pins.take().unwrap(),
-            nrf52840_hal::twim::Frequency::K400,
-        );
-        #[cfg(not(feature = "se050"))]
-        {
-            let _ = se050_timer;
-            let _ = twim;
-        }
-
-        let mut dev_rng = Rng::new(ctx.device.RNG);
+        let usb_nfc = embedded_runner_lib::init_usb_nfc::<Board>(Some(usb_bus), None, nfc_rp);
 
         #[cfg(feature = "se050")]
-        let (se050, rng) =
-            embedded_runner_lib::init_se050(twim, se050_timer, &mut dev_rng, &mut init_status);
-
-        #[cfg(not(feature = "se050"))]
-        use rand::{Rng as _, SeedableRng};
-        #[cfg(not(feature = "se050"))]
-        let rng = rand_chacha::ChaCha8Rng::from_seed(dev_rng.gen());
+        let se050 = nk3am::init_se050(
+            ctx.device.TWIM1,
+            board_gpio.se_pins.unwrap(),
+            board_gpio.se_power.unwrap(),
+            ctx.device.TIMER1,
+        );
 
         #[cfg(feature = "board-nk3am")]
         let user_interface = nk3am::init_ui(
@@ -151,53 +87,34 @@ mod app {
             board_gpio.touch,
         );
 
-        let platform = RunnerPlatform {
-            rng,
+        let mut dev_rng = Rng::new(ctx.device.RNG);
+        let hw_key = nk3am::hw_key(&ctx.device.FICR);
+        let mut trussed = boards::init::init_trussed(
+            &mut dev_rng,
             store,
             user_interface,
-        };
-
-        let mut er = [0; 16];
-        for (i, r) in ctx.device.FICR.er.iter().enumerate() {
-            let v = r.read().bits().to_be_bytes();
-            for (j, w) in v.into_iter().enumerate() {
-                er[i * 4 + j] = w;
-            }
-        }
-        trace!("ER: {:02x?}", er);
-
-        let mut trussed_service = trussed::service::Service::with_dispatch(
-            platform,
-            apps::Dispatch::with_hw_key(
-                Location::Internal,
-                Bytes::from_slice(&er).unwrap(),
-                #[cfg(feature = "se050")]
-                Some(se050),
-            ),
+            &mut init_status,
+            Some(&hw_key),
+            #[cfg(feature = "se050")]
+            Some(se050),
         );
 
-        let apps = embedded_runner_lib::init_apps(
-            &mut trussed_service,
-            init_status,
-            &store,
-            !powered_by_usb,
-        );
+        let apps = boards::init::init_apps(&mut trussed, init_status, &store, false);
 
         let rtc_mono = RtcMonotonic::new(ctx.device.RTC0);
 
         ui::spawn_after(RtcDuration::from_ms(2500)).ok();
 
-        // compose LateResources
         (
             SharedResources {
-                trussed: trussed_service,
+                trussed,
                 apps,
-                apdu_dispatch: usbnfcinit.apdu_dispatch,
-                ctaphid_dispatch: usbnfcinit.ctaphid_dispatch,
-                usb_classes: usbnfcinit.usb_classes,
+                apdu_dispatch: usb_nfc.apdu_dispatch,
+                ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
+                usb_classes: usb_nfc.usb_classes,
             },
             LocalResources {
-                gpiote: dev_gpiote,
+                gpiote: board_gpio.gpiote,
                 power: ctx.device.POWER,
             },
             init::Monotonics(rtc_mono),
@@ -219,7 +136,7 @@ mod app {
 
         loop {
             #[cfg(not(feature = "no-delog"))]
-            embedded_runner_lib::Delogger::flush();
+            boards::init::Delogger::flush();
 
             let (usb_activity, _nfc_activity) = apps.lock(|apps| {
                 apdu_dispatch.lock(|apdu_dispatch| {
@@ -334,5 +251,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    embedded_runner_lib::handle_panic::<boards::nk3am::NK3AM>(info)
+    boards::handle_panic::<boards::nk3am::NK3AM>(info)
 }

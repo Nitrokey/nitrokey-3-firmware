@@ -14,11 +14,15 @@ pub fn msp() -> u32 {
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
+    use apdu_dispatch::dispatch::ApduDispatch;
     use boards::{
+        init::UsbClasses,
         nk3xn::{nfc::NfcChip, NK3xN},
         soc::lpc55::{self, monotonic::SystickMonotonic},
+        Apps, Trussed,
     };
-    use embedded_runner_lib::{nk3xn, runtime, types};
+    use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
+    use embedded_runner_lib::{nk3xn, runtime};
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
@@ -39,19 +43,19 @@ mod app {
     #[shared]
     struct SharedResources {
         /// Dispatches APDUs from contact+contactless interface to apps.
-        apdu_dispatch: types::ApduDispatch,
+        apdu_dispatch: ApduDispatch<'static>,
 
         /// Dispatches CTAPHID messages to apps.
-        ctaphid_dispatch: types::CtaphidDispatch,
+        ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
 
         /// The Trussed service, used by all applications.
-        trussed: types::Trussed<Board>,
+        trussed: Trussed<Board>,
 
         /// All the applications that the device serves.
-        apps: types::Apps<Board>,
+        apps: Apps<Board>,
 
         /// The USB driver classes
-        usb_classes: Option<types::usbnfc::UsbClasses<Soc>>,
+        usb_classes: Option<UsbClasses<Soc>>,
         /// The NFC driver
         contactless: Option<Iso14443<NfcChip>>,
 
@@ -152,7 +156,7 @@ mod app {
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {
-                embedded_runner_lib::Delogger::flush();
+                boards::init::Delogger::flush();
             }
 
             let (usb_activity, nfc_activity) = apps.lock(|apps| {
@@ -338,5 +342,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    embedded_runner_lib::handle_panic::<boards::nk3xn::NK3xN>(info)
+    boards::handle_panic::<boards::nk3xn::NK3xN>(info)
 }

@@ -8,7 +8,7 @@ pub fn init(
 ) -> init::All {
     const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
 
-    crate::init_logger::<NK3xN>();
+    boards::init::init_logger::<NK3xN>(utils::VERSION_STRING);
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 
