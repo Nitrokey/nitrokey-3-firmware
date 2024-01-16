@@ -3,6 +3,8 @@
 
 delog::generate_macros!();
 
+use cortex_m_rt::{exception, ExceptionFrame};
+
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
@@ -240,4 +242,9 @@ mod app {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     boards::handle_panic::<boards::nk3am::NK3AM>(info)
+}
+
+#[exception]
+unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
+    boards::handle_hard_fault::<boards::nk3am::NK3AM>(ef)
 }
