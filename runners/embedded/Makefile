@@ -41,10 +41,12 @@ delim = ,
 space := $(null) #
 COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
 
-.PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
+.PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
-all: build-nk3am.bl build-nk3xn $(ARTIFACTS)
+all: build-all $(ARTIFACTS)
+
+build-all: build-nk3am.bl build-nk3xn
 
 check-all: check-nk3am.bl check-nk3xn
 
