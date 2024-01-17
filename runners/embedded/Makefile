@@ -114,7 +114,6 @@ build: build-banner check-var-BOARD check-var-SOC
 
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
-	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
 
 check: check-banner check-var-BOARD check-var-SOC
 
