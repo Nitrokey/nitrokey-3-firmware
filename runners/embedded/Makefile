@@ -29,17 +29,12 @@ SRCS = $(shell find src -name "*.rs" )
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
-CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
-NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(BUILD_FEATURES)'.split(',') and 'log-semihosting' not in '$(BUILD_FEATURES)'.split(',') and 'log-rtt' not in '$(BUILD_FEATURES)'.split(',') else None; ")
+CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(FEATURES)'.split(',')  else 'release'; print(p); " )
+NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-semihosting' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
 # feature definition
-BUILD_FEATURES := board-$(BOARD) $(FEATURES)
-ALL_FEATURES = $(BUILD_FEATURES) $(NO_DELOG_FEATURE)
-# assemble comma-seperated list to pass to `cargo build`
-delim = ,
-space := $(null) #
-COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
+BUILD_FEATURES := board-$(BOARD),$(FEATURES),$(NO_DELOG_FEATURE)
 
 .PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars
 
@@ -114,7 +109,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-SOC
 
 	# NRF52/test -> "release-thin-lto", use "release" otherwise
 	cargo build --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
 	cp $(RAW_OUT) ./$(OUT_ELF)
@@ -132,7 +127,7 @@ check: check-banner $(SRCS) check-var-BOARD check-var-SOC
 	cargo --version
 
 	cargo check --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
 doc: check-banner $(SRCS) check-var-BOARD check-var-SOC
@@ -140,7 +135,7 @@ doc: check-banner $(SRCS) check-var-BOARD check-var-SOC
 	cargo --version
 
 	cargo doc --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--verbose
 
 clean: clean-banner check-var-BOARD

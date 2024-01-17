@@ -219,7 +219,7 @@ mod app {
 
         loop {
             #[cfg(not(feature = "no-delog"))]
-            Delogger::flush();
+            embedded_runner_lib::Delogger::flush();
 
             let (usb_activity, _nfc_activity) = apps.lock(|apps| {
                 apdu_dispatch.lock(|apdu_dispatch| {
