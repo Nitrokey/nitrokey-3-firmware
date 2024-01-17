@@ -25,7 +25,6 @@ LOG ?= build-$(BUILD_ID).err.log
 SYMBOLS ?= symbols-$(BUILD_ID).txt
 
 # input files and outputs
-SRCS = $(shell find src -name "*.rs" )
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
@@ -70,10 +69,6 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BOARD=nk3xn FEATURES=$(FEATURES)
 
-$(OUT_ELF): $(SRCS) build
-$(OUT_BIN): $(OUT_ELF)
-$(OUT_IHEX): $(OUT_ELF)
-
 check-var-%:
 	@if [ -z '${${*}}' ]; then echo 'FAIL: var: $* required!!!' && exit 1; fi
 
@@ -103,11 +98,10 @@ clean-all:
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-SOC
+build: build-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
-	# NRF52/test -> "release-thin-lto", use "release" otherwise
 	cargo build --target $(TARGET) \
 		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
@@ -122,7 +116,7 @@ build: build-banner $(SRCS) check-var-BOARD check-var-SOC
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
 	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
 
-check: check-banner $(SRCS) check-var-BOARD check-var-SOC
+check: check-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
@@ -130,7 +124,7 @@ check: check-banner $(SRCS) check-var-BOARD check-var-SOC
 		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
-doc: check-banner $(SRCS) check-var-BOARD check-var-SOC
+doc: check-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
