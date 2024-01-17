@@ -1,27 +1,9 @@
 use core::marker::PhantomData;
 
-use crate::store::{RunnerStore, StoragePointers};
-pub use apdu_dispatch::{
-    command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
-};
-use apps::{Dispatch, Reboot, Variant};
-use cortex_m::interrupt::InterruptNumber;
-pub use ctaphid_dispatch::app::App as CtaphidApp;
-#[cfg(feature = "se050")]
-use embedded_hal::blocking::delay::DelayUs;
-use embedded_time::duration::Milliseconds;
-use littlefs2::{
-    const_ram_storage,
-    fs::{Allocation, Filesystem},
-};
-use nfc_device::traits::nfc::Device as NfcDevice;
+use apps::Dispatch;
+use boards::{soc::Soc, store::RunnerStore, ui::UserInterface, Board};
 use rand_chacha::ChaCha8Rng;
-use trussed::{
-    platform::UserInterface,
-    types::{LfsResult, LfsStorage},
-    Platform,
-};
-use usb_device::bus::UsbBus;
+use trussed::Platform;
 
 pub mod usbnfc;
 
@@ -43,63 +25,22 @@ pub const INTERFACE_CONFIG: Config = Config {
     usb_id_product: 0x42B2,
 };
 
-pub type Uuid = [u8; 16];
-
-pub trait Soc: StoragePointers + Reboot + 'static {
-    type UsbBus: UsbBus + 'static;
-    type NfcDevice: NfcDevice;
-    type TrussedUI: UserInterface;
-
-    #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32> + 'static;
-    #[cfg(feature = "se050")]
-    type Twi: se05x::t1::I2CForT1 + 'static;
-    #[cfg(not(feature = "se050"))]
-    type Se050Timer: 'static;
-    #[cfg(not(feature = "se050"))]
-    type Twi: 'static;
-
-    type Duration: From<Milliseconds>;
-
-    type Interrupt: InterruptNumber;
-    const SYSCALL_IRQ: Self::Interrupt;
-
-    const SOC_NAME: &'static str;
-    const BOARD_NAME: &'static str;
-    const VARIANT: Variant;
-
-    fn device_uuid() -> &'static Uuid;
-
-    fn prepare_ifs(ifs: &mut Self::InternalStorage) {
-        let _ = ifs;
-    }
-
-    fn recover_ifs(
-        ifs_storage: &mut Self::InternalStorage,
-        ifs_alloc: &mut Allocation<Self::InternalStorage>,
-        efs_storage: &mut Self::ExternalStorage,
-    ) -> LfsResult<()> {
-        let _ = (ifs_alloc, efs_storage);
-        Filesystem::format(ifs_storage)
-    }
-}
-
-pub struct Runner<S> {
+pub struct Runner<B> {
     pub is_efs_available: bool,
-    pub _marker: PhantomData<S>,
+    pub _marker: PhantomData<B>,
 }
 
-impl<S: Soc> apps::Runner for Runner<S> {
-    type Syscall = RunnerSyscall<S>;
-    type Reboot = S;
-    type Store = RunnerStore<S>;
+impl<B: Board> apps::Runner for Runner<B> {
+    type Syscall = RunnerSyscall<B::Soc>;
+    type Reboot = B::Soc;
+    type Store = RunnerStore<B>;
     #[cfg(feature = "provisioner")]
-    type Filesystem = S::InternalStorage;
-    type Twi = S::Twi;
-    type Se050Timer = S::Se050Timer;
+    type Filesystem = B::InternalStorage;
+    type Twi = B::Twi;
+    type Se050Timer = B::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
-        *S::device_uuid()
+        *B::Soc::device_uuid()
     }
 
     fn is_efs_available(&self) -> bool {
@@ -107,33 +48,16 @@ impl<S: Soc> apps::Runner for Runner<S> {
     }
 }
 
-// 8KB of RAM
-const_ram_storage!(
-    name = VolatileStorage,
-    trait = LfsStorage,
-    erase_value = 0xff,
-    read_size = 16,
-    write_size = 256,
-    cache_size_ty = littlefs2::consts::U256,
-    // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
-    block_size = 256,
-    block_count = 8192/256,
-    lookahead_size_ty = littlefs2::consts::U1,
-    filename_max_plus_one_ty = littlefs2::consts::U256,
-    path_max_plus_one_ty = littlefs2::consts::U256,
-    result = LfsResult,
-);
-
-pub struct RunnerPlatform<S: Soc> {
+pub struct RunnerPlatform<B: Board> {
     pub rng: ChaCha8Rng,
-    pub store: RunnerStore<S>,
-    pub user_interface: S::TrussedUI,
+    pub store: RunnerStore<B>,
+    pub user_interface: UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>,
 }
 
-unsafe impl<S: Soc> Platform for RunnerPlatform<S> {
+unsafe impl<B: Board> Platform for RunnerPlatform<B> {
     type R = ChaCha8Rng;
-    type S = RunnerStore<S>;
-    type UI = S::TrussedUI;
+    type S = RunnerStore<B>;
+    type UI = UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>;
 
     fn user_interface(&mut self) -> &mut Self::UI {
         &mut self.user_interface
@@ -167,8 +91,8 @@ impl<S: Soc> trussed::client::Syscall for RunnerSyscall<S> {
     }
 }
 
-pub type Trussed<S> =
-    trussed::Service<RunnerPlatform<S>, Dispatch<<S as Soc>::Twi, <S as Soc>::Se050Timer>>;
+pub type Trussed<B> =
+    trussed::Service<RunnerPlatform<B>, Dispatch<<B as Board>::Twi, <B as Board>::Se050Timer>>;
 
 pub type ApduDispatch = apdu_dispatch::dispatch::ApduDispatch<'static>;
 pub type CtaphidDispatch = ctaphid_dispatch::dispatch::Dispatch<'static, 'static>;

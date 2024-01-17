@@ -1,32 +1,14 @@
-pub mod clock_controller;
 pub mod init;
-pub mod monotonic;
-pub mod nfc;
-pub mod prince;
-pub mod spi;
-pub mod types;
 
-// modules with path attribute *are* directory owners if their path
-// refers to a 'mod.rs'
-#[cfg_attr(feature = "board-nk3xn", path = "board_nk3xn/mod.rs")]
-pub mod board;
-
-#[cfg(not(feature = "no-delog"))]
-delog::delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
-
-const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
+use boards::nk3xn::NK3xN;
 
 pub fn init(
     device_peripherals: lpc55_hal::raw::Peripherals,
     core_peripherals: rtic::export::Peripherals,
 ) -> init::All {
-    #[cfg(feature = "log-rtt")]
-    rtt_target::rtt_init_print!();
+    const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
 
-    #[cfg(not(feature = "no-delog"))]
-    Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
-
-    crate::banner::<types::Soc>();
+    crate::init_logger::<NK3xN>();
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 

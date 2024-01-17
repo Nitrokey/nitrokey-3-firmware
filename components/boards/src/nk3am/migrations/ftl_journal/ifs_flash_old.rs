@@ -1,6 +1,6 @@
 use embedded_storage::nor_flash::{NorFlash, ReadNorFlash};
 
-use crate::soc::types::MEMORY_REGIONS;
+use crate::nk3am::MEMORY_REGIONS;
 
 const FS_BASE: usize = MEMORY_REGIONS.filesystem.start;
 const FS_CEIL: usize = MEMORY_REGIONS.filesystem.end;

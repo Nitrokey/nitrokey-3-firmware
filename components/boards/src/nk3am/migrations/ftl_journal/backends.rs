@@ -1,9 +1,9 @@
-use heapless_bytes::Bytes;
 use littlefs2::driver::Storage;
+use trussed::types::Bytes;
 
 use lfs_backup::{BackupBackend, FSBackupError, Result, MAX_DUMP_BLOB_LENGTH};
 
-use crate::soc::types::ExternalFlashStorage;
+use crate::nk3am::ExternalFlashStorage;
 
 pub struct EFSBackupBackend<'a> {
     extflash: &'a mut ExternalFlashStorage,

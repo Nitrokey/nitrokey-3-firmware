@@ -6,6 +6,7 @@ use apdu_dispatch::{
     interchanges::{Channel as CcidChannel, Responder as CcidResponder},
 };
 use apps::InitStatus;
+use boards::{soc::Soc, store::RunnerStore, ui::rgb_led::RgbLed as _, Board};
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 use interchange::Channel;
 use nfc_device::Iso14443;
@@ -16,38 +17,36 @@ use usb_device::{
     device::{UsbDeviceBuilder, UsbVidPid},
 };
 
-use store::RunnerStore;
-use types::{
-    usbnfc::{UsbClasses, UsbNfcInit},
-    Soc,
-};
+use types::usbnfc::{UsbClasses, UsbNfcInit};
 
 delog::generate_macros!();
 
-pub mod flash;
+#[cfg(feature = "board-nk3xn")]
+pub mod nk3xn;
 pub mod runtime;
-#[macro_use]
-pub mod store;
-pub mod traits;
 pub mod types;
-pub mod ui;
 
-#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52840")))]
+#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
 compile_error!("No SoC chosen!");
 
-#[cfg_attr(feature = "soc-nrf52840", path = "soc_nrf52840/mod.rs")]
-#[cfg_attr(feature = "soc-lpc55", path = "soc_lpc55/mod.rs")]
-pub mod soc;
+#[cfg(not(feature = "no-delog"))]
+delog::delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
 #[cfg(feature = "alloc")]
 #[global_allocator]
 static ALLOCATOR: alloc_cortex_m::CortexMHeap = alloc_cortex_m::CortexMHeap::empty();
 
-pub fn banner<S: Soc>() {
+pub fn init_logger<B: Board>() {
+    #[cfg(feature = "log-rtt")]
+    rtt_target::rtt_init_print!();
+
+    #[cfg(not(feature = "no-delog"))]
+    Delogger::init_default(delog::LevelFilter::Debug, &crate::types::DELOG_FLUSHER).ok();
+
     info!(
         "Embedded Runner ({}:{}) using librunner {}",
-        S::SOC_NAME,
-        S::BOARD_NAME,
+        B::Soc::SOC_NAME,
+        B::BOARD_NAME,
         utils::VERSION_STRING,
     );
 }
@@ -60,11 +59,11 @@ pub fn init_alloc() {
     unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
 }
 
-pub fn init_usb_nfc<S: Soc>(
-    usbbus_opt: Option<&'static UsbBusAllocator<S::UsbBus>>,
-    nfc: Option<Iso14443<S::NfcDevice>>,
+pub fn init_usb_nfc<B: Board>(
+    usbbus_opt: Option<&'static UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
-) -> UsbNfcInit<S> {
+) -> UsbNfcInit<B> {
     let config = &types::INTERFACE_CONFIG;
 
     static CCID_CHANNEL: CcidChannel = Channel::new();
@@ -118,15 +117,15 @@ pub fn init_usb_nfc<S: Soc>(
     }
 }
 
-pub fn init_apps<S: Soc>(
-    trussed: &mut types::Trussed<S>,
+pub fn init_apps<B: Board>(
+    trussed: &mut types::Trussed<B>,
     init_status: InitStatus,
-    store: &RunnerStore<S>,
+    store: &RunnerStore<B>,
     nfc_powered: bool,
-) -> types::Apps<S> {
+) -> types::Apps<B> {
     use trussed::platform::Store as _;
 
-    let mut admin = apps::AdminData::new(*store, S::VARIANT);
+    let mut admin = apps::AdminData::new(*store, B::Soc::VARIANT);
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -143,9 +142,10 @@ pub fn init_apps<S: Soc>(
 
     #[cfg(feature = "provisioner")]
     let provisioner = {
+        use apps::Reboot as _;
         let store = store.clone();
-        let int_flash_ref = unsafe { store::steal_internal_storage::<S>() };
-        let rebooter: fn() -> ! = S::reboot_to_firmware_update;
+        let int_flash_ref = unsafe { boards::store::steal_internal_storage::<B>() };
+        let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
 
         apps::ProvisionerData {
             store,
@@ -206,11 +206,9 @@ pub fn init_se050<
     (se050, ChaCha8Rng::from_seed(seed))
 }
 
-#[inline(never)]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+pub fn handle_panic<B: Board>(_info: &core::panic::PanicInfo) -> ! {
     error_now!("{}", _info);
-    soc::board::set_panic_led();
+    B::Led::set_panic_led();
     loop {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }

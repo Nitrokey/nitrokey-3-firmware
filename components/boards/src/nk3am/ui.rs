@@ -1,36 +1,25 @@
 use core::time::Duration;
 
-use nrf52840_hal::{
-    gpio::{p0, p1, Level, Output, Pin, PushPull},
-    gpiote::Gpiote,
-    pac,
-    prelude::InputPin,
-    pwm,
-    pwm::Pwm,
-    spim,
-};
-
-pub const BOARD_NAME: &str = "NK3AM";
-
-use crate::traits::buttons::{Button, Press, UserPresence};
-use crate::traits::rgb_led;
-use crate::traits::rgb_led::Color;
-use crate::traits::Clock;
-
-type OutPin = Pin<Output<PushPull>>;
-
-use crate::soc::types::BoardGPIO;
-
-use crate::soc::rtic_monotonic::RtcMonotonic;
-
-use crate::ui::UserInterface;
-
+use nrf52840_hal::{gpio::Level, pac, prelude::InputPin, pwm, pwm::Pwm};
 use trussed::platform::consent;
 
-pub type TrussedUI = UserInterface<RtcMonotonic, HardwareButtons, RgbLed>;
+use super::OutPin;
+use crate::ui::{
+    buttons::{Button, Press, UserPresence},
+    rgb_led::{self, Color},
+    Clock,
+};
 
 pub struct HardwareButtons {
-    pub touch_button: Option<OutPin>,
+    touch_button: Option<OutPin>,
+}
+
+impl HardwareButtons {
+    pub fn new(pin: OutPin) -> Self {
+        Self {
+            touch_button: Some(pin),
+        }
+    }
 }
 
 impl UserPresence for HardwareButtons {
@@ -156,16 +145,16 @@ impl RgbLed {
 
 impl RgbLed {
     pub fn new(
-        leds: [Option<OutPin>; 3],
+        leds: [OutPin; 3],
         pwm_red: pac::PWM0,
         pwm_green: pac::PWM1,
         pwm_blue: pac::PWM2,
     ) -> RgbLed {
         let [red, green, blue] = leds;
 
-        let red_pwm_obj = RgbLed::init_led(red.unwrap(), pwm_red, pwm::Channel::C0);
-        let green_pwm_obj = RgbLed::init_led(green.unwrap(), pwm_green, pwm::Channel::C1);
-        let blue_pwm_obj = RgbLed::init_led(blue.unwrap(), pwm_blue, pwm::Channel::C2);
+        let red_pwm_obj = RgbLed::init_led(red, pwm_red, pwm::Channel::C0);
+        let green_pwm_obj = RgbLed::init_led(green, pwm_green, pwm::Channel::C1);
+        let blue_pwm_obj = RgbLed::init_led(blue, pwm_blue, pwm::Channel::C2);
 
         Self {
             pwm_red: red_pwm_obj,
@@ -176,6 +165,21 @@ impl RgbLed {
 }
 
 impl rgb_led::RgbLed for RgbLed {
+    fn set_panic_led() {
+        unsafe {
+            let pac = nrf52840_pac::Peripherals::steal();
+            let p0 = nrf52840_hal::gpio::p0::Parts::new(pac.P0);
+            let p1 = nrf52840_hal::gpio::p1::Parts::new(pac.P1);
+
+            // red
+            p0.p0_09.into_push_pull_output(Level::Low).degrade();
+            // green
+            p0.p0_10.into_push_pull_output(Level::High).degrade();
+            // blue
+            p1.p1_02.into_push_pull_output(Level::High).degrade();
+        }
+    }
+
     fn red(&mut self, intensity: u8) {
         self.set_led(Color::Red, pwm::Channel::C0, intensity);
     }
@@ -186,113 +190,5 @@ impl rgb_led::RgbLed for RgbLed {
 
     fn blue(&mut self, intensity: u8) {
         self.set_led(Color::Blue, pwm::Channel::C2, intensity);
-    }
-}
-
-pub fn init_ui(
-    leds: [Option<OutPin>; 3],
-    pwm_red: pac::PWM0,
-    pwm_green: pac::PWM1,
-    pwm_blue: pac::PWM2,
-    touch: OutPin,
-) -> TrussedUI {
-    // TODO: safely share the RTC
-    let pac = unsafe { nrf52840_pac::Peripherals::steal() };
-    let rtc_mono = RtcMonotonic::new(pac.RTC0);
-
-    let rgb = RgbLed::new(leds, pwm_red, pwm_green, pwm_blue);
-
-    let buttons = HardwareButtons {
-        touch_button: Some(touch),
-    };
-
-    let provisioner = cfg!(feature = "provisioner");
-    let ui = TrussedUI::new(rtc_mono, Some(buttons), Some(rgb), provisioner);
-
-    ui
-}
-
-pub fn init_pins(_gpiote: &Gpiote, gpio_p0: p0::Parts, gpio_p1: p1::Parts) -> BoardGPIO {
-    /* touch sensor */
-    let touch = gpio_p0.p0_04.into_push_pull_output(Level::High).degrade();
-    // not used, just ensure output + low
-    gpio_p0.p0_06.into_push_pull_output(Level::Low).degrade();
-
-    /* irq configuration */
-
-    // gpiote.port().input_pin(&btn3).low();
-    // gpiote.port().input_pin(&btn4).low();
-    // gpiote.port().input_pin(&btn5).low();
-    // gpiote.port().input_pin(&btn6).low();
-    // gpiote.port().input_pin(&btn7).low();
-    // gpiote.port().input_pin(&btn8).low();
-
-    /* RGB LED */
-    let led_r = gpio_p0.p0_09.into_push_pull_output(Level::Low).degrade();
-    let led_g = gpio_p0.p0_10.into_push_pull_output(Level::Low).degrade();
-    let led_b = gpio_p1.p1_02.into_push_pull_output(Level::Low).degrade();
-
-    /* SE050 */
-    let se_pwr = gpio_p1.p1_10.into_push_pull_output(Level::Low).degrade();
-    let se_scl = gpio_p1.p1_15.into_floating_input().degrade();
-    let se_sda = gpio_p0.p0_02.into_floating_input().degrade();
-
-    let se_pins = nrf52840_hal::twim::Pins {
-        scl: se_scl,
-        sda: se_sda,
-    };
-
-    /* Ext. Flash SPI */
-    // Flash WP# gpio_p0.p0_22
-    // Flash HOLD# gpio_p0.p0_23
-    let flash_spi_cs = gpio_p0.p0_24.into_push_pull_output(Level::High).degrade();
-    let flash_spi_clk = gpio_p1.p1_06.into_push_pull_output(Level::Low).degrade();
-    let flash_spi_mosi = gpio_p1.p1_04.into_push_pull_output(Level::Low).degrade();
-    let flash_spi_miso = gpio_p1.p1_00.into_floating_input().degrade();
-    //let _flash_wp = gpio_p0.p0_22.into_push_pull_output(Level::Low).degrade();
-    //let _flash_hold = gpio_p0.p0_23.into_push_pull_output(Level::High).degrade();
-
-    let flash_spi = spim::Pins {
-        sck: flash_spi_clk,
-        miso: Some(flash_spi_miso),
-        mosi: Some(flash_spi_mosi),
-    };
-
-    BoardGPIO {
-        buttons: [None, None, None, None, None, None, None, None],
-        leds: [None, None, None, None],
-        rgb_led: [Some(led_r), Some(led_g), Some(led_b)],
-        touch: Some(touch),
-        uart_pins: None,
-        fpr_detect: None,
-        fpr_power: None,
-        display_spi: None,
-        display_cs: None,
-        display_reset: None,
-        display_dc: None,
-        display_backlight: None,
-        display_power: None,
-        se_pins: Some(se_pins),
-        se_power: Some(se_pwr),
-        flashnfc_spi: Some(flash_spi),
-        flash_cs: Some(flash_spi_cs),
-        flash_power: None,
-        nfc_cs: None,
-        nfc_irq: None,
-    }
-}
-
-pub fn set_panic_led() {
-    unsafe {
-        let pac = nrf52840_pac::Peripherals::steal();
-        let p0 = nrf52840_hal::gpio::p0::Parts::new(pac.P0);
-        let p1 = nrf52840_hal::gpio::p1::Parts::new(pac.P1);
-
-        // red
-        p0.p0_09.into_push_pull_output(Level::Low).degrade();
-        // green
-        p0.p0_10.into_push_pull_output(Level::High).degrade();
-        // blue
-        p1.p1_02.into_push_pull_output(Level::High).degrade();
     }
 }

@@ -9,6 +9,10 @@ use lpc55_hal::{
     Adc, Enabled, Gpio, Iocon, Pmc, Syscon,
 };
 
+// Previous versions of this implementation provided the features no-clock-controller and
+// enable-clock-controller-signal-pin for tweaking the implementation.  They have been removed as
+// they were unused.
+
 pub type SignalPin = pins::Pio0_23;
 pub type SignalButton = Pin<SignalPin, state::Gpio<direction::Output>>;
 
@@ -124,9 +128,6 @@ impl DynamicClockController {
     }
 
     fn decrease_clock(&mut self) {
-        #[cfg(feature = "enable-clock-controller-signal-pin")]
-        self.signal_button.set_low().ok();
-
         let requirements = lpc55_hal::ClockRequirements::default().system_frequency(12.MHz());
 
         self.clocks =
@@ -135,9 +136,6 @@ impl DynamicClockController {
     }
 
     fn increase_clock(&mut self) {
-        #[cfg(feature = "enable-clock-controller-signal-pin")]
-        self.signal_button.set_high().ok();
-
         let requirements = if self.decrease_count > 2 {
             // opt for slower freq if there's too many dips in power
             lpc55_hal::ClockRequirements::default().system_frequency(48.MHz())
@@ -188,21 +186,18 @@ impl DynamicClockController {
             .ctrl
             .modify(|_, w| w.rstfifo0().set_bit().rstfifo1().set_bit());
         // info!("handle ADC: {}. status: {}", sample, self.adc.stat.read().bits());
-        #[cfg(not(feature = "no-clock-controller"))]
-        {
-            if sample < ADC_VOLTAGE_HIGH {
-                // info!("Voltage is high.  increase clock rate!");
-                self.increase_clock();
-                self.start_low_voltage_compare();
-            } else if sample > ADC_VOLTAGE_LOW {
-                // info!("Voltage is low.  Lower clock rate!");
-                self.decrease_clock();
-                self.start_high_voltage_compare();
-            } else {
-                // info!("Voltage is center: {}. Increase clock rate and watch closely!", sample);
-                self.increase_clock();
-                self.start_low_voltage_compare();
-            }
+        if sample < ADC_VOLTAGE_HIGH {
+            // info!("Voltage is high.  increase clock rate!");
+            self.increase_clock();
+            self.start_low_voltage_compare();
+        } else if sample > ADC_VOLTAGE_LOW {
+            // info!("Voltage is low.  Lower clock rate!");
+            self.decrease_clock();
+            self.start_high_voltage_compare();
+        } else {
+            // info!("Voltage is center: {}. Increase clock rate and watch closely!", sample);
+            self.increase_clock();
+            self.start_low_voltage_compare();
         }
     }
 }

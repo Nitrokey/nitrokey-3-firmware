@@ -90,7 +90,7 @@ check-var-%:
 
 list:
 	@echo "Available:"
-	@echo "  BOARD(s): $(shell find src/ -name 'board_*' | xargs -n1 basename | sed -E 's/board_([^.]*)(.rs)?/\1/g' | xargs)"
+	@echo "  BOARD(s): nk3xn, nk3am"
 	@echo "  Makefile shortcuts: nk3xn, nk3am.bl"
 	@echo ""
 	@echo "  Usage: make <target>-<something> e.g., build-nk3am.bl, reset-nk3xn, ..." 

@@ -1,22 +1,22 @@
 pub mod backends;
 pub mod ifs_flash_old;
 
-use littlefs2;
+use littlefs2::fs::{Allocation, Filesystem};
 
 use backends::EFSBackupBackend;
 use ifs_flash_old::FlashStorage as OldFlashStorage;
 use lfs_backup::{BackupBackend, FSBackupError, Result};
 
-use crate::soc::{flash::FlashStorage, types::ExternalFlashStorage};
+use crate::nk3am::{ExternalFlashStorage, InternalFlashStorage};
 
 pub fn migrate<'a>(
     old_ifs_storage: &mut OldFlashStorage,
-    old_ifs_alloc: &mut littlefs2::fs::Allocation<OldFlashStorage>,
-    ifs_alloc: &mut littlefs2::fs::Allocation<FlashStorage>,
-    ifs_storage: &mut FlashStorage,
+    old_ifs_alloc: &mut Allocation<OldFlashStorage>,
+    ifs_alloc: &mut Allocation<InternalFlashStorage>,
+    ifs_storage: &mut InternalFlashStorage,
     efs_storage: &mut ExternalFlashStorage,
 ) -> Result<()> {
-    let old_mounted = littlefs2::fs::Filesystem::mount(old_ifs_alloc, old_ifs_storage)
+    let old_mounted = Filesystem::mount(old_ifs_alloc, old_ifs_storage)
         .map_err(|_| FSBackupError::LittleFs2Err)?;
 
     trace!("old IFS mount success - migrating");
@@ -33,11 +33,11 @@ pub fn migrate<'a>(
 
     // only format IFS on failed backup...
     trace!("backup done, format new IFS");
-    let _fmt_ifs = littlefs2::fs::Filesystem::format(ifs_storage);
+    let _fmt_ifs = Filesystem::format(ifs_storage);
     ifs_storage.format_journal_blocks();
 
-    let new_mounted = littlefs2::fs::Filesystem::mount(ifs_alloc, ifs_storage)
-        .map_err(|_| FSBackupError::LittleFs2Err)?;
+    let new_mounted =
+        Filesystem::mount(ifs_alloc, ifs_storage).map_err(|_| FSBackupError::LittleFs2Err)?;
 
     trace!("restore: backend -> new IFS");
     backend.reset();

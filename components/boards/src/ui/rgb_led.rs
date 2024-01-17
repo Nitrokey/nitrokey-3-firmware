@@ -35,6 +35,8 @@ impl Intensities {
 }
 
 pub trait RgbLed {
+    fn set_panic_led();
+
     /// Set all LEDs
     fn set(&mut self, intensities: Intensities) {
         self.red(intensities.red);

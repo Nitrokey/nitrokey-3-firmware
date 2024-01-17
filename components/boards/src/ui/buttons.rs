@@ -1,5 +1,5 @@
 use core::convert::Infallible;
-use nb;
+
 use trussed::platform::consent;
 
 use super::Clock;
