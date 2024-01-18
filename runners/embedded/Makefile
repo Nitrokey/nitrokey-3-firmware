@@ -25,26 +25,22 @@ LOG ?= build-$(BUILD_ID).err.log
 SYMBOLS ?= symbols-$(BUILD_ID).txt
 
 # input files and outputs
-SRCS = $(shell find src -name "*.rs" )
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
-CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(COMMA_FEATURES)'.split(',')  else 'release'; print(p); " )
-NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(BUILD_FEATURES)'.split(',') and 'log-semihosting' not in '$(BUILD_FEATURES)'.split(',') and 'log-rtt' not in '$(BUILD_FEATURES)'.split(',') else None; ")
+CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(FEATURES)'.split(',')  else 'release'; print(p); " )
+NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-semihosting' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
 # feature definition
-BUILD_FEATURES := board-$(BOARD) $(FEATURES)
-ALL_FEATURES = $(BUILD_FEATURES) $(NO_DELOG_FEATURE)
-# assemble comma-seperated list to pass to `cargo build`
-delim = ,
-space := $(null) #
-COMMA_FEATURES = $(subst $(space),$(delim),$(ALL_FEATURES))
+BUILD_FEATURES := board-$(BOARD),$(FEATURES),$(NO_DELOG_FEATURE)
 
-.PHONY: list build reset program check doc check-all clean clean-all check-env set-vars
+.PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars
 
 # default target -> just build all "shortcuts"
-all: build-nk3am.bl build-nk3xn $(ARTIFACTS)
+all: build-all $(ARTIFACTS)
+
+build-all: build-nk3am.bl build-nk3xn
 
 check-all: check-nk3am.bl check-nk3xn
 
@@ -72,10 +68,6 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 	$(MAKE) $(GET_TARGET) BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BOARD=nk3xn FEATURES=$(FEATURES)
-
-$(OUT_ELF): $(SRCS) build
-$(OUT_BIN): $(OUT_ELF)
-$(OUT_IHEX): $(OUT_ELF)
 
 check-var-%:
 	@if [ -z '${${*}}' ]; then echo 'FAIL: var: $* required!!!' && exit 1; fi
@@ -106,13 +98,12 @@ clean-all:
 #### actual build, clean, reset, program targets
 ###############################################################################
 
-build: build-banner $(SRCS) check-var-BOARD check-var-SOC
+build: build-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
-	# NRF52/test -> "release-thin-lto", use "release" otherwise
 	cargo build --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
 	cp $(RAW_OUT) ./$(OUT_ELF)
@@ -123,22 +114,21 @@ build: build-banner $(SRCS) check-var-BOARD check-var-SOC
 
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
-	$(GNU_TARGET)-readelf -l ./$(OUT_ELF) | grep LOAD
 
-check: check-banner $(SRCS) check-var-BOARD check-var-SOC
+check: check-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
 	cargo check --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
 
-doc: check-banner $(SRCS) check-var-BOARD check-var-SOC
+doc: check-banner check-var-BOARD check-var-SOC
 
 	cargo --version
 
 	cargo doc --target $(TARGET) \
-		--features $(COMMA_FEATURES) \
+		--features $(BUILD_FEATURES) \
 		--verbose
 
 clean: clean-banner check-var-BOARD

@@ -152,7 +152,7 @@ mod app {
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {
-                lpc55::Delogger::flush();
+                embedded_runner_lib::Delogger::flush();
             }
 
             let (usb_activity, nfc_activity) = apps.lock(|apps| {

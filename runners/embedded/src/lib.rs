@@ -30,7 +30,9 @@ pub mod types;
 compile_error!("No SoC chosen!");
 
 #[cfg(not(feature = "no-delog"))]
-delog::delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
+use delog::delog;
+#[cfg(not(feature = "no-delog"))]
+delog!(Delogger, 3 * 1024, 512, crate::types::DelogFlusher);
 
 #[cfg(feature = "alloc")]
 #[global_allocator]
