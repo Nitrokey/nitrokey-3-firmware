@@ -9,10 +9,13 @@ use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
 use trussed::{types::Location, virt::StoreProvider as _, Bytes, Platform};
 use trussed_usbip::Service;
+use utils::Version;
 
 use store::FilesystemOrRam;
 use ui::{Signals, UserInterface, UserPresence};
 
+const VERSION: Version = Version::from_env();
+const VERSION_STRING: &str = env!("USBIP_FIRMWARE_VERSION");
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
 const VID: u16 = 0x20a0;
@@ -193,7 +196,7 @@ fn exec(
         .exec(move |_platform| {
             let store = unsafe { FilesystemOrRam::store() };
             let data = apps::Data {
-                admin: AdminData::new(store, Variant::Usbip),
+                admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerData {
                     store,

@@ -2,13 +2,15 @@ pub mod init;
 
 use boards::nk3xn::NK3xN;
 
+use crate::{VERSION, VERSION_STRING};
+
 pub fn init(
     device_peripherals: lpc55_hal::raw::Peripherals,
     core_peripherals: rtic::export::Peripherals,
 ) -> init::All {
-    const SECURE_FIRMWARE_VERSION: u32 = utils::VERSION.encode();
+    const SECURE_FIRMWARE_VERSION: u32 = VERSION.encode();
 
-    boards::init::init_logger::<NK3xN>(utils::VERSION_STRING);
+    boards::init::init_logger::<NK3xN>(VERSION_STRING);
 
     let hal = lpc55_hal::Peripherals::from((device_peripherals, core_peripherals));
 

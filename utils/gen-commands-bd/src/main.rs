@@ -1,12 +1,40 @@
+use cargo_metadata::MetadataCommand;
 use memory_regions::MemoryRegions;
 use std::env;
-use utils::{VERSION, VERSION_STRING};
+use utils::Version;
 
 fn main() {
-    let version_to_check = VERSION.encode();
-
     let mut args = env::args();
     args.next();
+    let manifest_path = args.next().expect("missing argument: manifest file");
+    let metadata = MetadataCommand::new()
+        .manifest_path(manifest_path)
+        .exec()
+        .expect("failed to parse package metadata");
+    let package = metadata
+        .root_package()
+        .expect("missing root package in manifest");
+
+    let version = Version::new(
+        package
+            .version
+            .major
+            .try_into()
+            .expect("major version too high"),
+        package
+            .version
+            .minor
+            .try_into()
+            .expect("minor version too high"),
+        package
+            .version
+            .patch
+            .try_into()
+            .expect("patch version too high"),
+    );
+    let version_to_check = version.encode();
+    let version_string = package.version.to_string();
+
     match args.next().as_deref() {
         None => {}
         Some("-O") => {
@@ -14,7 +42,7 @@ fn main() {
             return;
         }
         Some("-o") => {
-            println!("{VERSION_STRING}");
+            println!("{version_string}");
             return;
         }
         Some(s) => {
@@ -42,9 +70,9 @@ section (0) {{
 	erase 0x0..{filesystem_start:#x};
 	load inputFile > 0x0;
 }}",
-        major = VERSION.major,
-        minor = VERSION.minor,
-        patch = VERSION.patch,
+        major = version.major(),
+        minor = version.minor(),
+        patch = version.patch(),
         filesystem_start = MemoryRegions::LPC55.filesystem.start,
     );
 }

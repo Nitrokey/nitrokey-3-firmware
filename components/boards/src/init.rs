@@ -140,8 +140,10 @@ pub fn init_apps<B: Board>(
     init_status: InitStatus,
     store: &RunnerStore<B>,
     nfc_powered: bool,
+    version: Version,
+    version_string: &'static str,
 ) -> Apps<B> {
-    let mut admin = AdminData::new(*store, B::Soc::VARIANT);
+    let mut admin = AdminData::new(*store, B::Soc::VARIANT, version, version_string);
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {

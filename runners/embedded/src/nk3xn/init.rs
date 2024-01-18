@@ -64,6 +64,8 @@ use nfc_device::Iso14443;
 use trussed::types::{Location, PathBuf};
 use utils::OptionalStorage;
 
+use crate::{VERSION, VERSION_STRING};
+
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
 struct Peripherals {
@@ -804,6 +806,8 @@ impl Stage6 {
             self.status,
             &self.store,
             self.clocks.is_nfc_passive,
+            VERSION,
+            VERSION_STRING,
         );
 
         let usb_bus = if !self.clocks.is_nfc_passive {

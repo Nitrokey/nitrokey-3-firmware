@@ -110,7 +110,7 @@ build: build-banner check-var-BOARD check-var-SOC
 
 	$(GNU_TARGET)-nm ./$(OUT_ELF) | grep ' [ABbDdRrTt] ' | sort | c++filt > $(SYMBOLS) 
 	
-	cat $(GNU_TARGET)-arch-symbols.txt >> $(SYMBOLS)
+	cat ../$(GNU_TARGET)-arch-symbols.txt >> $(SYMBOLS)
 
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)

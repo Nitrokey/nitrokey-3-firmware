@@ -19,6 +19,7 @@ use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
     store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
 };
+use utils::Version;
 
 pub use admin_app::Reboot;
 use admin_app::{ConfigValueMut, ResetSignalAllocation};
@@ -311,15 +312,15 @@ impl<R: Runner> Apps<R> {
         mut data: AdminData<R>,
     ) -> (AdminApp<R>, InitStatus) {
         let trussed = AdminApp::<R>::client(runner, make_client, &());
-        const VERSION: u32 = utils::VERSION.encode();
         // TODO: use CLIENT_ID directly
         let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
+        let version = data.version.encode();
         let app = AdminApp::<R>::load_config(
             trussed,
             &mut filestore,
             runner.uuid(),
-            VERSION,
-            utils::VERSION_STRING,
+            version,
+            data.version_string,
             data.status(),
         )
         .unwrap_or_else(|(trussed, _err)| {
@@ -327,8 +328,8 @@ impl<R: Runner> Apps<R> {
             AdminApp::<R>::with_default_config(
                 trussed,
                 runner.uuid(),
-                VERSION,
-                utils::VERSION_STRING,
+                version,
+                data.version_string,
                 data.status(),
             )
         });
@@ -541,16 +542,25 @@ pub struct AdminData<R: Runner> {
     pub ifs_blocks: u8,
     pub efs_blocks: u16,
     pub variant: Variant,
+    pub version: Version,
+    pub version_string: &'static str,
 }
 
 impl<R: Runner> AdminData<R> {
-    pub fn new(store: R::Store, variant: Variant) -> Self {
+    pub fn new(
+        store: R::Store,
+        variant: Variant,
+        version: Version,
+        version_string: &'static str,
+    ) -> Self {
         Self {
             store,
             init_status: InitStatus::empty(),
             ifs_blocks: u8::MAX,
             efs_blocks: u16::MAX,
             variant,
+            version,
+            version_string,
         }
     }
 }

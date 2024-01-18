@@ -14,6 +14,8 @@ pub mod ui;
 pub mod nk3am;
 #[cfg(feature = "board-nk3xn")]
 pub mod nk3xn;
+#[cfg(feature = "board-nkpk")]
+pub mod nkpk;
 
 use core::marker::PhantomData;
 

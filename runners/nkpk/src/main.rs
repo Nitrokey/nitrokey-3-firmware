@@ -3,12 +3,12 @@
 
 delog::generate_macros!();
 
-#[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
+#[rtic::app(device = nrf52840_pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
     use boards::{
         init::UsbClasses,
-        nk3am::{self, InternalFlashStorage, NK3AM},
+        nkpk::{self, ExternalFlashStorage, InternalFlashStorage, NKPK},
         runtime,
         soc::nrf52::{self, rtic_monotonic::RtcDuration},
         store, Apps, Trussed,
@@ -16,12 +16,14 @@ mod app {
     use ctaphid_dispatch::dispatch::Dispatch as CtaphidDispatch;
     use interchange::Channel;
     use nrf52840_hal::{gpiote::Gpiote, rng::Rng};
+    use utils::Version;
 
-    use embedded_runner_lib::{VERSION, VERSION_STRING};
-
-    type Board = NK3AM;
+    pub type Board = NKPK;
 
     type Soc = <Board as boards::Board>::Soc;
+
+    const VERSION: Version = Version::from_env();
+    const VERSION_STRING: &str = env!("NKPK_FIRMWARE_VERSION");
 
     #[shared]
     struct SharedResources {
@@ -45,9 +47,6 @@ mod app {
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
         let mut init_status = apps::InitStatus::default();
 
-        #[cfg(feature = "alloc")]
-        embedded_runner_lib::init_alloc();
-
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
 
@@ -55,32 +54,29 @@ mod app {
 
         nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
-        let mut board_gpio = nk3am::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
+        let board_gpio = nkpk::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
         let usb_bus = nrf52::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD);
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
-        let external_flash = nk3am::init_external_flash(
-            ctx.device.SPIM3,
-            board_gpio.flashnfc_spi.take().unwrap(),
-            board_gpio.flash_cs.take().unwrap(),
-        );
-        let store = store::init_store(internal_flash, external_flash, false, &mut init_status);
+        let external_flash = ExternalFlashStorage::default();
+        let store =
+            store::init_store::<Board>(internal_flash, external_flash, true, &mut init_status);
 
+        const USB_PRODUCT: &str = "Nitrokey Passkey";
+        const USB_PRODUCT_ID: u16 = 0x42F3;
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
-        let usb_nfc = embedded_runner_lib::init_usb_nfc::<Board>(Some(usb_bus), None, nfc_rp);
-
-        #[cfg(feature = "se050")]
-        let se050 = nk3am::init_se050(
-            ctx.device.TWIM1,
-            board_gpio.se_pins.unwrap(),
-            board_gpio.se_power.unwrap(),
-            ctx.device.TIMER1,
+        let usb_nfc = boards::init::init_usb_nfc::<Board>(
+            Some(usb_bus),
+            None,
+            nfc_rp,
+            USB_PRODUCT,
+            USB_PRODUCT_ID,
+            VERSION,
         );
 
-        #[cfg(feature = "board-nk3am")]
-        let user_interface = nk3am::init_ui(
+        let user_interface = nkpk::init_ui(
             board_gpio.rgb_led,
             ctx.device.PWM0,
             ctx.device.PWM1,
@@ -89,16 +85,9 @@ mod app {
         );
 
         let mut dev_rng = Rng::new(ctx.device.RNG);
-        let hw_key = nk3am::hw_key(&ctx.device.FICR);
-        let mut trussed = boards::init::init_trussed(
-            &mut dev_rng,
-            store,
-            user_interface,
-            &mut init_status,
-            Some(&hw_key),
-            #[cfg(feature = "se050")]
-            Some(se050),
-        );
+        // let hw_key = nkpk::hw_key(&ctx.device.FICR);
+        let mut trussed =
+            boards::init::init_trussed(&mut dev_rng, store, user_interface, &mut init_status);
 
         let apps = boards::init::init_apps(
             &mut trussed,
@@ -167,7 +156,6 @@ mod app {
                 );
             });
         }
-        // loop {}
     }
 
     #[task(priority = 2, binds = SWI0_EGU0, shared = [trussed])]
@@ -220,7 +208,7 @@ mod app {
 
     #[task(priority = 5, binds = POWER_CLOCK, local = [power])]
     fn power_handler(ctx: power_handler::Context) {
-        nk3am::power_handler(ctx.local.power);
+        nkpk::power_handler(ctx.local.power);
     }
 
     #[task(priority = 1, shared = [trussed])]
@@ -239,5 +227,5 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    boards::handle_panic::<boards::nk3am::NK3AM>(info)
+    boards::handle_panic::<app::Board>(info)
 }

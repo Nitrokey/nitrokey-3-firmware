@@ -1344,6 +1344,7 @@ checksum = "1d758ba1b47b00caf47f24925c0074ecb20d6dfcffe7f6d53395c0465674841a"
 name = "gen-commands-bd"
 version = "0.1.0"
 dependencies = [
+ "cargo_metadata",
  "memory-regions",
  "utils",
 ]
@@ -1908,6 +1909,25 @@ dependencies = [
  "interchange 0.3.0",
  "iso7816",
  "nb 1.1.0",
+]
+
+[[package]]
+name = "nkpk"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "apps",
+ "boards",
+ "cargo-lock",
+ "cortex-m",
+ "cortex-m-rtic",
+ "ctaphid-dispatch",
+ "delog",
+ "interchange 0.3.0",
+ "memory-regions",
+ "nrf52840-hal",
+ "nrf52840-pac",
+ "utils",
 ]
 
 [[package]]

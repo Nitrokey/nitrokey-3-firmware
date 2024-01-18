@@ -18,6 +18,8 @@ struct Args {
     /// The path of the Cargo manifest to use.
     #[options(free)]
     manifest: PathBuf,
+    #[options(free)]
+    product: String,
 }
 
 impl Args {
@@ -109,6 +111,7 @@ impl From<Package> for Dependency {
 #[derive(Debug, Template)]
 #[template(path = "license.txt")]
 struct LicenseTemplate<'a> {
+    product: &'a str,
     firmware: &'a Dependency,
     dependencies: &'a BTreeSet<Dependency>,
     licenses: &'a BTreeMap<LicenseId, &'a str>,
@@ -126,6 +129,7 @@ fn main() {
         .map(|license| (*license, license.text()))
         .collect();
     let template = LicenseTemplate {
+        product: &args.product,
         firmware: &firmware,
         dependencies: &dependencies,
         licenses: &licenses,

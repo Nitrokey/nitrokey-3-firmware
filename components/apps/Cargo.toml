@@ -39,9 +39,20 @@ cbor-smol = "0.4"
 hex = "0.4"
 
 [features]
+# client count = n + 1, where n is the number of activated optional
+# applications except ndef-app:
+# - admin-app is always enabled (+1)
+# - ndef-app does not require a Trussed client (0)
+# - all other optional apps require a Trussed client (+n)
+
+# nk3
 nk3 = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "trussed/clients-4"]
 nk3-test = ["nk3", "piv-authenticator", "webcrypt", "factory-reset", "trussed/clients-6"]
 nk3-provisioner = ["nk3", "provisioner-app", "trussed/clients-5"]
+
+# nkpk
+nkpk = ["fido-authenticator", "trussed/clients-2"]
+nkpk-provisioner = ["nkpk", "provisioner-app", "trussed/clients-3"]
 
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth"]

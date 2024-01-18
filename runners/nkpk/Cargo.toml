@@ -1,0 +1,39 @@
+[package]
+name = "nkpk"
+edition = "2021"
+version = "0.1.0"
+license = "Apache-2.0 OR MIT"
+authors = ["Nitrokey GmbH <info@nitrokey.com>"]
+
+[dependencies]
+apdu-dispatch = "0.1"
+apps = { path = "../../components/apps", features = ["nkpk"] }
+boards = { path = "../../components/boards", features = ["board-nkpk"] }
+cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
+cortex-m-rtic = "1.0"
+ctaphid-dispatch = "0.1"
+delog = "0.1"
+interchange = "0.3"
+nrf52840-hal = "0.15.1"
+nrf52840-pac = "0.11"
+utils = { path = "../../components/utils", features = ["storage"] }
+
+[build-dependencies]
+cargo-lock = "7"
+memory-regions = "1"
+utils = { path = "../../components/utils", features = ["build"] }
+
+[features]
+log-all = ["boards/log-all"]
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []
+log-none = []
+
+log-rtt = ["boards/log-rtt"]
+
+provisioner = ["apps/nkpk-provisioner", "boards/provisioner", "no-buttons", "apps/no-reset-time-window"]
+
+no-buttons = ["boards/no-buttons"]

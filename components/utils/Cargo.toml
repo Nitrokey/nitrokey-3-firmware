@@ -7,17 +7,18 @@ edition = "2021"
 delog = "0.1"
 littlefs2 = { version = "0.4", optional = true }
 
-[build-dependencies]
-chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
-regex = { version = "1.10.2", default-features = false }
-semver = "1.0.20"
+# build
+chrono = { version = "0.4.31", default-features = false, features = ["clock"], optional = true }
+regex = { version = "1.10.2", default-features = false, optional = true }
+semver = { version = "1.0.20", optional = true }
 
 [dev-dependencies]
 quickcheck = "1.0.3"
 
 [features]
-default = ["storage"]
+std = []
 
+build = ["std", "chrono", "regex", "semver"]
 storage = ["littlefs2"]
 test = []
 

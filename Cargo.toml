@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "components/*",
-    "runners/*",
+    "runners/embedded",
+    "runners/nkpk",
+    "runners/usbip",
     "utils/collect-license-info",
     "utils/gen-commands-bd",
 ]

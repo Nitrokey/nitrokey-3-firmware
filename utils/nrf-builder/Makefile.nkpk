@@ -9,18 +9,18 @@ NK3_FW_DIR := nk3-fw
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
 
-KEY_DIR := $(TEST_CERTS_DIR)/firmware-nk3am
+KEY_DIR := $(TEST_CERTS_DIR)/firmware-nkpk
 PRIV_SIGN_KEY := $(KEY_DIR)/dfu_private.key
 
 BL_OUTPUT := mbr.hex bootloader.hex
 
-FW_RUNNER := $(NK3_FW_DIR)/runners/embedded
+FW_RUNNER := $(NK3_FW_DIR)/runners/nkpk
 FW_ARTIFACTS := $(FW_RUNNER)/artifacts
 
 CARGO_TOML_PATH := $(NK3_FW_DIR)/Cargo.toml
 
-FW_IHEX := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin.ihex
-FW_BIN := $(FW_ARTIFACTS)/runner-nrf52-bootloader-nk3am.bin
+FW_IHEX := $(FW_ARTIFACTS)/runner-nkpk.bin.ihex
+FW_BIN := $(FW_ARTIFACTS)/runner-nkpk.bin
 
 SH_SIGN := $(NK3_BL_DIR)/sign.sh
 SH_UPLOAD := $(NK3_BL_DIR)/upload.sh
@@ -31,19 +31,19 @@ GEN_COMMANDS_RUN := cargo run --manifest-path ../gen-commands-bd/Cargo.toml -- $
 FW_VERSION := $(shell $(GEN_COMMANDS_RUN) -o)
 SIGN_VERSION := $(shell $(GEN_COMMANDS_RUN) -O)
 
-FW_NAME_PROVISIONER_HEX := provisioner-nk3am-nrf52-$(FW_VERSION).hex
-FW_NAME_PROVISIONER_BIN := provisioner-nk3am-nrf52-$(FW_VERSION).bin
-FW_NAME_PROVISIONER := provisioner-nk3am-nrf52-$(FW_VERSION).zip
+FW_NAME_PROVISIONER_HEX := provisioner-nkpk-nrf52-$(FW_VERSION).hex
+FW_NAME_PROVISIONER_BIN := provisioner-nkpk-nrf52-$(FW_VERSION).bin
+FW_NAME_PROVISIONER := provisioner-nkpk-nrf52-$(FW_VERSION).zip
 
-FW_NAME_DEVELOP_HEX := develop-nk3am-nrf52-$(FW_VERSION).hex
-FW_NAME_DEVELOP_BIN := develop-nk3am-nrf52-$(FW_VERSION).bin
-FW_NAME_DEVELOP := develop-nk3am-nrf52-$(FW_VERSION).zip
+FW_NAME_DEVELOP_HEX := develop-nkpk-nrf52-$(FW_VERSION).hex
+FW_NAME_DEVELOP_BIN := develop-nkpk-nrf52-$(FW_VERSION).bin
+FW_NAME_DEVELOP := develop-nkpk-nrf52-$(FW_VERSION).zip
 
-FW_NAME_RELEASE_HEX := firmware-nk3am-nrf52-$(FW_VERSION).hex
-FW_NAME_RELEASE_BIN := firmware-nk3am-nrf52-$(FW_VERSION).bin
-FW_NAME_RELEASE := firmware-nk3am-nrf52-$(FW_VERSION).zip
+FW_NAME_RELEASE_HEX := firmware-nkpk-nrf52-$(FW_VERSION).hex
+FW_NAME_RELEASE_BIN := firmware-nkpk-nrf52-$(FW_VERSION).bin
+FW_NAME_RELEASE := firmware-nkpk-nrf52-$(FW_VERSION).zip
 
-BL_SIGNED_NAME := bootloader-nk3am-nrf52-$(FW_VERSION).zip
+BL_SIGNED_NAME := bootloader-nkpk-nrf52-$(FW_VERSION).zip
 
 ALL_ARTIFACTS := $(FW_NAME_RELEASE) $(FW_NAME_PROVISIONER) $(FW_NAME_DEVELOP) \
                  $(BL_OUTPUT) $(BL_SIGNED_NAME) \
@@ -52,7 +52,7 @@ ALL_ARTIFACTS := $(FW_NAME_RELEASE) $(FW_NAME_PROVISIONER) $(FW_NAME_DEVELOP) \
 
 SRCS = $(shell find $(FW_RUNNER)/src -name "*.rs" )
 
-TTY := /dev/serial/by-id/usb-Nitrokey_Nitrokey_3_Bootloader*
+TTY := /dev/serial/by-id/usb-Nitrokey_Nitrokey_Passkey_Bootloader*
 
 EXTRA_FEATURES :=
 
@@ -85,7 +85,7 @@ build: $(ALL_ARTIFACTS)
 
 flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	bash wait_for_usb.sh 20a0:42e8
+	bash wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_RELEASE) $(TTY)
 	
@@ -93,7 +93,7 @@ flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 
 flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	bash wait_for_usb.sh 20a0:42e8
+	bash wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_DEVELOP) $(TTY)
 	
@@ -101,7 +101,7 @@ flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 
 flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 	-nitropy nk3 reboot --bootloader
-	bash wait_for_usb.sh 20a0:42e8
+	bash wait_for_usb.sh 20a0:42f4
 	
 	$(SH_UPLOAD) $(FW_NAME_PROVISIONER) $(TTY)
 	
@@ -109,7 +109,7 @@ flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 
 flash-bootloader: $(BL_OUTPUT)
 	$(MAKE) -C $(NK3_BL_DIR) reset-bootloader
-	bash wait_for_usb.sh 20a0:42e8
+	bash wait_for_usb.sh 20a0:42f4
 
 provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 	bash wait_for_usb.sh 20a0:42b2
@@ -117,20 +117,20 @@ provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
 	solo2 app provision write-file $(TEST_FIDO_KEY) fido/sec/00
 
 full-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-provisioner
-	$(MAKE) provision-keys
-	$(MAKE) flash-release
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-provisioner
+	$(MAKE) -f Makefile.nkpk  provision-keys
+	$(MAKE) -f Makefile.nkpk  flash-release
 
 dev-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-provisioner
-	$(MAKE) provision-keys
-	$(MAKE) flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-provisioner
+	$(MAKE) -f Makefile.nkpk  provision-keys
+	$(MAKE) -f Makefile.nkpk  flash-develop EXTRA_FEATURES=$(DEV_FEATURES)
 
 fast-deploy:
-	$(MAKE) flash-bootloader
-	$(MAKE) flash-release
+	$(MAKE) -f Makefile.nkpk  flash-bootloader TARGET=nkpk
+	$(MAKE) -f Makefile.nkpk  flash-release
 
 clean:
 	rm -rf $(ALL_ARTIFACTS)
@@ -142,7 +142,7 @@ $(NK3_BL_KEY_DIR): $(KEY_DIR)
 	cp -r $< $(NK3_BL_KEY_DIR)
 
 $(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR)
-	$(MAKE) -C $(NK3_BL_DIR) build-bootloader TARGET=nk3am
+	$(MAKE) -C $(NK3_BL_DIR) build-bootloader TARGET=nkpk
 	cp $(NK3_BL_DIR)/mbr.hex mbr.hex
 	cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
 
@@ -156,19 +156,19 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 
 .PHONY: $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN) 
 $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=provisioner,$(EXTRA_FEATURES)
+	$(MAKE) -C $(FW_RUNNER) build FEATURES=provisioner,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
 .PHONY: $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN)
 $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=develop,$(EXTRA_FEATURES)
+	$(MAKE) -C $(FW_RUNNER) build FEATURES=develop,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
 .PHONY: $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN)
 $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
-	$(MAKE) -C $(FW_RUNNER) build-nk3am.bl FEATURES=$(EXTRA_FEATURES)
+	$(MAKE) -C $(FW_RUNNER) build FEATURES=$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
 

@@ -1,12 +1,16 @@
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate delog;
 delog::generate_macros!();
 
-mod constants;
+#[cfg(feature = "build")]
+mod build;
 #[cfg(feature = "storage")]
 mod storage;
+mod version;
 
-pub use constants::{Version, VERSION, VERSION_STRING};
+#[cfg(feature = "build")]
+pub use build::version_string;
 #[cfg(feature = "storage")]
 pub use storage::{OptionalStorage, RamStorage};
+pub use version::Version;

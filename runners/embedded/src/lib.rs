@@ -5,6 +5,7 @@ use apdu_dispatch::interchanges::Responder as CcidResponder;
 use boards::{init::UsbNfc, soc::Soc, Board};
 use nfc_device::Iso14443;
 use usb_device::bus::UsbBusAllocator;
+use utils::Version;
 
 delog::generate_macros!();
 
@@ -13,6 +14,9 @@ pub mod nk3xn;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
 compile_error!("No SoC chosen!");
+
+pub const VERSION: Version = Version::from_env();
+pub const VERSION_STRING: &str = env!("NK3_FIRMWARE_VERSION");
 
 #[cfg(feature = "alloc")]
 #[global_allocator]
@@ -33,12 +37,5 @@ pub fn init_usb_nfc<B: Board>(
 ) -> UsbNfc<B> {
     const USB_PRODUCT: &str = "Nitrokey 3";
     const USB_PRODUCT_ID: u16 = 0x42B2;
-    boards::init::init_usb_nfc(
-        usb_bus,
-        nfc,
-        nfc_rp,
-        USB_PRODUCT,
-        USB_PRODUCT_ID,
-        utils::VERSION,
-    )
+    boards::init::init_usb_nfc(usb_bus, nfc, nfc_rp, USB_PRODUCT, USB_PRODUCT_ID, VERSION)
 }

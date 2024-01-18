@@ -17,7 +17,7 @@ cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
 nfc-device = { path = "../../components/nfc-device" }
-utils = { path = "../../components/utils" }
+utils = { path = "../../components/utils", features = ["storage"] }
 
 ### protocols and dispatchers
 apdu-dispatch = "0.1"
@@ -48,6 +48,7 @@ cargo-lock = "7"
 memory-regions = "1"
 serde = { version = "1", features = ["derive"] }
 toml = "0.5"
+utils = { path = "../../components/utils", features = ["build"] }
 
 [features]
 default = ["alloc"]
@@ -83,12 +84,12 @@ se050 = ["apps/se050", "boards/se050"]
 
 lpc55-hardware-checks = []
 
-log-all = []
+log-all = ["boards/log-all"]
 log-trace = []
 log-debug = []
 log-info = []
 log-warn = []
-log-error = []
+log-error = ["boards/log-error"]
 log-none = []
 
 log-traceP = [ "log-trace", "log-debug", "log-info", "log-warn", "log-error" ]

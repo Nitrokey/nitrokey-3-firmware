@@ -16,12 +16,10 @@ use semver::{BuildMetadata, Prerelease, Version};
 //    metadata must be empty.
 // 4. Unless the firmware is built in the release CI, the build metadata for the firmware version
 //    is set to git-<commit> or git-<commit>-dirty.
-//
-// The environment variable NK3_FIRMWARE_VERSION is set to the calculated firmware version.
 
 const PATTERN_PRE: &str = r"rc\.\d+";
 
-fn main() {
+pub fn version_string() -> String {
     let mut version = crate_version();
     let test_prerelease = test_prerelease();
 
@@ -62,7 +60,7 @@ fn main() {
         }
     }
 
-    println!("cargo:rustc-env=NK3_FIRMWARE_VERSION={version}");
+    version.to_string()
 }
 
 fn crate_version() -> Version {
