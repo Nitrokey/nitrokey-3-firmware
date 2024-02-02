@@ -62,7 +62,7 @@ fn generate_memory_x(outpath: &Path, template: &str, regions: &MemoryRegions) {
 fn main() -> Result<(), Box<dyn error::Error>> {
     println!(
         "cargo:rustc-env=NK3_FIRMWARE_VERSION={}",
-        utils::version_string()
+        utils::version_string(env!("CARGO_PKG_VERSION"))
     );
 
     // @todo: add profile 'platform' items and cross-check them here ...

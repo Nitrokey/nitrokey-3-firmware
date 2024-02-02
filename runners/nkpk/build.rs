@@ -27,7 +27,7 @@ fn generate_memory_x(outpath: &Path, template: &str, regions: &MemoryRegions) {
 fn main() -> Result<(), Box<dyn error::Error>> {
     println!(
         "cargo:rustc-env=NKPK_FIRMWARE_VERSION={}",
-        utils::version_string()
+        utils::version_string(env!("CARGO_PKG_VERSION"))
     );
 
     if MEMORY_REGIONS.filesystem.start & 0x3ff != 0 {

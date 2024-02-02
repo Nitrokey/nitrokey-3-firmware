@@ -19,8 +19,8 @@ use semver::{BuildMetadata, Prerelease, Version};
 
 const PATTERN_PRE: &str = r"rc\.\d+";
 
-pub fn version_string() -> String {
-    let mut version = crate_version();
+pub fn version_string(cargo_pkg_version: &str) -> String {
+    let mut version = crate_version(cargo_pkg_version);
     let test_prerelease = test_prerelease();
 
     if let Some(tag_version) = tag_version() {
@@ -63,8 +63,8 @@ pub fn version_string() -> String {
     version.to_string()
 }
 
-fn crate_version() -> Version {
-    let version = Version::parse(env!("CARGO_PKG_VERSION")).expect("failed to parse crate version");
+fn crate_version(cargo_pkg_version: &str) -> Version {
+    let version = Version::parse(cargo_pkg_version).expect("failed to parse crate version");
     assert!(
         version.build.is_empty(),
         "crate version may not have build metadata: {version}"
