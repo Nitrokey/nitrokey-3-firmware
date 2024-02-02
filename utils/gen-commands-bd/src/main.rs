@@ -73,6 +73,6 @@ section (0) {{
         major = version.major(),
         minor = version.minor(),
         patch = version.patch(),
-        filesystem_start = MemoryRegions::LPC55.filesystem.start,
+        filesystem_start = MemoryRegions::NK3XN.filesystem.start,
     );
 }

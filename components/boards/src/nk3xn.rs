@@ -39,7 +39,7 @@ use prince::InternalFilesystem;
 use nfc::NfcChip;
 use spi::{FlashCs, Spi};
 
-pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::LPC55;
+pub const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NK3XN;
 
 pub type PwmTimer = ctimer::Ctimer3<Unknown>;
 pub type ButtonsTimer = ctimer::Ctimer1<Unknown>;

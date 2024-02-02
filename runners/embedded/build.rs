@@ -3,10 +3,10 @@ use std::{env, error, path::Path};
 
 use memory_regions::MemoryRegions;
 
-#[cfg(feature = "soc-lpc55")]
-const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::LPC55;
-#[cfg(feature = "soc-nrf52")]
-const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NRF52;
+#[cfg(feature = "board-nk3xn")]
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
+#[cfg(feature = "board-nk3am")]
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;
 
 #[derive(Eq, PartialEq)]
 enum SocType {
@@ -74,8 +74,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     // @todo: move this decision into 'profile.cfg'
     let (memory_x_infix, template_file) = match soc_type {
-        SocType::Lpc55 => ("../ld/lpc55", "../ld/lpc55-memory-template.x"),
-        SocType::Nrf52840 => ("../ld/nrf52", "../ld/nrf52-memory-template.x"),
+        SocType::Lpc55 => ("ld/lpc55", "../ld/lpc55-memory-template.x"),
+        SocType::Nrf52840 => ("ld/nrf52", "../ld/nrf52-memory-template.x"),
     };
 
     println!("cargo:rerun-if-changed={}", template_file);
@@ -84,7 +84,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let memory_x_dir =
         Path::new(&env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR not set"))
             .join(&memory_x_infix);
-    std::fs::create_dir(&memory_x_dir).ok();
+    std::fs::create_dir_all(&memory_x_dir).ok();
     let memory_x = memory_x_dir.join("custom_memory.x");
 
     generate_memory_x(&memory_x, template_file, MEMORY_REGIONS);

@@ -31,7 +31,7 @@ mod migrations;
 
 type OutPin = Pin<Output<PushPull>>;
 
-const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NRF52;
+const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NK3AM;
 
 pub struct NK3AM;
 
