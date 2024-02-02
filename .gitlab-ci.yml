@@ -2,7 +2,7 @@
 include:
   - project: 'nitrokey/gitlab-ci'
     file:
-      - 'common-jobs/common_jobs.yml'
+      - 'common-jobs/common_jobs_test.yml'
 
 stages:
   - pull-github
