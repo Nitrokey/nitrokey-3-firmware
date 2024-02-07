@@ -33,22 +33,26 @@ const PRINCE_REGION2_ENABLE: u32 = {
 };
 const PRINCE_REGION2_DISABLE: u32 = 0;
 
-// Check that the FS is placed in PRINCE Region 2
-const _: () = assert!(FS_START >= PRINCE_REGION2_START);
-const _: () = assert!(FS_START < FS_END);
-const _: () = assert!(FS_END <= _FLASH_SIZE);
-// Check that the firmware does not overlap with the PRINCE subregions used for the FS
-const _: () = assert!(
-    MEMORY_REGIONS.firmware.end
-        <= PRINCE_REGION2_START
-            + (FS_START - PRINCE_REGION2_START) / PRINCE_SUBREGION_SIZE * PRINCE_SUBREGION_SIZE
-);
-// Check that offset and size are multiples of the block size
-const _: () = assert!(FS_START % BLOCK_SIZE == 0);
-const _: () = assert!(FS_END % BLOCK_SIZE == 0);
-// Check that flash region does NOT spill over the flash boundary
-const _: () = assert!(FS_START + BLOCK_COUNT * BLOCK_SIZE <= _FLASH_SIZE);
+#[allow(clippy::assertions_on_constants)]
+mod checks {
+    use super::*;
 
+    // Check that the FS is placed in PRINCE Region 2
+    const _: () = assert!(FS_START >= PRINCE_REGION2_START);
+    const _: () = assert!(FS_START < FS_END);
+    const _: () = assert!(FS_END <= _FLASH_SIZE);
+    // Check that the firmware does not overlap with the PRINCE subregions used for the FS
+    const _: () = assert!(
+        MEMORY_REGIONS.firmware.end
+            <= PRINCE_REGION2_START
+                + (FS_START - PRINCE_REGION2_START) / PRINCE_SUBREGION_SIZE * PRINCE_SUBREGION_SIZE
+    );
+    // Check that offset and size are multiples of the block size
+    const _: () = assert!(FS_START % BLOCK_SIZE == 0);
+    const _: () = assert!(FS_END % BLOCK_SIZE == 0);
+    // Check that flash region does NOT spill over the flash boundary
+    const _: () = assert!(FS_START + BLOCK_COUNT * BLOCK_SIZE <= _FLASH_SIZE);
+}
 pub fn enable(prince: &mut Prince<Enabled>) {
     prince.set_region_enable(Region::Region2, PRINCE_REGION2_ENABLE);
 }
@@ -92,8 +96,9 @@ impl Storage for InternalFilesystem {
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize> {
         with_enabled(&mut self.prince, || {
             let flash: *const u8 = (FS_START + off) as *const u8;
+            #[allow(clippy::needless_range_loop)]
             for i in 0..buf.len() {
-                buf[i] = unsafe { *flash.offset(i as isize) };
+                buf[i] = unsafe { *flash.add(i) };
             }
         });
         Ok(buf.len())

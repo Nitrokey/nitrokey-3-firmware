@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     let memory_x_dir =
         Path::new(&env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR not set"))
-            .join(&memory_x_infix);
+            .join(memory_x_infix);
     std::fs::create_dir_all(&memory_x_dir).ok();
     let memory_x = memory_x_dir.join("custom_memory.x");
 

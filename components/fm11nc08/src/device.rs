@@ -119,9 +119,9 @@ where
 {
     pub fn new(spi: SPI, cs: CS, int: INT) -> Self {
         Self {
-            spi: spi,
-            cs: cs,
-            int: int,
+            spi,
+            cs,
+            int,
             packet: [0u8; 256],
             offset: 0usize,
             current_frame_size: 128,
@@ -213,6 +213,7 @@ where
         Ok(())
     }
 
+    #[allow(clippy::result_unit_err)]
     /// Configure the eeprom in FM11 chip.  Should only need to do this once per device.
     pub fn configure(
         &mut self,
@@ -279,9 +280,9 @@ where
         block!(self.spi.read()).ok().unwrap();
         block!(self.spi.read()).ok().unwrap();
 
-        for i in 0..array.len() {
+        for byte in array {
             block!(self.spi.send(0)).ok();
-            array[i] = block!(self.spi.read()).ok().unwrap();
+            *byte = block!(self.spi.read()).ok().unwrap();
         }
         self.cs.set_high().ok();
     }
@@ -300,7 +301,7 @@ where
 
     /// Write data to NFC FIFO as fast as possible.
     fn write_fifo(&mut self, buf: &[u8]) {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return;
         }
         self.cs.set_low().ok();
@@ -311,8 +312,8 @@ where
         // (assumes count >= 1)
         block!(self.spi.send(buf[0])).ok();
 
-        for i in 1..buf.len() {
-            block!(self.spi.send(buf[i as usize])).ok();
+        for byte in &buf[1..] {
+            block!(self.spi.send(*byte)).ok();
             block!(self.spi.read()).ok().unwrap();
         }
 
@@ -408,9 +409,7 @@ where
             } else {
                 info!("RxDone");
                 let l = self.offset - 2;
-                for i in 0..l {
-                    buf[i] = self.packet[i];
-                }
+                buf[..l].copy_from_slice(&self.packet[..l]);
                 self.offset = 0;
                 if new_session {
                     return Ok(nfc::State::NewSession(l as u8));
@@ -507,7 +506,7 @@ where
             info!("24 chunk");
             self.write_fifo(&buf[i * 24..i * 24 + 24]);
 
-            if !self.wait_for_transmission().is_ok() {
+            if self.wait_for_transmission().is_err() {
                 return Err(nfc::Error::NoActivity);
             }
         }
@@ -698,6 +697,7 @@ where
     pub fn dump_registers(&mut self) -> RegisterBlock {
         let mut regs = [0u8; 15];
 
+        #[allow(clippy::needless_range_loop)]
         for i in 2..15 {
             regs[i] = self.read_reg_raw(i as u8);
         }
@@ -730,10 +730,10 @@ where
         self.write_reg(Register::AuxIrq, 0);
 
         InterruptState {
-            main: main,
-            fifo: fifo,
-            aux: aux,
-            count: count,
+            main,
+            fifo,
+            aux,
+            count,
         }
     }
 
@@ -744,14 +744,14 @@ where
 
         let regu_cfg = arr[1];
 
-        self.read_eeprom(0x3a0 + 0, &mut arr);
+        self.read_eeprom(0x3a0, &mut arr);
 
         double_byte.clone_from_slice(&arr[0..2]);
         let atqa = u16::from_be_bytes(double_byte);
         let sak1 = arr[2];
         let sak2 = arr[3];
 
-        self.read_eeprom(0x3b0 + 0, &mut arr);
+        self.read_eeprom(0x3b0, &mut arr);
         let tl = arr[0];
         let t0 = arr[1];
         let nfc_cfg = arr[2];
@@ -764,19 +764,19 @@ where
         let rblock_nack = arr[11];
 
         Eeprom {
-            regu_cfg: regu_cfg,
-            atqa: atqa,
-            sak1: sak1,
-            sak2: sak2,
-            tl: tl,
-            t0: t0,
-            ta: ta,
-            tb: tb,
-            tc: tc,
-            i2c_addr: i2c_addr,
-            nfc_cfg: nfc_cfg,
-            rblock_ack: rblock_ack,
-            rblock_nack: rblock_nack,
+            regu_cfg,
+            atqa,
+            sak1,
+            sak2,
+            tl,
+            t0,
+            ta,
+            tb,
+            tc,
+            i2c_addr,
+            nfc_cfg,
+            rblock_ack,
+            rblock_nack,
         }
     }
 }

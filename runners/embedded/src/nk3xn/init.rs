@@ -264,6 +264,7 @@ impl Stage1 {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[inline(never)]
     pub fn next(
         mut self,
@@ -285,11 +286,10 @@ impl Stage1 {
         #[allow(unused_mut)]
         let mut adc = Some(if self.clocks.is_nfc_passive {
             // important to start Adc early in passive mode
-            hal::Adc::from(adc)
-                .configure(DynamicClockController::adc_configuration())
+            adc.configure(DynamicClockController::adc_configuration())
                 .enabled(pmc, syscon)
         } else {
-            hal::Adc::from(adc).enabled(pmc, syscon)
+            adc.enabled(pmc, syscon)
         });
 
         let mut delay_timer = Timer::new(
@@ -512,7 +512,7 @@ impl Stage3 {
         #[allow(unused_mut)]
         let mut rng = rng.enabled(syscon);
 
-        let mut prince = prince.enabled(&mut rng);
+        let mut prince = prince.enabled(&rng);
         prince::disable(&mut prince);
 
         let flash_gordon = FlashGordon::new(flash.enabled(syscon));
@@ -579,8 +579,7 @@ impl Stage4 {
 
         let external = if let Some(spi) = self.spi.take() {
             info_now!("using external flash");
-            let external_flash = self.setup_external_flash(spi);
-            OptionalStorage::from(external_flash)
+            self.setup_external_flash(spi)
         } else {
             info_now!("simulating external flash with RAM");
             OptionalStorage::default()

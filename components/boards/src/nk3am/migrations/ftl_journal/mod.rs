@@ -9,7 +9,7 @@ use lfs_backup::{BackupBackend, FSBackupError, Result};
 
 use crate::nk3am::{ExternalFlashStorage, InternalFlashStorage};
 
-pub fn migrate<'a>(
+pub fn migrate(
     old_ifs_storage: &mut OldFlashStorage,
     old_ifs_alloc: &mut Allocation<OldFlashStorage>,
     ifs_alloc: &mut Allocation<InternalFlashStorage>,

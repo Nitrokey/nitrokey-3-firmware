@@ -37,6 +37,7 @@ type WtxGranted = bool;
 type Nad = Option<u8>;
 type Cid = Option<u8>;
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Copy, Clone)]
 enum Block {
     IBlock(BlockNum, Nad, Cid, Chaining, Offset),
@@ -107,7 +108,7 @@ where
 {
     pub fn new(device: DEV, interchange: Requester<'static>) -> Self {
         Self {
-            device: device,
+            device,
             state: Iso14443State::Receiving,
             cid: None,
 
@@ -116,7 +117,7 @@ where
 
             buffer: Vec::new(),
 
-            interchange: interchange,
+            interchange,
         }
     }
 
@@ -209,7 +210,7 @@ where
                             // PICC shall toggle its block number before sending a block.
                             self.block_num = !self.block_num;
 
-                            if remaining_data_range.len() == 0 {
+                            if remaining_data_range.is_empty() {
                                 info!("Error, recieved ack when this is no more data.");
                                 self.ack();
                                 self.reset_state();
@@ -262,7 +263,7 @@ where
         }
     }
 
-    pub fn borrow<F: Fn(&mut DEV) -> ()>(&mut self, func: F) {
+    pub fn borrow<F: Fn(&mut DEV)>(&mut self, func: F) {
         func(&mut self.device);
     }
 
@@ -338,8 +339,8 @@ where
 
         let command = interchanges::Data::from_slice(&self.buffer);
         self.buffer.clear();
-        if command.is_ok() {
-            if self.interchange.request(command.unwrap()).is_ok() {
+        if let Ok(command) = command {
+            if self.interchange.request(command).is_ok() {
                 Ok(())
             } else {
                 // Would be better to try canceling and taking on this apdu.
@@ -434,13 +435,13 @@ where
     /// Write response code + APDU
     fn send_frame(&mut self, buffer: &Iso14443Frame) -> Result<(), SourceError> {
         let r = self.device.send(buffer);
-        if !r.is_ok() {
+        if r.is_err() {
             // o!("FM11 not okay!");
             return Err(SourceError::NoActivity);
         }
 
         debug!("<{}< ", buffer.len());
-        if buffer.len() > 0 {
+        if !buffer.is_empty() {
             debug!("{}", hex_str!(&buffer, sep:""));
         }
 

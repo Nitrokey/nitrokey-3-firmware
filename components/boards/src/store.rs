@@ -33,11 +33,15 @@ const_ram_storage!(
     result = LfsResult,
 );
 
+// FIXME: document safety
+#[allow(clippy::missing_safety_doc)]
 #[cfg(feature = "provisioner")]
 pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
     S::ifs_storage().as_mut().unwrap()
 }
 
+// FIXME: document safety
+#[allow(clippy::missing_safety_doc)]
 pub trait StoragePointers: 'static {
     type InternalStorage: Storage;
     type ExternalStorage: Storage;
@@ -149,9 +153,7 @@ impl<S: StoragePointers> RunnerStore<S> {
 
 impl<S> Clone for RunnerStore<S> {
     fn clone(&self) -> Self {
-        Self {
-            _marker: self._marker,
-        }
+        *self
     }
 }
 

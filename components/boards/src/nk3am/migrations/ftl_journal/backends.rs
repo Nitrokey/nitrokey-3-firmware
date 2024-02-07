@@ -16,7 +16,7 @@ impl<'a> EFSBackupBackend<'a> {
     pub fn new(extflash: &'a mut ExternalFlashStorage, offset: usize, len: usize) -> Self {
         Self {
             extflash,
-            initial_offset: offset.clone(),
+            initial_offset: offset,
             offset,
             len,
         }
@@ -68,7 +68,7 @@ impl<'a> BackupBackend for EFSBackupBackend<'a> {
         self.extflash
             .erase(self.initial_offset, self.len)
             .map_err(|_| FSBackupError::BackendEraseErr)?;
-        self.offset = self.initial_offset.clone();
+        self.offset = self.initial_offset;
         Ok(self.len)
     }
 

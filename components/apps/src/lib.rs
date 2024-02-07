@@ -71,7 +71,7 @@ impl admin_app::Config for Config {
         #[cfg(not(feature = "factory-reset"))]
         {
             _ = key;
-            return None;
+            None
         }
     }
 }

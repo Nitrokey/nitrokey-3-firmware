@@ -36,6 +36,12 @@ impl<'a> App<'a> {
     }
 }
 
+impl<'a> Default for App<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> iso7816::App for App<'a> {
     fn aid(&self) -> iso7816::Aid {
         iso7816::Aid::new(&[0xD2u8, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01])
@@ -80,14 +86,12 @@ impl<'a> app::App<CommandSize, ResponseSize> for App<'a> {
             }
             Instruction::ReadBinary => {
                 let offset = (((p1 & 0xef) as usize) << 8) | p2 as usize;
-                let len_to_read = if expected as usize > (self.reader.len() - offset) {
+                let len_to_read = if expected > (self.reader.len() - offset) {
                     self.reader.len() - offset
+                } else if expected > 0 {
+                    expected
                 } else {
-                    if expected > 0 {
-                        expected as usize
-                    } else {
-                        self.reader.len() - offset
-                    }
+                    self.reader.len() - offset
                 };
 
                 reply

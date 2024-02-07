@@ -226,7 +226,7 @@ mod app {
         let mask = inten & intstat;
         if mask != 0 {
             for i in 0..5 {
-                if mask & (1 << 2 * i) != 0 {
+                if mask & (1 << (2 * i)) != 0 {
                     // debug!("EP{}OUT", i);
                 }
                 if mask & (1 << (2 * i + 1)) != 0 {
@@ -269,9 +269,7 @@ mod app {
     #[task(binds = OS_EVENT, shared = [trussed], priority = 5)]
     fn os_event(mut c: os_event::Context) {
         // debug_now!("os event: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
-        c.shared
-            .trussed
-            .lock(|trussed| runtime::run_trussed(trussed));
+        c.shared.trussed.lock(runtime::run_trussed);
     }
 
     #[task(shared = [trussed], priority = 1)]

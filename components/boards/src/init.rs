@@ -240,6 +240,8 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     #[cfg(not(feature = "se050"))]
     let seed = None;
 
+    // False positive due to cfg
+    #[allow(clippy::unnecessary_literal_unwrap)]
     let rng = ChaCha8Rng::from_seed(seed.unwrap_or_else(|| dev_rng.gen()));
     let _ = init_status;
 
@@ -253,7 +255,7 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     let dispatch = if let Some(hw_key) = hw_key {
         Dispatch::with_hw_key(
             Location::Internal,
-            trussed::types::Bytes::from_slice(&hw_key).unwrap(),
+            trussed::types::Bytes::from_slice(hw_key).unwrap(),
             #[cfg(feature = "se050")]
             se050,
         )

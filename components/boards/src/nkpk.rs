@@ -15,7 +15,7 @@ use crate::{
 
 pub use nk3am::{init_pins, init_ui, power_handler};
 
-const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NKPK;
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NKPK;
 
 pub struct NKPK;
 

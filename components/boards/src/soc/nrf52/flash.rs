@@ -110,7 +110,7 @@ impl<const START: usize, const END: usize> FlashStorage<START, END> {
 
         // erase journal block
         self.nvmc
-            .erase(addr as u32, addr + REAL_BLOCK_SIZE as u32)
+            .erase(addr, addr + REAL_BLOCK_SIZE as u32)
             .unwrap();
 
         // write meta-data
@@ -123,9 +123,7 @@ impl<const START: usize, const END: usize> FlashStorage<START, END> {
 
         // write lhs + rhs for journaled block
         if lhs_len > 0 {
-            self.nvmc
-                .write((addr + 16) as u32, &data[..lhs_len])
-                .unwrap();
+            self.nvmc.write(addr + 16, &data[..lhs_len]).unwrap();
         }
 
         let rhs_len = (REAL_BLOCK_SIZE - rhs_off) as u32;
@@ -178,7 +176,7 @@ impl<const START: usize, const END: usize> FlashStorage<START, END> {
 
         // erase target block inside littlefs2 space
         self.nvmc
-            .erase(src_addr as u32, (src_addr + REAL_BLOCK_SIZE as u32) as u32)
+            .erase(src_addr, src_addr + REAL_BLOCK_SIZE as u32)
             .unwrap();
 
         // write back journaled lhs + rhs
@@ -191,7 +189,7 @@ impl<const START: usize, const END: usize> FlashStorage<START, END> {
             self.nvmc
                 .write(
                     src_addr + rhs_off,
-                    &buf[((lhs_len + 16) as usize)..((rhs_len + 16 + lhs_len as usize) as usize)],
+                    &buf[((lhs_len + 16) as usize)..(rhs_len + 16 + lhs_len as usize)],
                 )
                 .unwrap();
         }

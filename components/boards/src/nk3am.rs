@@ -31,7 +31,7 @@ mod migrations;
 
 type OutPin = Pin<Output<PushPull>>;
 
-const MEMORY_REGIONS: &'static MemoryRegions = &MemoryRegions::NK3AM;
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;
 
 pub struct NK3AM;
 
@@ -183,7 +183,7 @@ pub fn init_pins(gpiote: GPIOTE, p0: P0, p1: P1) -> BoardGPIO {
     BoardGPIO {
         gpiote,
         rgb_led: [led_r, led_g, led_b],
-        touch: touch,
+        touch,
         se_pins: Some(se_pins),
         se_power: Some(se_pwr),
         flashnfc_spi: Some(flash_spi),

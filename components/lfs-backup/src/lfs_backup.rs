@@ -3,7 +3,6 @@ use littlefs2::fs::{Attribute, DirEntry, Filesystem};
 
 use littlefs2::path::{Path, PathBuf};
 
-use postcard;
 use serde::{Deserialize, Serialize};
 
 use heapless::Vec;
@@ -189,7 +188,7 @@ pub trait BackupBackend {
 
             // 'None' => no next item inside this directory, continue w/o adding 'current'
             // back to 'path_stack' implicitly means this subtree is done
-            if next_path == None {
+            if next_path.is_none() {
                 continue;
             }
 

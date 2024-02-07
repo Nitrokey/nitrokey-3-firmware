@@ -54,10 +54,10 @@ where
             middle: user_button.is_high().ok().unwrap(),
         };
         Self {
-            user_button: user_button,
+            user_button,
             // wakeup_button: wakeup_button,
             last_state: buts,
-            timer: timer,
+            timer,
         }
     }
 }

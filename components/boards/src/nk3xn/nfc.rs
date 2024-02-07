@@ -39,6 +39,8 @@ pub fn try_setup(
 
     let mut fm = FM11NC08::new(spi, nfc_cs, nfc_irq).enabled();
 
+    #[allow(clippy::eq_op, clippy::identity_op)]
+    // FIXME: use bitlfags to document what is being configured
     //                      no limit      2mA resistor    3.3V
     const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
     let current_regu_config = fm.read_reg(fm11nc08::Register::ReguCfg);
@@ -79,7 +81,7 @@ pub fn try_setup(
                 // (FWI[b4], SFGI[b4]), (256 * 16 / fc) * 2 ^ value
                 tb: 0x78,
                 tc: 0x00,
-                #[allow(clippy::eq_op)]
+                #[allow(clippy::eq_op, clippy::identity_op)]
                 // enable P-on IRQ    14443-4 mode
                 // FIXME: use bitlfags to document what is being configured
                 nfc: (0b0 << 1) | (0b00 << 2),

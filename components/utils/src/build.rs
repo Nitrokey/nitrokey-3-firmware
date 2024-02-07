@@ -82,7 +82,7 @@ fn crate_version(cargo_pkg_version: &str) -> Version {
 
 fn tag_version() -> Option<Version> {
     option_env!("CI_COMMIT_TAG")
-        .map(|s| s.strip_prefix("v").expect("tag must start with v"))
+        .map(|s| s.strip_prefix('v').expect("tag must start with v"))
         .map(|s| Version::parse(s).expect("failed to parse version from tag"))
 }
 

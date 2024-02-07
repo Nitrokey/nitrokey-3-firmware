@@ -36,9 +36,9 @@ const ADC_VOLTAGE_HIGH: u16 = 12_700;
 
 impl DynamicClockController {
     pub fn adc_configuration() -> adc::Config {
-        let mut config: adc::Config = Default::default();
-        config.conversion_delay = 96;
-        config
+        adc::Config {
+            conversion_delay: 96,
+        }
     }
     pub fn new(
         adc: Adc<Enabled>,
@@ -96,11 +96,11 @@ impl DynamicClockController {
         });
 
         DynamicClockController {
-            adc: adc,
-            signal_button: signal_button,
-            pmc: pmc,
-            clocks: clocks,
-            syscon: syscon,
+            adc,
+            signal_button,
+            pmc,
+            clocks,
+            syscon,
             decrease_count: 0,
         }
     }
