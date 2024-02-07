@@ -79,7 +79,9 @@ pub fn try_setup(
                 // (FWI[b4], SFGI[b4]), (256 * 16 / fc) * 2 ^ value
                 tb: 0x78,
                 tc: 0x00,
+                #[allow(clippy::eq_op)]
                 // enable P-on IRQ    14443-4 mode
+                // FIXME: use bitlfags to document what is being configured
                 nfc: (0b0 << 1) | (0b00 << 2),
             },
             timer,

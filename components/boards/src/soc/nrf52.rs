@@ -100,6 +100,7 @@ pub fn init_bootup(
         error!("REGOUT0 is not at 3.3V - external flash will fail!");
     }
 
+    #[allow(clippy::if_same_then_else)]
     if uicr.approtect.read().pall().is_enabled() {
         info!("UICR APPROTECT is ENABLED!");
     } else {

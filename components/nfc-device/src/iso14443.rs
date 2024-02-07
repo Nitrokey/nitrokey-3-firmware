@@ -245,6 +245,7 @@ where
             }
             Block::SBlock(_cid, wtxgranted) => {
                 if wtxgranted {
+                    #[allow(clippy::if_same_then_else)]
                     if self.wtx_requested {
                         info!("wtx accepted");
                     } else {
