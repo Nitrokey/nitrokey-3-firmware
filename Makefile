@@ -11,6 +11,10 @@ doc:
 .PHONY: lint
 lint:
 	cargo fmt -- --check
+	$(MAKE) -C runners/embedded lint-all
+	$(MAKE) -C runners/nkpk lint
+	$(MAKE) -C runners/usbip lint
+
 
 license.txt:
 	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/embedded/Cargo.toml "Nitrokey 3" > license.txt

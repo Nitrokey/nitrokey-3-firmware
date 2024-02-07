@@ -44,6 +44,8 @@ build-all: build-nk3am.bl build-nk3xn
 
 check-all: check-nk3am.bl check-nk3xn
 
+lint-all: lint-nk3am.bl lint-nk3xn
+
 $(ARTIFACTS):
 	mkdir -p $@
 
@@ -122,6 +124,15 @@ check: check-banner check-var-BOARD check-var-SOC
 	cargo check --target $(TARGET) \
 		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
+
+lint: check-banner check-var-BOARD check-var-SOC
+
+	cargo --version
+
+	cargo clippy --target $(TARGET) \
+		--features $(BUILD_FEATURES) \
+		--quiet --profile $(CUSTOM_PROFILE)
+
 
 doc: check-banner check-var-BOARD check-var-SOC
 

@@ -24,3 +24,7 @@ build:
 .PHONY: check
 check:
 	cargo check --features $(ALL_FEATURES)
+
+.PHONY: lint
+lint:
+	cargo clippy --features $(ALL_FEATURES)
