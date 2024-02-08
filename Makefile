@@ -32,6 +32,10 @@ binaries:
 	$(MAKE) -C runners/nkpk build FEATURES=provisioner
 	cp runners/nkpk/artifacts/runner-nkpk.bin.ihex binaries/provisioner-nkpk.ihex
 
+.PHONY: metrics
+metrics: binaries
+	repometrics generate > metrics.toml
+
 license.txt:
 	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/embedded/Cargo.toml "Nitrokey 3" > license.txt
 

@@ -7,6 +7,7 @@ include:
 stages:
   - pull-github
   - build
+  - metrics
   - test
   - deploy
 
@@ -45,18 +46,6 @@ metadata:
   artifacts:
     paths:
       - artifacts
-
-check-firmware:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make -C runners/embedded check-all
-    - make -C runners/embedded check-all FEATURES=provisioner
-    - make -C runners/embedded check-all FEATURES=test
 
 check-usbip:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -104,7 +93,7 @@ build-nightly:
     - cargo build --release --manifest-path runners/usbip/Cargo.toml --features test
     - cargo build --release --manifest-path runners/usbip/Cargo.toml --features provisioner
 
-build-firmware:
+build-release-firmware:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
@@ -148,9 +137,7 @@ build-usbip:
     paths:
       - artifacts
 
-# This is a copy of build-firmware, but without the strict tag check guard and NK3AM build temporarily removed
-# FIXME Either this or build-firmware should be removed
-build-firmware-for-tests:
+build-firmware:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -158,19 +145,16 @@ build-firmware-for-tests:
     - docker
   stage: build
   script:
-    - git describe
-    - export VERSION=`git describe`
+    # Generate normal binaries
+    - make binaries
+    # Generate no-buttons firmware binaries for HIL
     - mkdir -p artifacts
     - make -C runners/embedded build-nk3xn FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
-    - make -C runners/embedded build-nk3xn FEATURES=test
-    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-test-lpc55.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
     - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nrf52.hex
-    - make -C runners/embedded build-nk3am.bl FEATURES=test
-    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-test-nrf52.hex
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
     - make -C runners/nkpk build FEATURES=no-buttons
@@ -180,6 +164,22 @@ build-firmware-for-tests:
   artifacts:
     paths:
       - artifacts
+      - binaries
+
+# metrics stage
+
+metrics:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: metrics
+  script:
+    - repometrics generate > metrics.toml
+  artifacts:
+    paths:
+      - metrics.toml
 
 ###############################################################################
 # test stage
@@ -207,10 +207,6 @@ hardware-tests:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch v1.2.2
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
-  dependencies:
-    - build-firmware-for-tests
-  needs:
-    - build-firmware-for-tests
   artifacts:
     when: always
     paths:

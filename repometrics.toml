@@ -1,0 +1,25 @@
+[gitlab]
+host = "git.nitrokey.com"
+project = "nitrokey/nitrokey-3-firmware"
+job = "metrics"
+artifact = "metrics.toml"
+
+[metrics.binary-size-nk3am]
+type = "file-size"
+input = "binaries/firmware-nk3am.ihex"
+
+[metrics.binary-size-nk3am-test]
+type = "file-size"
+input = "binaries/firmware-nk3am-test.ihex"
+
+[metrics.binary-size-nk3xn]
+type = "file-size"
+input = "binaries/firmware-nk3xn.bin"
+
+[metrics.binary-size-nk3xn-test]
+type = "file-size"
+input = "binaries/firmware-nk3xn-test.bin"
+
+[metrics.binary-size-nkpk]
+type = "file-size"
+input = "binaries/firmware-nkpk.ihex"
