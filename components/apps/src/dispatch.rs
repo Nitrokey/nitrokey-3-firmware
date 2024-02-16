@@ -195,7 +195,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 self.auth
                     .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
             }
-            Backend::Hkdf => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "webcrypt")]
             Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-rsa")]
@@ -275,6 +274,13 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
+                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -342,7 +348,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
     Auth,
-    Hkdf,
     #[cfg(feature = "webcrypt")]
     HmacSha256P256,
     #[cfg(feature = "backend-rsa")]

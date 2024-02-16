@@ -14,6 +14,7 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
+use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
@@ -22,7 +23,7 @@ use trussed::{
 use utils::Version;
 
 pub use admin_app::Reboot;
-use admin_app::{ConfigValueMut, ResetSignalAllocation};
+use admin_app::{migrations::Migrator, ConfigValueMut, ResetSignalAllocation};
 
 #[cfg(feature = "webcrypt")]
 use webcrypt::{PeekingBypass, Webcrypt};
@@ -35,12 +36,50 @@ fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     value == &Default::default()
 }
 
+const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
+
+const MIGRATORS: &[Migrator] = &[
+    // We first migrate the SE050 since this migration deletes data to make sure that the other
+    // migrations succeed even on low block availability
+    #[cfg(feature = "se050-migration")]
+    Migrator {
+        migrate: |ifs, _efs| {
+            trussed_se050_backend::migrate::migrate_remove_all_dat(ifs, &[path!("/opcard")])
+        },
+        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
+    },
+    #[cfg(feature = "backend-auth")]
+    Migrator {
+        migrate: |ifs, _efs| {
+            trussed_auth::migrate::migrate_remove_dat(
+                ifs,
+                &[
+                    path!("opcard"),
+                    path!("webcrypt"),
+                    path!("secrets"),
+                    path!("piv"),
+                ],
+            )
+        },
+        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
+    },
+    #[cfg(feature = "fido-authenticator")]
+    Migrator {
+        migrate: |ifs, _efs| {
+            fido_authenticator::migrate::migrate_no_rp_dir(ifs, path!("/fido/dat"))
+        },
+        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
+    },
+];
+
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
     #[serde(default, rename = "f", skip_serializing_if = "is_default")]
     fido: FidoConfig,
     #[serde(default, rename = "o", skip_serializing_if = "is_default")]
     opcard: OpcardConfig,
+    #[serde(default, rename = "v", skip_serializing_if = "is_default")]
+    fs_version: u32,
 }
 
 impl admin_app::Config for Config {
@@ -74,6 +113,14 @@ impl admin_app::Config for Config {
             None
         }
     }
+
+    fn migration_version(&self) -> Option<u32> {
+        Some(self.fs_version)
+    }
+    fn set_migration_version(&mut self, version: u32) -> bool {
+        self.fs_version = version;
+        true
+    }
 }
 
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
@@ -82,7 +129,7 @@ pub struct FidoConfig {
     disable_skip_up_timeout: bool,
 }
 
-impl admin_app::Config for FidoConfig {
+impl FidoConfig {
     fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
         match key {
             "disable_skip_up_timeout" => {
@@ -92,6 +139,7 @@ impl admin_app::Config for FidoConfig {
         }
     }
 
+    #[cfg(feature = "factory-reset")]
     fn reset_client_id(
         &self,
         _key: &str,
@@ -132,7 +180,7 @@ impl OpcardConfig {
     }
 }
 
-impl admin_app::Config for OpcardConfig {
+impl OpcardConfig {
     fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
         match key {
             #[cfg(feature = "se050")]
@@ -141,6 +189,7 @@ impl admin_app::Config for OpcardConfig {
         }
     }
 
+    #[cfg(feature = "factory-reset")]
     fn reset_client_id(
         &self,
         key: &str,
@@ -249,6 +298,7 @@ pub struct Apps<R: Runner> {
     provisioner: ProvisionerApp<R>,
     #[cfg(feature = "webcrypt")]
     webcrypt: PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>,
+    migrated_successfully: bool,
 }
 
 impl<R: Runner> Apps<R> {
@@ -272,8 +322,6 @@ impl<R: Runner> Apps<R> {
         } = data;
 
         let (admin, init_status) = Self::admin_app(runner, &mut make_client, admin);
-        #[cfg(not(feature = "opcard"))]
-        let _ = init_status;
 
         #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
@@ -303,6 +351,7 @@ impl<R: Runner> Apps<R> {
             provisioner: App::new(runner, &mut make_client, provisioner, &()),
             #[cfg(feature = "webcrypt")]
             webcrypt: webcrypt_fido_bypass,
+            migrated_successfully: !init_status.contains(InitStatus::MIGRATION_ERROR),
             admin,
         }
     }
@@ -320,13 +369,14 @@ impl<R: Runner> Apps<R> {
         // TODO: use CLIENT_ID directly
         let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
         let version = data.version.encode();
-        let app = AdminApp::<R>::load_config(
+        let mut app = AdminApp::<R>::load_config(
             trussed,
             &mut filestore,
             runner.uuid(),
             version,
             data.version_string,
             data.status(),
+            MIGRATORS,
         )
         .unwrap_or_else(|(trussed, _err)| {
             data.init_status.insert(InitStatus::CONFIG_ERROR);
@@ -336,8 +386,18 @@ impl<R: Runner> Apps<R> {
                 version,
                 data.version_string,
                 data.status(),
+                MIGRATORS,
             )
         });
+
+        const LATEST_MIGRATION: u32 = MIGRATION_VERSION_SPACE_EFFICIENCY;
+        let migration_success = app
+            .migrate(LATEST_MIGRATION, data.store, &mut filestore)
+            .is_ok();
+        if !migration_success {
+            data.init_status.insert(InitStatus::MIGRATION_ERROR);
+            *app.status_mut() = data.status();
+        }
         (app, data.init_status)
     }
 
@@ -374,23 +434,25 @@ impl<R: Runner> Apps<R> {
         #[cfg(feature = "ndef-app")]
         apps.push(&mut self.ndef).ok().unwrap();
 
-        // App 2: secrets
-        #[cfg(feature = "secrets-app")]
-        apps.push(&mut self.oath).ok().unwrap();
+        if self.migrated_successfully {
+            // App 2: secrets
+            #[cfg(feature = "secrets-app")]
+            apps.push(&mut self.oath).ok().unwrap();
 
-        // App 3: opcard
-        #[cfg(feature = "opcard")]
-        if let Some(opcard) = &mut self.opcard {
-            apps.push(opcard).ok().unwrap();
+            // App 3: opcard
+            #[cfg(feature = "opcard")]
+            if let Some(opcard) = &mut self.opcard {
+                apps.push(opcard).ok().unwrap();
+            }
+
+            // App 4: piv
+            #[cfg(feature = "piv-authenticator")]
+            apps.push(&mut self.piv).ok().unwrap();
+
+            // App 5: fido
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+            apps.push(&mut self.fido).ok().unwrap();
         }
-
-        // App 4: piv
-        #[cfg(feature = "piv-authenticator")]
-        apps.push(&mut self.piv).ok().unwrap();
-
-        // App 5: fido
-        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-        apps.push(&mut self.fido).ok().unwrap();
 
         // App 6: admin
         apps.push(&mut self.admin).ok().unwrap();
@@ -408,18 +470,22 @@ impl<R: Runner> Apps<R> {
     {
         let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
 
-        // App 1: webcrypt or fido
-        #[cfg(feature = "webcrypt")]
-        apps.push(&mut self.webcrypt).ok().unwrap();
-        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-        apps.push(&mut self.fido).ok().unwrap();
+        if self.migrated_successfully {
+            // App 1: webcrypt or fido
+            #[cfg(feature = "webcrypt")]
+            apps.push(&mut self.webcrypt).ok().unwrap();
+            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+            apps.push(&mut self.fido).ok().unwrap();
+        }
 
         // App 2: admin
         apps.push(&mut self.admin).ok().unwrap();
 
-        // App 3: secrets
-        #[cfg(feature = "secrets-app")]
-        apps.push(&mut self.oath).ok().unwrap();
+        if self.migrated_successfully {
+            // App 3: secrets
+            #[cfg(feature = "secrets-app")]
+            apps.push(&mut self.oath).ok().unwrap();
+        }
 
         // App 4: provisioner
         #[cfg(feature = "provisioner-app")]
@@ -463,7 +529,7 @@ impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
 trait App<R: Runner>: Sized {
     /// additional data needed by this Trussed app
     type Data;
-    type Config: admin_app::Config;
+    type Config;
 
     /// the desired client ID
     const CLIENT_ID: &'static str;
@@ -841,6 +907,7 @@ mod tests {
                 #[cfg(feature = "se050")]
                 use_se050_backend: true,
             },
+            fs_version: 1,
         };
         let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
         // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512

@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.11#0ba0e766cba65a1fe7b0865f343de589e4202d82"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=7637af1cc935cc20210310ae00e54e28fc2d3b51#7637af1cc935cc20210310ae00e54e28fc2d3b51"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -147,7 +147,7 @@ source = "git+https://github.com/Nitrokey/apdu-dispatch.git?tag=v0.1.2-nitrokey.
 dependencies = [
  "delog",
  "heapless",
- "interchange 0.3.0",
+ "interchange",
  "iso7816",
 ]
 
@@ -367,7 +367,7 @@ dependencies = [
  "embedded-time",
  "fm11nc08",
  "generic-array",
- "interchange 0.3.0",
+ "interchange",
  "lfs-backup",
  "littlefs2",
  "lpc55-hal",
@@ -492,7 +492,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.0"
-source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.1#cdedd94cc62214f99f0e4bb35f9e7a67f50a45c1"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?rev=bac1ac69dd0117d1f80f3f5e1d3b60ba8987ad70#bac1ac69dd0117d1f80f3f5e1d3b60ba8987ad70"
 dependencies = [
  "delog",
  "heapless",
@@ -896,7 +896,7 @@ dependencies = [
  "delog",
  "heapless",
  "heapless-bytes",
- "interchange 0.3.0",
+ "interchange",
  "ref-swap",
  "trussed",
 ]
@@ -1081,7 +1081,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-hal",
- "interchange 0.3.0",
+ "interchange",
  "littlefs2-sys",
  "lpc55-hal",
  "lpc55-pac",
@@ -1121,7 +1121,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0-rc2#c4cd4c10c4b6e6910b462ee963ac3610ffdfc3aa"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa#5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1183,7 +1183,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.14#db4a63dd582784c847520136da930f172330ef28"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?rev=81818b0ea8a2f1c49ef1d16ebdc4f79b4c8e32cb#81818b0ea8a2f1c49ef1d16ebdc4f79b4c8e32cb"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1191,6 +1191,7 @@ dependencies = [
  "delog",
  "heapless",
  "iso7816",
+ "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
@@ -1631,12 +1632,6 @@ dependencies = [
 
 [[package]]
 name = "interchange"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "310d743c23f798f10d5ba2f77fdd3eff06aaf2d8f8b9d78beba7fb1167f4ccbf"
-
-[[package]]
-name = "interchange"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92cfaa4be499da454ab279e04dee4837e71b3803eced4bd2b4cdec4bb3377b4f"
@@ -1756,7 +1751,7 @@ checksum = "01cda141df6706de531b6c46c3a33ecca755538219bd484262fa09410c13539c"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2?rev=ebd27e49ca321089d01d8c9b169c4aeb58ceeeca#ebd27e49ca321089d01d8c9b169c4aeb58ceeeca"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=960e57d9fc0d209308c8e15dc26252bbe1ff6ba8#960e57d9fc0d209308c8e15dc26252bbe1ff6ba8"
 dependencies = [
  "bitflags 1.3.2",
  "cstr_core",
@@ -1912,7 +1907,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless",
- "interchange 0.3.0",
+ "interchange",
  "iso7816",
  "nb 1.1.0",
 ]
@@ -1930,7 +1925,7 @@ dependencies = [
  "cortex-m-rtic",
  "ctaphid-dispatch",
  "delog",
- "interchange 0.3.0",
+ "interchange",
  "memory-regions",
  "nrf52840-hal",
  "nrf52840-pac",
@@ -2108,7 +2103,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "opcard"
 version = "1.4.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.4.0#0fec661b2d5718b97e942c229444ba6b8997ea7e"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=70e3f1aa21ecb75c1237b20b733d0e228a966b10#70e3f1aa21ecb75c1237b20b733d0e228a966b10"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2215,8 +2210,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.4.0"
-source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.4.0#b69b394facdaaafcd41a5ea48dae34ed3680e9d5"
+version = "0.3.4"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=2d0ae0312170adb9cfffd05f70ebc83af3c14679#2d0ae0312170adb9cfffd05f70ebc83af3c14679"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2232,6 +2227,7 @@ dependencies = [
  "trussed-auth",
  "trussed-chunked",
  "trussed-rsa-alloc",
+ "trussed-staging",
  "untrusted",
 ]
 
@@ -2661,7 +2657,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0-rc2#c4cd4c10c4b6e6910b462ee963ac3610ffdfc3aa"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa#5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.4.2",
@@ -2674,7 +2670,6 @@ dependencies = [
  "heapless",
  "heapless-bytes",
  "hex-literal 0.3.4",
- "interchange 0.2.2",
  "iso7816",
  "serde",
  "trussed",
@@ -3196,7 +3191,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.18#cb7bd328549293077cd9d6c2e9e42df62180db96"
+source = "git+https://github.com/Nitrokey/trussed.git?rev=371e8f7a07817c2ed57978bd86e3412bd9877647#371e8f7a07817c2ed57978bd86e3412bd9877647"
 dependencies = [
  "aes",
  "bitflags 2.4.2",
@@ -3215,7 +3210,7 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.4.1",
  "hmac",
- "interchange 0.3.0",
+ "interchange",
  "littlefs2",
  "nb 1.1.0",
  "p256-cortex-m4",
@@ -3232,12 +3227,14 @@ dependencies = [
 
 [[package]]
 name = "trussed-auth"
-version = "0.2.2"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=4b8191f248c26cb074cdac887c7f3f48f9c449a4#4b8191f248c26cb074cdac887c7f3f48f9c449a4"
+version = "0.3.0"
+source = "git+https://github.com/Nitrokey/trussed-auth?rev=68271487a93c65261f4d54149a17b8a5137201de#68271487a93c65261f4d54149a17b8a5137201de"
 dependencies = [
+ "admin-app",
  "chacha20poly1305",
  "hkdf",
  "hmac",
+ "littlefs2",
  "rand_core",
  "serde",
  "serde-byte-array",
@@ -3291,8 +3288,9 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.0#af9502a6e1d0359212101558cafa359e7f7bd5a9"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=0f33b19b18060c0f63a75b1e3894a5e0da8179b7#0f33b19b18060c0f63a75b1e3894a5e0da8179b7"
 dependencies = [
+ "admin-app",
  "cbor-smol",
  "crypto-bigint",
  "delog",
@@ -3356,7 +3354,7 @@ source = "git+https://github.com/Nitrokey/pc-usbip-runner.git?tag=v0.0.1-nitroke
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
- "interchange 0.3.0",
+ "interchange",
  "log",
  "trussed",
  "usb-device",
@@ -3489,7 +3487,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless",
- "interchange 0.3.0",
+ "interchange",
  "iso7816",
  "usb-device",
 ]
@@ -3505,7 +3503,7 @@ dependencies = [
  "embedded-time",
  "heapless",
  "heapless-bytes",
- "interchange 0.3.0",
+ "interchange",
  "ref-swap",
  "serde",
  "trussed",
