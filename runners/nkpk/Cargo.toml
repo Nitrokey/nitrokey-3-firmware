@@ -37,3 +37,5 @@ log-rtt = ["boards/log-rtt"]
 provisioner = ["apps/nkpk-provisioner", "boards/provisioner", "no-buttons", "apps/no-reset-time-window"]
 
 no-buttons = ["boards/no-buttons"]
+
+test = []
