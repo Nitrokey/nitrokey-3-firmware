@@ -143,7 +143,7 @@ checksum = "080e9890a082662b09c1ad45f567faeeb47f22b5fb23895fbe1e651e718e25ca"
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "git+https://github.com/Nitrokey/apdu-dispatch.git?tag=v0.1.2-nitrokey.2#647029550ea204b7a714ddf8852b93e644f4a429"
+source = "git+https://github.com/Nitrokey/apdu-dispatch.git?tag=v0.1.2-nitrokey.3#3d4e2f67bacf93a9815fbdffb4149f91df7088d6"
 dependencies = [
  "delog",
  "heapless",

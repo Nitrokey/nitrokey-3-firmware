@@ -26,7 +26,7 @@ serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "
 trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.18" }
 
 # unreleased upstream changes
-apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
+apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
 ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "a9f8003a1d9f05f9eea39e615b9159bc0613fcb5" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "ebd27e49ca321089d01d8c9b169c4aeb58ceeeca" }
