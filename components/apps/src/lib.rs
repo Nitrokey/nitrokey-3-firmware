@@ -640,6 +640,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 skip_up_timeout,
                 max_resident_credential_count: Some(10),
                 large_blobs,
+                pin_protocol_v2: true,
             },
         )
     }
@@ -649,7 +650,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
-        &[BackendId::Custom(Backend::Staging), BackendId::Core]
+        &[BackendId::Custom(Backend::Hkdf), BackendId::Custom(Backend::Staging), BackendId::Core]
     }
 }
 

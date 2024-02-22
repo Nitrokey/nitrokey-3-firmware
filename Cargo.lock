@@ -175,6 +175,7 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
+ "trussed-hkdf",
  "trussed-rsa-alloc",
  "trussed-se050-backend",
  "trussed-staging",
@@ -867,18 +868,15 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "git+https://github.com/trussed-dev/ctap-types.git?rev=7d4ad69e64ad308944c012aef5b9cfd7654d9be8#7d4ad69e64ad308944c012aef5b9cfd7654d9be8"
+source = "git+https://github.com/Nitrokey/ctap-types.git?branch=pin-protocol-2-permissions#0a7bf621c40540108eeb466097244bdf1552b58d"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
- "cosey",
  "delog",
  "heapless",
  "heapless-bytes",
- "interchange 0.2.2",
  "iso7816",
  "serde",
- "serde-byte-array",
  "serde-indexed",
  "serde_bytes",
  "serde_repr",
@@ -1178,20 +1176,20 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.10#8c26ab39201191296ec6cc95c7409410bf12ee32"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=pin-protocol-2#c53bbea2207a299d0475ebc94c9baf8808789760"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "heapless",
- "interchange 0.2.2",
  "iso7816",
  "serde",
  "serde-indexed",
  "serde_cbor",
  "sha2",
  "trussed",
+ "trussed-hkdf",
  "trussed-staging",
 ]
 
@@ -3204,7 +3202,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.17#419dd5c60aa9a59d5f31b9a88e96989e8d2da10d"
+source = "git+https://github.com/Nitrokey/trussed.git?branch=aes-iv#df603d82fc937e626b69bd196d5d322142e43ccc"
 dependencies = [
  "aes",
  "bitflags 2.4.2",
@@ -3251,6 +3249,21 @@ dependencies = [
  "serde-byte-array",
  "sha2",
  "subtle",
+ "trussed",
+]
+
+[[package]]
+name = "trussed-hkdf"
+version = "0.1.0"
+source = "git+https://github.com/Nitrokey/trussed-hkdf-backend.git?tag=v0.1.0#4a172d88c0fd4be713a863db0cb18266acb0da43"
+dependencies = [
+ "heapless-bytes",
+ "hkdf",
+ "hmac",
+ "log",
+ "postcard 0.7.3",
+ "serde",
+ "sha2",
  "trussed",
 ]
 
@@ -3453,7 +3466,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/usbd-ctaphid.git?tag=v0.1.0-nitrokey.2#3f24df2f8b799eb203539c0e723854e8f7739f79"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=1db2e014f28669bc484c81ab0406c54b16bba33c#1db2e014f28669bc484c81ab0406c54b16bba33c"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
