@@ -18,6 +18,7 @@ littlefs2 = "0.4"
 
 # Backends
 trussed-auth = { version = "0.2.2", optional = true }
+trussed-hkdf = { version = "0.1.0" }
 trussed-rsa-alloc = { version = "0.1.0", optional = true }
 trussed-staging = { version = "0.1.0", features = ["wrap-key-to-file", "chunked", "encrypted-chunked", "manage"] }
 
@@ -31,7 +32,7 @@ opcard = { version = "1.1.1", features = ["apdu-dispatch", "delog", "rsa2048-gen
 piv-authenticator = { version = "0.3.1", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 se05x = { version = "0.1.1", optional = true}
-trussed-se050-backend = { version = "0.1.0", optional = true }
+trussed-se050-backend = { version = "0.2.0", optional = true }
 embedded-hal = "0.2.7"
 
 [dev-dependencies]

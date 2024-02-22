@@ -57,6 +57,7 @@ pub trait Board: StoragePointers {
     type Twi: 'static;
 
     const BOARD_NAME: &'static str;
+    const HAS_NFC: bool;
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         let _ = ifs;

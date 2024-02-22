@@ -52,6 +52,7 @@ impl Board for NK3AM {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NK3AM";
+    const HAS_NFC: bool = false;
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         ifs.format_journal_blocks();

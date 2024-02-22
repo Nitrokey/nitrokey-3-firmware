@@ -73,6 +73,7 @@ impl Board for NK3xN {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "nk3xn";
+    const HAS_NFC: bool = true;
 }
 
 pub type InternalFlashStorage = InternalFilesystem;

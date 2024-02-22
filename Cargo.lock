@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.9#75c7c969cfa811aa774d1a08d48e8563f8732497"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.10#c6c87cfad4d94c4910c87e870bae759330f6f634"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -175,6 +175,7 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
+ "trussed-hkdf",
  "trussed-rsa-alloc",
  "trussed-se050-backend",
  "trussed-staging",
@@ -867,18 +868,15 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "git+https://github.com/trussed-dev/ctap-types.git?rev=7d4ad69e64ad308944c012aef5b9cfd7654d9be8#7d4ad69e64ad308944c012aef5b9cfd7654d9be8"
+source = "git+https://github.com/trussed-dev/ctap-types.git?rev=a9f8003a1d9f05f9eea39e615b9159bc0613fcb5#a9f8003a1d9f05f9eea39e615b9159bc0613fcb5"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
- "cosey",
  "delog",
  "heapless",
  "heapless-bytes",
- "interchange 0.2.2",
  "iso7816",
  "serde",
- "serde-byte-array",
  "serde-indexed",
  "serde_bytes",
  "serde_repr",
@@ -1177,20 +1175,20 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.10#8c26ab39201191296ec6cc95c7409410bf12ee32"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.12#3db1f6fdba65ede3a05e7f0e4489145e22cde3af"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "heapless",
- "interchange 0.2.2",
  "iso7816",
  "serde",
  "serde-indexed",
  "serde_cbor",
  "sha2",
  "trussed",
+ "trussed-hkdf",
  "trussed-staging",
 ]
 
@@ -2109,8 +2107,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "opcard"
-version = "1.2.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=8d3622f5c228352cdb57453c1d0b02da22da7f7b#8d3622f5c228352cdb57453c1d0b02da22da7f7b"
+version = "1.3.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=1c844b74aa5bf245cd8223bc63b74b3a1f1f7b0f#1c844b74aa5bf245cd8223bc63b74b3a1f1f7b0f"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2151,7 +2149,7 @@ dependencies = [
 [[package]]
 name = "p256-cortex-m4"
 version = "0.1.0-alpha.6"
-source = "git+https://github.com/sosthene-nitrokey/p256-cortex-m4.git?rev=50ff0366d66f294e1e3049e0c70ec67c218f011d#50ff0366d66f294e1e3049e0c70ec67c218f011d"
+source = "git+https://github.com/ycrypto/p256-cortex-m4.git?rev=cdb31e12594b4dc1f045b860a885fdc94d96aee2#cdb31e12594b4dc1f045b860a885fdc94d96aee2"
 dependencies = [
  "der",
  "ecdsa",
@@ -3203,7 +3201,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.17#419dd5c60aa9a59d5f31b9a88e96989e8d2da10d"
+source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.18#cb7bd328549293077cd9d6c2e9e42df62180db96"
 dependencies = [
  "aes",
  "bitflags 2.4.2",
@@ -3254,6 +3252,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "trussed-hkdf"
+version = "0.1.0"
+source = "git+https://github.com/Nitrokey/trussed-hkdf-backend.git?tag=v0.1.0#4a172d88c0fd4be713a863db0cb18266acb0da43"
+dependencies = [
+ "heapless-bytes",
+ "hkdf",
+ "hmac",
+ "log",
+ "postcard 0.7.3",
+ "serde",
+ "sha2",
+ "trussed",
+]
+
+[[package]]
 name = "trussed-rsa-alloc"
 version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=9732a9a3e98af72112286afdc9b7174c66c2869a#9732a9a3e98af72112286afdc9b7174c66c2869a"
@@ -3269,8 +3282,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=1bccc1d9ec9fafb9b769e32fcfe7476b9b034506#1bccc1d9ec9fafb9b769e32fcfe7476b9b034506"
+version = "0.2.0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.2.0#f48a4f2bb2d3f5f9fba5d361401f91cd9c2ee8f1"
 dependencies = [
  "cbor-smol",
  "crypto-bigint",
@@ -3452,7 +3465,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/usbd-ctaphid.git?tag=v0.1.0-nitrokey.2#3f24df2f8b799eb203539c0e723854e8f7739f79"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=1db2e014f28669bc484c81ab0406c54b16bba33c#1db2e014f28669bc484c81ab0406c54b16bba33c"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
@@ -3612,7 +3625,7 @@ checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc5#012227d413666d82de416dc30c7e3008113cbadb"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?rev=eb1898dc2e2104772f97e7c84ca77c68f18af946#eb1898dc2e2104772f97e7c84ca77c68f18af946"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",

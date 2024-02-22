@@ -8,6 +8,7 @@
 - Report errors when loading the configuration during initialization and disable opcard if an error occured ([#394][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
 - Fix LED during user presence check for NK3AM ([#93][])
+- fido-authenticator: Implement CTAP 2.1
 
 [#93]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/93
 [#394]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/394

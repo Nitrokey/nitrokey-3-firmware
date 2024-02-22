@@ -177,6 +177,8 @@ pub trait Runner {
 
 pub struct Data<R: Runner> {
     pub admin: AdminData<R>,
+    #[cfg(feature = "fido-authenticator")]
+    pub fido: FidoData,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
     pub _marker: PhantomData<R>,
@@ -261,6 +263,8 @@ impl<R: Runner> Apps<R> {
         let _ = (runner, &mut make_client);
         let Data {
             admin,
+            #[cfg(feature = "fido-authenticator")]
+            fido,
             #[cfg(feature = "provisioner-app")]
             provisioner,
             ..
@@ -272,13 +276,13 @@ impl<R: Runner> Apps<R> {
 
         #[cfg(feature = "webcrypt")]
         let webcrypt_fido_bypass = PeekingBypass::new(
-            App::new(runner, &mut make_client, (), &admin.config().fido),
+            App::new(runner, &mut make_client, fido, &admin.config().fido),
             App::new(runner, &mut make_client, (), &()),
         );
 
         Self {
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            fido: App::new(runner, &mut make_client, (), &admin.config().fido),
+            fido: App::new(runner, &mut make_client, fido, &admin.config().fido),
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
             #[cfg(feature = "secrets-app")]
@@ -612,13 +616,18 @@ impl<R: Runner> App<R> for AdminApp<R> {
 }
 
 #[cfg(feature = "fido-authenticator")]
+pub struct FidoData {
+    pub has_nfc: bool,
+}
+
+#[cfg(feature = "fido-authenticator")]
 impl<R: Runner> App<R> for FidoApp<R> {
     const CLIENT_ID: &'static str = "fido";
 
-    type Data = ();
+    type Data = FidoData;
     type Config = FidoConfig;
 
-    fn with_client(runner: &R, trussed: Client<R>, _: (), config: &Self::Config) -> Self {
+    fn with_client(runner: &R, trussed: Client<R>, data: FidoData, config: &Self::Config) -> Self {
         let skip_up_timeout = if config.disable_skip_up_timeout {
             None
         } else {
@@ -640,6 +649,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 skip_up_timeout,
                 max_resident_credential_count: Some(10),
                 large_blobs,
+                nfc_transport: data.has_nfc,
             },
         )
     }
@@ -649,7 +659,11 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
-        &[BackendId::Custom(Backend::Staging), BackendId::Core]
+        &[
+            BackendId::Custom(Backend::Hkdf),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+        ]
     }
 }
 

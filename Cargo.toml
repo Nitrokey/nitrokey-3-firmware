@@ -17,33 +17,34 @@ version = "1.6.0"
 memory-regions = { path = "components/memory-regions" }
 
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.9" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.10" }
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.1" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.12" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.17" }
 serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "v0.1.0-nitrokey.2" }
-p256-cortex-m4  = { git = "https://github.com/sosthene-nitrokey/p256-cortex-m4.git", rev = "50ff0366d66f294e1e3049e0c70ec67c218f011d" }
+trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.18" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
-ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "7d4ad69e64ad308944c012aef5b9cfd7654d9be8" }
+ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "a9f8003a1d9f05f9eea39e615b9159bc0613fcb5" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
-usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
-usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "ebd27e49ca321089d01d8c9b169c4aeb58ceeeca" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "1db2e014f28669bc484c81ab0406c54b16bba33c" }
+usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
+p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0-rc2" }
-webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc5" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "8d3622f5c228352cdb57453c1d0b02da22da7f7b" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", rev = "eb1898dc2e2104772f97e7c84ca77c68f18af946" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "1c844b74aa5bf245cd8223bc63b74b3a1f1f7b0f" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.4" }
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0-nitrokey-hmac256p256.3" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "4b8191f248c26cb074cdac887c7f3f48f9c449a4" }
+trussed-hkdf = { git = "https://github.com/Nitrokey/trussed-hkdf-backend.git", tag = "v0.1.0" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "9732a9a3e98af72112286afdc9b7174c66c2869a" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "1bccc1d9ec9fafb9b769e32fcfe7476b9b034506" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.2.0" }
 
 [profile.release]
 codegen-units = 1

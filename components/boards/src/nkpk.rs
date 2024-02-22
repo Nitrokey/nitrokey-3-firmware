@@ -30,6 +30,7 @@ impl Board for NKPK {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NKPK";
+    const HAS_NFC: bool = false;
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         ifs.format_journal_blocks();

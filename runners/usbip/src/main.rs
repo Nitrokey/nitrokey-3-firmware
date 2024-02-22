@@ -3,7 +3,7 @@ mod ui;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
-use apps::{AdminData, Apps, Dispatch, Variant};
+use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
@@ -197,6 +197,7 @@ fn exec(
             let store = unsafe { FilesystemOrRam::store() };
             let data = apps::Data {
                 admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
+                fido: FidoData { has_nfc: false },
                 #[cfg(feature = "provisioner")]
                 provisioner: apps::ProvisionerData {
                     store,

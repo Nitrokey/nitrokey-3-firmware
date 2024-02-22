@@ -2,7 +2,7 @@ use apdu_dispatch::{
     dispatch::ApduDispatch,
     interchanges::{Channel as CcidChannel, Responder as CcidResponder, SIZE as CCID_SIZE},
 };
-use apps::{AdminData, Data, Dispatch, InitStatus};
+use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
@@ -179,6 +179,9 @@ pub fn init_apps<B: Board>(
     };
     let data = Data {
         admin,
+        fido: FidoData {
+            has_nfc: B::HAS_NFC,
+        },
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),

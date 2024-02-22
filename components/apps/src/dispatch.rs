@@ -16,6 +16,7 @@ use trussed::{
     api::{reply, request},
     backend::Backend as _,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
+    types::NoData,
 };
 
 #[cfg(feature = "se050")]
@@ -33,6 +34,7 @@ use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;
 
+use trussed_hkdf::{HkdfBackend, HkdfExtension};
 use trussed_staging::{
     manage::ManageExtension, streaming::ChunkedExtension, wrap_key_to_file::WrapKeyToFileExtension,
     StagingBackend, StagingContext,
@@ -44,6 +46,7 @@ use trussed_staging::hmacsha256p256::HmacSha256P256Extension;
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
+    hkdf: HkdfBackend,
     staging: StagingBackend,
     #[cfg(feature = "se050")]
     se050: Option<Se050Backend<T, D>>,
@@ -114,6 +117,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         Self {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location),
+            hkdf: HkdfBackend,
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| Se050Backend::new(driver, auth_location, None, NAMESPACE)),
@@ -133,6 +137,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let hw_key_se050 = hw_key.clone();
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
+            hkdf: HkdfBackend,
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
@@ -183,6 +188,7 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 self.auth
                     .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
             }
+            Backend::Hkdf => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-rsa")]
             Backend::SoftwareRsa => SoftwareRsa.request(&mut ctx.core, &mut (), request, resources),
             Backend::Staging => {
@@ -220,6 +226,15 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                     resources,
                 ),
                 #[allow(unreachable_patterns)]
+                _ => Err(TrussedError::RequestNotAvailable),
+            },
+            Backend::Hkdf => match extension {
+                Extension::Hkdf => self.hkdf.extension_request_serialized(
+                    &mut ctx.core,
+                    &mut NoData,
+                    request,
+                    resources,
+                ),
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             #[cfg(feature = "backend-rsa")]
@@ -320,6 +335,7 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
     Auth,
+    Hkdf,
     #[cfg(feature = "backend-rsa")]
     SoftwareRsa,
     Staging,
@@ -336,6 +352,7 @@ pub enum Backend {
 pub enum Extension {
     #[cfg(feature = "backend-auth")]
     Auth,
+    Hkdf,
     Chunked,
     WrapKeyToFile,
     Manage,
@@ -357,6 +374,7 @@ impl From<Extension> for u8 {
             Extension::HmacShaP256 => 4,
             #[cfg(feature = "se050")]
             Extension::Se050Manage => 5,
+            Extension::Hkdf => 6,
         }
     }
 }
@@ -375,6 +393,7 @@ impl TryFrom<u8> for Extension {
             4 => Ok(Extension::HmacShaP256),
             #[cfg(feature = "se050")]
             5 => Ok(Extension::Se050Manage),
+            6 => Ok(Extension::Hkdf),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -385,6 +404,12 @@ impl<T: Twi, D: Delay> ExtensionId<AuthExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::Auth;
+}
+
+impl<T: Twi, D: Delay> ExtensionId<HkdfExtension> for Dispatch<T, D> {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::Hkdf;
 }
 
 impl<T: Twi, D: Delay> ExtensionId<ChunkedExtension> for Dispatch<T, D> {
