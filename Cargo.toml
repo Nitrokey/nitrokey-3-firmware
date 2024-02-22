@@ -19,7 +19,8 @@ memory-regions = { path = "components/memory-regions" }
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.9" }
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.1" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }
+# fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "ctap-2.0" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.17" }
@@ -28,9 +29,10 @@ p256-cortex-m4  = { git = "https://github.com/sosthene-nitrokey/p256-cortex-m4.g
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
-ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "7d4ad69e64ad308944c012aef5b9cfd7654d9be8" }
+ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "885bcebdb2683e7514fabc88e6df642d4f30eb3a" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
-usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
+# usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
+usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", branch = "cancel" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2", rev = "ebd27e49ca321089d01d8c9b169c4aeb58ceeeca" }
 

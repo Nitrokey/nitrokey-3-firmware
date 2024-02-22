@@ -867,18 +867,15 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.1.2"
-source = "git+https://github.com/trussed-dev/ctap-types.git?rev=7d4ad69e64ad308944c012aef5b9cfd7654d9be8#7d4ad69e64ad308944c012aef5b9cfd7654d9be8"
+source = "git+https://github.com/trussed-dev/ctap-types.git?rev=885bcebdb2683e7514fabc88e6df642d4f30eb3a#885bcebdb2683e7514fabc88e6df642d4f30eb3a"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
- "cosey",
  "delog",
  "heapless",
  "heapless-bytes",
- "interchange 0.2.2",
  "iso7816",
  "serde",
- "serde-byte-array",
  "serde-indexed",
  "serde_bytes",
  "serde_repr",
@@ -1178,14 +1175,13 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.10#8c26ab39201191296ec6cc95c7409410bf12ee32"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=ctap-2.0#ba0765ab4dd9e8c9581df183a21c38741c64a1c2"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "heapless",
- "interchange 0.2.2",
  "iso7816",
  "serde",
  "serde-indexed",
@@ -3453,7 +3449,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/usbd-ctaphid.git?tag=v0.1.0-nitrokey.2#3f24df2f8b799eb203539c0e723854e8f7739f79"
+source = "git+https://github.com/Nitrokey/usbd-ctaphid.git?branch=cancel#d095946fdac80bead1f4c7185797d811bd88def4"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
