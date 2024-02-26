@@ -47,7 +47,6 @@ alloc-cortex-m = { version = "0.4.3", optional = true }
 cargo-lock = "7"
 memory-regions = "1"
 serde = { version = "1", features = ["derive"] }
-toml = "0.5"
 utils = { path = "../../components/utils", features = ["build"] }
 
 [features]

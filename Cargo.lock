@@ -1086,7 +1086,6 @@ dependencies = [
  "nrf52840-pac",
  "serde",
  "systick-monotonic",
- "toml 0.5.11",
  "trussed",
  "usb-device",
  "utils",
