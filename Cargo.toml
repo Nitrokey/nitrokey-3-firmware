@@ -20,7 +20,7 @@ memory-regions = { path = "components/memory-regions" }
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.9" }
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.1" }
 # fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.10" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "ctap-2.0" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "pin-protocol-2" }
 flexiber = { git = "https://github.com/Nitrokey/flexiber", tag = "0.1.1.nitrokey" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
 trussed = { git = "https://github.com/Nitrokey/trussed.git", tag = "v0.1.0-nitrokey.17" }
@@ -29,7 +29,8 @@ p256-cortex-m4  = { git = "https://github.com/sosthene-nitrokey/p256-cortex-m4.g
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.2" }
-ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "885bcebdb2683e7514fabc88e6df642d4f30eb3a" }
+ctap-types = { git = "https://github.com/nitrokey/ctap-types.git", branch = "pin-protocols" }
+# ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "885bcebdb2683e7514fabc88e6df642d4f30eb3a" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 # usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", tag = "v0.1.0-nitrokey.2" }
 usbd-ctaphid = { git = "https://github.com/Nitrokey/usbd-ctaphid.git", branch = "cancel" }
@@ -43,6 +44,7 @@ opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "8d3622f5c228352
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator", tag = "v0.3.4" }
 trussed-staging = { git = "https://github.com/Nitrokey/trussed-staging.git", tag = "v0.1.0-nitrokey-hmac256p256.3" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "4b8191f248c26cb074cdac887c7f3f48f9c449a4" }
+trussed-hkdf = { git = "https://github.com/Nitrokey/trussed-hkdf-backend.git", branch = "update-deps" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "9732a9a3e98af72112286afdc9b7174c66c2869a" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "1bccc1d9ec9fafb9b769e32fcfe7476b9b034506" }

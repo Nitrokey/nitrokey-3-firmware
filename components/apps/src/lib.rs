@@ -640,6 +640,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 skip_up_timeout,
                 max_resident_credential_count: Some(10),
                 large_blobs,
+                pin_protocol_v2: true,
             },
         )
     }
