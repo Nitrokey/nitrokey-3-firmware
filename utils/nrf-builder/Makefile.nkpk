@@ -4,7 +4,7 @@ TEST_FIDO_CERTS_DIR := $(TEST_CERTS_DIR)/fido
 TEST_FIDO_CERT := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-cert.der
 TEST_FIDO_KEY := $(TEST_FIDO_CERTS_DIR)/nk-fido-ee-key.trussed
 
-NK3_FW_DIR := nk3-fw
+NK3_FW_DIR := "../.."
 
 NK3_BL_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader
 NK3_BL_KEY_DIR := $(NK3_FW_DIR)/utils/nrf-bootloader/signing-key
@@ -83,7 +83,7 @@ build: $(ALL_ARTIFACTS)
 	@echo "- active branch: $(shell git branch -l | grep "*" | cut -d ' ' -f 2)"
 	@echo "#########################################################"
 
-flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
+flash-release: $(FW_NAME_RELEASE)
 	-nitropy nk3 reboot --bootloader
 	bash wait_for_usb.sh 20a0:42f4
 	
@@ -91,7 +91,7 @@ flash-release: $(FW_NAME_RELEASE) $(SH_UPLOAD)
 	
 	bash wait_for_usb.sh 20a0:42b2
 
-flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
+flash-develop: $(FW_NAME_DEVELOP)
 	-nitropy nk3 reboot --bootloader
 	bash wait_for_usb.sh 20a0:42f4
 	
@@ -99,7 +99,7 @@ flash-develop: $(FW_NAME_DEVELOP) $(SH_UPLOAD)
 	
 	bash wait_for_usb.sh 20a0:42b2
 
-flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
+flash-provisioner: $(FW_NAME_PROVISIONER)
 	-nitropy nk3 reboot --bootloader
 	bash wait_for_usb.sh 20a0:42f4
 	
@@ -108,7 +108,7 @@ flash-provisioner: $(FW_NAME_PROVISIONER) $(SH_UPLOAD)
 	bash wait_for_usb.sh 20a0:42b2
 
 flash-bootloader: $(BL_OUTPUT)
-	$(MAKE) -C $(NK3_BL_DIR) reset-bootloader
+	$(MAKE) -C $(NK3_BL_DIR) reset-bootloader TARGET=nkpk
 	bash wait_for_usb.sh 20a0:42f4
 
 provision-keys: $(TEST_FIDO_CERT) $(TEST_FIDO_KEY)
@@ -141,12 +141,12 @@ clean:
 $(NK3_BL_KEY_DIR): $(KEY_DIR)
 	cp -r $< $(NK3_BL_KEY_DIR)
 
-$(BL_OUTPUT): $(NK3_FW_DIR) $(NK3_BL_KEY_DIR)
+$(BL_OUTPUT): $(NK3_BL_KEY_DIR)
 	$(MAKE) -C $(NK3_BL_DIR) build-bootloader TARGET=nkpk
 	cp $(NK3_BL_DIR)/mbr.hex mbr.hex
 	cp $(NK3_BL_DIR)/bootloader.hex bootloader.hex
 
-$(FW_RUNNER): $(NK3_FW_DIR)
+$(FW_RUNNER):
 
 $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 	$(SH_BL_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
@@ -155,19 +155,19 @@ $(BL_SIGNED_NAME): bootloader.hex $(PRIV_SIGN_KEY)
 	$(SH_SIGN) $(SIGN_VERSION) $@ $< $(PRIV_SIGN_KEY)
 
 .PHONY: $(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN) 
-$(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(NK3_FW_DIR) $(SRCS)
+$(FW_NAME_PROVISIONER_HEX) $(FW_NAME_PROVISIONER_BIN): $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build FEATURES=provisioner,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_PROVISIONER_HEX)
 	cp $(FW_BIN) $(FW_NAME_PROVISIONER_BIN)
 
 .PHONY: $(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN)
-$(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(NK3_FW_DIR) $(SRCS)
+$(FW_NAME_DEVELOP_HEX) $(FW_NAME_DEVELOP_BIN): $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build FEATURES=develop,$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_DEVELOP_HEX)
 	cp $(FW_BIN) $(FW_NAME_DEVELOP_BIN)
 
 .PHONY: $(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN)
-$(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(NK3_FW_DIR) $(SRCS)
+$(FW_NAME_RELEASE_HEX) $(FW_NAME_RELEASE_BIN): $(SRCS)
 	$(MAKE) -C $(FW_RUNNER) build FEATURES=$(EXTRA_FEATURES)
 	cp $(FW_IHEX) $(FW_NAME_RELEASE_HEX)
 	cp $(FW_BIN) $(FW_NAME_RELEASE_BIN)
