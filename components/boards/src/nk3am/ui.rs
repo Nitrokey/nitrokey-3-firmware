@@ -24,45 +24,7 @@ impl HardwareButtons {
 
 impl UserPresence for HardwareButtons {
     fn check_user_presence(&mut self, clock: &mut dyn Clock) -> consent::Level {
-        // essentially a blocking call for up to ~30secs
-        // this outer loop accumulates *presses* from the
-        // inner loop & maintains (loading) delays.
-
-        let mut counter: u8 = 0;
-        let threshold: u8 = 1;
-
-        let start_time = clock.uptime();
-        let timeout_at = start_time + Duration::from_millis(1_000);
-        let mut next_check = start_time + Duration::from_millis(25);
-
-        loop {
-            let cur_time = clock.uptime();
-
-            // timeout reached
-            if cur_time > timeout_at {
-                break;
-            }
-            // loop until next check shall be done
-            if cur_time < next_check {
-                continue;
-            }
-
-            if self.is_pressed(Button::A) {
-                counter += 1;
-                // with press -> delay 25ms
-                next_check = cur_time + Duration::from_millis(25);
-            } else {
-                // w/o press -> delay 100ms
-                next_check = cur_time + Duration::from_millis(100);
-            }
-
-            if counter >= threshold {
-                break;
-            }
-        }
-
-        // consent, if we've counted 3 "presses"
-        if counter >= threshold {
+        if self.is_pressed(Button::A) {
             consent::Level::Normal
         } else {
             consent::Level::None
