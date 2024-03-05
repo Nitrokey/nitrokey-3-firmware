@@ -90,7 +90,7 @@ impl<C: Clock, P: UserPresence, L: RgbLed> platform::UserInterface for UserInter
     fn check_user_presence(&mut self) -> consent::Level {
         if let Some(buttons) = &mut self.buttons {
             set_waiting(true);
-            let level = buttons.check_user_presence(&mut self.clock);
+            let level = buttons.check_user_presence();
             set_waiting(false);
             level
         } else {

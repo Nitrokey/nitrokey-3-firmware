@@ -2,8 +2,6 @@ use core::convert::Infallible;
 
 use trussed::platform::consent;
 
-use super::Clock;
-
 /// Trio of buttons.
 ///
 /// Buttons A and B can't reliably be distinguished by user, as being top/bottom or left/right
@@ -28,7 +26,7 @@ pub struct State {
 }
 
 pub trait UserPresence {
-    fn check_user_presence(&mut self, clock: &mut dyn Clock) -> consent::Level;
+    fn check_user_presence(&mut self) -> consent::Level;
 }
 
 /// Implement on triple of buttons.

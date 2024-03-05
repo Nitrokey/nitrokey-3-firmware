@@ -1,7 +1,4 @@
-use crate::ui::{
-    buttons::{Button, Edge, Press, State, UserPresence},
-    Clock,
-};
+use crate::ui::buttons::{Button, Edge, Press, State, UserPresence};
 use core::convert::Infallible;
 use lpc55_hal::{
     drivers::{pins, timer},
@@ -80,7 +77,7 @@ impl<CTIMER> UserPresence for XpressoButtons<CTIMER>
 where
     CTIMER: ctimer::Ctimer<init_state::Enabled>,
 {
-    fn check_user_presence(&mut self, _clock: &mut dyn Clock) -> consent::Level {
+    fn check_user_presence(&mut self) -> consent::Level {
         let state = self.state();
         let press_result = self.wait_for_any_new_press();
         if press_result.is_ok() {

@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use nrf52840_hal::{gpio::Level, pac, prelude::InputPin, pwm, pwm::Pwm};
 use trussed::platform::consent;
 
@@ -7,7 +5,6 @@ use super::OutPin;
 use crate::ui::{
     buttons::{Button, Press, UserPresence},
     rgb_led::{self, Color},
-    Clock,
 };
 
 pub struct HardwareButtons {
@@ -23,7 +20,7 @@ impl HardwareButtons {
 }
 
 impl UserPresence for HardwareButtons {
-    fn check_user_presence(&mut self, clock: &mut dyn Clock) -> consent::Level {
+    fn check_user_presence(&mut self) -> consent::Level {
         if self.is_pressed(Button::A) {
             consent::Level::Normal
         } else {
