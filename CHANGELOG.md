@@ -5,8 +5,16 @@
 - Add an SE050 driver and its tests ([#335][])
 - Use SE050 entropy to bootstrap the random number generator ([#335][])
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
-- Report errors when loading the configuration during initialization and disable opcard if an error occured ([#394][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
+
+[fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
+[piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
+
+# 1.7.0-rc.1 (2024-03-06)
+
+### Features
+
+- Report errors when loading the configuration during initialization and disable opcard if an error occured ([#394][])
 - Fix LED during user presence check for NK3AM ([#93][])
 - fido-authenticator: Implement CTAP 2.1
 - OpenPGP: fix locking out after an aborted factory-reset operation ([#443][])
@@ -14,8 +22,6 @@
 [#93]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/93
 [#394]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/394
 [#443]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/443
-[fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
-[piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 
 # 1.6.0 (2023-11-23)
 
