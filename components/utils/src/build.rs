@@ -19,11 +19,11 @@ use semver::{BuildMetadata, Prerelease, Version};
 
 const PATTERN_PRE: &str = r"rc\.\d+";
 
-pub fn version_string(cargo_pkg_version: &str) -> String {
+pub fn version_string(project: &str, cargo_pkg_version: &str) -> String {
     let mut version = crate_version(cargo_pkg_version);
     let test_prerelease = test_prerelease();
 
-    if let Some(tag_version) = tag_version() {
+    if let Some(tag_version) = tag_version(project) {
         assert_eq!(
             tag_version.major, version.major,
             "bad major component in tag"
@@ -80,7 +80,10 @@ fn crate_version(cargo_pkg_version: &str) -> Version {
     version
 }
 
-fn tag_version() -> Option<Version> {
+fn tag_version(project: &str) -> Option<Version> {
+    if option_env!("CI_PROJECT_NAME")? != project {
+        return None;
+    }
     option_env!("CI_COMMIT_TAG")
         .map(|s| s.strip_prefix('v').expect("tag must start with v"))
         .map(|s| Version::parse(s).expect("failed to parse version from tag"))
