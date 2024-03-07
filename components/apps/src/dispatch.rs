@@ -40,14 +40,19 @@ use trussed_staging::{
     StagingBackend, StagingContext,
 };
 
-#[cfg(feature = "webcrypt")]
-use trussed_staging::hmacsha256p256::HmacSha256P256Extension;
+#[cfg(feature = "backend-staging-hmacsha256p256")]
+use webcrypt::hmacsha256p256::{
+    Backend as HmacSha256P256Backend, BackendContext as HmacSha256P256Context,
+    HmacSha256P256Extension,
+};
 
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
     hkdf: HkdfBackend,
     staging: StagingBackend,
+    #[cfg(feature = "backend-staging-hmacsha256p256")]
+    hmacsha256p256: HmacSha256P256Backend,
     #[cfg(feature = "se050")]
     se050: Option<Se050Backend<T, D>>,
     #[cfg(not(feature = "se050"))]
@@ -59,6 +64,8 @@ pub struct DispatchContext {
     #[cfg(feature = "backend-auth")]
     auth: AuthContext,
     staging: StagingContext,
+    #[cfg(feature = "backend-staging-hmacsha256p256")]
+    hmacsha256p256: HmacSha256P256Context,
     #[cfg(feature = "se050")]
     se050: Se050Context,
 }
@@ -119,6 +126,8 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
             auth: AuthBackend::new(auth_location),
             hkdf: HkdfBackend,
             staging: build_staging_backend(),
+            #[cfg(feature = "backend-staging-hmacsha256p256")]
+            hmacsha256p256: HmacSha256P256Backend::default(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| Se050Backend::new(driver, auth_location, None, NAMESPACE)),
             #[cfg(not(feature = "se050"))]
@@ -139,6 +148,8 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
             hkdf: HkdfBackend,
             staging: build_staging_backend(),
+            #[cfg(feature = "backend-staging-hmacsha256p256")]
+            hmacsha256p256: HmacSha256P256Backend::default(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
                 Se050Backend::new(driver, auth_location, Some(hw_key_se050), NAMESPACE)
@@ -196,6 +207,8 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                     .request(&mut ctx.core, &mut ctx.backends.staging, request, resources)
             }
             Backend::StagingManage => Err(TrussedError::RequestNotAvailable),
+            #[cfg(feature = "backend-staging-hmacsha256p256")]
+            Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "se050")]
             Backend::Se050 => self
                 .se050
@@ -258,17 +271,20 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
-                #[cfg(feature = "backend-staging-hmacsha256p256")]
+                #[allow(unreachable_patterns)]
+                _ => Err(TrussedError::RequestNotAvailable),
+            },
+            #[cfg(feature = "backend-staging-hmacsha256p256")]
+            Backend::HmacSha256P256 => match extension {
                 Extension::HmacShaP256 => {
                     ExtensionImpl::<HmacSha256P256Extension>::extension_request_serialized(
-                        &mut self.staging,
+                        &mut self.hmacsha256p256,
                         &mut ctx.core,
-                        &mut ctx.backends.staging,
+                        &mut ctx.backends.hmacsha256p256,
                         request,
                         resources,
                     )
                 }
-                #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             Backend::StagingManage => match extension {
@@ -341,6 +357,8 @@ pub enum Backend {
     Staging,
     /// Separate BackendId to prevent non-priviledged apps from accessing the manage Extension
     StagingManage,
+    #[cfg(feature = "backend-staging-hmacsha256p256")]
+    HmacSha256P256,
     #[cfg(feature = "se050")]
     Se050,
     #[cfg(feature = "se050")]
