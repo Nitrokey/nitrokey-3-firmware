@@ -166,6 +166,18 @@ build-firmware:
       - artifacts
       - binaries
 
+stack-sizes:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - make binaries-stack-sizes
+    - ./utils/stack-sizes/print-stack-sizes.rs < binaries-stack-sizes/firmware-nk3am.elf
+    - ./utils/stack-sizes/print-stack-sizes.rs < binaries-stack-sizes/firmware-nk3xn.elf
+
 # metrics stage
 
 metrics:

@@ -107,7 +107,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .find(|p| p.name.as_str() == "cortex-m-rt");
 
     if let Some(p) = pkg_cortex_m_rt {
-        println!("cargo:rustc-link-arg=-Tcortex-m-rt_{}_link.x", p.version);
+        let variant = if cfg!(feature = "emit-stack-sizes") {
+            "_stack_sizes"
+        } else {
+            ""
+        };
+        println!(
+            "cargo:rustc-link-arg=-Tcortex-m-rt_{}_link{}.x",
+            p.version, variant
+        );
     }
 
     Ok(())
