@@ -176,10 +176,12 @@ metrics:
     - docker
   stage: metrics
   script:
-    - repometrics generate > metrics.toml
+    - repometrics generate --cache > metrics.toml
+    - repometrics run --base origin/main || true
   artifacts:
     paths:
       - metrics.toml
+    expire_in: never
 
 ###############################################################################
 # test stage
