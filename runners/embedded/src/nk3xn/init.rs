@@ -10,7 +10,7 @@ use boards::{
     nk3xn::{
         button::ThreeButtons,
         led::RgbLed,
-        nfc::{self, NfcChip},
+        nfc::{self, NfcChip, Ntp53, Ntp53EdPin, Ntp53I2C},
         prince,
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
@@ -28,7 +28,7 @@ use boards::{
     Apps, Trussed,
 };
 use embedded_hal::{
-    blocking::i2c::{Read, Write},
+    blocking::i2c::{Read, Write, WriteRead},
     timer::{Cancel, CountDown},
 };
 use hal::{
@@ -40,7 +40,7 @@ use hal::{
     },
     peripherals::{
         ctimer::{self, Ctimer},
-        flexcomm::{Flexcomm0, Flexcomm5},
+        flexcomm::{Flexcomm0, Flexcomm4, Flexcomm5},
         inputmux::InputMux,
         pfr::Pfr,
         pint::Pint,
@@ -120,6 +120,7 @@ impl Stage0 {
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
+        iocon.pio1_9.modify(|_, w| w.mode().pull_down());
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
         let is_passive_mode = nfc_irq.is_low().ok().unwrap();
 
@@ -391,6 +392,32 @@ impl Stage2 {
         Some(iso14443)
     }
 
+    fn get_ntp53(&mut self, flexcomm4: Flexcomm4<Unknown>) -> Ntp53 {
+        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        let i2c = flexcomm4.enabled_as_i2c(&mut self.peripherals.syscon, &token);
+        let scl = pins::Pio1_20::take()
+            .unwrap()
+            .into_i2c4_scl_pin(&mut self.clocks.iocon);
+        let sda = pins::Pio1_21::take()
+            .unwrap()
+            .into_i2c4_sda_pin(&mut self.clocks.iocon);
+        let i2c = hal::I2cMaster::new(
+            i2c,
+            (scl, sda),
+            hal::time::Hertz::try_from(400_u32.kHz()).unwrap(),
+        );
+        let ed = pins::Pio1_9::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_input();
+
+        let mut ntag = Ntp53::new(i2c, ed);
+
+        ntag.test();
+
+        ntag
+    }
+
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
@@ -443,6 +470,7 @@ impl Stage2 {
     pub fn next(
         mut self,
         flexcomm0: Flexcomm0<Unknown>,
+        flexcomm4: Flexcomm4<Unknown>,
         flexcomm5: Flexcomm5<Unknown>,
         mux: InputMux<Unknown>,
         pint: Pint<Unknown>,
@@ -451,7 +479,8 @@ impl Stage2 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
 
-        let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
+        let se050_i2c = false.then(|| self.get_se050_i2c(flexcomm5));
+        let ntp53 = self.get_ntp53(flexcomm4);
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc, spi) = if use_nfc {

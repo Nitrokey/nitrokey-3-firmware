@@ -45,6 +45,9 @@ lfs-backup = { path = "../lfs-backup", optional = true }
 # board-nk3xn
 fm11nc08 = { path = "../fm11nc08", optional = true }
 
+# new nfc chip
+ntp53 = { path = "../ntp53", optional = true }
+
 # logging
 cortex-m-semihosting = { version = "0.3.5", optional = true }
 rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
@@ -54,7 +57,7 @@ se05x = { version = "0.1.1", optional = true }
 
 [features]
 board-nk3am = ["soc-nrf52", "lfs-backup"]
-board-nk3xn = ["soc-lpc55", "fm11nc08"]
+board-nk3xn = ["soc-lpc55", "fm11nc08", "ntp53"]
 board-nkpk = ["board-nk3am"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55", "systick-monotonic"]

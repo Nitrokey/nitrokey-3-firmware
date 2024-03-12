@@ -378,6 +378,7 @@ dependencies = [
  "nfc-device",
  "nrf52840-hal",
  "nrf52840-pac",
+ "ntp53",
  "rand",
  "rand_chacha",
  "ref-swap",
@@ -1978,6 +1979,14 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "vcell",
+]
+
+[[package]]
+name = "ntp53"
+version = "1.7.0-rc.1"
+dependencies = [
+ "delog",
+ "embedded-hal",
 ]
 
 [[package]]

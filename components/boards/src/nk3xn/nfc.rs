@@ -5,6 +5,7 @@ use lpc55_hal::{
         pins::{self, Pin},
         Timer,
     },
+    peripherals::flexcomm,
     typestates::pin,
     Enabled,
 };
@@ -19,6 +20,21 @@ pub type NfcChip = FM11NC08<
     Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
     Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
 >;
+
+pub type Ntp53I2C = lpc55_hal::I2cMaster<
+    pins::Pio1_20,
+    pins::Pio1_21,
+    flexcomm::I2c4,
+    (
+        Pin<pins::Pio1_20, pin::state::Special<pin::function::FC4_TXD_SCL_MISO_WS>>,
+        Pin<pins::Pio1_21, pin::state::Special<pin::function::FC4_RXD_SDA_MOSI_DATA>>,
+    ),
+>;
+
+pub type Ntp53EdPin =
+    Pin<pins::Pio1_9, pin::state::Gpio<lpc55_hal::drivers::pins::direction::Input>>;
+
+pub type Ntp53 = ntp53::Ntp53<Ntp53I2C, Ntp53EdPin>;
 
 pub fn try_setup(
     spi: Spi,

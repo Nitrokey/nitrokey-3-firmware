@@ -35,6 +35,7 @@ pub fn init(
         )
         .next(
             hal.flexcomm.0,
+            hal.flexcomm.4,
             hal.flexcomm.5,
             hal.inputmux,
             hal.pint,
