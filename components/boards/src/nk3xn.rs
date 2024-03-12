@@ -5,12 +5,17 @@ use embedded_time::duration::Microseconds;
 #[cfg(feature = "se050")]
 use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
-    drivers::pins::{Pio0_9, Pio1_14},
-    peripherals::{ctimer, flexcomm::I2c5},
+    drivers::pins::{Pio0_9, Pio1_14, Pio1_20, Pio1_21},
+    peripherals::{
+        ctimer,
+        flexcomm::{I2c4, I2c5},
+    },
     typestates::{
         init_state::Unknown,
         pin::{
-            function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
+            function::{
+                FC4_RXD_SDA_MOSI_DATA, FC4_TXD_SCL_MISO_WS, FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS,
+            },
             state::Special,
         },
     },
