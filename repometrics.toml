@@ -1,3 +1,6 @@
+[defaults]
+significance_threshold = 0.01
+
 [gitlab]
 host = "git.nitrokey.com"
 project = "nitrokey/nitrokey-3-firmware"
