@@ -177,7 +177,12 @@ metrics:
   stage: metrics
   script:
     - repometrics generate --cache > metrics.toml
-    - repometrics run --base origin/main || true
+  after_script:
+    - !reference [notify_github, script] # use notify_github from include
+    - echo '```' > metrics-comment.txt
+    - repometrics run --base origin/main | tee --append metrics-comment.txt
+    - echo -n '```' >> metrics-comment.txt
+    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id repometrics --commit $(git rev-parse HEAD) metrics-comment.txt
   artifacts:
     paths:
       - metrics.toml
