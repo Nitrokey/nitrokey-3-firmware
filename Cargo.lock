@@ -3313,16 +3313,14 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-staging.git?tag=v0.1.0-nitrokey-hmac256p256.3#c4d701ff1fe2d169ccf9c4a75c414faeb75c75db"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=1240154c269cc3875552c46ddcbde2c9aeea5e51#1240154c269cc3875552c46ddcbde2c9aeea5e51"
 dependencies = [
  "chacha20poly1305",
  "delog",
- "hmac",
  "littlefs2",
  "rand_core",
  "serde",
  "serde-byte-array",
- "sha2",
  "trussed",
 ]
 
@@ -3625,7 +3623,7 @@ checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?rev=eb1898dc2e2104772f97e7c84ca77c68f18af946#eb1898dc2e2104772f97e7c84ca77c68f18af946"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?rev=b1502d72035ecde0f16f9fff5c8da06139b90d11#b1502d72035ecde0f16f9fff5c8da06139b90d11"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -3635,9 +3633,11 @@ dependencies = [
  "generic-array",
  "heapless",
  "heapless-bytes",
+ "hmac",
  "serde",
  "serde-indexed",
  "serde_bytes",
+ "sha2",
  "trussed",
  "trussed-rsa-alloc",
  "trussed-staging",

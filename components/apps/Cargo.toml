@@ -57,8 +57,7 @@ nkpk-provisioner = ["nkpk", "provisioner-app", "trussed/clients-3"]
 
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth"]
-backend-staging-hmacsha256p256 = ["trussed-staging/hmacsha256p256"]
-webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa", "backend-staging-hmacsha256p256"]
+webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth"]
