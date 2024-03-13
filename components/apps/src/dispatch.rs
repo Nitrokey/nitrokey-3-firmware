@@ -24,9 +24,9 @@ use embedded_hal::blocking::delay::DelayUs;
 #[cfg(feature = "se050")]
 use se05x::{se05x::Se05X, t1::I2CForT1};
 #[cfg(feature = "se050")]
-use trussed_se050_backend::{
-    manage::ManageExtension as Se050ManageExtension, Context as Se050Context, Se050Backend,
-};
+use trussed_se050_backend::{Context as Se050Context, Se050Backend};
+#[cfg(feature = "se050")]
+use trussed_se050_manage::Se050ManageExtension;
 
 #[cfg(feature = "backend-auth")]
 use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
@@ -34,11 +34,11 @@ use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;
 
+use trussed_chunked::ChunkedExtension;
 use trussed_hkdf::{HkdfBackend, HkdfExtension};
-use trussed_staging::{
-    manage::ManageExtension, streaming::ChunkedExtension, wrap_key_to_file::WrapKeyToFileExtension,
-    StagingBackend, StagingContext,
-};
+use trussed_manage::ManageExtension;
+use trussed_staging::{StagingBackend, StagingContext};
+use trussed_wrap_key_to_file::WrapKeyToFileExtension;
 
 #[cfg(feature = "webcrypt")]
 use webcrypt::hmacsha256p256::{
@@ -328,15 +328,15 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
-                Extension::Se050Manage => ExtensionImpl::<
-                    trussed_se050_backend::manage::ManageExtension,
-                >::extension_request_serialized(
-                    self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
-                    &mut ctx.core,
-                    &mut ctx.backends.se050,
-                    request,
-                    resources,
-                ),
+                Extension::Se050Manage => {
+                    ExtensionImpl::<Se050ManageExtension>::extension_request_serialized(
+                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
+                        &mut ctx.core,
+                        &mut ctx.backends.se050,
+                        request,
+                        resources,
+                    )
+                }
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             _ => Err(TrussedError::RequestNotAvailable),

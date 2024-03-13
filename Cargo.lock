@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.10#c6c87cfad4d94c4910c87e870bae759330f6f634"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.11#0ba0e766cba65a1fe7b0865f343de589e4202d82"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -17,8 +17,8 @@ dependencies = [
  "serde",
  "strum_macros",
  "trussed",
- "trussed-se050-backend",
- "trussed-staging",
+ "trussed-manage",
+ "trussed-se050-manage",
 ]
 
 [[package]]
@@ -175,11 +175,15 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
+ "trussed-chunked",
  "trussed-hkdf",
+ "trussed-manage",
  "trussed-rsa-alloc",
  "trussed-se050-backend",
+ "trussed-se050-manage",
  "trussed-staging",
  "trussed-usbip",
+ "trussed-wrap-key-to-file",
  "usbd-ctaphid",
  "utils",
  "webcrypt",
@@ -1175,7 +1179,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.12#3db1f6fdba65ede3a05e7f0e4489145e22cde3af"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.13#d55050a2491b0bd6cb6f72d1265ef038b8295c4f"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1188,8 +1192,8 @@ dependencies = [
  "serde_cbor",
  "sha2",
  "trussed",
+ "trussed-chunked",
  "trussed-hkdf",
- "trussed-staging",
 ]
 
 [[package]]
@@ -2107,8 +2111,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "opcard"
-version = "1.3.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=1c844b74aa5bf245cd8223bc63b74b3a1f1f7b0f#1c844b74aa5bf245cd8223bc63b74b3a1f1f7b0f"
+version = "1.4.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.4.0#0fec661b2d5718b97e942c229444ba6b8997ea7e"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2124,8 +2128,9 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
+ "trussed-chunked",
  "trussed-rsa-alloc",
- "trussed-staging",
+ "trussed-wrap-key-to-file",
 ]
 
 [[package]]
@@ -2220,8 +2225,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.4"
-source = "git+https://github.com/Nitrokey/piv-authenticator?tag=v0.3.4#2c948a966f3e410e9a4cee3c351ca20b956383e0"
+version = "0.4.0"
+source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.4.0#b69b394facdaaafcd41a5ea48dae34ed3680e9d5"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2235,8 +2240,8 @@ dependencies = [
  "subtle",
  "trussed",
  "trussed-auth",
+ "trussed-chunked",
  "trussed-rsa-alloc",
- "trussed-staging",
  "untrusted",
 ]
 
@@ -3252,6 +3257,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "trussed-chunked"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=chunked-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+dependencies = [
+ "serde",
+ "serde-byte-array",
+ "trussed",
+]
+
+[[package]]
 name = "trussed-hkdf"
 version = "0.1.0"
 source = "git+https://github.com/Nitrokey/trussed-hkdf-backend.git?tag=v0.1.0#4a172d88c0fd4be713a863db0cb18266acb0da43"
@@ -3263,6 +3278,15 @@ dependencies = [
  "postcard 0.7.3",
  "serde",
  "sha2",
+ "trussed",
+]
+
+[[package]]
+name = "trussed-manage"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=manage-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+dependencies = [
+ "serde",
  "trussed",
 ]
 
@@ -3282,8 +3306,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.2.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.2.0#f48a4f2bb2d3f5f9fba5d361401f91cd9c2ee8f1"
+version = "0.3.0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.0#af9502a6e1d0359212101558cafa359e7f7bd5a9"
 dependencies = [
  "cbor-smol",
  "crypto-bigint",
@@ -3306,14 +3330,25 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-auth",
+ "trussed-manage",
  "trussed-rsa-alloc",
- "trussed-staging",
+ "trussed-se050-manage",
+ "trussed-wrap-key-to-file",
+]
+
+[[package]]
+name = "trussed-se050-manage"
+version = "0.1.0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=se050-manage-v0.1.0#d70748efbde217bb6f2a7b1ecd579d2480f7edc0"
+dependencies = [
+ "serde",
+ "trussed",
 ]
 
 [[package]]
 name = "trussed-staging"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=1240154c269cc3875552c46ddcbde2c9aeea5e51#1240154c269cc3875552c46ddcbde2c9aeea5e51"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.2.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
 dependencies = [
  "chacha20poly1305",
  "delog",
@@ -3322,6 +3357,9 @@ dependencies = [
  "serde",
  "serde-byte-array",
  "trussed",
+ "trussed-chunked",
+ "trussed-manage",
+ "trussed-wrap-key-to-file",
 ]
 
 [[package]]
@@ -3338,6 +3376,15 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "usbip-device",
+]
+
+[[package]]
+name = "trussed-wrap-key-to-file"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=wrap-key-to-file-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+dependencies = [
+ "serde",
+ "trussed",
 ]
 
 [[package]]
@@ -3623,7 +3670,7 @@ checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?rev=b1502d72035ecde0f16f9fff5c8da06139b90d11#b1502d72035ecde0f16f9fff5c8da06139b90d11"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc6#f636071c242f555318e5940c72b866e3a3a63000"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -3640,7 +3687,6 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-rsa-alloc",
- "trussed-staging",
 ]
 
 [[package]]
