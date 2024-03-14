@@ -8,7 +8,7 @@ version.workspace = true
 [dependencies]
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
 delog = "0.1"
-bitflags = { version = "2.4.2", default-features = false}
+bitfield = { version = "0.14.0", default-features = false }
 
 [features]
 default = ["log-all"]
