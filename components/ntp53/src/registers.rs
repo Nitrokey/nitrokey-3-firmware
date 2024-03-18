@@ -78,6 +78,12 @@ macro_rules! u8newtype {
                 value.0
             }
         }
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(0)
+            }
+        }
     };
 }
 
@@ -113,18 +119,18 @@ bitfield! {
     pub struct StatusRegister0(u8);
     impl Debug;
 
-    /// EEPROM is busy
+    // EEPROM is busy
     pub eeprom_wr_busy, _: 7;
-    /// 1: EEPROM write error happened
-    pub eeprom_wr_error, set_eeprom_wr_error: 6;
-    /// 1: data is ready, used in pass-through mode
+    // 1: EEPROM write error happened
+    pub mask EEPROM_WR_ERROR_MASK(u8), eeprom_wr_error, set_eeprom_wr_error: 6;
+    // 1: data is ready, used in pass-through mode
     pub sram_data_ready, _: 5;
-    /// 1: data has been written to SYNCH_BLOCK
-    pub synch_block_write, set_synch_block_write: 4;
-    /// 1: data has been read from SYNCH_BLOCK
-    pub synch_block_read, set_synch_block_read: 3;
-    /// 1: I2C to NFC passthrough direction
-    /// 0: NFC to I2C passthrough direction
+    // 1: data has been written to SYNCH_BLOCK
+    pub mask SYNCH_BLOCK_WRITE_MASK(u8), synch_block_write, set_synch_block_write: 4;
+    // 1: data has been read from SYNCH_BLOCK
+    pub mask SYNCH_BLOCK_READ_MASK(u8), synch_block_read, set_synch_block_read: 3;
+    // 1: I2C to NFC passthrough direction
+    // 0: NFC to I2C passthrough direction
     pub pt_transfer_dir, _: 2;
     pub vcc_supply_ok, _: 1;
     pub nfc_field_ok, _: 0;
@@ -143,7 +149,7 @@ bitfield! {
     pub gpio0_in_status, _: 3;
     pub rfu2, _: 2;
     /// 1: arbitrer locked to I2C
-    pub i2c_if_locked, set_i2c_if_locked: 1;
+    pub mask I2C_IF_LOCKED_MASK(u8), i2c_if_locked, set_i2c_if_locked: 1;
     /// 1: arbitrer locked to NFC
     pub nfc_if_locked, _: 0;
 }
@@ -186,13 +192,13 @@ bitfield! {
     pub sram_copy_en, _: 7;
     rfu1, _: 6;
     /// NFC is disabled
-    pub disable_nfc, set_disable_nfc: 5;
+    pub mask DISABLE_NFC(u8), disable_nfc, set_disable_nfc: 5;
     rfu2, _: 4;
     rfu3, _: 3;
     rfu4, _: 2;
     rfu5, _: 1;
     /// true: IC enters standby mode after boot if there is no RF present automatically
-    auto_standby_mode_en, set_auto_standby_mode_en: 0;
+    pub mask AUTO_STANDBY_MODE_EN(u8), auto_standby_mode_en, set_auto_standby_mode_en: 0;
 
 }
 
@@ -204,9 +210,9 @@ bitfield! {
     rfu1, _: 7;
     rfu2, _: 6;
     pub U8Wrapper, from into UseCaseConf, use_case_conf, _: 5, 4;
-    pub U8Wrapper, from into ArbiterMode, arbiter_mode, set_arbiter_mode: 3, 2;
+    pub U8Wrapper, mask ARBITER_MODE(u8), from into ArbiterMode, arbiter_mode, set_arbiter_mode: 3, 2;
     pub sram_enabled, _: 1;
-    pub pt_transfer_dir, set_pt_transfer_dir: 0;
+    pub mask PT_TRANSFER_DIR(u8), pt_transfer_dir, set_pt_transfer_dir: 0;
 }
 
 custom_bits!(ConfigRegister1);
@@ -366,10 +372,11 @@ bitfield! {
     impl Debug;
 
     /// true: watchdog timer is enabled
-    wdt_enable, _: 0;
+    pub mask WDT_ENABLE_MASK(u8), wdt_enable, set_wdt_enable: 0;
 }
 
 /// Watch Dog timer register
+#[derive(Debug)]
 pub struct WdtRegister {
     /// up to 618ms
     pub duration: u16,
@@ -507,8 +514,8 @@ bitfield!(
 
     /// Watch Dog expired
     pub i2c_wdt_expired, _: 4;
-    pub i2c_soft_reset, set_i2c_soft_read: 3;
-    pub i2c_s_repeated_start, set_i2c_s_repeated_start: 2;
+    pub mask I2C_SOFT_RESET(u8), i2c_soft_reset, set_i2c_soft_read: 3;
+    pub mask I2C_S_REPEATED_START(u8), i2c_s_repeated_start, set_i2c_s_repeated_start: 2;
     pub disable_i2c, _: 0;
 );
 
@@ -518,7 +525,7 @@ bitfield! {
     pub struct EdIntrClear(u8);
     impl Debug;
 
-    pub ed_intr_clear, set_ed_intr_clear: 0;
+    pub mask ED_INTR_CLEAR(u8), ed_intr_clear, set_ed_intr_clear: 0;
 }
 
 #[derive(Clone, Copy)]
