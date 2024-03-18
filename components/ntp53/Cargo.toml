@@ -8,7 +8,10 @@ version.workspace = true
 [dependencies]
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
 delog = "0.1"
-bitfield = { version = "0.14.0", default-features = false }
+bitfield = { git = "https://github.com/sosthene-nitrokey/rust-bitfield.git", rev = "e22a096dd22eac3abbfc37f92423b8bdf0985bba" }
+embedded-time = "0.12.1"
+nb = "1.1.0"
+nfc-device = {path = "../nfc-device"}
 
 [features]
 default = ["log-all"]
