@@ -1,0 +1,101 @@
+{
+    "description": "Nitrokey 3 AM",
+    "authenticatorVersion": 1,
+    "schema": 3,
+    "upv": [
+        {
+            "major": 1,
+            "minor": 0
+        },
+        {
+            "major": 1,
+            "minor": 1
+        }
+    ],
+    "attestationTypes": [
+        "basic_full"
+    ],
+    "userVerificationDetails": [
+        [
+            {
+                "userVerificationMethod": "none"
+            }
+        ],
+        [
+            {
+                "userVerificationMethod": "presence_internal"
+            }
+        ],
+        [
+            {
+                "userVerificationMethod": "passcode_external"
+            }
+        ],
+        [
+            {
+                "userVerificationMethod": "presence_internal"
+            },
+            {
+                "userVerificationMethod": "passcode_external"
+            }
+        ]
+    ],
+    "keyProtection": [
+        "software"
+    ],
+    "matcherProtection": [
+        "software"
+    ],
+    "attachmentHint": [
+        "external",
+        "wired"
+    ],
+    "tcDisplay": [],
+    "attestationRootCertificates": [
+        "MIICMDCCAdWgAwIBAgIDDd3dMAoGCCqGSM49BAMCMDkxCzAJBgNVBAYTAkRFMRYwFAYDVQQKDA1OaXRyb2tleSBHbWJIMRIwEAYDVQQDDAlGSURPIENBIDQwIBcNMjIwODA0MDg0NzE1WhgPMjA3MjA3MjIwODQ3MTVaMG8xCzAJBgNVBAYTAkRFMRYwFAYDVQQKDA1OaXRyb2tleSBHbWJIMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMSQwIgYDVQQDDBtOaXRyb2tleSBGSURPIEF0dGVzdGF0aW9uIDIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS+IePqVQyYbgIArVErEML3TskcCbPZL2IEVH09Twp8SoppMIRqH68BTJI9T7KtS/jM7tX/sMTlia3QzCbQQTNWo4GTMIGQMB0GA1UdDgQWBBSfGOwSbpLM6gruQLCkDtMDXuJdEzAfBgNVHSMEGDAWgBTySa+WQ9BQlglET9dBg6HF9E7M5TAJBgNVHRMEAjAAMAsGA1UdDwQEAwIE8DAhBgsrBgEEAYLlHAEBBAQSBBAs0vcn9spE2o9IXC5doACiMBMGCysGAQQBguUcAgEBBAQDAgUgMAoGCCqGSM49BAMCA0kAMEYCIQDo9n7yn1VrA5QgOLQqMjfoOff4TNPUqtRv4FYVL0tkvAIhAN4B1jv5LomMySWBQ3YJ7llY2RSY0TeaCIZICboVyVqC"
+    ],
+    "aaguid": "2cd2f727-f6ca-44da-8f48-5c2e5da000a2",
+    "protocolFamily": "fido2",
+    "authenticationAlgorithms": [
+        "ed25519_eddsa_sha512_raw",
+        "secp256r1_ecdsa_sha256_raw"
+    ],
+    "publicKeyAlgAndEncodings": [
+        "cose",
+        "ecc_x962_raw"
+    ],
+    "isKeyRestricted": true,
+    "isFreshUserVerificationRequired": true,
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABmJLR0QA/wD/AP+gvaeTAAANRklEQVR4nO2cf2wTdR/H37d1K0zXwQMb3cYiLAKZjoW5PA+g0NEBj4jrIrD2YWMsaEKjPvIkkIg/nvGHGjMeyRND8HnC8oQAizzRkKiJiT4pDhWCqDCYjB/BIDsJozCYoMjWde19nj+gR9v1x/V6vbbX7zv5JIW73vd2r9d979v7XguwsLCwsKRGSgD8F8CEZO8Ii/qZUlpaer6jo4MMBsNJAH9I9g6xqBdjSUnJ+d7eXhIEgQ4dOkQFBQVMggyJsaSk5EcffF8xCTIjxpKSkh9PnToVAJ9JkBmJCJ9JoO1Igs8k0GZigs8k0FZkwfeXYMKECT1gEqRl4oLPJEjvKAI/hAQTk/2HsUSPovCDJDgJJkFKJyHwmQTpkbDw9+3bR21tbTQ6Osok0GhKi4uLfwq+vSsIAu3evZvMZvOQxWL52W63KyLBV199RQaD4TsABcn+w1mAqcXFxRdDnfmdnZ20aNEil9VqLQSAhoaGi88++yy53e64JTh8+DDrCVIgkuH7wiRIrVQAWCXzvdHgDzc1NU0O9caGhoY+hSX4HoBB9lHI0MwEwAPwAFgb43unGo3GkPA/+OADWrx4sSscfF8sFkvfhg0bFPl0wHqC2FMB4DIAulduAH+R+N6wZ74gCLR582ZasWJFT7SN2Gy2fyxbtkwRAXwDw4KCgu/AeoKo8Z35FFRSeoKpRqPx4g8//BAWhMvloqamJlqxYkV3uI3YbLa3TSYTOZ1OxQRgPYG0hIPvL0FrmPdGhS9FgkTBZxJETzT4kSSQDD+SBDab7e3a2tqEwQ+SgF0O/CIVfigJYoYfSgKr1fp3s9mccPhMgrEJHvBJLTeAvxmNxr547u0PDw/TmjVraMmSJXTt2jVV4Pvq66+/zviBoVz4Yu3fv19VaErX9u3bCcB/VD/yKZC44QMgo9FIZ86cURUaz/M0d+5ceuGFF+KaOzhy5AhNnDixF8AktQ9+shPrNT9iFRUVUaiJnkTUpUuXqLa2Vli9evXz8dw29oMf8YaUFqMofKgogQ++zWb7q++PkSMBg68wfKggQSj4vsQyd8DgJwg+EihBJPi+SJEgk+ErMuCTWkoODD0eDz3xxBO0evXq56P9kfX19f3bt2+PBj/igC8rtuOaFpkJ4HMApWo1ePXqVZjNZpw5cybubWVlZaGsrAxut3t9pPUsFsv0wcHBooqKijHLjh49ivr6+tM3b940AxiMe6fSKKp0++FKqcuBy+WiNWvW0MqVK0+E+iObm5sfWrBggTvUPYlM7vaTCh8JkiB4AonBD52UgO8rJSVoaWkRJWhubn5o4cKFDH5QVB3wSS2lBoZ+EvQuWLDA/cknn8ge8GkxKXXmB5dSPcHIyAi9/vrr9Omnn7Iz3y8pDd9XibxZxOCnAGAplQgJGPwUABtLKSkBg58CQOWUEhIw+CkAMp6KRwIGX+ZBLywspNbWVlq3bh1Nnz49LSVg8GUe7JUrV9KtW7fEA+n1esnhcFBjYyPl5OSkhQQMvsyDvGrVKhoZGQl7YJ1OJ7W3t1N5eXnKSsDgKwR/cHAwoCfwL4/HQw6Hg6xWq+q9QiQJGHyF4DudTnr00UdJr9eT1Wolh8MR9ozr7++n9vZ2mjZtWlIlYPAVhh+8XkVFBbW3t9Pg4GDUXkGn06kqAYMv8yA2NjZKgu9f+fn5ZLfbqbu7O2yvwPM8vfrqq5Sbm5tQCYxGI+3Zsydj4cc1qxcK/iOPPBLTNmpqamjnzp10+/btkCIcPXqU9Hp9wnsDAFEfB9NaFO/2Y4XvXwUFBWS32ynUV8Bee+01NQSI9K1kzUVR+P39/TRr1ixFQHAcR2azmb799ltx+1euXFHrk0JGSBAX/IaGBkXP/HC1aNGigF6gsbFRDQE0L0Fc8B988EEaGBhIOHxfnT59WmzrwIEDagmgWQninthpamoSgQwMDNDMmTMTCmLTpk0Bt5MT3V5QyfnhqpSNIrN6H3/8sQjknXfeCVhmMplow4YNVFVVRRzHKQJh0qRJNDQ0JLa5bds2NQXQjASKPMCZn58fAGPOnDniMr1eTzdv3gwYtO3du5daWlrIaDTG1e77778vbvf69es0btw4tSVwA1ihAIekRLH5/OXLlwfcpPFftnjx4oiTKxcuXKCdO3eS1Wql/Pz8mNqtra0N2NbatWvVFoAH8LACLFSPog9zvPXWWyKEXbt2BSzbunWr5Dn29evXx9y2/2Dw8OHDDL6EKP4kT1dXlwhh3bp1ActOnDghWYBZs2ZRWVkZlZSUSG5748aNAdvwv/wksHgw+PfLfwLHH8CUKVPI6/VKgt/X10cAaMeOHQGXhtbWViotLQ3bdvBg8L333mPwwyQh8A0Gg3jwR0dHA+7Nt7S0SD77Ozo6CACdO3duzDKv10s9PT307rvv0vLly8fsQ2dnp7jur7/+GvNYIobiweAHVlVVlXjwL1++HLBs7969kgWwWq00derUqOsdP358zD6YTKaAdex2O4Pvl4Q+vev/CeDYsWPi/3McR/39/ZLgezwemjx5Mj333HNR1926dWvI/fB/gKO7uztt4Sv9AxEzATgAPKTwdsWMHz9efP3bb7+Jr2fPno3i4mJJ2+ju7saNGzdQV1cXdd2DBw+G/P9du3aJr6urq1FTUyOpbQn5GcASABeU2mCkKClAwuEDQE5OjviaiMTXHo8HHo9H0jYcDgc4josqgNvtxpEjR0Iu6+zsDGjv8ccfl9R2lKgKH1BOAFXgA4EC+Ofs2bN47LHH8PLLL+Ozzz7D77//HnYbX3zxBaqqqmA0GiO29c033+DOnTshl7344ovQ6XTiv4eGhiTsfcSoDl+pqPqNHZvNJunam52dTTU1NfTKK6+Qw+EQP7rdvn2b9Ho9WSyWgNnEUNXW1hZy25s3bw5Yb3BwkAoLC9Pimq90VP+6Vl1dnXjgr169Kvl9eXl5tHTp0jE3jsrLy8lut9OHH35I169fDwA7b968qPCHh4dDflSMoXgw+NKrsrIy4PO6khMyWVlZVF1dTZs2baL9+/ePeRq4ra1tDPynn36awVezcnNzyeVyiRDmz5+vSrvBZ77L5aKGhgYGPxnl/7Dmxo0bkwLfYrEw+Mmqjo4OEcZHH32U0LaCu/2hoSFatmwZg5/MWrVqVQAQg8GQkHZCDfjq6+sZ/GSXwWAImJFrbm5WdPscx9GWLVvGnPlPPvkkg58qtW/fvoBJoTfeeIMqKyvjgl5dXU1vvvkm9fX1Zcxon4uyXLU7fLHGbDajq6trzP+fPXsWXV1d6O3txblz53Dp0iU4nc6A27bjx49HWVkZpk2bhtmzZ6Ompga1tbUh5xKGh4fxzDPP4MCBA3J3ld3hS1Rt27aNPB6P5CngX375RfK6giBQT08PmUwmTZ750ZLy8H1VVlZGW7ZsofPnz8cEN1wNDAxQR0cH1dXVxftIOY80gB/qEpCy3X60zJgxA0899RRMJhMqKytRXl4eMGETnNHRUfA8j5MnT6K7uxtffvklTpw4AUEQ4t2VtOn2gwVIW/ihotPpUFRUhMLCQuTl5eGBBx7AyMgI7ty5g4GBATidTni9XqWbTRv4wXkYCv/qNsdxh3W63C0Ad17J7aZwXQRQLuPYJy3Zfq//BUCRpxoAgOO4Q3p93u6srOybOp3umMfjmQVt/5x5H+6e+ReTvSOxxP+BkGlKbfQe/D0A7vWvnGvcuPH/BLgflWojxZKW8IHAHmACgD/Hu8Gx8MUlHo32BGkLHwgU4Dvc/WGiP8ndWHj44hoenU73vdfrmQFt/AjSzwCWAvgp2TsiN/4CEID/QaYE0eGLa3p1Ot0xDUiQtqN9/2QH/dsnQRGAP8ayoXHj8t4GuFFpa3NenU53PI0vB30AFiONz3xfggUA7krwOWKUgEi4lJ2t65fedNqOCdL6mh+cUAIA9yWQfDkgoj8RCVdkSJBOY4K0v+YHJ5wAgIwxgUwJ0mVMoIlrfnAiCQAwCXzRJHwgugAAk0Cz8AFpAgCZK4Gm4QPSBQDkS9Cfna27Ir2ZlJFA8/CB2AQAMkeCjIAPxC4AoH0JMgY+IE8AQLsSZBR8QL4AgHwJLqeoBBkHH4hPAECeBHNTUIKMhA/ELwAgYwKJiOYCxGdl6a5Kb4bzAsINQRAWytrL8NHMxI6cKCEAIGMCSRCE+bFJQLmjo+7We20oFU1N7MiJUgIAMiaQBEGYL+1yQLqRkeGXiKgq7r28H81N7MiJkgIACRkTUM7IyPAGIpqj2F5m8DU/OEoLAMj8dABQX1aW7lrQkpx7Zz6Dn6AkQgAgdgk4QRDmAXTxvgQMvhaSBeDfkP7FCiE7O3uHXq9/ieO4UzG8T5Nf2tBKsgC8h+R+Y4dHGnxRU8tJpgQ8GPyUSDIk4MHgp1TUlIAHg5+SUUMCHgx+SieREvBg8NMiiZCAB4OfVlFSAh4MflpGCQl4MPhpnXgk4MHgayJyJODB4GsqsUjAg8HXZKRIwIPB13QiScCDwc+IhJKAB4OvaBL1QIgSIdx9qOQWAAOAgwDWIYMf4GRhYWFRNv8H+qUMwajW3bIAAAAASUVORK5CYII=",
+    "authenticatorGetInfo": {
+        "versions": [
+            "U2F_V2",
+            "FIDO_2_0",
+            "FIDO_2_1"
+        ],
+        "extensions": [
+            "credProtect",
+            "hmac-secret"
+        ],
+        "aaguid": "2cd2f727f6ca44da8f485c2e5da000a2",
+        "options": {
+            "rk": true,
+            "up": true,
+            "plat": false,
+            "clientPin": false,
+            "credMgmt": true,
+            "largeBlobs": false,
+            "pinUvAuthToken": true
+        },
+        "maxMsgSize": 3072,
+        "pinUvAuthProtocols": [
+            2,
+            1
+        ],
+        "maxCredentialCountInList": 10,
+        "maxCredentialIdLength": 255,
+        "transports": [
+            "usb"
+        ]
+    }
+}

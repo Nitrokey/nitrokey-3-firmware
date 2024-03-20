@@ -2,10 +2,10 @@ PYTHON3 ?= python3
 VIRTUAL_ENV ?= .venv
 VIRTUAL_PYTHON3 ?= $(VIRTUAL_ENV)/bin/python3
 
-METADATA_VERSION ?= v1
+METADATA_VERSION ?= v2
 OUT_DIR ?= metadata/$(METADATA_VERSION)
 
-INPUTS := generate-mds.py attestation-test.der attestation.der nitrokey.svg
+INPUTS := generate-mds.py nitrokey.svg
 
 MODELS := nk3am nk3xn
 EXTS := json test.json

@@ -36,14 +36,8 @@ class Authenticator:
     name: str
     aaguid: str
     has_nfc: bool
+    attestation_root_certificate: str
     is_test: bool = False
-
-    @property
-    def attestation_root_certificate(self) -> str:
-        if self.is_test:
-            return "attestation-test.der"
-        else:
-            return "attestation.der"
 
     @property
     def attachment_hint(self) -> list[str]:
@@ -153,18 +147,21 @@ NK3AM = Authenticator(
     name="Nitrokey 3 AM",
     aaguid="2cd2f727-f6ca-44da-8f48-5c2e5da000a2",
     has_nfc=False,
+    attestation_root_certificate="attestation/nk3am.der",
 )
 
 NK3XN = Authenticator(
     name="Nitrokey 3 xN",
     aaguid="ec99db19-cd1f-4c06-a2a9-940f17a6a30b",
     has_nfc=True,
+    attestation_root_certificate="attestation/nk3xn.der",
 )
 
 NK3AM_TEST = Authenticator(
     name="Nitrokey 3 AM Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=False,
+    attestation_root_certificate="attestation/test.der",
     is_test=True,
 )
 
@@ -172,6 +169,7 @@ NK3XN_TEST = Authenticator(
     name="Nitrokey 3 xN Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=True,
+    attestation_root_certificate="attestation/test.der",
     is_test=True,
 )
 
