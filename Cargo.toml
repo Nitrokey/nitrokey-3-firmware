@@ -57,6 +57,10 @@ debug = true
 lto = "thin"
 inherits = "release"
 
+[profile.release-no-strip]
+strip = false
+inherits = "release"
+
 [profile.release.package.salty]
 opt-level = 2
 

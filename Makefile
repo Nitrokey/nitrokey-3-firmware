@@ -32,6 +32,16 @@ binaries:
 	$(MAKE) -C runners/nkpk build FEATURES=provisioner
 	cp runners/nkpk/artifacts/runner-nkpk.bin.ihex binaries/provisioner-nkpk.ihex
 
+.PHONY: binaries-stack-sizes
+binaries-stack-sizes: export RUSTFLAGS=-Z emit-stack-sizes
+binaries-stack-sizes: export FEATURES=emit-stack-sizes
+binaries-stack-sizes: export RUSTUP_TOOLCHAIN=nightly
+binaries-stack-sizes:
+	mkdir -p binaries-stack-sizes
+	$(MAKE) -C runners/embedded build-all
+	cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf $@/firmware-nk3xn.elf
+	cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.elf $@/firmware-nk3am.elf
+
 .PHONY: metrics
 metrics: binaries
 	repometrics generate > metrics.toml

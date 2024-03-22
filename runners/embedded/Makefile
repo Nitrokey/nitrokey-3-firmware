@@ -28,7 +28,7 @@ SYMBOLS ?= symbols-$(BUILD_ID).txt
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_IHEX = $(OUT_BIN).ihex
-CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(FEATURES)'.split(',')  else 'release'; print(p); " )
+CUSTOM_PROFILE=$(shell python3 -c "features = '$(FEATURES)'.split(','); p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in features else 'release-no-strip' if 'emit-stack-sizes' in features else 'release'; print(p); " )
 NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-semihosting' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
 RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 
@@ -101,7 +101,6 @@ clean-all:
 ###############################################################################
 
 build: build-banner check-var-BOARD check-var-SOC
-
 	cargo --version
 
 	cargo build --target $(TARGET) \
