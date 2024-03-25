@@ -592,12 +592,14 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
+impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch<R::Twi, R::Se050Timer>>
+    for Apps<R>
+{
     type Data = (R, Data<R>);
 
     fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
     where
-        B: trussed_usbip::ClientBuilder<Client<R>, Dispatch>,
+        B: trussed_usbip::ClientBuilder<Client<R>, Dispatch<R::Twi, R::Se050Timer>>,
     {
         Self::new(
             &runner,

@@ -40,6 +40,7 @@ webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "70e3f1aa21ecb75c1237b20b733d0e228a966b10" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "2d0ae0312170adb9cfffd05f70ebc83af3c14679" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
+trussed-derive = { git = "https://github.com/trussed-dev/trussed.git", rev = "5eed121ce987c7e82ad1eaff4b9b7d7bc716ed91" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
 trussed-wrap-key-to-file = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "wrap-key-to-file-v0.1.0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.0" }

@@ -108,7 +108,7 @@ impl Runner {
 }
 
 impl apps::Runner for Runner {
-    type Syscall = Service<FilesystemOrRam, Dispatch>;
+    type Syscall = Service<FilesystemOrRam, Dispatch<Self::Twi, Self::Se050Timer>>;
 
     type Reboot = Reboot;
 
