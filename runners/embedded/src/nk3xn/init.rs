@@ -120,7 +120,6 @@ impl Stage0 {
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
-        iocon.pio1_9.modify(|_, w| w.mode().pull_down());
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
         let is_passive_mode = nfc_irq.is_low().ok().unwrap();
 
@@ -422,7 +421,8 @@ impl Stage2 {
 
         let mut ntag = Ntp53::new(i2c, ed);
 
-        ntag.test();
+        debug_now!("ntag init: {:?}", ntag.init());
+        ntag.test(&mut self.basic.delay_timer);
 
         ntag
     }
@@ -490,11 +490,17 @@ impl Stage2 {
 
         let se050_i2c = false.then(|| self.get_se050_i2c(flexcomm5));
         let ntp53 = self.get_ntp53(flexcomm4);
+        let mut iso14443 = Iso14443::new(ntp53, nfc_rq);
+        iso14443.poll();
+        // Give a small delay to charge up capacitors
+        // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+        let ntp53 = iso14443;
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc, spi) = if use_nfc {
             let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-            let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
+            // let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
+            let nfc = None;
             (nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
@@ -511,6 +517,7 @@ impl Stage2 {
             spi,
             se050_timer: self.se050_timer,
             se050_i2c,
+            ntp53,
         }
     }
 }
@@ -525,6 +532,7 @@ pub struct Stage3 {
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    ntp53: Iso14443<Ntp53>,
 }
 
 impl Stage3 {
@@ -561,6 +569,7 @@ impl Stage3 {
             spi: self.spi,
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
+            ntp53: self.ntp53,
             flash,
         }
     }
@@ -577,6 +586,7 @@ pub struct Stage4 {
     flash: Flash,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    ntp53: Iso14443<Ntp53>,
 }
 
 impl Stage4 {
@@ -674,6 +684,7 @@ impl Stage4 {
             nfc_rp: self.nfc_rp,
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
+            ntp53: self.ntp53,
             store,
         }
     }
@@ -724,6 +735,7 @@ pub struct Stage5 {
     store: RunnerStore<NK3xN>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    ntp53: Iso14443<Ntp53>,
 }
 
 impl Stage5 {
@@ -771,6 +783,7 @@ impl Stage5 {
             nfc: self.nfc,
             nfc_rp: self.nfc_rp,
             store: self.store,
+            ntp53: self.ntp53,
             trussed,
         }
     }
@@ -785,6 +798,7 @@ pub struct Stage6 {
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore<NK3xN>,
     trussed: Trussed<NK3xN>,
+    ntp53: Iso14443<Ntp53>,
 }
 
 impl Stage6 {
@@ -844,7 +858,7 @@ impl Stage6 {
             None
         };
 
-        let usb_nfc = crate::init_usb_nfc(usb_bus, self.nfc, self.nfc_rp);
+        let usb_nfc = crate::init_usb_nfc(usb_bus, Some(self.ntp53), self.nfc_rp);
 
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();
