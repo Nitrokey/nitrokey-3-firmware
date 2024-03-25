@@ -7,6 +7,7 @@ use embedded_time::duration::{Extensions, Microseconds};
 
 use nfc_device::traits::nfc;
 
+pub mod blocks;
 pub mod registers;
 
 use registers::*;
@@ -34,8 +35,18 @@ where
         Self {
             i2c,
             ed,
-            current_frame_size: 0x80,
+            current_frame_size: 0xFF,
         }
+    }
+
+    pub fn init(&mut self) -> Result<(), E> {
+        self.write_block_raw(blocks::SYNC_DATA_BLOCK, &[0xFF, 0x00])?;
+        let synch_addr = self.read_block_raw(blocks::SYNC_DATA_BLOCK)?;
+        debug_now!("sync: {synch_addr:02x?}");
+
+        self.write_synch_data_addr(0x00FF)?;
+        self.release_eeproom_i2c_lock()?;
+        Ok(())
     }
 
     pub fn read_status(&mut self) -> Result<StatusRegister, E> {
@@ -113,18 +124,110 @@ where
         Ok(())
     }
 
-    pub fn write_block(&mut self, addr: u16, data: [u8; 4]) -> Result<(), E> {
+    /// Write a block and don't clear the arbiter lock
+    pub fn write_block_raw(&mut self, addr: u16, data: &[u8]) -> Result<(), E> {
+        assert!(data.len() <= 4, "Block data must be 4 bytes at most");
         let [addr_msb, addr_lsb] = addr.to_be_bytes();
-        let [b1, b2, b3, b4] = data;
-        let buf = [addr_msb, addr_lsb, b1, b2, b3, b4];
+        let b1 = data.get(0).copied().unwrap_or_default();
+        let b2 = data.get(1).copied().unwrap_or_default();
+        let b3 = data.get(2).copied().unwrap_or_default();
+        let b4 = data.get(3).copied().unwrap_or_default();
+        let buf = &[addr_msb, addr_lsb, b1, b2, b3, b4][..data.len() + 2];
         self.i2c.write(NFC_ADDR, &buf)
     }
 
-    pub fn read_block(&mut self, addr: u16) -> Result<[u8; 4], E> {
+    /// Read a block and release the arbiter lock
+    pub fn write_block(&mut self, addr: u16, data: &[u8]) -> Result<(), E> {
+        self.write_block_raw(addr, data)?;
+        self.release_eeproom_i2c_lock()
+    }
+
+    /// Write multiple blocks without releasing the EEPROM lock
+    pub fn write_blocks_raw<'a>(
+        &mut self,
+        datas: impl Iterator<Item = (u16, &'a [u8])>,
+    ) -> Result<(), E> {
+        for (addr, data) in datas {
+            self.write_block_raw(addr, data)?;
+        }
+        Ok(())
+    }
+
+    /// Write multiple blocks and release the EEPROM lock after
+    pub fn write_blocks<'a>(
+        &mut self,
+        datas: impl Iterator<Item = (u16, &'a [u8])>,
+    ) -> Result<(), E> {
+        self.write_blocks_raw(datas)?;
+        self.release_eeproom_i2c_lock()
+    }
+
+    /// Read a block without releasing the arbiter lock
+    pub fn read_block_raw(&mut self, addr: u16) -> Result<[u8; 4], E> {
         let mut data = [0; 4];
         self.i2c
             .write_read(NFC_ADDR, &addr.to_be_bytes(), &mut data)?;
         Ok(data)
+    }
+
+    /// Read a block and release the arbiter lock
+    pub fn read_block(&mut self, addr: u16) -> Result<[u8; 4], E> {
+        let data = self.read_block_raw(addr)?;
+        self.release_eeproom_i2c_lock()?;
+        Ok(data)
+    }
+
+    /// Read multiple blocks without releasing the arbiter lock
+    ///
+    /// returns the number of **bytes** read (4 times the number of *blocks* read)
+    pub fn read_blocks_raw(
+        &mut self,
+        addrs: impl Iterator<Item = u16>,
+        data: &mut [u8],
+    ) -> Result<usize, E> {
+        assert_eq!(
+            data.len() % 4,
+            0,
+            "Blocks are 4 bytes long. Data must be a multiple of 4"
+        );
+        let mut count = 0;
+        assert!(addrs.size_hint().0 * 4 < data.len());
+
+        for addr in addrs {
+            let block = self.read_block_raw(addr)?;
+            for b in block {
+                data[count] = b;
+                count += 1;
+            }
+        }
+        Ok(count)
+    }
+
+    /// Read multiple blocks and release the arbiter lock
+    ///
+    /// returns the number of **bytes** read (4 times the number of *blocks* read)
+    pub fn read_blocks(
+        &mut self,
+        addrs: impl Iterator<Item = u16>,
+        data: &mut [u8],
+    ) -> Result<usize, E> {
+        assert_eq!(
+            data.len() % 4,
+            0,
+            "Blocks are 4 bytes long. Data must be a multiple of 4"
+        );
+        let mut count = 0;
+        assert!(addrs.size_hint().0 * 4 < data.len());
+
+        for addr in addrs {
+            let block = self.read_block_raw(addr)?;
+            for b in block {
+                data[count] = b;
+                count += 1;
+            }
+        }
+        self.release_eeproom_i2c_lock()?;
+        Ok(count)
     }
 
     pub fn read_register(&mut self, register: Register, register_offset: u8) -> Result<u8, E> {
@@ -172,7 +275,7 @@ where
             error_now!("Could not read config block: ");
             return;
         };
-        debug_now!("Release lock: {}", self.release_eeproom_i2c_lock().is_ok());
+        // debug_now!("Release lock: {}", self.release_eeproom_i2c_lock().is_ok());
         debug_now!("Config block: {:032b}", u32::from_be_bytes(_config));
 
         match self.write_register(Register::Config, 0, 0b0000_0010, 0b0000_0010) {
@@ -213,9 +316,8 @@ where
 
         let mut pin_inital = (self.ed.is_high().ok(), self.ed.is_low().ok());
         let mut read_synch_data_addr_initial = self.read_synch_data_addr().ok();
-        let mut i = 0;
         debug_now!("Status: {:?}", self.read_status());
-        loop {
+        for i in 0..1000 {
             let pin_data = (self.ed.is_high().ok(), self.ed.is_low().ok());
             if pin_data != pin_inital {
                 debug_now!(
@@ -244,10 +346,13 @@ where
             if i % (10_000_000 / 200_000) == 0 {
                 debug_now!("Round {i}");
             }
-
-            i += 1;
         }
     }
+}
+
+fn convert_err<E: core::fmt::Debug>(_err: E) -> nfc::Error {
+    debug_now!("Failed to read status: {_err:?}");
+    nfc::Error::NoActivity
 }
 
 impl<I2C, ED, E> nfc::Device for Ntp53<I2C, ED>
@@ -257,7 +362,17 @@ where
     ED: InputPin,
 {
     fn read(&mut self, buf: &mut [u8]) -> Result<nfc::State, nfc::Error> {
-        // self.read_packet(buf)
+        let current_frame_size = self.read_synch_data_addr().map_err(convert_err)?;
+
+        let status0: StatusRegister0 = self
+            .read_register(Register::Status, 0)
+            .map_err(convert_err)?
+            .into();
+        if !status0.synch_block_write() {
+            return Err(nfc::Error::NoActivity);
+        }
+
+        // self.read_blocks_raw(0..buf.len(), data)
         todo!()
     }
 
