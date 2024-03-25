@@ -16,7 +16,6 @@ use trussed::{
     api::{reply, request},
     backend::Backend as _,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
-    types::NoData,
 };
 
 #[cfg(feature = "se050")]
@@ -35,7 +34,7 @@ use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 use trussed_rsa_alloc::SoftwareRsa;
 
 use trussed_chunked::ChunkedExtension;
-use trussed_hkdf::{HkdfBackend, HkdfExtension};
+use trussed_hkdf::HkdfExtension;
 use trussed_manage::ManageExtension;
 use trussed_staging::{StagingBackend, StagingContext};
 use trussed_wrap_key_to_file::WrapKeyToFileExtension;
@@ -49,7 +48,6 @@ use webcrypt::hmacsha256p256::{
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
-    hkdf: HkdfBackend,
     #[cfg(feature = "webcrypt")]
     hmacsha256p256: HmacSha256P256Backend,
     staging: StagingBackend,
@@ -124,7 +122,6 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         Self {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location),
-            hkdf: HkdfBackend,
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
@@ -146,7 +143,6 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let hw_key_se050 = hw_key.clone();
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key),
-            hkdf: HkdfBackend,
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
@@ -241,15 +237,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
-            Backend::Hkdf => match extension {
-                Extension::Hkdf => self.hkdf.extension_request_serialized(
-                    &mut ctx.core,
-                    &mut NoData,
-                    request,
-                    resources,
-                ),
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
             #[cfg(feature = "webcrypt")]
             Backend::HmacSha256P256 => match extension {
                 Extension::HmacSha256P256 => self.hmacsha256p256.extension_request_serialized(
@@ -272,6 +259,13 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
+                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 Extension::WrapKeyToFile => {
                     ExtensionImpl::<WrapKeyToFileExtension>::extension_request_serialized(
                         &mut self.staging,

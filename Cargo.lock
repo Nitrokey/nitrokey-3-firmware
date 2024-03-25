@@ -1181,7 +1181,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.13#d55050a2491b0bd6cb6f72d1265ef038b8295c4f"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.14#db4a63dd582784c847520136da930f172330ef28"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -3271,16 +3271,10 @@ dependencies = [
 
 [[package]]
 name = "trussed-hkdf"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-hkdf-backend.git?tag=v0.1.0#4a172d88c0fd4be713a863db0cb18266acb0da43"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=hkdf-v0.2.0#e016b25fbc49f3ba13272d58a9e9d47a16d8ea14"
 dependencies = [
- "heapless-bytes",
- "hkdf",
- "hmac",
- "log",
- "postcard 0.7.3",
  "serde",
- "sha2",
  "trussed",
 ]
 
@@ -3350,17 +3344,20 @@ dependencies = [
 
 [[package]]
 name = "trussed-staging"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.2.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+version = "0.3.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.0#e016b25fbc49f3ba13272d58a9e9d47a16d8ea14"
 dependencies = [
  "chacha20poly1305",
  "delog",
+ "hkdf",
  "littlefs2",
  "rand_core",
  "serde",
  "serde-byte-array",
+ "sha2",
  "trussed",
  "trussed-chunked",
+ "trussed-hkdf",
  "trussed-manage",
  "trussed-wrap-key-to-file",
 ]
