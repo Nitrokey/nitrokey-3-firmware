@@ -19,7 +19,7 @@ mod app {
     use apdu_dispatch::dispatch::ApduDispatch;
     use boards::{
         init::UsbClasses,
-        nk3xn::{nfc::NfcChip, NK3xN},
+        nk3xn::{nfc::Ntp53, NK3xN},
         runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
         Apps, Trussed,
@@ -60,7 +60,7 @@ mod app {
         /// The USB driver classes
         usb_classes: Option<UsbClasses<Soc>>,
         /// The NFC driver
-        contactless: Option<Iso14443<NfcChip>>,
+        contactless: Option<Iso14443<Ntp53>>,
 
         /// This timer is used while developing NFC, to time how long things took,
         /// and to make sure logs are not flushed in the middle of NFC transactions.
@@ -122,6 +122,8 @@ mod app {
 
         let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
         let systick = Systick::new(systick, 96_000_000); // TODO: read out sysclk
+
+        debug_now!("Contactless: {}", usb_nfc.iso14443.is_some());
 
         let shared = SharedResources {
             apdu_dispatch: usb_nfc.apdu_dispatch,

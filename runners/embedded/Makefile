@@ -43,7 +43,7 @@ RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 # feature definition
 BUILD_FEATURES := board-$(BOARD),$(FEATURES),$(NO_DELOG_FEATURE),$(LITTLEFS_INTRINSICS_FEATURE)
 
-.PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars lint-all lint
+.PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars lint-all lint doc-nk3xn doc-nk3am.bl
 
 # default target -> just build all "shortcuts"
 all: build-all $(ARTIFACTS)

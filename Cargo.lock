@@ -313,6 +313,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46afbd2983a5d5a7bd740ccb198caf5b82f45c40c09c0eed36052d91cb92e719"
 
 [[package]]
+name = "bitfield"
+version = "0.14.0"
+source = "git+https://github.com/sosthene-nitrokey/rust-bitfield.git?rev=e22a096dd22eac3abbfc37f92423b8bdf0985bba#e22a096dd22eac3abbfc37f92423b8bdf0985bba"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -708,7 +713,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
 dependencies = [
  "bare-metal 0.2.5",
- "bitfield",
+ "bitfield 0.13.2",
  "critical-section 1.1.2",
  "embedded-hal",
  "volatile-register",
@@ -1983,10 +1988,14 @@ dependencies = [
 
 [[package]]
 name = "ntp53"
-version = "1.7.0-rc.1"
+version = "1.7.2"
 dependencies = [
+ "bitfield 0.14.0",
  "delog",
  "embedded-hal",
+ "embedded-time",
+ "nb 1.1.0",
+ "nfc-device",
 ]
 
 [[package]]
