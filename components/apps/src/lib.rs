@@ -14,7 +14,6 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
-use littlefs2::path;
 use serde::{Deserialize, Serialize};
 use trussed::{
     backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
@@ -23,7 +22,7 @@ use trussed::{
 use utils::Version;
 
 pub use admin_app::Reboot;
-use admin_app::{migrations::Migrator, ConfigValueMut, ResetSignalAllocation};
+use admin_app::{ConfigValueMut, ResetSignalAllocation};
 
 #[cfg(feature = "webcrypt")]
 use webcrypt::{PeekingBypass, Webcrypt};
@@ -36,41 +35,49 @@ fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     value == &Default::default()
 }
 
-const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
+#[allow(unused)]
+mod migrations {
+    use admin_app::migrations::Migrator;
+    use littlefs2::path;
 
-const MIGRATORS: &[Migrator] = &[
-    // We first migrate the SE050 since this migration deletes data to make sure that the other
-    // migrations succeed even on low block availability
-    #[cfg(feature = "se050-migration")]
-    Migrator {
-        migrate: |ifs, _efs| {
-            trussed_se050_backend::migrate::migrate_remove_all_dat(ifs, &[path!("/opcard")])
+    pub(crate) const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
+
+    /// set to true to enable migrations for trussed-auth and se050-backend
+    pub(crate) const USE_MIGRATIONS: bool = false;
+
+    // TODO: use when enabling migrations of trussed-auth and se050-backend and of fido-authenticator
+    pub(crate) const MIGRATORS: &[Migrator] = &[
+        // We first migrate the SE050 since this migration deletes data to make sure that the other
+        // migrations succeed even on low block availability
+        #[cfg(feature = "se050-migration")]
+        Migrator {
+            migrate: |ifs, _efs| {
+                trussed_se050_backend::migrate::migrate_remove_all_dat(ifs, &[path!("/opcard")])
+            },
+            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
         },
-        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-    },
-    #[cfg(feature = "backend-auth")]
-    Migrator {
-        migrate: |ifs, _efs| {
-            trussed_auth::migrate::migrate_remove_dat(
-                ifs,
-                &[
-                    path!("opcard"),
-                    path!("webcrypt"),
-                    path!("secrets"),
-                    path!("piv"),
-                ],
-            )
+        #[cfg(feature = "backend-auth")]
+        Migrator {
+            migrate: |ifs, _efs| {
+                trussed_auth::migrate::migrate_remove_dat(
+                    ifs,
+                    &[
+                        path!("opcard"),
+                        path!("webcrypt"),
+                        path!("secrets"),
+                        path!("piv"),
+                    ],
+                )
+            },
+            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
         },
-        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-    },
-    #[cfg(feature = "fido-authenticator")]
-    Migrator {
-        migrate: |ifs, _efs| {
-            fido_authenticator::migrate::migrate_no_rp_dir(ifs, path!("/fido/dat"))
+        Migrator {
+            // FIDO migration
+            migrate: |_ifs, _efs| todo!("Add fido migration"),
+            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
         },
-        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-    },
-];
+    ];
+}
 
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
@@ -376,7 +383,7 @@ impl<R: Runner> Apps<R> {
             version,
             data.version_string,
             data.status(),
-            MIGRATORS,
+            migrations::MIGRATORS,
         )
         .unwrap_or_else(|(trussed, _err)| {
             data.init_status.insert(InitStatus::CONFIG_ERROR);
@@ -386,11 +393,11 @@ impl<R: Runner> Apps<R> {
                 version,
                 data.version_string,
                 data.status(),
-                MIGRATORS,
+                migrations::MIGRATORS,
             )
         });
 
-        const LATEST_MIGRATION: u32 = MIGRATION_VERSION_SPACE_EFFICIENCY;
+        const LATEST_MIGRATION: u32 = 0;
         let migration_success = app
             .migrate(LATEST_MIGRATION, data.store, &mut filestore)
             .is_ok();

@@ -1121,7 +1121,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa#5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=6eff6f9ad65df6875fe1eec31cfe34f591cad303#6eff6f9ad65df6875fe1eec31cfe34f591cad303"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1183,7 +1183,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?rev=81818b0ea8a2f1c49ef1d16ebdc4f79b4c8e32cb#81818b0ea8a2f1c49ef1d16ebdc4f79b4c8e32cb"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.14#db4a63dd582784c847520136da930f172330ef28"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
@@ -1191,7 +1191,6 @@ dependencies = [
  "delog",
  "heapless",
  "iso7816",
- "littlefs2",
  "serde",
  "serde-indexed",
  "serde_cbor",
@@ -2657,7 +2656,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa#5da6f4e278a4b13fadbaacdb30387ccc6a3a9bfa"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=6eff6f9ad65df6875fe1eec31cfe34f591cad303#6eff6f9ad65df6875fe1eec31cfe34f591cad303"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.4.2",
@@ -3228,7 +3227,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-auth?rev=68271487a93c65261f4d54149a17b8a5137201de#68271487a93c65261f4d54149a17b8a5137201de"
+source = "git+https://github.com/Nitrokey/trussed-auth?rev=f89f8534a88fb1fe96c6ad6e002e6e523e0e7280#f89f8534a88fb1fe96c6ad6e002e6e523e0e7280"
 dependencies = [
  "admin-app",
  "chacha20poly1305",
@@ -3288,7 +3287,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=0f33b19b18060c0f63a75b1e3894a5e0da8179b7#0f33b19b18060c0f63a75b1e3894a5e0da8179b7"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=4158263c4c060be2691cf87ad400187f9ef0b0a3#4158263c4c060be2691cf87ad400187f9ef0b0a3"
 dependencies = [
  "admin-app",
  "cbor-smol",
