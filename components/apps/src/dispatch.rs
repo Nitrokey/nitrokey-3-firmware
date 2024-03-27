@@ -45,6 +45,8 @@ use webcrypt::hmacsha256p256::{
     HmacSha256P256Extension,
 };
 
+use crate::migrations::USE_MIGRATIONS;
+
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
@@ -121,12 +123,14 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let _ = auth_location;
         Self {
             #[cfg(feature = "backend-auth")]
-            auth: AuthBackend::new(auth_location),
+            auth: AuthBackend::new(auth_location, USE_MIGRATIONS),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
-            se050: se050.map(|driver| Se050Backend::new(driver, auth_location, None, NAMESPACE)),
+            se050: se050.map(|driver| {
+                Se050Backend::new(driver, auth_location, None, NAMESPACE, USE_MIGRATIONS)
+            }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -142,13 +146,19 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         // Should the backend really use the same key?
         let hw_key_se050 = hw_key.clone();
         Self {
-            auth: AuthBackend::with_hw_key(auth_location, hw_key),
+            auth: AuthBackend::with_hw_key(auth_location, hw_key, USE_MIGRATIONS),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
-                Se050Backend::new(driver, auth_location, Some(hw_key_se050), NAMESPACE)
+                Se050Backend::new(
+                    driver,
+                    auth_location,
+                    Some(hw_key_se050),
+                    NAMESPACE,
+                    USE_MIGRATIONS,
+                )
             }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
