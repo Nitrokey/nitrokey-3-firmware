@@ -5,6 +5,8 @@ delog::generate_macros!();
 
 use core::arch::asm;
 
+use cortex_m_rt::{exception, ExceptionFrame};
+
 #[inline]
 pub fn msp() -> u32 {
     let r;
@@ -342,4 +344,9 @@ mod app {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     boards::handle_panic::<boards::nk3xn::NK3xN>(info)
+}
+
+#[exception]
+unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
+    boards::handle_hard_fault::<boards::nk3xn::NK3xN>(ef)
 }

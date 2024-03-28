@@ -3,6 +3,8 @@
 
 delog::generate_macros!();
 
+use cortex_m_rt::ExceptionFrame;
+
 pub mod flash;
 pub mod init;
 pub mod runtime;
@@ -141,6 +143,17 @@ impl<S: Soc> Syscall for RunnerSyscall<S> {
 
 pub fn handle_panic<B: Board>(_info: &core::panic::PanicInfo) -> ! {
     error_now!("{}", _info);
+    #[cfg(feature = "rtt-target")]
+    rtt_target::rprint!("{}", _info);
+    B::Led::set_panic_led();
+    loop {
+        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+pub unsafe fn handle_hard_fault<B: Board>(_ef: &ExceptionFrame) -> ! {
+    #[cfg(feature = "rtt-target")]
+    rtt_target::rprint!("HardFault: {:?}", _ef);
     B::Led::set_panic_led();
     loop {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);

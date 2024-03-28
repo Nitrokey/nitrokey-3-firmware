@@ -8,6 +8,7 @@ apdu-dispatch = "0.1"
 apps = { path = "../apps" }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
+cortex-m-rt = "0.6.15"
 ctaphid-dispatch = "0.1"
 delog = "0.1"
 embedded-hal = "0.2.3"

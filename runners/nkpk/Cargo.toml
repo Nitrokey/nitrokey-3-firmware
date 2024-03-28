@@ -17,6 +17,7 @@ interchange = "0.3"
 nrf52840-hal = "0.15.1"
 nrf52840-pac = "0.11"
 utils = { path = "../../components/utils", features = ["storage"] }
+cortex-m-rt = "0.6.15"
 
 [build-dependencies]
 cargo-lock = "7"
