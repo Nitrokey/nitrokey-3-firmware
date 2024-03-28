@@ -230,7 +230,8 @@ impl TryFrom<u8> for CustomStatus {
     }
 }
 
-pub struct UnknownStatusError(u8);
+#[derive(Debug)]
+pub struct UnknownStatusError(pub u8);
 
 pub struct Apps<R: Runner> {
     admin: AdminApp<R>,

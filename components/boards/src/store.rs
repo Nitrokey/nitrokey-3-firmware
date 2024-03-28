@@ -69,12 +69,14 @@ macro_rules! impl_storage_pointers {
 
             unsafe fn ifs_storage() -> &'static mut Option<Self::InternalStorage> {
                 static mut IFS_STORAGE: Option<$I> = None;
+                #[allow(static_mut_refs)]
                 &mut IFS_STORAGE
             }
 
             unsafe fn ifs_alloc(
             ) -> &'static mut Option<::littlefs2::fs::Allocation<Self::InternalStorage>> {
                 static mut IFS_ALLOC: Option<::littlefs2::fs::Allocation<$I>> = None;
+                #[allow(static_mut_refs)]
                 &mut IFS_ALLOC
             }
 
@@ -82,6 +84,7 @@ macro_rules! impl_storage_pointers {
             ) -> &'static mut Option<::littlefs2::fs::Filesystem<'static, Self::InternalStorage>>
             {
                 static mut IFS: Option<::littlefs2::fs::Filesystem<$I>> = None;
+                #[allow(static_mut_refs)]
                 &mut IFS
             }
 
@@ -93,12 +96,14 @@ macro_rules! impl_storage_pointers {
 
             unsafe fn efs_storage() -> &'static mut Option<Self::ExternalStorage> {
                 static mut EFS_STORAGE: Option<$E> = None;
+                #[allow(static_mut_refs)]
                 &mut EFS_STORAGE
             }
 
             unsafe fn efs_alloc(
             ) -> &'static mut Option<::littlefs2::fs::Allocation<Self::ExternalStorage>> {
                 static mut EFS_ALLOC: Option<::littlefs2::fs::Allocation<$E>> = None;
+                #[allow(static_mut_refs)]
                 &mut EFS_ALLOC
             }
 
@@ -106,6 +111,7 @@ macro_rules! impl_storage_pointers {
             ) -> &'static mut Option<::littlefs2::fs::Filesystem<'static, Self::ExternalStorage>>
             {
                 static mut EFS: Option<::littlefs2::fs::Filesystem<$E>> = None;
+                #[allow(static_mut_refs)]
                 &mut EFS
             }
 
