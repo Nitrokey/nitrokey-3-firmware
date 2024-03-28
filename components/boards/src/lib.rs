@@ -151,7 +151,7 @@ pub fn handle_panic<B: Board>(_info: &core::panic::PanicInfo) -> ! {
     }
 }
 
-pub unsafe fn handle_hard_fault<B: Board>(_ef: &ExceptionFrame) -> ! {
+pub fn handle_hard_fault<B: Board>(_ef: &ExceptionFrame) -> ! {
     #[cfg(feature = "rtt-target")]
     rtt_target::rprint!("HardFault: {:?}", _ef);
     B::Led::set_panic_led();
