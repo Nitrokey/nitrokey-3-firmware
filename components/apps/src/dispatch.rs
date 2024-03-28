@@ -39,13 +39,17 @@ use trussed_manage::ManageExtension;
 use trussed_staging::{StagingBackend, StagingContext};
 use trussed_wrap_key_to_file::WrapKeyToFileExtension;
 
+#[cfg(feature = "backend-auth")]
+use super::migrations::TRUSSED_AUTH_FS_LAYOUT;
+
+#[cfg(feature = "se050")]
+use super::migrations::SE050_BACKEND_FS_LAYOUT;
+
 #[cfg(feature = "webcrypt")]
 use webcrypt::hmacsha256p256::{
     Backend as HmacSha256P256Backend, BackendContext as HmacSha256P256Context,
     HmacSha256P256Extension,
 };
-
-use crate::migrations::USE_MIGRATIONS;
 
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
@@ -123,13 +127,19 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let _ = auth_location;
         Self {
             #[cfg(feature = "backend-auth")]
-            auth: AuthBackend::new(auth_location, USE_MIGRATIONS),
+            auth: AuthBackend::new(auth_location, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
-                Se050Backend::new(driver, auth_location, None, NAMESPACE, USE_MIGRATIONS)
+                Se050Backend::new(
+                    driver,
+                    auth_location,
+                    None,
+                    NAMESPACE,
+                    SE050_BACKEND_FS_LAYOUT,
+                )
             }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
@@ -146,7 +156,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         // Should the backend really use the same key?
         let hw_key_se050 = hw_key.clone();
         Self {
-            auth: AuthBackend::with_hw_key(auth_location, hw_key, USE_MIGRATIONS),
+            auth: AuthBackend::with_hw_key(auth_location, hw_key, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
@@ -157,7 +167,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
                     auth_location,
                     Some(hw_key_se050),
                     NAMESPACE,
-                    USE_MIGRATIONS,
+                    SE050_BACKEND_FS_LAYOUT,
                 )
             }),
             #[cfg(not(feature = "se050"))]

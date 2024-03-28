@@ -67,8 +67,7 @@ webcrypt = ["dep:webcrypt", "backend-auth", "backend-rsa"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid"]
 opcard = ["dep:opcard", "backend-rsa", "backend-auth"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth"]
-se050 = ["dep:se05x", "trussed-se050-backend", "trussed-se050-manage", "admin-app/se050", "se050-migration"]
-se050-migration = ["dep:se05x", "trussed-se050-backend"]
+se050 = ["dep:se05x", "trussed-se050-backend", "trussed-se050-manage", "admin-app/se050"]
 
 # backends
 backend-auth = ["trussed-auth"]
