@@ -3227,9 +3227,8 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-auth?rev=f89f8534a88fb1fe96c6ad6e002e6e523e0e7280#f89f8534a88fb1fe96c6ad6e002e6e523e0e7280"
+source = "git+https://github.com/Nitrokey/trussed-auth?rev=b792b186378b81e15e1ef9e8d5a08ef0d986e9bb#b792b186378b81e15e1ef9e8d5a08ef0d986e9bb"
 dependencies = [
- "admin-app",
  "chacha20poly1305",
  "hkdf",
  "hmac",
@@ -3287,7 +3286,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=4158263c4c060be2691cf87ad400187f9ef0b0a3#4158263c4c060be2691cf87ad400187f9ef0b0a3"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=d5aee1bcff61dc55bcf87efca10cd58cd06714a0#d5aee1bcff61dc55bcf87efca10cd58cd06714a0"
 dependencies = [
  "admin-app",
  "cbor-smol",

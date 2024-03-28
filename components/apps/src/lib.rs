@@ -35,49 +35,7 @@ fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     value == &Default::default()
 }
 
-#[allow(unused)]
-mod migrations {
-    use admin_app::migrations::Migrator;
-    use littlefs2::path;
-
-    pub(crate) const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
-
-    /// set to true to enable migrations for trussed-auth and se050-backend
-    pub(crate) const USE_MIGRATIONS: bool = false;
-
-    // TODO: use when enabling migrations of trussed-auth and se050-backend and of fido-authenticator
-    pub(crate) const MIGRATORS: &[Migrator] = &[
-        // We first migrate the SE050 since this migration deletes data to make sure that the other
-        // migrations succeed even on low block availability
-        #[cfg(feature = "se050-migration")]
-        Migrator {
-            migrate: |ifs, _efs| {
-                trussed_se050_backend::migrate::migrate_remove_all_dat(ifs, &[path!("/opcard")])
-            },
-            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-        },
-        #[cfg(feature = "backend-auth")]
-        Migrator {
-            migrate: |ifs, _efs| {
-                trussed_auth::migrate::migrate_remove_dat(
-                    ifs,
-                    &[
-                        path!("opcard"),
-                        path!("webcrypt"),
-                        path!("secrets"),
-                        path!("piv"),
-                    ],
-                )
-            },
-            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-        },
-        Migrator {
-            // FIDO migration
-            migrate: |_ifs, _efs| todo!("Add fido migration"),
-            version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-        },
-    ];
-}
+mod migrations;
 
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
