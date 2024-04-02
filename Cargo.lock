@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=7637af1cc935cc20210310ae00e54e28fc2d3b51#7637af1cc935cc20210310ae00e54e28fc2d3b51"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=v0.1.0-nitrokey.12#c134517557accee32370e34d1527681b38932e41"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -492,7 +492,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.0"
-source = "git+https://github.com/Nitrokey/cbor-smol.git?rev=bac1ac69dd0117d1f80f3f5e1d3b60ba8987ad70#bac1ac69dd0117d1f80f3f5e1d3b60ba8987ad70"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.2#ebf597e4800b5523490b957714cafe066db13e66"
 dependencies = [
  "delog",
  "heapless",
@@ -3227,7 +3227,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-auth?rev=b792b186378b81e15e1ef9e8d5a08ef0d986e9bb#b792b186378b81e15e1ef9e8d5a08ef0d986e9bb"
+source = "git+https://github.com/Nitrokey/trussed-auth?tag=v0.3.0-nitrokey.1#a725ae6d42b88a89599f7d9f0b5c78e21e8352b2"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3286,7 +3286,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=d5aee1bcff61dc55bcf87efca10cd58cd06714a0#d5aee1bcff61dc55bcf87efca10cd58cd06714a0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.1#2c06c5b281a3661909ee514680a7cb2530879f0e"
 dependencies = [
  "admin-app",
  "cbor-smol",
