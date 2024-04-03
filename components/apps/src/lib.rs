@@ -366,7 +366,8 @@ impl<R: Runner> Apps<R> {
                 version,
                 data.version_string,
                 data.status(),
-                migrations::MIGRATORS,
+                // No migrations if the config failed to load. In that case applications are disabled anyways
+                &[],
             )
         });
 
