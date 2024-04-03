@@ -250,20 +250,19 @@ pub struct UnknownStatusError(pub u8);
 pub struct Apps<R: Runner> {
     admin: AdminApp<R>,
     #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-    fido: FidoApp<R>,
+    fido: Option<FidoApp<R>>,
     #[cfg(feature = "ndef-app")]
     ndef: NdefApp,
     #[cfg(feature = "secrets-app")]
-    oath: SecretsApp<R>,
+    oath: Option<SecretsApp<R>>,
     #[cfg(feature = "opcard")]
     opcard: Option<OpcardApp<R>>,
     #[cfg(feature = "piv-authenticator")]
-    piv: PivApp<R>,
+    piv: Option<PivApp<R>>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
     #[cfg(feature = "webcrypt")]
-    webcrypt: PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>,
-    migrated_successfully: bool,
+    webcrypt: Option<PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>>,
 }
 
 impl<R: Runner> Apps<R> {
@@ -287,36 +286,52 @@ impl<R: Runner> Apps<R> {
         } = data;
 
         let (admin, init_status) = Self::admin_app(runner, &mut make_client, admin);
+        let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
+        #[cfg(feature = "opcard")]
+        let config_has_error = init_status.contains(InitStatus::CONFIG_ERROR);
+
+        // Config errors can have security and stability implications for opcard as they select
+        // the backend to use (se050 or software).  Therefore we disable the app if a config
+        // error occured.
+        #[cfg(feature = "opcard")]
+        let opcard = (!config_has_error && migrated_successfully)
+            .then(|| App::new(runner, &mut make_client, (), &admin.config().opcard));
+        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        let fido = migrated_successfully
+            .then(|| App::new(runner, &mut make_client, fido, &admin.config().fido));
 
         #[cfg(feature = "webcrypt")]
-        let webcrypt_fido_bypass = PeekingBypass::new(
-            App::new(runner, &mut make_client, fido, &admin.config().fido),
-            App::new(runner, &mut make_client, (), &()),
-        );
+        let webcrypt_fido_bypass = migrated_successfully.then(|| {
+            PeekingBypass::new(
+                App::new(runner, &mut make_client, fido, &admin.config().fido),
+                App::new(runner, &mut make_client, (), &()),
+            )
+        });
+
+        #[cfg(feature = "secrets-app")]
+        let oath = migrated_successfully.then(|| App::new(runner, &mut make_client, (), &()));
+
+        #[cfg(feature = "piv-authenticator")]
+        let piv = migrated_successfully.then(|| App::new(runner, &mut make_client, (), &()));
+
+        #[cfg(feature = "provisioner-app")]
+        let provisioner = App::new(runner, &mut make_client, provisioner, &());
 
         Self {
             #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            fido: App::new(runner, &mut make_client, fido, &admin.config().fido),
+            fido,
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
             #[cfg(feature = "secrets-app")]
-            oath: App::new(runner, &mut make_client, (), &()),
+            oath,
             #[cfg(feature = "opcard")]
-            // Config errors can have security and stability implications for opcard as they select
-            // the backend to use (se050 or software).  Therefore we disable the app if a config
-            // error occured.
-            opcard: if init_status.contains(InitStatus::CONFIG_ERROR) {
-                None
-            } else {
-                Some(App::new(runner, &mut make_client, (), &admin.config().opcard))
-            },
+            opcard,
             #[cfg(feature = "piv-authenticator")]
-            piv: App::new(runner, &mut make_client, (), &()),
+            piv,
             #[cfg(feature = "provisioner-app")]
-            provisioner: App::new(runner, &mut make_client, provisioner, &()),
+            provisioner,
             #[cfg(feature = "webcrypt")]
             webcrypt: webcrypt_fido_bypass,
-            migrated_successfully: !init_status.contains(InitStatus::MIGRATION_ERROR),
             admin,
         }
     }
@@ -399,24 +414,24 @@ impl<R: Runner> Apps<R> {
         #[cfg(feature = "ndef-app")]
         apps.push(&mut self.ndef).ok().unwrap();
 
-        if self.migrated_successfully {
-            // App 2: secrets
-            #[cfg(feature = "secrets-app")]
-            apps.push(&mut self.oath).ok().unwrap();
+        #[cfg(feature = "secrets-app")]
+        if let Some(oath) = self.oath.as_mut() {
+            apps.push(oath).ok().unwrap();
+        }
 
-            // App 3: opcard
-            #[cfg(feature = "opcard")]
-            if let Some(opcard) = &mut self.opcard {
-                apps.push(opcard).ok().unwrap();
-            }
+        #[cfg(feature = "opcard")]
+        if let Some(opcard) = self.opcard.as_mut() {
+            apps.push(opcard).ok().unwrap();
+        }
 
-            // App 4: piv
-            #[cfg(feature = "piv-authenticator")]
-            apps.push(&mut self.piv).ok().unwrap();
+        #[cfg(feature = "piv-authenticator")]
+        if let Some(piv) = self.piv.as_mut() {
+            apps.push(piv).ok().unwrap();
+        }
 
-            // App 5: fido
-            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            apps.push(&mut self.fido).ok().unwrap();
+        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        if let Some(fido) = self.fido.as_mut() {
+            apps.push(fido).ok().unwrap();
         }
 
         // App 6: admin
@@ -435,21 +450,24 @@ impl<R: Runner> Apps<R> {
     {
         let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
 
-        if self.migrated_successfully {
-            // App 1: webcrypt or fido
-            #[cfg(feature = "webcrypt")]
-            apps.push(&mut self.webcrypt).ok().unwrap();
-            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
-            apps.push(&mut self.fido).ok().unwrap();
+        // App 1: webcrypt or fido
+        #[cfg(feature = "webcrypt")]
+        if let Some(webcrypt) = self.webcrypt.as_mut() {
+            apps.push(webcrypt).ok().unwrap();
+        }
+
+        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        if let Some(fido) = self.fido.as_mut() {
+            apps.push(fido).ok().unwrap();
         }
 
         // App 2: admin
         apps.push(&mut self.admin).ok().unwrap();
 
-        if self.migrated_successfully {
-            // App 3: secrets
-            #[cfg(feature = "secrets-app")]
-            apps.push(&mut self.oath).ok().unwrap();
+        // App 3: secret
+        #[cfg(feature = "secrets-app")]
+        if let Some(oath) = self.oath.as_mut() {
+            apps.push(oath).ok().unwrap();
         }
 
         // App 4: provisioner
