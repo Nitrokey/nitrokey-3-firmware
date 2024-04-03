@@ -1,3 +1,4 @@
+use delog_panic::DelogPanic as _;
 use embedded_time::duration::units::Milliseconds;
 use systick_monotonic::{
     fugit::{MillisDurationU64, TimerDurationU64, TimerInstantU64},
@@ -63,5 +64,5 @@ impl<M: rtic::Monotonic> From<M> for MonotonicWrapper<M> {
 
 fn convert<const FREQ_HZ: u32>(instant: TimerInstantU64<FREQ_HZ>) -> Milliseconds {
     let duration: MillisDurationU64 = instant.duration_since_epoch().convert();
-    Milliseconds(duration.ticks().try_into().unwrap())
+    Milliseconds(duration.ticks().try_into().delog_unwrap())
 }

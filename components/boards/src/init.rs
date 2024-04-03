@@ -6,6 +6,7 @@ use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
+use delog_panic::DelogPanic as _;
 use interchange::Channel;
 use nfc_device::Iso14443;
 use rand::{CryptoRng, Rng as _, RngCore, SeedableRng};
@@ -93,8 +94,8 @@ pub fn init_usb_nfc<B: Board>(
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
-    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().delog_unwrap();
+    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().delog_unwrap();
 
     /* initialize dispatchers */
     let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);

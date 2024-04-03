@@ -361,6 +361,7 @@ dependencies = [
  "cortex-m-semihosting",
  "ctaphid-dispatch",
  "delog",
+ "delog-panic",
  "embedded-hal",
  "embedded-storage",
  "embedded-time",
