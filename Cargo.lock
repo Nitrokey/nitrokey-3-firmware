@@ -361,6 +361,7 @@ dependencies = [
  "cortex-m-semihosting",
  "ctaphid-dispatch",
  "delog",
+ "delog-panic",
  "embedded-hal",
  "embedded-storage",
  "embedded-time",
@@ -938,6 +939,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "delog-panic"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/delog-panic#180911472423fa3911141b72c8581970786de5fa"
+dependencies = [
+ "delog",
+]
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1181,12 +1190,13 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.14#db4a63dd582784c847520136da930f172330ef28"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=delog-panic#142adb291737f38f2c31f6bd72478096bcf08e44"
 dependencies = [
  "apdu-dispatch",
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
+ "delog-panic",
  "heapless",
  "iso7816",
  "serde",

@@ -1,5 +1,6 @@
 use super::spi::Spi;
 use apps::InitStatus;
+use delog_panic::DelogPanic as _;
 use lpc55_hal::{
     self,
     drivers::{
@@ -33,7 +34,7 @@ pub fn try_setup(
 ) -> Option<NfcChip> {
     // Start unselected.
     let nfc_cs = NfcCsPin::take()
-        .unwrap()
+        .delog_unwrap()
         .into_gpio_pin(iocon, gpio)
         .into_output_high();
 

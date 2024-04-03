@@ -5,6 +5,7 @@ use core::{
 };
 
 use apps::InitStatus;
+use delog_panic::{delog_panic, DelogPanic as _};
 use littlefs2::{
     const_ram_storage,
     driver::Storage,
@@ -37,7 +38,7 @@ const_ram_storage!(
 #[allow(clippy::missing_safety_doc)]
 #[cfg(feature = "provisioner")]
 pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
-    S::ifs_storage().as_mut().unwrap()
+    S::ifs_storage().as_mut().delog_unwrap()
 }
 
 // FIXME: document safety
@@ -192,7 +193,7 @@ pub fn init_store<B: Board>(
     static CLAIMED: AtomicBool = AtomicBool::new(false);
     CLAIMED
         .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
-        .expect("multiple instances of RunnerStore are not allowed");
+        .delog_expect("multiple instances of RunnerStore are not allowed");
 
     static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
     static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
@@ -210,7 +211,7 @@ pub fn init_store<B: Board>(
             Ok(ifs) => B::ifs().insert(ifs),
             Err(_e) => {
                 error!("IFS Mount Error {:?}", _e);
-                panic!("IFS");
+                delog_panic!("IFS");
             }
         };
 
@@ -218,7 +219,7 @@ pub fn init_store<B: Board>(
             Ok(efs) => B::efs().insert(efs),
             Err(_e) => {
                 error!("EFS Mount Error {:?}", _e);
-                panic!("EFS");
+                delog_panic!("EFS");
             }
         };
 
@@ -226,7 +227,7 @@ pub fn init_store<B: Board>(
             Ok(vfs) => VOLATILE_FS.insert(vfs),
             Err(_e) => {
                 error!("VFS Mount Error {:?}", _e);
-                panic!("VFS");
+                delog_panic!("VFS");
             }
         };
 
