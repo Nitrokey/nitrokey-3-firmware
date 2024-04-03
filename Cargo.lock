@@ -227,7 +227,7 @@ dependencies = [
  "humansize",
  "mime",
  "mime_guess",
- "nom 7.1.3",
+ "nom",
  "num-traits",
  "percent-encoding",
  "proc-macro2",
@@ -287,21 +287,22 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "bindgen"
-version = "0.56.0"
+version = "0.69.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2da379dbebc0b76ef63ca68d8fc6e71c0f13e59432e0987e508c1820e6ab5239"
+checksum = "a00dc851838a2120612785d195287475a3ac45514741da670b735818822129a0"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.4.2",
  "cexpr",
  "clang-sys",
+ "itertools",
  "lazy_static",
  "lazycell",
- "peeking_take_while",
  "proc-macro2",
  "quote",
  "regex",
  "rustc-hash",
  "shlex",
+ "syn 2.0.48",
 ]
 
 [[package]]
@@ -510,11 +511,11 @@ dependencies = [
 
 [[package]]
 name = "cexpr"
-version = "0.4.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
+checksum = "6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766"
 dependencies = [
- "nom 5.1.3",
+ "nom",
 ]
 
 [[package]]
@@ -1081,6 +1082,7 @@ dependencies = [
  "delog",
  "embedded-hal",
  "interchange 0.3.0",
+ "littlefs2-sys",
  "lpc55-hal",
  "lpc55-pac",
  "memory-regions",
@@ -1769,8 +1771,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c25e4f545f6ca5415c6325066260e764674d7893dcf0017a52a2ef456ba915f5"
+source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=39626c0dbc2f6c38b74889a5bf9d5a200614f121#39626c0dbc2f6c38b74889a5bf9d5a200614f121"
 dependencies = [
  "bindgen",
  "cc",
@@ -1934,16 +1935,6 @@ dependencies = [
  "nrf52840-hal",
  "nrf52840-pac",
  "utils",
-]
-
-[[package]]
-name = "nom"
-version = "5.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08959a387a676302eebf4ddbcbc611da04285579f76f88ee0506c63b1a61dd4b"
-dependencies = [
- "memchr",
- "version_check",
 ]
 
 [[package]]
@@ -2203,12 +2194,6 @@ dependencies = [
  "smallvec",
  "windows-targets 0.48.5",
 ]
-
-[[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
 name = "percent-encoding"
@@ -2873,9 +2858,9 @@ checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "shlex"
-version = "0.1.1"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
+checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "signal-hook"
