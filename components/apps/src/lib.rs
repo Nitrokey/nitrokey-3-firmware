@@ -349,6 +349,13 @@ impl<R: Runner> Apps<R> {
         // TODO: use CLIENT_ID directly
         let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
         let version = data.version.encode();
+
+        let valid_migrators = migrations::MIGRATORS;
+        // No migrations if the config failed to load. In that case applications are disabled anyways
+        let config_error_migrators = &[];
+
+        let mut used_migrators = valid_migrators;
+
         let mut app = AdminApp::<R>::load_config(
             trussed,
             &mut filestore,
@@ -356,24 +363,29 @@ impl<R: Runner> Apps<R> {
             version,
             data.version_string,
             data.status(),
-            migrations::MIGRATORS,
+            valid_migrators,
         )
         .unwrap_or_else(|(trussed, _err)| {
             data.init_status.insert(InitStatus::CONFIG_ERROR);
+            used_migrators = config_error_migrators;
             AdminApp::<R>::with_default_config(
                 trussed,
                 runner.uuid(),
                 version,
                 data.version_string,
                 data.status(),
-                // No migrations if the config failed to load. In that case applications are disabled anyways
-                &[],
+                config_error_migrators,
             )
         });
 
-        const LATEST_MIGRATION: u32 = 0;
+        let migration_version = used_migrators
+            .iter()
+            .map(|m| m.version)
+            .max()
+            .unwrap_or_default();
+
         let migration_success = app
-            .migrate(LATEST_MIGRATION, data.store, &mut filestore)
+            .migrate(migration_version, data.store, &mut filestore)
             .is_ok();
         if !migration_success {
             data.init_status.insert(InitStatus::MIGRATION_ERROR);
