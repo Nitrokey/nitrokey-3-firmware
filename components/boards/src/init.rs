@@ -2,7 +2,10 @@ use apdu_dispatch::{
     dispatch::ApduDispatch,
     interchanges::{Channel as CcidChannel, Responder as CcidResponder, SIZE as CCID_SIZE},
 };
+#[cfg(any(feature = "trussed-auth", feature = "se050"))]
+use apps::AUTH_LOCATION;
 use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
+
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
@@ -11,7 +14,7 @@ use nfc_device::Iso14443;
 use rand::{CryptoRng, Rng as _, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use ref_swap::OptionRefSwap;
-use trussed::{interrupt::InterruptFlag, platform::Store as _, types::Location};
+use trussed::{interrupt::InterruptFlag, platform::Store as _};
 use usb_device::{
     bus::UsbBusAllocator,
     device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
@@ -257,21 +260,22 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     #[cfg(feature = "trussed-auth")]
     let dispatch = if let Some(hw_key) = hw_key {
         Dispatch::with_hw_key(
-            Location::Internal,
+            AUTH_LOCATION,
             trussed::types::Bytes::from_slice(hw_key).unwrap(),
             #[cfg(feature = "se050")]
             se050,
         )
     } else {
         Dispatch::new(
-            Location::Internal,
+            AUTH_LOCATION,
             #[cfg(feature = "se050")]
             se050,
         )
     };
     #[cfg(not(feature = "trussed-auth"))]
     let dispatch = Dispatch::new(
-        Location::Internal,
+        #[cfg(feature = "se050")]
+        AUTH_LOCATION,
         #[cfg(feature = "se050")]
         se050,
     );
