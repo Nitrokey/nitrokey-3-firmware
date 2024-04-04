@@ -3,7 +3,7 @@ use nrf52840_hal::{
     clocks::Clocks,
     usbd::{UsbPeripheral, Usbd},
 };
-use nrf52840_pac::{self, Interrupt, SCB};
+use nrf52840_pac::{Interrupt, SCB};
 
 use super::{Soc, Uuid};
 use rtic_monotonic::{RtcDuration, RtcMonotonic};
@@ -144,9 +144,9 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
-    let usb_peripheral = nrf52840_hal::usbd::UsbPeripheral::new(usb_pac, usb_clock_ref);
+    let usb_peripheral = UsbPeripheral::new(usb_pac, usb_clock_ref);
 
-    let usbd = nrf52840_hal::usbd::Usbd::new(usb_peripheral);
+    let usbd = Usbd::new(usb_peripheral);
     unsafe {
         USBD.replace(usbd);
     }
