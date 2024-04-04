@@ -34,7 +34,10 @@ impl Soc for Lpc55 {
     const VARIANT: Variant = Variant::Lpc55;
 
     fn device_uuid() -> &'static Uuid {
-        unsafe { &DEVICE_UUID }
+        #[allow(static_mut_refs)]
+        unsafe {
+            &DEVICE_UUID
+        }
     }
 }
 
