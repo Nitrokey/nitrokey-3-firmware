@@ -37,9 +37,4 @@ pub(crate) const MIGRATORS: &[Migrator] = &[
         },
         version: MIGRATION_VERSION_SPACE_EFFICIENCY,
     },
-    Migrator {
-        // FIDO migration
-        migrate: |_ifs, _efs| todo!("Add fido migration"),
-        version: MIGRATION_VERSION_SPACE_EFFICIENCY,
-    },
 ];
