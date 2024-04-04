@@ -1,7 +1,6 @@
 use super::spi::Spi;
 use apps::InitStatus;
 use lpc55_hal::{
-    self,
     drivers::{
         pins::{self, Pin},
         Timer,
@@ -43,8 +42,8 @@ pub fn try_setup(
     // FIXME: use bitlfags to document what is being configured
     //                      no limit      2mA resistor    3.3V
     const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
-    let current_regu_config = fm.read_reg(fm11nc08::Register::ReguCfg);
-    let current_nfc_config = fm.read_reg(fm11nc08::Register::NfcCfg);
+    let current_regu_config = fm.read_reg(Register::ReguCfg);
+    let current_nfc_config = fm.read_reg(Register::NfcCfg);
 
     // regu_config gets configured by upstream vendor testing, so we need
     // to additionally test on another value to see if eeprom is configured by us.

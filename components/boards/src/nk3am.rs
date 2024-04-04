@@ -158,7 +158,7 @@ pub fn init_pins(gpiote: GPIOTE, p0: P0, p1: P1) -> BoardGPIO {
     let se_scl = gpio_p1.p1_15.into_floating_input().degrade();
     let se_sda = gpio_p0.p0_02.into_floating_input().degrade();
 
-    let se_pins = nrf52840_hal::twim::Pins {
+    let se_pins = twim::Pins {
         scl: se_scl,
         sda: se_sda,
     };

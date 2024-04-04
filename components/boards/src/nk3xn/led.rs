@@ -8,7 +8,7 @@ use lpc55_hal::{
         init_state,
         pin::{self, function},
     },
-    Iocon,
+    Gpio, Iocon, Syscon,
 };
 
 pub enum Color {
@@ -67,9 +67,9 @@ impl RgbLed {
 impl rgb_led::RgbLed for RgbLed {
     fn set_panic_led() {
         unsafe {
-            let mut syscon = lpc55_hal::Syscon::steal();
-            let mut iocon = lpc55_hal::Iocon::steal().enabled(&mut syscon);
-            let mut gpio = lpc55_hal::Gpio::steal().enabled(&mut syscon);
+            let mut syscon = Syscon::steal();
+            let mut iocon = Iocon::steal().enabled(&mut syscon);
+            let mut gpio = Gpio::steal().enabled(&mut syscon);
 
             RedLedPin::steal()
                 .into_gpio_pin(&mut iocon, &mut gpio)

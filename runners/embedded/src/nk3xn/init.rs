@@ -717,7 +717,7 @@ impl Stage5 {
 
         let user_interface = UserInterface::new(rtc, three_buttons, rgb);
 
-        let trussed = boards::init::init_trussed(
+        let trussed = init::init_trussed(
             &mut self.rng,
             self.store,
             user_interface,

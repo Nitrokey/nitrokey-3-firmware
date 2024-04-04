@@ -98,7 +98,7 @@ impl<C: Clock, P: UserPresence, L: RgbLed> platform::UserInterface for UserInter
         }
     }
 
-    fn set_status(&mut self, status: trussed::platform::ui::Status) {
+    fn set_status(&mut self, status: ui::Status) {
         let uptime = self.uptime();
         self.status.update(status, uptime);
         self.refresh_ui(uptime);

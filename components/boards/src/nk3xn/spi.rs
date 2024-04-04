@@ -1,5 +1,4 @@
 use lpc55_hal::{
-    self,
     drivers::{
         pins::{self, Pin},
         SpiMaster,
