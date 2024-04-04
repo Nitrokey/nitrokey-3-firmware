@@ -44,6 +44,9 @@ systick-monotonic = { version = "1.0.0", optional = true }
 ### Allocator
 alloc-cortex-m = { version = "0.4.3", optional = true }
 
+# littlefs2-sys for intrinsics feature
+littlefs2-sys = { version = "0.1.7", optional = true }
+
 [build-dependencies]
 cargo-lock = "7"
 memory-regions = "1"
@@ -59,6 +62,9 @@ develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
 
 no-delog = ["boards/no-delog", "delog/knock-it-off"]
+
+# Disable littlefs use of compiler intrinsics
+littlefs-software-intrinsics = ["dep:littlefs2-sys", "littlefs2-sys/software-intrinsics"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = ["boards/no-encrypted-storage"]
