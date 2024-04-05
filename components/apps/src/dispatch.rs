@@ -125,6 +125,7 @@ const NAMESPACE: trussed_se050_backend::namespacing::Namespace = {
 pub const AUTH_LOCATION: Location = Location::Internal;
 
 impl<T: Twi, D: Delay> Dispatch<T, D> {
+    #[allow(clippy::new_without_default)]
     pub fn new(
         #[cfg(any(feature = "backend-auth", feature = "se050"))] auth_location: Location,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,

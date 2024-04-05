@@ -158,6 +158,7 @@ pub struct OpcardConfig {
     use_se050_backend: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for OpcardConfig {
     fn default() -> Self {
         Self {
