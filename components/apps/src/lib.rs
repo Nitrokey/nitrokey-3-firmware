@@ -16,6 +16,10 @@ use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
 #[cfg(all(feature = "opcard", any(feature = "factory-reset", feature = "se050")))]
 use littlefs2::path;
+
+#[cfg(feature = "factory-reset")]
+use admin_app::ResetConfigResult;
+
 use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "opcard", feature = "se050"))]
 use trussed::{api::NotBefore, service::Filestore};
@@ -92,6 +96,15 @@ impl admin_app::Config for Config {
         }
     }
 
+    #[cfg(feature = "factory-reset")]
+    fn reset_client_config(&mut self, key: &str) -> ResetConfigResult {
+        match key {
+            "fido" => self.fido.reset_config(),
+            "opcard" => self.opcard.reset_config(),
+            _ => ResetConfigResult::WrongKey,
+        }
+    }
+
     fn migration_version(&self) -> Option<u32> {
         Some(self.fs_version)
     }
@@ -124,13 +137,34 @@ impl FidoConfig {
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         None
     }
+
+    #[cfg(feature = "factory-reset")]
+    fn reset_config(&mut self) -> ResetConfigResult {
+        use core::mem;
+        let old = mem::take(self);
+
+        if &old == self {
+            ResetConfigResult::Unchanged
+        } else {
+            ResetConfigResult::Changed
+        }
+    }
 }
 
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct OpcardConfig {
     #[cfg(feature = "se050")]
     #[serde(default, rename = "s", skip_serializing_if = "is_default")]
     use_se050_backend: bool,
+}
+
+impl Default for OpcardConfig {
+    fn default() -> Self {
+        Self {
+            #[cfg(feature = "se050")]
+            use_se050_backend: true,
+        }
+    }
 }
 
 #[cfg(feature = "opcard")]
@@ -178,6 +212,18 @@ impl OpcardConfig {
             #[cfg(feature = "se050")]
             "use_se050_backend" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
+        }
+    }
+
+    #[cfg(feature = "factory-reset")]
+    fn reset_config(&mut self) -> ResetConfigResult {
+        use core::mem;
+        let old = mem::take(self);
+
+        if &old == self {
+            ResetConfigResult::Unchanged
+        } else {
+            ResetConfigResult::Changed
         }
     }
 }
