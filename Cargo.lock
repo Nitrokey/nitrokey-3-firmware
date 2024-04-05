@@ -492,7 +492,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.0"
-source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.2#ebf597e4800b5523490b957714cafe066db13e66"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?rev=refs/pull/4/head#b2427e67ac8ff53f012986d954586fa18d5e6921"
 dependencies = [
  "delog",
  "heapless",
