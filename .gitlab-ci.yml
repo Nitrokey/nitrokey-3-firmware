@@ -128,12 +128,12 @@ build-usbip:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
   tags:
     - docker
   stage: build
   script:
-    - git describe --exact-match
-    - export VERSION=`git describe --exact-match`
+    - export VERSION=`git describe`
     - if echo $VERSION | grep test ; then export FEATURES=test ; fi
     - mkdir -p artifacts
     - cargo build --release --manifest-path runners/usbip/Cargo.toml --features $FEATURES,
