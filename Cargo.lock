@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=054536c2b46722b657fdc4d5806a5edcb10b5256#054536c2b46722b657fdc4d5806a5edcb10b5256"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=c257432dbe2efb53424d6847d82d90ddb527c53b#c257432dbe2efb53424d6847d82d90ddb527c53b"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -160,6 +160,7 @@ dependencies = [
  "bitflags 2.4.2",
  "cbor-smol",
  "ctaphid-dispatch",
+ "delog",
  "embedded-hal",
  "fido-authenticator",
  "heapless",

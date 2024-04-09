@@ -20,6 +20,11 @@ use littlefs2::path;
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
 
+#[macro_use]
+extern crate delog;
+
+generate_macros!();
+
 use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "opcard", feature = "se050"))]
 use trussed::{api::NotBefore, service::Filestore};
@@ -151,21 +156,11 @@ impl FidoConfig {
     }
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct OpcardConfig {
     #[cfg(feature = "se050")]
     #[serde(default, rename = "s", skip_serializing_if = "is_default")]
     use_se050_backend: bool,
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for OpcardConfig {
-    fn default() -> Self {
-        Self {
-            #[cfg(feature = "se050")]
-            use_se050_backend: true,
-        }
-    }
 }
 
 #[cfg(feature = "opcard")]
@@ -194,6 +189,18 @@ impl OpcardConfig {
 }
 
 impl OpcardConfig {
+    /// The config value used for initialization and after a factory-reset
+    ///
+    /// This is distinct from the `Default` value because the old default config was not
+    /// enabled
+    #[cfg(any(feature = "factory-reset", feature = "se050"))]
+    fn init() -> Self {
+        Self {
+            #[cfg(feature = "se050")]
+            use_se050_backend: true,
+        }
+    }
+
     fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
         match key {
             #[cfg(feature = "se050")]
@@ -219,7 +226,7 @@ impl OpcardConfig {
     #[cfg(feature = "factory-reset")]
     fn reset_config(&mut self) -> ResetConfigResult {
         use core::mem;
-        let old = mem::take(self);
+        let old = mem::replace(self, Self::init());
 
         if &old == self {
             ResetConfigResult::Unchanged
@@ -443,7 +450,8 @@ impl<R: Runner> Apps<R> {
             && app.config().fs_version == 0
             && !app.config().opcard.use_se050_backend
         {
-            let trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
+            use core::mem;
+            let opcard_trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
                 trussed_auth::FilesystemLayout::V0,
                 dispatch::AUTH_LOCATION,
                 path!("opcard"),
@@ -456,9 +464,17 @@ impl<R: Runner> Apps<R> {
                 .unwrap_or_default()
                 .is_none();
 
-            if !trussed_auth_used && !opcard_used {
+            if !opcard_trussed_auth_used && !opcard_used {
                 // No need to factory reset because the app is not yet created yet
-                app.config_mut().opcard.use_se050_backend = true;
+                let mut config = OpcardConfig::init();
+                mem::swap(&mut app.config_mut().opcard, &mut config);
+                app.save_config_filestore(&mut filestore)
+                    .map_err(|_err| {
+                        // We reset the config to the old on file version to avoid invalid operations
+                        mem::swap(&mut app.config_mut().opcard, &mut config);
+                        error_now!("Failed to save config after migration: {_err:?}");
+                    })
+                    .ok();
             }
         }
 
