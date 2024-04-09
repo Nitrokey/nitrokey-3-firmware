@@ -450,15 +450,11 @@ impl<R: Runner> Apps<R> {
                 data.store,
             )
             .unwrap_or_default();
-            let mut opcard_used = false;
             let mut fs = ClientFilestore::new(path!("opcard").into(), data.store);
-            if fs
+            let opcard_used = !fs
                 .read_dir_first(path!(""), Location::External, &NotBefore::None)
                 .unwrap_or_default()
-                .is_none()
-            {
-                opcard_used = true;
-            }
+                .is_none();
 
             if !trussed_auth_used && !opcard_used {
                 // No need to factory reset because the app is not yet created yet
