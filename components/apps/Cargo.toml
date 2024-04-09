@@ -19,7 +19,7 @@ if_chain = "1.0.2"
 littlefs2 = "0.4"
 
 # Backends
-trussed-auth = { version = "0.2.2", optional = true }
+trussed-auth = { version = "0.3.0", optional = true }
 trussed-rsa-alloc = { version = "0.1.0", optional = true }
 trussed-se050-backend = { version = "0.3.0", optional = true }
 trussed-staging = { version = "0.3.0", features = ["wrap-key-to-file", "chunked", "hkdf", "manage"] }
@@ -38,7 +38,7 @@ ndef-app = { path = "../ndef-app", optional = true }
 webcrypt = { version = "0.8.0", optional = true }
 secrets-app = { version = "0.13.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.4.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }
-piv-authenticator = { version = "0.4.0", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
+piv-authenticator = { version = "0.3.4", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]

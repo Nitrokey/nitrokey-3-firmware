@@ -39,6 +39,12 @@ use trussed_manage::ManageExtension;
 use trussed_staging::{StagingBackend, StagingContext};
 use trussed_wrap_key_to_file::WrapKeyToFileExtension;
 
+#[cfg(feature = "backend-auth")]
+use super::migrations::TRUSSED_AUTH_FS_LAYOUT;
+
+#[cfg(feature = "se050")]
+use super::migrations::SE050_BACKEND_FS_LAYOUT;
+
 #[cfg(feature = "webcrypt")]
 use webcrypt::hmacsha256p256::{
     Backend as HmacSha256P256Backend, BackendContext as HmacSha256P256Context,
@@ -121,12 +127,20 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let _ = auth_location;
         Self {
             #[cfg(feature = "backend-auth")]
-            auth: AuthBackend::new(auth_location),
+            auth: AuthBackend::new(auth_location, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
-            se050: se050.map(|driver| Se050Backend::new(driver, auth_location, None, NAMESPACE)),
+            se050: se050.map(|driver| {
+                Se050Backend::new(
+                    driver,
+                    auth_location,
+                    None,
+                    NAMESPACE,
+                    SE050_BACKEND_FS_LAYOUT,
+                )
+            }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -142,13 +156,19 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         // Should the backend really use the same key?
         let hw_key_se050 = hw_key.clone();
         Self {
-            auth: AuthBackend::with_hw_key(auth_location, hw_key),
+            auth: AuthBackend::with_hw_key(auth_location, hw_key, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
             hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
-                Se050Backend::new(driver, auth_location, Some(hw_key_se050), NAMESPACE)
+                Se050Backend::new(
+                    driver,
+                    auth_location,
+                    Some(hw_key_se050),
+                    NAMESPACE,
+                    SE050_BACKEND_FS_LAYOUT,
+                )
             }),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
@@ -195,7 +215,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 self.auth
                     .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
             }
-            Backend::Hkdf => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "webcrypt")]
             Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-rsa")]
@@ -275,6 +294,13 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
+                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -342,7 +368,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
     Auth,
-    Hkdf,
     #[cfg(feature = "webcrypt")]
     HmacSha256P256,
     #[cfg(feature = "backend-rsa")]
