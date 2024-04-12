@@ -14,11 +14,30 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
+#[cfg(all(feature = "opcard", any(feature = "factory-reset", feature = "se050")))]
+use littlefs2::path;
+
+#[cfg(feature = "factory-reset")]
+use admin_app::ResetConfigResult;
+
+#[macro_use]
+extern crate delog;
+
+generate_macros!();
+
 use serde::{Deserialize, Serialize};
+#[cfg(all(feature = "opcard", feature = "se050"))]
+use trussed::{api::NotBefore, service::Filestore};
 use trussed::{
-    backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
-    store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
+    backend::BackendId,
+    client::ClientBuilder,
+    interrupt::InterruptFlag,
+    platform::Syscall,
+    store::filestore::ClientFilestore,
+    types::{Location, Path},
+    ClientImplementation, Platform, Service,
 };
+
 use utils::Version;
 
 pub use admin_app::Reboot;
@@ -30,6 +49,9 @@ use webcrypt::{PeekingBypass, Webcrypt};
 mod dispatch;
 use dispatch::Backend;
 pub use dispatch::Dispatch;
+
+#[cfg(any(feature = "backend-auth", feature = "se050"))]
+pub use dispatch::AUTH_LOCATION;
 
 fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     value == &Default::default()
@@ -79,6 +101,15 @@ impl admin_app::Config for Config {
         }
     }
 
+    #[cfg(feature = "factory-reset")]
+    fn reset_client_config(&mut self, key: &str) -> ResetConfigResult {
+        match key {
+            "fido" => self.fido.reset_config(),
+            "opcard" => self.opcard.reset_config(),
+            _ => ResetConfigResult::WrongKey,
+        }
+    }
+
     fn migration_version(&self) -> Option<u32> {
         Some(self.fs_version)
     }
@@ -111,9 +142,21 @@ impl FidoConfig {
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         None
     }
+
+    #[cfg(feature = "factory-reset")]
+    fn reset_config(&mut self) -> ResetConfigResult {
+        use core::mem;
+        let old = mem::take(self);
+
+        if &old == self {
+            ResetConfigResult::Unchanged
+        } else {
+            ResetConfigResult::Changed
+        }
+    }
 }
 
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct OpcardConfig {
     #[cfg(feature = "se050")]
     #[serde(default, rename = "s", skip_serializing_if = "is_default")]
@@ -146,6 +189,18 @@ impl OpcardConfig {
 }
 
 impl OpcardConfig {
+    /// The config value used for initialization and after a factory-reset
+    ///
+    /// This is distinct from the `Default` value because the old default config was not
+    /// enabled
+    #[cfg(any(feature = "factory-reset", feature = "se050"))]
+    fn init() -> Self {
+        Self {
+            #[cfg(feature = "se050")]
+            use_se050_backend: true,
+        }
+    }
+
     fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
         match key {
             #[cfg(feature = "se050")]
@@ -161,10 +216,22 @@ impl OpcardConfig {
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         match key {
             #[cfg(feature = "factory-reset")]
-            "" => Some((littlefs2::path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            "" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             #[cfg(feature = "se050")]
-            "use_se050_backend" => Some((littlefs2::path!("opcard"), &OPCARD_RESET_SIGNAL)),
+            "use_se050_backend" => Some((path!("opcard"), &OPCARD_RESET_SIGNAL)),
             _ => None,
+        }
+    }
+
+    #[cfg(feature = "factory-reset")]
+    fn reset_config(&mut self) -> ResetConfigResult {
+        use core::mem;
+        let old = mem::replace(self, Self::init());
+
+        if &old == self {
+            ResetConfigResult::Unchanged
+        } else {
+            ResetConfigResult::Changed
         }
     }
 }
@@ -377,6 +444,39 @@ impl<R: Runner> Apps<R> {
                 config_error_migrators,
             )
         });
+
+        #[cfg(all(feature = "opcard", feature = "se050"))]
+        if !data.init_status.contains(InitStatus::CONFIG_ERROR)
+            && app.config().fs_version == 0
+            && !app.config().opcard.use_se050_backend
+        {
+            use core::mem;
+            let opcard_trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
+                trussed_auth::FilesystemLayout::V0,
+                dispatch::AUTH_LOCATION,
+                path!("opcard"),
+                data.store,
+            )
+            .unwrap_or_default();
+            let mut fs = ClientFilestore::new(path!("opcard").into(), data.store);
+            let opcard_used = !fs
+                .read_dir_first(path!(""), Location::External, &NotBefore::None)
+                .unwrap_or_default()
+                .is_none();
+
+            if !opcard_trussed_auth_used && !opcard_used {
+                // No need to factory reset because the app is not yet created yet
+                let mut config = OpcardConfig::init();
+                mem::swap(&mut app.config_mut().opcard, &mut config);
+                app.save_config_filestore(&mut filestore)
+                    .map_err(|_err| {
+                        // We reset the config to the old on file version to avoid invalid operations
+                        mem::swap(&mut app.config_mut().opcard, &mut config);
+                        error_now!("Failed to save config after migration: {_err:?}");
+                    })
+                    .ok();
+            }
+        }
 
         let migration_version = used_migrators
             .iter()
@@ -698,7 +798,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
         };
         let large_blobs = if cfg!(feature = "test") && runner.is_efs_available() {
             Some(fido_authenticator::LargeBlobsConfig {
-                location: trussed::types::Location::External,
+                location: Location::External,
                 max_size: 4096,
             })
         } else {
@@ -738,7 +838,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
         Webcrypt::new_with_options(
             trussed,
             webcrypt::Options::new(
-                trussed::types::Location::External,
+                Location::External,
                 [uuid[0], uuid[1], uuid[2], uuid[3]],
                 WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT,
             ),
@@ -766,7 +866,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
         let uuid = runner.uuid();
         let options = secrets_app::Options::new(
-            trussed::types::Location::External,
+            Location::External,
             CustomStatus::ReverseHotpSuccess.into(),
             CustomStatus::ReverseHotpError.into(),
             [uuid[0], uuid[1], uuid[2], uuid[3]],
@@ -804,7 +904,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         // See scd/app-openpgp.c in GnuPG for the manufacturer IDs
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
-        options.storage = trussed::types::Location::External;
+        options.storage = Location::External;
         #[cfg(feature = "se050")]
         {
             if config.use_se050_backend {

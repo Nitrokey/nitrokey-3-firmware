@@ -5,9 +5,12 @@ use trussed::{
     api::{Reply, Request},
     error::Error as TrussedError,
     service::ServiceResources,
-    types::{Context, Location},
+    types::Context,
     Platform,
 };
+
+#[cfg(feature = "backend-auth")]
+use trussed::types::Location;
 
 use littlefs2::{path, path::Path};
 
@@ -118,13 +121,15 @@ const NAMESPACE: trussed_se050_backend::namespacing::Namespace = {
     ])
 };
 
+#[cfg(any(feature = "backend-auth", feature = "se050"))]
+pub const AUTH_LOCATION: Location = Location::Internal;
+
 impl<T: Twi, D: Delay> Dispatch<T, D> {
+    #[allow(clippy::new_without_default)]
     pub fn new(
-        auth_location: Location,
+        #[cfg(any(feature = "backend-auth", feature = "se050"))] auth_location: Location,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,
     ) -> Self {
-        #[cfg(not(all(feature = "backend-auth", feature = "se050")))]
-        let _ = auth_location;
         Self {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location, TRUSSED_AUTH_FS_LAYOUT),

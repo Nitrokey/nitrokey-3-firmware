@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=v0.1.0-nitrokey.12#c134517557accee32370e34d1527681b38932e41"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=c257432dbe2efb53424d6847d82d90ddb527c53b#c257432dbe2efb53424d6847d82d90ddb527c53b"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -160,6 +160,7 @@ dependencies = [
  "bitflags 2.4.2",
  "cbor-smol",
  "ctaphid-dispatch",
+ "delog",
  "embedded-hal",
  "fido-authenticator",
  "heapless",
@@ -3173,7 +3174,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed.git?rev=371e8f7a07817c2ed57978bd86e3412bd9877647#371e8f7a07817c2ed57978bd86e3412bd9877647"
+source = "git+https://github.com/Nitrokey/trussed.git?tag=v0.1.0-nitrokey.19#2e7dd7c30bde38ff11f653b9f41a1780e7948bf7"
 dependencies = [
  "aes",
  "bitflags 2.4.2",
@@ -3210,7 +3211,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-auth?tag=v0.3.0-nitrokey.1#a725ae6d42b88a89599f7d9f0b5c78e21e8352b2"
+source = "git+https://github.com/trussed-dev/trussed-auth?rev=947ffe6cff426ccbbbb2d0f689437f427665919e#947ffe6cff426ccbbbb2d0f689437f427665919e"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3269,7 +3270,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=46b5af1842ccae7db76171aca5813f13991054c9#46b5af1842ccae7db76171aca5813f13991054c9"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=23d3511276176da396b6c3e788cd1c2f4dd37c9d#23d3511276176da396b6c3e788cd1c2f4dd37c9d"
 dependencies = [
  "admin-app",
  "cbor-smol",

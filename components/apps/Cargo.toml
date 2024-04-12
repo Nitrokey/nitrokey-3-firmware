@@ -4,6 +4,7 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
+delog = "0.1"
 apdu-dispatch = "0.1"
 bitflags = "2"
 ctaphid-dispatch = "0.1"

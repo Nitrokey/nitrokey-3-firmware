@@ -56,7 +56,7 @@ utils = { path = "../../components/utils", features = ["build"] }
 [features]
 default = ["alloc"]
 
-test = ["apps/nk3-test", "utils/test", "se050"]
+test = ["apps/nk3-test", "utils/test"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
@@ -80,8 +80,8 @@ format-filesystem = []
 
 alloc = ["alloc-cortex-m"]
 
-board-nk3am = ["boards/board-nk3am", "soc-nrf52"]
-board-nk3xn = ["boards/board-nk3xn", "soc-lpc55"]
+board-nk3am = ["boards/board-nk3am", "soc-nrf52", "se050"]
+board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050"]
 
 soc-nrf52 = ["nrf52840-hal", "nrf52840-pac"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "nb", "systick-monotonic"]
