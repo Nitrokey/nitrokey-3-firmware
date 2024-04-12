@@ -3211,7 +3211,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=deeba516cdfc280170d8b4f4cd1e024bac21ee13#deeba516cdfc280170d8b4f4cd1e024bac21ee13"
+source = "git+https://github.com/trussed-dev/trussed-auth?rev=947ffe6cff426ccbbbb2d0f689437f427665919e#947ffe6cff426ccbbbb2d0f689437f427665919e"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
