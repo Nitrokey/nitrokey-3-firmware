@@ -2,13 +2,22 @@
 
 ### Features
 
-- Add an SE050 driver and its tests ([#335][])
-- Use SE050 entropy to bootstrap the random number generator ([#335][])
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
 
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
+
+# 1.7.0-rc.2 (2024-04-12)
+
+### Features
+
+- Add an SE050 driver and its tests ([#335][])
+- Use SE050 entropy to bootstrap the random number generator ([#335][])
+- Enable SE050 support in OpenPGP by default ([#471][])
+
+[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
+[#471]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/471
 
 # 1.7.0-rc.1 (2024-03-06)
 
