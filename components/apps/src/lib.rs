@@ -14,7 +14,7 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
-#[cfg(all(feature = "opcard", any(feature = "factory-reset", feature = "se050")))]
+#[cfg(any(feature = "factory-reset", feature = "se050"))]
 use littlefs2::path;
 
 #[cfg(feature = "factory-reset")]
