@@ -10,7 +10,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 
 [patch.crates-io]
 # components

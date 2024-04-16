@@ -8,6 +8,15 @@
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 
+# 1.7.0-rc.3 (2024-04-16)
+
+### Features
+
+- Support app and device factory reset ([#383][], [#479][])
+
+[#383]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/383
+[#479]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/479
+
 # 1.7.0-rc.2 (2024-04-12)
 
 ### Features

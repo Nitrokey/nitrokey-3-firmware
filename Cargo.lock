@@ -153,7 +153,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "boards"
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 dependencies = [
  "apdu-dispatch",
  "apps",
@@ -1063,7 +1063,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 dependencies = [
  "alloc-cortex-m",
  "apdu-dispatch",
@@ -3505,7 +3505,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 dependencies = [
  "apps",
  "cfg-if",
@@ -3531,7 +3531,7 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
 name = "utils"
-version = "1.7.0-rc.2"
+version = "1.7.0-rc.3"
 dependencies = [
  "chrono",
  "delog",
