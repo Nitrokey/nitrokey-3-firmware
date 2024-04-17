@@ -11,9 +11,9 @@ use rtic_monotonic::{RtcDuration, RtcMonotonic};
 pub mod flash;
 pub mod rtic_monotonic;
 
-static mut DEVICE_UUID: Uuid = [0u8; 16];
-
-pub struct Nrf52;
+pub struct Nrf52 {
+    uuid: Uuid,
+}
 
 impl Soc for Nrf52 {
     type UsbBus = Usbd<UsbPeripheral<'static>>;
@@ -27,11 +27,8 @@ impl Soc for Nrf52 {
     const SOC_NAME: &'static str = "nrf52";
     const VARIANT: Variant = Variant::Nrf52;
 
-    fn device_uuid() -> &'static Uuid {
-        #[allow(static_mut_refs)]
-        unsafe {
-            &DEVICE_UUID
-        }
+    fn uuid(&self) -> &Uuid {
+        &self.uuid
     }
 }
 
@@ -60,13 +57,13 @@ pub fn init_bootup(
     ficr: &nrf52840_pac::FICR,
     uicr: &nrf52840_pac::UICR,
     power: &mut nrf52840_pac::POWER,
-) {
+) -> Nrf52 {
     let deviceid0 = ficr.deviceid[0].read().bits();
     let deviceid1 = ficr.deviceid[1].read().bits();
-    unsafe {
-        DEVICE_UUID[0..4].copy_from_slice(&deviceid0.to_be_bytes());
-        DEVICE_UUID[4..8].copy_from_slice(&deviceid1.to_be_bytes());
-    }
+
+    let mut uuid = Uuid::default();
+    uuid[0..4].copy_from_slice(&deviceid0.to_be_bytes());
+    uuid[4..8].copy_from_slice(&deviceid1.to_be_bytes());
 
     info!("RESET Reason: {:x}", power.resetreas.read().bits());
     power.resetreas.write(|w| w);
@@ -109,6 +106,8 @@ pub fn init_bootup(
     } else {
         info!("UICR APPROTECT is DISABLED!");
     };
+
+    Nrf52 { uuid }
 }
 
 type UsbClockType = Clocks<

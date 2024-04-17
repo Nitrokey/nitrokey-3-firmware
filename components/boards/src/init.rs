@@ -139,6 +139,7 @@ pub fn init_usb_nfc<B: Board>(
 }
 
 pub fn init_apps<B: Board>(
+    soc: &B::Soc,
     trussed: &mut Trussed<B>,
     init_status: InitStatus,
     store: &RunnerStore<B>,
@@ -177,6 +178,7 @@ pub fn init_apps<B: Board>(
     };
 
     let runner = Runner {
+        uuid: *soc.uuid(),
         is_efs_available: !nfc_powered,
         _marker: Default::default(),
     };

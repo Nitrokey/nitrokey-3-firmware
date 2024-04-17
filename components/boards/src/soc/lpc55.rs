@@ -15,11 +15,19 @@ use lpc55_hal::{
 pub mod clock_controller;
 pub mod monotonic;
 
-pub static mut DEVICE_UUID: Uuid = [0u8; 16];
-
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
-pub struct Lpc55;
+pub struct Lpc55 {
+    uuid: Uuid,
+}
+
+impl Lpc55 {
+    pub fn new() -> Self {
+        Self {
+            uuid: lpc55_hal::uuid(),
+        }
+    }
+}
 
 impl Soc for Lpc55 {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
@@ -33,11 +41,8 @@ impl Soc for Lpc55 {
     const SOC_NAME: &'static str = "lpc55";
     const VARIANT: Variant = Variant::Lpc55;
 
-    fn device_uuid() -> &'static Uuid {
-        #[allow(static_mut_refs)]
-        unsafe {
-            &DEVICE_UUID
-        }
+    fn uuid(&self) -> &Uuid {
+        &self.uuid
     }
 }
 

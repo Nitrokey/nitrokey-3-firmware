@@ -55,7 +55,7 @@ mod app {
 
         boards::init::init_logger::<Board>(VERSION_STRING);
 
-        nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
+        let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
 
         let mut board_gpio = nk3am::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
@@ -103,6 +103,7 @@ mod app {
         );
 
         let apps = boards::init::init_apps(
+            &soc,
             &mut trussed,
             init_status,
             &store,

@@ -25,5 +25,5 @@ pub trait Soc: Reboot + 'static {
     const SOC_NAME: &'static str;
     const VARIANT: Variant;
 
-    fn device_uuid() -> &'static Uuid;
+    fn uuid(&self) -> &Uuid;
 }

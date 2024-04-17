@@ -16,7 +16,7 @@ use boards::{
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
     },
     soc::{
-        lpc55::{clock_controller::DynamicClockController, Lpc55, DEVICE_UUID},
+        lpc55::{clock_controller::DynamicClockController, Lpc55},
         Soc,
     },
     store::{self, RunnerStore},
@@ -141,15 +141,6 @@ impl Stage0 {
 
     #[inline(never)]
     pub fn next(mut self, iocon: hal::Iocon<Unknown>, gpio: hal::Gpio<Unknown>) -> Stage1 {
-        unsafe {
-            DEVICE_UUID.copy_from_slice(&hal::uuid());
-            #[cfg(feature = "alpha")]
-            {
-                DEVICE_UUID[14] = 0xa1;
-                DEVICE_UUID[15] = 0xfa;
-            }
-        };
-
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
@@ -801,6 +792,7 @@ impl Stage6 {
     pub fn next(mut self, usbhs: Usbhs<Unknown>) -> All {
         self.perform_data_migrations();
         let apps = init::init_apps(
+            &Lpc55::new(),
             &mut self.trussed,
             self.status,
             &self.store,

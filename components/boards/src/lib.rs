@@ -33,7 +33,7 @@ use rand_chacha::ChaCha8Rng;
 use trussed::{client::Syscall, Platform};
 
 use crate::{
-    soc::Soc,
+    soc::{Soc, Uuid},
     store::{RunnerStore, StoragePointers},
     ui::{buttons::UserPresence, rgb_led::RgbLed, UserInterface},
 };
@@ -76,6 +76,7 @@ pub trait Board: StoragePointers {
 }
 
 pub struct Runner<B> {
+    pub uuid: Uuid,
     pub is_efs_available: bool,
     pub _marker: PhantomData<B>,
 }
@@ -90,7 +91,7 @@ impl<B: Board> apps::Runner for Runner<B> {
     type Se050Timer = B::Se050Timer;
 
     fn uuid(&self) -> [u8; 16] {
-        *B::Soc::device_uuid()
+        self.uuid
     }
 
     fn is_efs_available(&self) -> bool {
