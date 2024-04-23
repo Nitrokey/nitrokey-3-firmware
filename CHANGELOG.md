@@ -8,27 +8,9 @@
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 
-# 1.7.0-rc.3 (2024-04-16)
+# 1.7.0 (2024-04-24)
 
-### Features
-
-- Support app and device factory reset ([#383][], [#479][])
-
-[#383]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/383
-[#479]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/479
-
-# 1.7.0-rc.2 (2024-04-12)
-
-### Features
-
-- Add an SE050 driver and its tests ([#335][])
-- Use SE050 entropy to bootstrap the random number generator ([#335][])
-- Enable SE050 support in OpenPGP by default ([#471][])
-
-[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
-[#471]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/471
-
-# 1.7.0-rc.1 (2024-03-06)
+This release adds SE050 support to opcard, updates fido-authenticator to support CTAP 2.1 and introduces app and device factory reset.
 
 ### Features
 
@@ -36,10 +18,22 @@
 - Fix LED during user presence check for NK3AM ([#93][])
 - fido-authenticator: Implement CTAP 2.1
 - OpenPGP: fix locking out after an aborted factory-reset operation ([#443][])
+- Add an SE050 driver and its tests ([#335][])
+- Use SE050 entropy to bootstrap the random number generator ([#335][])
+- Enable SE050 support in OpenPGP by default ([#471][])
+- Support app and device factory reset ([#383][], [#479][])
+
+### Notes
+
+- When upgrading from the test firmware release v1.6.0-test.20231218, OpenPGP keys will not be retained after the update if the `opcard.use_se050_backend` config option has been set to true.
 
 [#93]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/93
+[#335]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/335
+[#383]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/383
 [#394]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/394
 [#443]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/443
+[#471]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/471
+[#479]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/479
 
 # 1.6.0 (2023-11-23)
 
