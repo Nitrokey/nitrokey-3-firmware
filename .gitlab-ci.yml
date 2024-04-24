@@ -81,6 +81,7 @@ build-nightly:
     matrix:
       - RUSTUP_TOOLCHAIN: [stable, nightly]
   script:
+    - rustup target add thumbv7em-none-eabihf thumbv8m.main-none-eabi
     - cargo --version
     - make -C runners/embedded build-nk3am.bl
     - make -C runners/embedded build-nk3am.bl FEATURES=test
