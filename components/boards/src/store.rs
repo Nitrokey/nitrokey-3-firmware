@@ -265,16 +265,17 @@ fn init_efs<B: Board>(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> LfsResult<Filesystem<'static, B::ExternalStorage>> {
-    if !Filesystem::is_mountable(efs_storage) {
-        let fmt_ext = Filesystem::format(efs_storage);
+    Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
+        error_now!("EFS Mount Error {:?}", _err);
+        let fmt_ext = Filesystem::format(storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NO_SPACE) {
             info_now!("Formatting simulated EFS failed as expected");
         } else {
-            error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
+            error_now!("EFS Reformat {:?}", fmt_ext);
             status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
         }
-    };
-    Filesystem::mount(efs_alloc, efs_storage)
+        Ok(())
+    })
 }
 
 #[inline(always)]
