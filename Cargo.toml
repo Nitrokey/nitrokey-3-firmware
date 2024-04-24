@@ -21,7 +21,7 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-n
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.3"}
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.16" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.20" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", rev = "0ccdd468859ea14b43e2e95790b9712c398ae5e1" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }

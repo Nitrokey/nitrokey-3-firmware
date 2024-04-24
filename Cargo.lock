@@ -2154,6 +2154,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "p384"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70786f51bcc69f6a4c0360e063a4cac5419ef7c5cd5b3c99ad70f3be5ba79209"
+dependencies = [
+ "ecdsa",
+ "elliptic-curve",
+ "primeorder",
+ "sha2",
+]
+
+[[package]]
+name = "p521"
+version = "0.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fc9e2161f1f215afdfce23677034ae137bbd45016a880c2eb3ba8eb95f085b2"
+dependencies = [
+ "base16ct",
+ "ecdsa",
+ "elliptic-curve",
+ "primeorder",
+ "sha2",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3166,7 +3191,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.20#40e312859ad1f6d4db8d4416d1f46558daf34819"
+source = "git+https://github.com/nitrokey/trussed.git?rev=0ccdd468859ea14b43e2e95790b9712c398ae5e1#0ccdd468859ea14b43e2e95790b9712c398ae5e1"
 dependencies = [
  "aes",
  "bitflags 2.5.0",
@@ -3178,6 +3203,7 @@ dependencies = [
  "cosey",
  "delog",
  "des",
+ "ecdsa",
  "embedded-hal",
  "flexiber",
  "generic-array",
@@ -3189,6 +3215,8 @@ dependencies = [
  "littlefs2",
  "nb 1.1.0",
  "p256-cortex-m4",
+ "p384",
+ "p521",
  "postcard 0.7.3",
  "rand_chacha",
  "rand_core",
