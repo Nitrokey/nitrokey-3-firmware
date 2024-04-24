@@ -1,4 +1,6 @@
-# Unreleased
+# Changelog
+
+## Unreleased
 
 ### Features
 
@@ -8,7 +10,7 @@
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 
-# 1.7.0 (2024-04-24)
+## v1.7.0 (2024-04-24)
 
 This release adds SE050 support to opcard, updates fido-authenticator to support CTAP 2.1 and introduces app and device factory reset.
 
@@ -35,11 +37,7 @@ This release adds SE050 support to opcard, updates fido-authenticator to support
 [#471]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/471
 [#479]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/479
 
-# 1.6.0 (2023-11-23)
-
-- no additions since v1.6.0-rc.1
-
-# 1.6.0-rc.1 (2023-11-10)
+## v1.6.0 (2023-11-23)
 
 ### Features
 
@@ -77,8 +75,7 @@ This release adds SE050 support to opcard, updates fido-authenticator to support
 [trussed-secrets-app#65]: https://github.com/Nitrokey/trussed-secrets-app/issues/65
 [trussed-secrets-app#92]: https://github.com/Nitrokey/trussed-secrets-app/issues/92
 
-
-# v1.5.0 (2023-05-31)
+## v1.5.0 (2023-05-31)
 
 ### Features
 
@@ -95,7 +92,7 @@ This release adds SE050 support to opcard, updates fido-authenticator to support
 [#278]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/278
 [#277]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/277
 
-# v1.4.0 (2023-05-05)
+## v1.4.0 (2023-05-05)
 
 This release adds OpenPGP card support and updates the OTP functionality.
 
@@ -117,7 +114,7 @@ This release adds OpenPGP card support and updates the OTP functionality.
 [#206]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/206
 [#207]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/207
 
-# v1.3.1 (2023-04-05)
+## v1.3.1 (2023-04-05)
 
 This release adds OTP functionality and contains some bugfixes.
 
@@ -151,11 +148,11 @@ This release adds OTP functionality and contains some bugfixes.
 [#160]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/160
 [#97]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/97
 
-# v1.3.0 (2023-03-27)
+## v1.3.0 (2023-03-27)
 
 This release was skipped to fix a naming inconsistency.
 
-# v1.2.2 (2022-10-05)
+## v1.2.2 (2022-10-05)
 
 This release contains additional internal tests.
 v1.2.1 was skipped due to an incorrectly determined bugfix.
@@ -173,7 +170,7 @@ v1.2.1 was skipped due to an incorrectly determined bugfix.
 [#90]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
 [#87]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/90
 
-# v1.2.0 (2022-08-30)
+## v1.2.0 (2022-08-30)
 
 This release contains various bugfixes and stability improvements.
 
@@ -194,15 +191,11 @@ This release contains various bugfixes and stability improvements.
 [iso7816#4]: https://github.com/ycrypto/iso7816/pull/4
 [iso7816#5]: https://github.com/ycrypto/iso7816/pull/5
 
-# v1.1.0 (2022-08-02)
+## v1.1.0 (2022-08-02)
 
 This release adds support for the NRF52 MCU, changes the LED color to red on
 panics and allows the user to skip the additional user presence check for the
 first FIDO2 operation within two seconds after boot.
-
-## v1.1.0-rc.1 (2022-07-27)
-
-This is the first official nRF52 release(candidate) for the Nitrokey 3A Mini.
 
 ### Features
 
@@ -215,15 +208,9 @@ This is the first official nRF52 release(candidate) for the Nitrokey 3A Mini.
 [#52]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/52
 [#61]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/61
 
-# v1.0.4 (2022-07-14)
+## v1.0.4 (2022-07-14)
 
 This release improves compatibility with Windows 10 and with OpenSSH and changes the LED patterns.
-
-### Features
-
-- Use white instead of blue as the LED color for winking ([#34][])
-
-## v1.0.4-rc.3 (2022-07-05)
 
 ### Features
 
@@ -239,11 +226,9 @@ This release improves compatibility with Windows 10 and with OpenSSH and changes
 [#48]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/48
 [#54]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/54
 
-# v1.0.3 (2022-04-11)
+## v1.0.3 (2022-04-11)
 
 This release fixes a FIDO authentication issue with Google.
-
-## v1.0.3-rc.1 (2022-04-06)
 
 ### Bugfixes
 
@@ -251,13 +236,9 @@ This release fixes a FIDO authentication issue with Google.
 
 [#36]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/36
 
-# v1.0.2 (2022-01-26)
+## v1.0.2 (2022-01-26)
 
 This release improves compatibility with Windows systems.
-
-## v1.0.2-rc.1 (2022-01-25)
-
-Update to upstream release 1.0.9.
 
 ### Bugfixes
 
@@ -265,20 +246,10 @@ Update to upstream release 1.0.9.
 
 [#21]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/21
 
-# v1.0.1 (2022-01-15)
+## v1.0.1 (2022-01-15)
 
 This release fixes some issues with the FIDO authenticator and the admin
 application.
-
-### Bugfixes
-
-- fido-authenticator: use smaller CredentialID - fixes issues with some services FIDO usage ([fido-authenticator#8][])
-- trussed: update P256 library - fixes signing failure in some cases ([#31][])
-
-[#31]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/31
-[fido-authenticator#8]: https://github.com/solokeys/fido-authenticator/pull/8
-
-## v1.0.1-rc.1 (2021-12-06)
 
 ### Features
 
@@ -286,6 +257,8 @@ application.
 
 ### Bugfixes
 
+- fido-authenticator: use smaller CredentialID - fixes issues with some services FIDO usage ([fido-authenticator#8][])
+- trussed: update P256 library - fixes signing failure in some cases ([#31][])
 - admin-app: Fix CTAPHID command dispatch ([#8][]).
 - admin-app: Fix CTAPHID wink command ([#9][]).
 - fido-authenticator: Handle pin protocol field in hmac-secret extension data
@@ -296,9 +269,11 @@ application.
 [#8]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/8
 [#9]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/9
 [#14]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/14
+[#31]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/31
 [fido-authenticator#1]: https://github.com/solokeys/fido-authenticator/pull/1
 [fido-authenticator#5]: https://github.com/solokeys/fido-authenticator/pull/5
+[fido-authenticator#8]: https://github.com/solokeys/fido-authenticator/pull/8
 
-# v1.0.0 (2021-10-16)
+## v1.0.0 (2021-10-16)
 
 First stable firmware release with FIDO authenticator.
