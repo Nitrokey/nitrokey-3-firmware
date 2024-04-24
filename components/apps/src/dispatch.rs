@@ -49,20 +49,12 @@ use super::migrations::TRUSSED_AUTH_FS_LAYOUT;
 #[cfg(feature = "se050")]
 use super::migrations::SE050_BACKEND_FS_LAYOUT;
 
-#[cfg(feature = "webcrypt")]
-use webcrypt::hmacsha256p256::{
-    Backend as HmacSha256P256Backend, BackendContext as HmacSha256P256Context,
-    HmacSha256P256Extension,
-};
-
 #[cfg(feature = "piv-authenticator")]
 use trussed_hpke::HpkeExtension;
 
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
-    #[cfg(feature = "webcrypt")]
-    hmacsha256p256: HmacSha256P256Backend,
     staging: StagingBackend,
     #[cfg(feature = "se050")]
     pub(crate) se050: Option<Se050Backend<T, D>>,
@@ -74,8 +66,6 @@ pub struct Dispatch<T = (), D = ()> {
 pub struct DispatchContext {
     #[cfg(feature = "backend-auth")]
     auth: AuthContext,
-    #[cfg(feature = "webcrypt")]
-    hmacsha256p256: HmacSha256P256Context,
     staging: StagingContext,
     #[cfg(feature = "se050")]
     se050: Se050Context,
@@ -141,8 +131,6 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         Self {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location, TRUSSED_AUTH_FS_LAYOUT),
-            #[cfg(feature = "webcrypt")]
-            hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
@@ -170,8 +158,6 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         let hw_key_se050 = hw_key.clone();
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key, TRUSSED_AUTH_FS_LAYOUT),
-            #[cfg(feature = "webcrypt")]
-            hmacsha256p256: Default::default(),
             staging: build_staging_backend(),
             #[cfg(feature = "se050")]
             se050: se050.map(|driver| {
@@ -228,8 +214,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                 self.auth
                     .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
             }
-            #[cfg(feature = "webcrypt")]
-            Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-rsa")]
             Backend::SoftwareRsa => SoftwareRsa.request(&mut ctx.core, &mut (), request, resources),
             Backend::Staging => {
@@ -267,16 +251,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                     resources,
                 ),
                 #[allow(unreachable_patterns)]
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            #[cfg(feature = "webcrypt")]
-            Backend::HmacSha256P256 => match extension {
-                Extension::HmacSha256P256 => self.hmacsha256p256.extension_request_serialized(
-                    &mut ctx.core,
-                    &mut ctx.backends.hmacsha256p256,
-                    request,
-                    resources,
-                ),
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             #[cfg(feature = "backend-rsa")]
@@ -399,8 +373,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
     Auth,
-    #[cfg(feature = "webcrypt")]
-    HmacSha256P256,
     #[cfg(feature = "backend-rsa")]
     SoftwareRsa,
     Staging,
@@ -422,8 +394,6 @@ pub enum Extension {
     WrapKeyToFile,
     Manage,
     FsInfo,
-    #[cfg(feature = "webcrypt")]
-    HmacSha256P256,
     #[cfg(feature = "se050")]
     Se050Manage,
     #[cfg(feature = "piv-authenticator")]
@@ -438,8 +408,6 @@ impl From<Extension> for u8 {
             Extension::Chunked => 1,
             Extension::WrapKeyToFile => 2,
             Extension::Manage => 3,
-            #[cfg(feature = "webcrypt")]
-            Extension::HmacSha256P256 => 4,
             #[cfg(feature = "se050")]
             Extension::Se050Manage => 5,
             Extension::Hkdf => 6,
@@ -460,8 +428,6 @@ impl TryFrom<u8> for Extension {
             1 => Ok(Extension::Chunked),
             2 => Ok(Extension::WrapKeyToFile),
             3 => Ok(Extension::Manage),
-            #[cfg(feature = "webcrypt")]
-            4 => Ok(Extension::HmacSha256P256),
             #[cfg(feature = "se050")]
             5 => Ok(Extension::Se050Manage),
             6 => Ok(Extension::Hkdf),
@@ -496,13 +462,6 @@ impl<T: Twi, D: Delay> ExtensionId<WrapKeyToFileExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::WrapKeyToFile;
-}
-
-#[cfg(feature = "webcrypt")]
-impl<T: Twi, D: Delay> ExtensionId<HmacSha256P256Extension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::HmacSha256P256;
 }
 
 impl<T: Twi, D: Delay> ExtensionId<ManageExtension> for Dispatch<T, D> {

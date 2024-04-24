@@ -198,7 +198,6 @@ dependencies = [
  "trussed-wrap-key-to-file",
  "usbd-ctaphid",
  "utils",
- "webcrypt",
 ]
 
 [[package]]
@@ -376,7 +375,7 @@ dependencies = [
  "cortex-m-rt",
  "cortex-m-rtic",
  "cortex-m-semihosting",
- "ctaphid-dispatch 0.3.0",
+ "ctaphid-dispatch",
  "delog",
  "embedded-hal",
  "embedded-storage",
@@ -882,9 +881,9 @@ dependencies = [
 
 [[package]]
 name = "ctap-types"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1beeb5a05e42c7cbfb788ce3e9fd6ce7d0aa214893b5ca6cd38d09ac9afe722"
+checksum = "bb8b105c5e728afd373e99874f0c1911c170b3a56848456cc16feb4506321606"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -906,20 +905,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fe93489fe96c998488d0843dffea35c02ed9add2585e55228e1d45988727ecc"
 dependencies = [
  "heapless-bytes",
- "trussed-core",
-]
-
-[[package]]
-name = "ctaphid-dispatch"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27caf0a07de6b0af58ba69562c1834ddf7aa27bc1d1687fed3b18fea1501e59e"
-dependencies = [
- "ctaphid-app",
- "delog",
- "heapless-bytes",
- "interchange",
- "ref-swap",
  "trussed-core",
 ]
 
@@ -1222,7 +1207,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.26#443eca178726f6de29ec86cbf70a92f47d385853"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.27#5ebb4a48302e4c80a2abe1c2d86201a3df2a1d2d"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -1968,7 +1953,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
- "ctaphid-dispatch 0.3.0",
+ "ctaphid-dispatch",
  "delog",
  "interchange",
  "memory-regions",
@@ -3456,7 +3441,7 @@ version = "0.0.1"
 source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=504674453c9573a30aa2f155101df49eb2af1ba7#504674453c9573a30aa2f155101df49eb2af1ba7"
 dependencies = [
  "apdu-dispatch",
- "ctaphid-dispatch 0.3.0",
+ "ctaphid-dispatch",
  "interchange",
  "littlefs2-core",
  "log",
@@ -3606,7 +3591,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82f5a2aa6898726b4eeb3fa3796fb8dc49e76e2a16bd683db103f63bc8ceca97"
 dependencies = [
- "ctaphid-dispatch 0.3.0",
+ "ctaphid-dispatch",
  "delog",
  "embedded-time",
  "heapless-bytes",
@@ -3636,7 +3621,7 @@ dependencies = [
  "cfg-if",
  "clap",
  "clap-num",
- "ctaphid-dispatch 0.3.0",
+ "ctaphid-dispatch",
  "delog",
  "dialoguer",
  "littlefs2",
@@ -3760,32 +3745,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
-
-[[package]]
-name = "webcrypt"
-version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc11#539ca26b1e045e27b1489d71784524640119db8b"
-dependencies = [
- "apdu-app",
- "cbor-smol",
- "ctap-types",
- "ctaphid-app",
- "ctaphid-dispatch 0.2.0",
- "delog",
- "generic-array",
- "heapless",
- "heapless-bytes",
- "hmac",
- "iso7816",
- "littlefs2-core",
- "serde",
- "serde-indexed",
- "serde_bytes",
- "sha2",
- "trussed",
- "trussed-core",
- "trussed-rsa-alloc",
-]
 
 [[package]]
 name = "winapi"

@@ -5,8 +5,6 @@ extern crate alloc;
 
 #[cfg(feature = "secrets-app")]
 const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
-#[cfg(feature = "webcrypt")]
-const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
 use apdu_app::App as ApduApp;
 use bitflags::bitflags;
@@ -41,9 +39,6 @@ use utils::Version;
 
 pub use admin_app::Reboot;
 use admin_app::{ConfigValueMut, ResetSignalAllocation};
-
-#[cfg(feature = "webcrypt")]
-use webcrypt::{PeekingBypass, Webcrypt};
 
 mod dispatch;
 pub use dispatch::{Backend, Dispatch, DispatchContext};
@@ -353,8 +348,6 @@ type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conformi
 type NdefApp = ndef_app::App<'static>;
 #[cfg(feature = "secrets-app")]
 type SecretsApp<R> = secrets_app::Authenticator<Client<R>>;
-#[cfg(feature = "webcrypt")]
-type WebcryptApp<R> = webcrypt::Webcrypt<Client<R>>;
 #[cfg(feature = "opcard")]
 type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "piv-authenticator")]
@@ -391,7 +384,7 @@ pub struct UnknownStatusError(pub u8);
 
 pub struct Apps<R: Runner> {
     admin: AdminApp<R>,
-    #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+    #[cfg(feature = "fido-authenticator")]
     fido: Option<FidoApp<R>>,
     #[cfg(feature = "ndef-app")]
     ndef: NdefApp,
@@ -403,8 +396,6 @@ pub struct Apps<R: Runner> {
     piv: Option<PivApp<R>>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
-    #[cfg(feature = "webcrypt")]
-    webcrypt: Option<PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>>,
 }
 
 const CLIENT_COUNT: usize = const {
@@ -415,7 +406,6 @@ const CLIENT_COUNT: usize = const {
         cfg!(feature = "piv-authenticator"),
         cfg!(feature = "provisioner-app"),
         cfg!(feature = "secrets-app"),
-        cfg!(feature = "webcrypt"),
     ];
 
     let mut n = 0;
@@ -556,17 +546,9 @@ impl<R: Runner> Apps<R> {
         #[cfg(feature = "opcard")]
         let opcard = (!config_has_error && migrated_successfully)
             .then(|| App::new(runner, client_builder, (), &admin.config().opcard));
-        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        #[cfg(feature = "fido-authenticator")]
         let fido = migrated_successfully
             .then(|| App::new(runner, client_builder, fido, &admin.config().fido));
-
-        #[cfg(feature = "webcrypt")]
-        let webcrypt_fido_bypass = migrated_successfully.then(|| {
-            PeekingBypass::new(
-                App::new(runner, client_builder, fido, &admin.config().fido),
-                App::new(runner, client_builder, (), &()),
-            )
-        });
 
         #[cfg(feature = "secrets-app")]
         let oath = migrated_successfully.then(|| App::new(runner, client_builder, (), &()));
@@ -578,7 +560,7 @@ impl<R: Runner> Apps<R> {
         let provisioner = App::new(runner, client_builder, provisioner, &());
 
         Self {
-            #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+            #[cfg(feature = "fido-authenticator")]
             fido,
             #[cfg(feature = "ndef-app")]
             ndef: NdefApp::new(),
@@ -590,8 +572,6 @@ impl<R: Runner> Apps<R> {
             piv,
             #[cfg(feature = "provisioner-app")]
             provisioner,
-            #[cfg(feature = "webcrypt")]
-            webcrypt: webcrypt_fido_bypass,
             admin,
         }
     }
@@ -744,7 +724,7 @@ impl<R: Runner> Apps<R> {
             }
         }
 
-        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        #[cfg(feature = "fido-authenticator")]
         if let Some(fido) = self.fido.as_mut() {
             apps.push(fido).ok().unwrap();
         }
@@ -765,13 +745,7 @@ impl<R: Runner> Apps<R> {
     {
         let mut apps: Vec<&mut dyn CtaphidApp<'static, N>, 4> = Default::default();
 
-        // App 1: webcrypt or fido
-        #[cfg(feature = "webcrypt")]
-        if let Some(webcrypt) = self.webcrypt.as_mut() {
-            apps.push(webcrypt).ok().unwrap();
-        }
-
-        #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
+        #[cfg(feature = "fido-authenticator")]
         if let Some(fido) = self.fido.as_mut() {
             apps.push(fido).ok().unwrap();
         }
@@ -1048,42 +1022,6 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
         &[BackendId::Custom(Backend::Staging), BackendId::Core]
-    }
-}
-
-#[cfg(feature = "webcrypt")]
-impl<R: Runner> App<R> for WebcryptApp<R> {
-    const CLIENT_ID: &'static Path = path!("webcrypt");
-
-    type Data = ();
-    type Config = ();
-
-    fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
-        let uuid = runner.uuid();
-        Webcrypt::new_with_options(
-            trussed,
-            webcrypt::Options::new(
-                Location::External,
-                [uuid[0], uuid[1], uuid[2], uuid[3]],
-                WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT,
-            ),
-        )
-    }
-
-    fn channel() -> &'static TrussedChannel {
-        static CHANNEL: TrussedChannel = TrussedChannel::new();
-        &CHANNEL
-    }
-
-    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
-        const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
-            BackendId::Custom(Backend::SoftwareRsa),
-            BackendId::Custom(Backend::Staging),
-            BackendId::Custom(Backend::Auth),
-            BackendId::Core,
-        ];
-        let _ = runner;
-        BACKENDS_WEBCRYPT
     }
 }
 
