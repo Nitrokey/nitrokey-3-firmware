@@ -35,7 +35,7 @@ usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitro
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # unreleased crates
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "6eff6f9ad65df6875fe1eec31cfe34f591cad303" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc6" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "70e3f1aa21ecb75c1237b20b733d0e228a966b10" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "2d0ae0312170adb9cfffd05f70ebc83af3c14679" }
