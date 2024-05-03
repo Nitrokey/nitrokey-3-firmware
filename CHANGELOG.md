@@ -7,12 +7,15 @@
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
 
+[fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
+[piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
+
+## v1.7.1 (2024-05-03)
+
 ### Bugfixes
 
 - secrets-app: Require PIN for registering Reverse HOTP credentials ([trussed-secrets-app#114][])
 
-[fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
-[piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 [trussed-secrets-app#114]: https://github.com/Nitrokey/trussed-secrets-app/pull/114
 
 ## v1.7.0 (2024-04-24)
