@@ -68,10 +68,7 @@ pub fn init_bootup(
     info!("RESET Reason: {:x}", power.resetreas.read().bits());
     power.resetreas.write(|w| w);
 
-    info!(
-        "FICR DeviceID {}",
-        delog::hex_str!(unsafe { &DEVICE_UUID[0..8] })
-    );
+    info!("FICR DeviceID {}", delog::hex_str!(&uuid),);
     info!(
         "FICR IdtRoot  {:08x} {:08x} {:08x} {:08x}",
         ficr.ir[0].read().bits(),
