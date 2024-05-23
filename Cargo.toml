@@ -48,7 +48,8 @@ trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "9732a9a3e98af72112286afdc9b7174c66c2869a" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "23d3511276176da396b6c3e788cd1c2f4dd37c9d" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "37ac3e4f58a2bf1fc8fea1210cf2098b877287e9" }
+se05x = { git = "https://github.com/Nitrokey/se05x.git", rev = "5ca5881b0e44ea8df71af31c7215a94204911bc0" }
 
 [profile.release]
 codegen-units = 1
