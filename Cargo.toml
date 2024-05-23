@@ -49,7 +49,7 @@ trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.3" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "0802b9a1ebf997522ddcb50445a4abde65a397d2" }
-se05x = { git = "https://github.com/Nitrokey/se05x.git", rev = "5ca5881b0e44ea8df71af31c7215a94204911bc0" }
+se05x = { git = "https://github.com/Nitrokey/se05x.git", rev = "046db9ebe22fbd76420619b800615bffde94a638" }
 
 [profile.release]
 codegen-units = 1
