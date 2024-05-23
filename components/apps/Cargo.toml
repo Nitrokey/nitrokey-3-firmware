@@ -54,7 +54,7 @@ hex = "0.4"
 # - all other optional apps require a Trussed client (+n)
 
 # nk3
-nk3 = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "factory-reset", "trussed/clients-4"]
+nk3 = ["fido-authenticator", "ndef-app", "opcard", "factory-reset", "trussed/clients-4"]
 nk3-test = ["nk3", "piv-authenticator", "webcrypt", "trussed/clients-6"]
 nk3-provisioner = ["nk3", "provisioner-app", "trussed/clients-5"]
 
