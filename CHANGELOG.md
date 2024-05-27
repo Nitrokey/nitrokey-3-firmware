@@ -7,6 +7,11 @@
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
 
+### Bugfixes
+
+- fido-authenticator: Fix incompatibility when enumerating resident keys with libfido2/ssh-agent ([#496][])
+
+[#496]: https://github.com/Nitrokey/nitrokey-3-firmware/issues/496
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 
