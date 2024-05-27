@@ -83,6 +83,7 @@ build-nightly:
   script:
     - rustup target add thumbv7em-none-eabihf thumbv8m.main-none-eabi
     - cargo --version
+    - rustup target add thumbv7em-none-eabihf thumbv8m.main-none-eabi
     - make -C runners/embedded build-nk3am.bl
     - make -C runners/embedded build-nk3am.bl FEATURES=test
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
