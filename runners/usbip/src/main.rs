@@ -8,7 +8,7 @@ use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
 use trussed::{types::Location, virt::StoreProvider as _, Bytes, Platform};
-use trussed_usbip::Service;
+use trussed_usbip::Syscall;
 use utils::Version;
 
 use store::FilesystemOrRam;
@@ -108,7 +108,7 @@ impl Runner {
 }
 
 impl apps::Runner for Runner {
-    type Syscall = Service<FilesystemOrRam, Dispatch>;
+    type Syscall = Syscall;
 
     type Reboot = Reboot;
 

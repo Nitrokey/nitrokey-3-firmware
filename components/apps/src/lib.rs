@@ -592,16 +592,27 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R: Runner> trussed_usbip::Apps<'static, Client<R>, Dispatch> for Apps<R> {
+impl<R, S> trussed_usbip::Apps<'static, S, Dispatch<R::Twi, R::Se050Timer>> for Apps<R>
+where
+    R: Runner<Syscall = trussed_usbip::Syscall>,
+    S: trussed::virt::StoreProvider,
+{
     type Data = (R, Data<R>);
 
-    fn new<B>(builder: &B, (runner, data): (R, Data<R>)) -> Self
-    where
-        B: trussed_usbip::ClientBuilder<Client<R>, Dispatch>,
-    {
+    fn new(
+        trussed: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
+        syscall: trussed_usbip::Syscall,
+        (runner, data): (R, Data<R>),
+    ) -> Self {
         Self::new(
             &runner,
-            move |id, backends, _| builder.build(id, backends),
+            move |id, backends, _| {
+                ClientBuilder::new(id)
+                    .backends(backends)
+                    .prepare(trussed)
+                    .unwrap()
+                    .build(syscall.clone())
+            },
             data,
         )
     }
