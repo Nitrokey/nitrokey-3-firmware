@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.13#c24149193fb9bdcaa9ed4dd99fd2a503159a66ee"
+source = "git+https://github.com/Nitrokey/admin-app.git?branch=littlefs2#b0eac6363ee40280a35529d1c3c23f7b5864ed31"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -13,7 +13,7 @@ dependencies = [
  "delog",
  "hex-literal 0.4.1",
  "iso7816",
- "littlefs2",
+ "littlefs2-core",
  "serde",
  "strum_macros",
  "trussed",
@@ -841,16 +841,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cstr_core"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
-dependencies = [
- "cty",
- "memchr",
-]
-
-[[package]]
 name = "csv"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1084,6 +1074,7 @@ dependencies = [
  "delog",
  "embedded-hal",
  "interchange",
+ "littlefs2-core",
  "littlefs2-sys",
  "lpc55-hal",
  "lpc55-pac",
@@ -1123,7 +1114,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0#d819e0121f8231f4f9b3f915c32c083bc5f0ad1f"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=littlefs2#2e10b40409c5005df884c2848b64aae01fe21eb3"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1175,7 +1166,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.19#0fdecc93df800543aed0f1de0ea0f7178cf93b80"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=littlefs2#91584908c86d8912334bed920158009b89b52f91"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -1185,6 +1176,7 @@ dependencies = [
  "delog",
  "heapless",
  "iso7816",
+ "littlefs2-core",
  "serde",
  "serde-indexed",
  "serde_bytes",
@@ -1726,7 +1718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -1744,26 +1736,33 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=960e57d9fc0d209308c8e15dc26252bbe1ff6ba8#960e57d9fc0d209308c8e15dc26252bbe1ff6ba8"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=a1f8d9e87bc70765b488625e5844dbce4c1568cc#a1f8d9e87bc70765b488625e5844dbce4c1568cc"
 dependencies = [
- "bitflags 1.3.2",
- "cstr_core",
- "cty",
  "delog",
  "generic-array",
  "heapless",
+ "littlefs2-core",
  "littlefs2-sys",
+]
+
+[[package]]
+name = "littlefs2-core"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=a1f8d9e87bc70765b488625e5844dbce4c1568cc#a1f8d9e87bc70765b488625e5844dbce4c1568cc"
+dependencies = [
+ "bitflags 2.6.0",
+ "heapless",
+ "heapless-bytes",
  "serde",
 ]
 
 [[package]]
 name = "littlefs2-sys"
-version = "0.1.7"
-source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=39626c0dbc2f6c38b74889a5bf9d5a200614f121#39626c0dbc2f6c38b74889a5bf9d5a200614f121"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/littlefs2-sys.git?tag=0.2.0#c12b0dc8b5123c67dc753875dbb02f8b5f85421f"
 dependencies = [
  "bindgen",
  "cc",
- "cty",
 ]
 
 [[package]]
@@ -2095,7 +2094,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.5.0#0c0f18b0d17155874e06b18726647097d06cb0da"
+source = "git+https://github.com/Nitrokey/opcard-rs?branch=littlefs2#10a632de7987cca937b8dcdf719f7e734c6552b8"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2106,6 +2105,7 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.4.1",
  "iso7816",
+ "littlefs2-core",
  "log",
  "serde",
  "serde_repr",
@@ -2204,7 +2204,7 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "piv-authenticator"
 version = "0.3.7"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?tag=v0.3.7#9c88e0bb586ef1c750cc043dff867e3306105d15"
+source = "git+https://github.com/trussed-dev/piv-authenticator.git?branch=littlefs2#b34579046ab49c1223cfdba28cdfa3d311fe817b"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2213,6 +2213,7 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.3.4",
  "iso7816",
+ "littlefs2",
  "log",
  "serde",
  "subtle",
@@ -2635,7 +2636,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.13.0#d819e0121f8231f4f9b3f915c32c083bc5f0ad1f"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=littlefs2#2e10b40409c5005df884c2848b64aae01fe21eb3"
 dependencies = [
  "apdu-dispatch",
  "bitflags 2.6.0",
@@ -2649,6 +2650,7 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.3.4",
  "iso7816",
+ "littlefs2-core",
  "serde",
  "trussed",
  "trussed-auth",
@@ -3154,7 +3156,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.21#66e8fa72939b769587df28550034ba66425dcefd"
+source = "git+https://github.com/Nitrokey/trussed.git?branch=littlefs2-nk#a386be09679f4d3c5c26f4e7637338a0defda7ab"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3175,6 +3177,7 @@ dependencies = [
  "hmac",
  "interchange",
  "littlefs2",
+ "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
  "postcard 0.7.3",
@@ -3191,7 +3194,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=947ffe6cff426ccbbbb2d0f689437f427665919e#947ffe6cff426ccbbbb2d0f689437f427665919e"
+source = "git+https://github.com/trussed-dev/trussed-auth?branch=littlefs2#0d24dca44240b20b9e66e8176e9a2457fe136020"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3260,7 +3263,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.5#f04beb6e1d5cc0ec84af4fcdc05338450c24cb0e"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=littlefs2#8877088c3fbf4c67f68701d0d38462f8b221038f"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
@@ -3304,7 +3307,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.1#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=littlefs2#4148fdab7e47844e890e81512955490b2bb773b7"
 dependencies = [
  "chacha20poly1305",
  "delog",
@@ -3629,7 +3632,7 @@ checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc9#5179795e6b1015efcfbbe22ad555fc5ae63d09bd"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?branch=littlefs2#7a16620d2ca377f8ac244119dd864df596390c95"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -3640,6 +3643,7 @@ dependencies = [
  "heapless",
  "heapless-bytes",
  "hmac",
+ "littlefs2",
  "serde",
  "serde-indexed",
  "serde_bytes",
@@ -3855,8 +3859,3 @@ dependencies = [
  "quote",
  "syn 2.0.69",
 ]
-
-[[patch.unused]]
-name = "ctap-types"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/ctap-types.git?rev=72eb68b61e3f14957c5ab89bd22f776ac860eb62#72eb68b61e3f14957c5ab89bd22f776ac860eb62"

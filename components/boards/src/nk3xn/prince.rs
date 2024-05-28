@@ -108,7 +108,7 @@ impl Storage for InternalFilesystem {
         let ret = self.prince.write_encrypted(|prince| {
             with_enabled(prince, || self.flash_gordon.write(FS_START + off, data))
         });
-        ret.map(|_| data.len()).map_err(|_| Error::Io)
+        ret.map(|_| data.len()).map_err(|_| Error::IO)
     }
 
     fn erase(&mut self, off: usize, len: usize) -> Result<usize> {
@@ -118,7 +118,7 @@ impl Storage for InternalFilesystem {
         for i in 0..pages {
             self.flash_gordon
                 .erase_page(first_page + i)
-                .map_err(|_| Error::Io)?;
+                .map_err(|_| Error::IO)?;
         }
         Ok(BLOCK_SIZE * pages)
     }

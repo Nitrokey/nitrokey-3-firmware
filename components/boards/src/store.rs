@@ -267,7 +267,7 @@ fn init_efs<B: Board>(
 ) -> LfsResult<Filesystem<'static, B::ExternalStorage>> {
     if !Filesystem::is_mountable(efs_storage) {
         let fmt_ext = Filesystem::format(efs_storage);
-        if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NoSpace) {
+        if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NO_SPACE) {
             info_now!("Formatting simulated EFS failed as expected");
         } else {
             error_now!("EFS Mount Error, Reformat {:?}", fmt_ext);
