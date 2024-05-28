@@ -61,7 +61,7 @@ pub struct Dispatch<T = (), D = ()> {
     hmacsha256p256: HmacSha256P256Backend,
     staging: StagingBackend,
     #[cfg(feature = "se050")]
-    se050: Option<Se050Backend<T, D>>,
+    pub(crate) se050: Option<Se050Backend<T, D>>,
     #[cfg(not(feature = "se050"))]
     __: PhantomData<(T, D)>,
 }

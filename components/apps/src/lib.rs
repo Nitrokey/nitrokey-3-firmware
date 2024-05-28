@@ -67,6 +67,9 @@ pub struct Config {
     opcard: OpcardConfig,
     #[serde(default, rename = "v", skip_serializing_if = "is_default")]
     fs_version: u32,
+    #[cfg(feature = "se050")]
+    #[serde(default, rename = "se", skip_serializing_if = "is_default")]
+    se050_backend_configured_version: u32,
 }
 
 impl admin_app::Config for Config {
@@ -333,10 +336,12 @@ pub struct Apps<R: Runner> {
 }
 
 impl<R: Runner> Apps<R> {
-    pub fn new(
+    pub fn new<P: Platform>(
         runner: &R,
+        mut trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         mut make_client: impl FnMut(
-            &str,
+            &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
+            &'static str,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -352,7 +357,11 @@ impl<R: Runner> Apps<R> {
             ..
         } = data;
 
-        let (admin, init_status) = Self::admin_app(runner, &mut make_client, admin);
+        let (admin, init_status) =
+            Self::admin_app(runner, &mut trussed_service, &mut make_client, admin);
+
+        let mut make_client =
+            |ids, backends, interrupt| make_client(&mut trussed_service, ids, backends, interrupt);
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
         let config_has_error = init_status.contains(InitStatus::CONFIG_ERROR);
@@ -403,16 +412,22 @@ impl<R: Runner> Apps<R> {
         }
     }
 
-    fn admin_app(
+    fn admin_app<P: Platform>(
         runner: &R,
+        mut trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         make_client: impl FnOnce(
-            &str,
+            &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
+            &'static str,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
         mut data: AdminData<R>,
     ) -> (AdminApp<R>, InitStatus) {
-        let trussed = AdminApp::<R>::client(runner, make_client, &());
+        let trussed = AdminApp::<R>::client(
+            runner,
+            |id, backends, interrupt| make_client(&mut trussed_service, id, backends, interrupt),
+            &(),
+        );
         // TODO: use CLIENT_ID directly
         let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
         let version = data.version.encode();
@@ -478,6 +493,34 @@ impl<R: Runner> Apps<R> {
             }
         }
 
+        #[cfg(feature = "se050")]
+        'se050_configuration: {
+            if app.config().se050_backend_configured_version
+                != trussed_se050_backend::SE050_CONFIGURE_VERSION
+            {
+                let Some(se050) = trussed_service.dispatch_mut().se050.as_mut() else {
+                    break 'se050_configuration;
+                };
+
+                let Ok(_) = se050.configure().map_err(|_err| {
+                    error_now!("Failed to configure SE050: {_err:?}");
+                    data.init_status.insert(InitStatus::SE050_ERROR);
+                    *app.status_mut() = data.status();
+                }) else {
+                    break 'se050_configuration;
+                };
+
+                app.config_mut().se050_backend_configured_version =
+                    trussed_se050_backend::SE050_CONFIGURE_VERSION;
+                app.save_config_filestore(&mut filestore)
+                    .map_err(|_err| {
+                        error_now!("Failed to save config after migration: {_err:?}");
+                        data.init_status.insert(InitStatus::CONFIG_ERROR);
+                        *app.status_mut() = data.status();
+                    })
+                    .ok();
+            }
+        }
         let migration_version = used_migrators
             .iter()
             .map(|m| m.version)
@@ -496,7 +539,7 @@ impl<R: Runner> Apps<R> {
 
     pub fn with_service<P: Platform>(
         runner: &R,
-        trussed: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         data: Data<R>,
     ) -> Self
     where
@@ -504,11 +547,12 @@ impl<R: Runner> Apps<R> {
     {
         Self::new(
             runner,
-            |id, backends, interrupt| {
+            trussed_service,
+            |trussed_service, id, backends, interrupt| {
                 ClientBuilder::new(id)
                     .backends(backends)
                     .interrupt(interrupt)
-                    .prepare(trussed)
+                    .prepare(trussed_service)
                     .unwrap()
                     .build(R::Syscall::default())
             },
@@ -600,16 +644,17 @@ where
     type Data = (R, Data<R>);
 
     fn new(
-        trussed: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
         syscall: trussed_usbip::Syscall,
         (runner, data): (R, Data<R>),
     ) -> Self {
         Self::new(
             &runner,
-            move |id, backends, _| {
+            trussed_service,
+            move |trussed_service, id, backends, _| {
                 ClientBuilder::new(id)
                     .backends(backends)
-                    .prepare(trussed)
+                    .prepare(trussed_service)
                     .unwrap()
                     .build(syscall.clone())
             },
@@ -644,7 +689,7 @@ trait App<R: Runner>: Sized {
     fn new(
         runner: &R,
         make_client: impl FnOnce(
-            &str,
+            &'static str,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -658,7 +703,7 @@ trait App<R: Runner>: Sized {
     fn client(
         runner: &R,
         make_client: impl FnOnce(
-            &str,
+            &'static str,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -709,7 +754,7 @@ bitflags! {
         const INTERNAL_FLASH_ERROR = 0b00000010;
         const EXTERNAL_FLASH_ERROR = 0b00000100;
         const MIGRATION_ERROR = 0b00001000;
-        const SE050_RAND_ERROR = 0b00010000;
+        const SE050_ERROR = 0b00010000;
         const CONFIG_ERROR = 0b00100000;
     }
 }
