@@ -3,6 +3,7 @@ include:
   - project: 'nitrokey/gitlab-ci'
     file:
       - 'common-jobs/common_jobs.yml'
+      - 'common-jobs/github_commands.yml'
 
 stages:
   - pull-github
@@ -10,6 +11,7 @@ stages:
   - metrics
   - test
   - deploy
+  - commands
 
 variables:
   GIT_STRATEGY: clone             
@@ -23,8 +25,12 @@ variables:
   COMMON_UPDATE_DOCKER: "false"
   COMMON_UPLOAD_FILES: "false"
   COMMON_UPLOAD_NIGHTLY: "false"
+  COMMAND_MERGE_ENABLED: "true"
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
+
+
+# build stage
 
 metadata:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -64,6 +70,7 @@ lint:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
   tags:
     - docker
   stage: build
@@ -141,6 +148,7 @@ build-firmware:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
   tags:
     - docker
   stage: build
@@ -209,13 +217,70 @@ hardware-tests:
       - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch v1.2.5
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.2
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
+  after_script:
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
+    - !reference [notify_github, script] # use notify_github from include
   artifacts:
     when: always
     paths:
       - nitrokey-hardware-test/artifacts
     reports:
       junit: nitrokey-hardware-test/artifacts/report-junit.xml
+
+full-hardware-tests:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  tags:
+    - nk3-hw
+  parallel:
+    matrix:
+      - MODEL: [ nrf52, lpc55, nkpk ]
+  stage: test
+  script:
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.2
+    - >
+      if [ "$COMMAND_ARGS" == "slow" ] ; then
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,slow
+      else
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,full
+      fi
+  after_script:
+    - cp nitrokey-hardware-test/artifacts/FullTestSuite/report-junit-full.xml nitrokey-hardware-test/artifacts/ || true
+    - cp nitrokey-hardware-test/artifacts/SlowTestSuite/report-junit-slow.xml nitrokey-hardware-test/artifacts/ || true
+    - >
+      if [ "$CI_JOB_STATUS" != "success" ]; then
+        echo "FULL_TEST_STATUS=failed" >> build.env
+      fi
+    - !reference [notify_github, script] # use notify_github from include
+  artifacts:
+    when: always
+    paths:
+      - nitrokey-hardware-test/artifacts
+    reports:
+      junit: nitrokey-hardware-test/artifacts/report-junit*.xml
+      dotenv: build.env
+
+# commands stage
+
+full-hardware-tests-report:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+     - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  when: always
+  tags:
+    - docker
+  stage: commands
+  before_script: []
+  after_script: []
+  script:
+    - >
+      if [ "$FULL_TEST_STATUS" == "failed" ]; then
+        echo Full hardware tests completed with errors: > report.txt
+      else
+        echo Full hardware tests completed successfully: > report.txt
+      fi
+    - echo https://${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/-/pipelines/${CI_PIPELINE_ID}/test_report >> report.txt
+    - nitrokey-ci write-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) report.txt
 
