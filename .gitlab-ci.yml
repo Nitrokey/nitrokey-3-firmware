@@ -38,6 +38,7 @@ command-interface:
     - docker
   stage: com-interface
   script:
+    - cat $TRIGGER_PAYLOAD
     - cargo install --git https://github.com/blu-nitro/github-comment --branch test --locked --force
     - github-comment read-command $TRIGGER_PAYLOAD git.nitrokey.com $CI_JOB_TOKEN
 
