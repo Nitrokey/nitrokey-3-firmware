@@ -110,6 +110,7 @@ class Authenticator:
                 "maxCredentialIdLength": 255,
                 "transports": self.transports,
             },
+            crypto_strength=0,
 
             # TODO: Do we want to set caDesc?
             user_verification_details=[
@@ -139,7 +140,6 @@ class Authenticator:
             attestation_types=["basic_full"],
             is_key_restricted=True,
             is_fresh_user_verification_required=True,
-            crypto_strength=None,
         )
 
 
