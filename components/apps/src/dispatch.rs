@@ -1,37 +1,25 @@
 #[cfg(not(feature = "se050"))]
 use core::marker::PhantomData;
 
-use trussed::{
-    api::{Reply, Request},
-    error::Error as TrussedError,
-    service::ServiceResources,
-    types::Context,
-    Platform,
-};
-
-#[cfg(feature = "backend-auth")]
-use trussed::types::Location;
-
-use littlefs2::{path, path::Path};
-
 use if_chain::if_chain;
-use trussed::{
-    api::{reply, request},
-    backend::Backend as _,
-    serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
-};
+use littlefs2::{path, path::Path};
 
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 #[cfg(feature = "se050")]
 use se05x::{se05x::Se05X, t1::I2CForT1};
 #[cfg(feature = "se050")]
-use trussed_se050_backend::{Context as Se050Context, Se050Backend};
+use trussed::backend::OptionalBackend;
+#[cfg(feature = "se050")]
+use trussed_se050_backend::Se050Backend;
 #[cfg(feature = "se050")]
 use trussed_se050_manage::Se050ManageExtension;
 
+#[cfg(any(feature = "backend-auth", feature = "se050"))]
+use trussed::types::Location;
+
 #[cfg(feature = "backend-auth")]
-use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
+use trussed_auth::{AuthBackend, AuthExtension, MAX_HW_KEY_LEN};
 
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;
@@ -39,7 +27,7 @@ use trussed_rsa_alloc::SoftwareRsa;
 use trussed_chunked::ChunkedExtension;
 use trussed_hkdf::HkdfExtension;
 use trussed_manage::ManageExtension;
-use trussed_staging::{StagingBackend, StagingContext};
+use trussed_staging::StagingBackend;
 use trussed_wrap_key_to_file::WrapKeyToFileExtension;
 
 #[cfg(feature = "backend-auth")]
@@ -49,32 +37,55 @@ use super::migrations::TRUSSED_AUTH_FS_LAYOUT;
 use super::migrations::SE050_BACKEND_FS_LAYOUT;
 
 #[cfg(feature = "webcrypt")]
-use webcrypt::hmacsha256p256::{
-    Backend as HmacSha256P256Backend, BackendContext as HmacSha256P256Context,
-    HmacSha256P256Extension,
-};
+use webcrypt::hmacsha256p256::{Backend as HmacSha256P256Backend, HmacSha256P256Extension};
 
-pub struct Dispatch<T = (), D = ()> {
+#[derive(trussed_derive::ExtensionDispatch)]
+#[dispatch(backend_id = "Backend", extension_id = "Extension")]
+#[extensions(
+    Hkdf = "HkdfExtension",
+    Chunked = "ChunkedExtension",
+    Manage = "ManageExtension",
+    WrapKeyToFile = "WrapKeyToFileExtension"
+)]
+#[cfg_attr(feature = "backend-auth", extensions(Auth = "AuthExtension"))]
+#[cfg_attr(feature = "se050", extensions(Se050Manage = "Se050ManageExtension"))]
+#[cfg_attr(
+    feature = "webcrypt",
+    extensions(HmacSha256P256 = "HmacSha256P256Extension")
+)]
+pub struct Dispatch<T: Twi, D: Delay> {
     #[cfg(feature = "backend-auth")]
+    #[extensions("Auth")]
     auth: AuthBackend,
-    #[cfg(feature = "webcrypt")]
-    hmacsha256p256: HmacSha256P256Backend,
-    staging: StagingBackend,
-    #[cfg(feature = "se050")]
-    se050: Option<Se050Backend<T, D>>,
-    #[cfg(not(feature = "se050"))]
-    __: PhantomData<(T, D)>,
-}
 
-#[derive(Default)]
-pub struct DispatchContext {
-    #[cfg(feature = "backend-auth")]
-    auth: AuthContext,
     #[cfg(feature = "webcrypt")]
-    hmacsha256p256: HmacSha256P256Context,
-    staging: StagingContext,
+    #[dispatch(no_core)]
+    #[extensions("HmacSha256P256")]
+    hmac_sha256_p256: HmacSha256P256Backend,
+
+    #[cfg(feature = "backend-rsa")]
+    software_rsa: SoftwareRsa,
+
+    #[extensions("Chunked", "Hkdf", "WrapKeyToFile")]
+    staging: StagingBackend,
+
+    #[dispatch(delegate_to = "staging", no_core)]
+    #[extensions("Manage")]
+    staging_manage: (),
+
     #[cfg(feature = "se050")]
-    se050: Se050Context,
+    #[extensions("WrapKeyToFile")]
+    #[cfg_attr(feature = "trussed-auth", extensions("Auth"))]
+    se050: OptionalBackend<Se050Backend<T, D>>,
+
+    #[cfg(feature = "se050")]
+    #[dispatch(delegate_to = "se050", no_core)]
+    #[extensions("Manage", "Se050Manage")]
+    se050_manage: (),
+
+    #[cfg(not(feature = "se050"))]
+    #[dispatch(skip)]
+    __: PhantomData<(T, D)>,
 }
 
 fn should_preserve_file(file: &Path) -> bool {
@@ -134,18 +145,25 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
             #[cfg(feature = "backend-auth")]
             auth: AuthBackend::new(auth_location, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
-            hmacsha256p256: Default::default(),
+            hmac_sha256_p256: Default::default(),
+            #[cfg(feature = "backend-rsa")]
+            software_rsa: SoftwareRsa,
             staging: build_staging_backend(),
+            staging_manage: (),
             #[cfg(feature = "se050")]
-            se050: se050.map(|driver| {
-                Se050Backend::new(
-                    driver,
-                    auth_location,
-                    None,
-                    NAMESPACE,
-                    SE050_BACKEND_FS_LAYOUT,
-                )
-            }),
+            se050: se050
+                .map(|driver| {
+                    Se050Backend::new(
+                        driver,
+                        auth_location,
+                        None,
+                        NAMESPACE,
+                        SE050_BACKEND_FS_LAYOUT,
+                    )
+                })
+                .into(),
+            #[cfg(feature = "se050")]
+            se050_manage: (),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -163,18 +181,25 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
         Self {
             auth: AuthBackend::with_hw_key(auth_location, hw_key, TRUSSED_AUTH_FS_LAYOUT),
             #[cfg(feature = "webcrypt")]
-            hmacsha256p256: Default::default(),
+            hmac_sha256_p256: Default::default(),
+            #[cfg(feature = "backend-rsa")]
+            software_rsa: SoftwareRsa,
             staging: build_staging_backend(),
+            staging_manage: (),
             #[cfg(feature = "se050")]
-            se050: se050.map(|driver| {
-                Se050Backend::new(
-                    driver,
-                    auth_location,
-                    Some(hw_key_se050),
-                    NAMESPACE,
-                    SE050_BACKEND_FS_LAYOUT,
-                )
-            }),
+            se050: se050
+                .map(|driver| {
+                    Se050Backend::new(
+                        driver,
+                        auth_location,
+                        Some(hw_key_se050),
+                        NAMESPACE,
+                        SE050_BACKEND_FS_LAYOUT,
+                    )
+                })
+                .into(),
+            #[cfg(feature = "se050")]
+            se050_manage: (),
             #[cfg(not(feature = "se050"))]
             __: Default::default(),
         }
@@ -202,173 +227,6 @@ pub trait Delay {}
 #[cfg(not(feature = "se050"))]
 impl<D> Delay for D {}
 
-impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
-    type Context = DispatchContext;
-    type BackendId = Backend;
-    type ExtensionId = Extension;
-
-    fn core_request<P: Platform>(
-        &mut self,
-        backend: &Self::BackendId,
-        ctx: &mut Context<Self::Context>,
-        request: &Request,
-        resources: &mut ServiceResources<P>,
-    ) -> Result<Reply, TrussedError> {
-        match backend {
-            #[cfg(feature = "backend-auth")]
-            Backend::Auth => {
-                self.auth
-                    .request(&mut ctx.core, &mut ctx.backends.auth, request, resources)
-            }
-            #[cfg(feature = "webcrypt")]
-            Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
-            #[cfg(feature = "backend-rsa")]
-            Backend::SoftwareRsa => SoftwareRsa.request(&mut ctx.core, &mut (), request, resources),
-            Backend::Staging => {
-                self.staging
-                    .request(&mut ctx.core, &mut ctx.backends.staging, request, resources)
-            }
-            Backend::StagingManage => Err(TrussedError::RequestNotAvailable),
-            #[cfg(feature = "se050")]
-            Backend::Se050 => self
-                .se050
-                .as_mut()
-                .ok_or(TrussedError::GeneralError)?
-                .request(&mut ctx.core, &mut ctx.backends.se050, request, resources),
-            #[cfg(feature = "se050")]
-            Backend::Se050Manage => Err(TrussedError::RequestNotAvailable),
-        }
-    }
-
-    fn extension_request<P: Platform>(
-        &mut self,
-        backend: &Self::BackendId,
-        extension: &Self::ExtensionId,
-        ctx: &mut Context<Self::Context>,
-        request: &request::SerdeExtension,
-        resources: &mut ServiceResources<P>,
-    ) -> Result<reply::SerdeExtension, TrussedError> {
-        #[allow(unreachable_patterns)]
-        match backend {
-            #[cfg(feature = "backend-auth")]
-            Backend::Auth => match extension {
-                Extension::Auth => self.auth.extension_request_serialized(
-                    &mut ctx.core,
-                    &mut ctx.backends.auth,
-                    request,
-                    resources,
-                ),
-                #[allow(unreachable_patterns)]
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            #[cfg(feature = "webcrypt")]
-            Backend::HmacSha256P256 => match extension {
-                Extension::HmacSha256P256 => self.hmacsha256p256.extension_request_serialized(
-                    &mut ctx.core,
-                    &mut ctx.backends.hmacsha256p256,
-                    request,
-                    resources,
-                ),
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            #[cfg(feature = "backend-rsa")]
-            Backend::SoftwareRsa => Err(TrussedError::RequestNotAvailable),
-            Backend::Staging => match extension {
-                Extension::Chunked => {
-                    ExtensionImpl::<ChunkedExtension>::extension_request_serialized(
-                        &mut self.staging,
-                        &mut ctx.core,
-                        &mut ctx.backends.staging,
-                        request,
-                        resources,
-                    )
-                }
-                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
-                Extension::WrapKeyToFile => {
-                    ExtensionImpl::<WrapKeyToFileExtension>::extension_request_serialized(
-                        &mut self.staging,
-                        &mut ctx.core,
-                        &mut ctx.backends.staging,
-                        request,
-                        resources,
-                    )
-                }
-                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
-                #[allow(unreachable_patterns)]
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            Backend::StagingManage => match extension {
-                Extension::Manage => {
-                    ExtensionImpl::<ManageExtension>::extension_request_serialized(
-                        &mut self.staging,
-                        &mut ctx.core,
-                        &mut ctx.backends.staging,
-                        request,
-                        resources,
-                    )
-                }
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            #[cfg(feature = "se050")]
-            Backend::Se050 => match extension {
-                #[cfg(feature = "trussed-auth")]
-                Extension::Auth => ExtensionImpl::<AuthExtension>::extension_request_serialized(
-                    self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
-                    &mut ctx.core,
-                    &mut ctx.backends.se050,
-                    request,
-                    resources,
-                ),
-                Extension::WrapKeyToFile => {
-                    ExtensionImpl::<WrapKeyToFileExtension>::extension_request_serialized(
-                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
-                        &mut ctx.core,
-                        &mut ctx.backends.se050,
-                        request,
-                        resources,
-                    )
-                }
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            #[cfg(feature = "se050")]
-            Backend::Se050Manage => match extension {
-                Extension::Manage => {
-                    ExtensionImpl::<ManageExtension>::extension_request_serialized(
-                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
-                        &mut ctx.core,
-                        &mut ctx.backends.se050,
-                        request,
-                        resources,
-                    )
-                }
-                Extension::Se050Manage => {
-                    ExtensionImpl::<Se050ManageExtension>::extension_request_serialized(
-                        self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
-                        &mut ctx.core,
-                        &mut ctx.backends.se050,
-                        request,
-                        resources,
-                    )
-                }
-                _ => Err(TrussedError::RequestNotAvailable),
-            },
-            _ => Err(TrussedError::RequestNotAvailable),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum Backend {
     #[cfg(feature = "backend-auth")]
@@ -387,100 +245,18 @@ pub enum Backend {
     Se050Manage,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, trussed_derive::ExtensionId)]
 pub enum Extension {
     #[cfg(feature = "backend-auth")]
-    Auth,
-    Hkdf,
-    Chunked,
-    WrapKeyToFile,
-    Manage,
+    Auth = 0,
+    Hkdf = 1,
+    Chunked = 2,
+    WrapKeyToFile = 3,
+    Manage = 4,
     #[cfg(feature = "webcrypt")]
-    HmacSha256P256,
+    HmacSha256P256 = 5,
     #[cfg(feature = "se050")]
-    Se050Manage,
-}
-
-impl From<Extension> for u8 {
-    fn from(extension: Extension) -> Self {
-        match extension {
-            #[cfg(feature = "backend-auth")]
-            Extension::Auth => 0,
-            Extension::Chunked => 1,
-            Extension::WrapKeyToFile => 2,
-            Extension::Manage => 3,
-            #[cfg(feature = "webcrypt")]
-            Extension::HmacSha256P256 => 4,
-            #[cfg(feature = "se050")]
-            Extension::Se050Manage => 5,
-            Extension::Hkdf => 6,
-        }
-    }
-}
-
-impl TryFrom<u8> for Extension {
-    type Error = TrussedError;
-
-    fn try_from(id: u8) -> Result<Self, Self::Error> {
-        match id {
-            #[cfg(feature = "backend-auth")]
-            0 => Ok(Extension::Auth),
-            1 => Ok(Extension::Chunked),
-            2 => Ok(Extension::WrapKeyToFile),
-            3 => Ok(Extension::Manage),
-            #[cfg(feature = "webcrypt")]
-            4 => Ok(Extension::HmacSha256P256),
-            #[cfg(feature = "se050")]
-            5 => Ok(Extension::Se050Manage),
-            6 => Ok(Extension::Hkdf),
-            _ => Err(TrussedError::InternalError),
-        }
-    }
-}
-
-#[cfg(feature = "backend-auth")]
-impl<T: Twi, D: Delay> ExtensionId<AuthExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::Auth;
-}
-
-impl<T: Twi, D: Delay> ExtensionId<HkdfExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::Hkdf;
-}
-
-impl<T: Twi, D: Delay> ExtensionId<ChunkedExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::Chunked;
-}
-
-impl<T: Twi, D: Delay> ExtensionId<WrapKeyToFileExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::WrapKeyToFile;
-}
-
-#[cfg(feature = "webcrypt")]
-impl<T: Twi, D: Delay> ExtensionId<HmacSha256P256Extension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::HmacSha256P256;
-}
-
-impl<T: Twi, D: Delay> ExtensionId<ManageExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::Manage;
-}
-
-#[cfg(feature = "se050")]
-impl<T: Twi, D: Delay> ExtensionId<Se050ManageExtension> for Dispatch<T, D> {
-    type Id = Extension;
-
-    const ID: Self::Id = Self::Id::Se050Manage;
+    Se050Manage = 6,
 }
 
 #[cfg(test)]
