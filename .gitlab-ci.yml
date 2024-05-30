@@ -44,11 +44,14 @@ command-interface:
 
 
 command-help:
-    rules:
-        - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND == "test"'
-    stage: com-interface
-    script:
-        - echo test job started
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND == "test"'
+  tags:
+    - docker
+  stage: com-interface
+  script:
+    - echo help command job started
 # build stage
 
 metadata:
