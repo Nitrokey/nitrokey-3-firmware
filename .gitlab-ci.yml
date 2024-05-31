@@ -1,9 +1,10 @@
 
 include:
   - project: 'nitrokey/gitlab-ci'
-    ref: com-interface-test
+    ref: com-interface
     file:
       - 'common-jobs/common_jobs.yml'
+      - 'common-jobs/github_commands.yml'
 
 stages:
   - pull-github
@@ -30,20 +31,7 @@ variables:
 
 # com-interface stage
 
-command-interface:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "trigger" && $CI_TRIGGER_SHORT_TOKEN == $ISSUE_COMMENT_TRIGGER_SHORT_TOKEN'
-  tags:
-    - docker
-  stage: com-interface
-  script:
-    - cat $TRIGGER_PAYLOAD
-    - cargo install --git https://github.com/blu-nitro/github-comment --branch test --locked --force
-    - github-comment read-command $TRIGGER_PAYLOAD git.nitrokey.com $CI_JOB_TOKEN
-
-
-command-help:
+command-test:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND == "test"'
@@ -51,7 +39,8 @@ command-help:
     - docker
   stage: com-interface
   script:
-    - echo help command job started
+    - echo test completed successfully > test_command.txt
+    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
 # build stage
 
 metadata:
