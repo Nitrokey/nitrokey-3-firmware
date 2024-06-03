@@ -38,6 +38,8 @@ command-test:
   tags:
     - docker
   stage: com-interface
+  before_script: []
+  after_script: []
   script:
     - echo test completed successfully > test_command.txt
     - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
@@ -49,6 +51,8 @@ command-retry:
   tags:
     - docker
   stage: com-interface
+  before_script: []
+  after_script: []
   script:
     - echo trying to restart failed pipeline jobs > test_command.txt
     - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
