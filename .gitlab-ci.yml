@@ -29,40 +29,6 @@ variables:
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
 
-# com-interface stage
-
-command-test:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "test"'
-  tags:
-    - docker
-  stage: com-interface
-  before_script: []
-  after_script: []
-  script:
-    - echo test completed successfully > test_command.txt
-    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
-
-full-hardware-tests:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
-  tags:
-    - nk3-hw
-  parallel:
-    matrix:
-      - MODEL: [ nrf52, lpc55, nkpk ]
-  stage: com-interface
-  script:
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch update-pynitrokey
-    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
-    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
-  artifacts:
-    when: always
-    paths:
-      - nitrokey-hardware-test/artifacts
-    reports:
-      junit: nitrokey-hardware-test/artifacts/report-junit.xml
 
 # build stage
 
@@ -235,7 +201,6 @@ software-tests:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
   tags:
     - docker
   stage: test
@@ -262,3 +227,50 @@ hardware-tests:
     reports:
       junit: nitrokey-hardware-test/artifacts/report-junit.xml
 
+full-hardware-tests:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  tags:
+    - nk3-hw
+  parallel:
+    matrix:
+      - MODEL: [ nrf52, lpc55, nkpk ]
+  stage: test
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch update-pynitrokey
+    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
+    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
+  artifacts:
+    when: always
+    paths:
+      - nitrokey-hardware-test/artifacts
+    reports:
+      junit: nitrokey-hardware-test/artifacts/report-junit.xml
+
+# com-interface stage
+
+command-test:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "test"'
+  tags:
+    - docker
+  stage: com-interface
+  before_script: []
+  after_script: []
+  script:
+    - echo test completed successfully > test_command.txt
+    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
+
+full-hardware-tests-report:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+     - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  tags:
+    - docker
+  stage: com-interface
+  before_script: []
+  after_script: []
+  script:
+    - echo full hardware tests completed successfully > report.txt
+    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) report.txt
