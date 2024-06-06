@@ -338,7 +338,7 @@ pub struct Apps<R: Runner> {
 impl<R: Runner> Apps<R> {
     pub fn new<P: Platform>(
         runner: &R,
-        mut trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         mut make_client: impl FnMut(
             &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
             &'static str,
@@ -358,10 +358,10 @@ impl<R: Runner> Apps<R> {
         } = data;
 
         let (admin, init_status) =
-            Self::admin_app(runner, &mut trussed_service, &mut make_client, admin);
+            Self::admin_app(runner, trussed_service, &mut make_client, admin);
 
         let mut make_client =
-            |ids, backends, interrupt| make_client(&mut trussed_service, ids, backends, interrupt);
+            |ids, backends, interrupt| make_client(trussed_service, ids, backends, interrupt);
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
         let config_has_error = init_status.contains(InitStatus::CONFIG_ERROR);
@@ -414,7 +414,7 @@ impl<R: Runner> Apps<R> {
 
     fn admin_app<P: Platform>(
         runner: &R,
-        mut trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         make_client: impl FnOnce(
             &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
             &'static str,
@@ -425,7 +425,7 @@ impl<R: Runner> Apps<R> {
     ) -> (AdminApp<R>, InitStatus) {
         let trussed = AdminApp::<R>::client(
             runner,
-            |id, backends, interrupt| make_client(&mut trussed_service, id, backends, interrupt),
+            |id, backends, interrupt| make_client(trussed_service, id, backends, interrupt),
             &(),
         );
         // TODO: use CLIENT_ID directly
@@ -474,10 +474,10 @@ impl<R: Runner> Apps<R> {
             )
             .unwrap_or_default();
             let mut fs = ClientFilestore::new(path!("opcard").into(), data.store);
-            let opcard_used = !fs
+            let opcard_used = fs
                 .read_dir_first(path!(""), Location::External, &NotBefore::None)
                 .unwrap_or_default()
-                .is_none();
+                .is_some();
 
             if !opcard_trussed_auth_used && !opcard_used {
                 // No need to factory reset because the app is not yet created yet
