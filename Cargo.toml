@@ -19,24 +19,22 @@ memory-regions = { path = "components/memory-regions" }
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", rev = "c257432dbe2efb53424d6847d82d90ddb527c53b" }
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.3"}
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.15" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.16" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-serde-indexed = { git = "https://github.com/nitrokey/serde-indexed.git", tag = "v0.1.0-nitrokey.2" }
 trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.20" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
-ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "a9f8003a1d9f05f9eea39e615b9159bc0613fcb5" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "960e57d9fc0d209308c8e15dc26252bbe1ff6ba8" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "39626c0dbc2f6c38b74889a5bf9d5a200614f121" }
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "1db2e014f28669bc484c81ab0406c54b16bba33c" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
-webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc7" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc8" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.4.1" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
