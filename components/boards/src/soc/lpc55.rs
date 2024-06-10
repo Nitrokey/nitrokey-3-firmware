@@ -29,6 +29,12 @@ impl Lpc55 {
     }
 }
 
+impl Default for Lpc55 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Soc for Lpc55 {
     type UsbBus = lpc55_hal::drivers::UsbBus<UsbPeripheral>;
     type Clock = RtcClock;

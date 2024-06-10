@@ -224,7 +224,7 @@ fn init_se050<
     })()
     .unwrap_or_else(|_err| {
         debug_now!("Got error when getting SE050 initial entropy: {_err:?}");
-        *init_status |= InitStatus::SE050_RAND_ERROR;
+        *init_status |= InitStatus::SE050_ERROR;
         seed
     });
     (se050, seed)
