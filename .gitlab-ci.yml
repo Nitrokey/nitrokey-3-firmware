@@ -241,6 +241,12 @@ full-hardware-tests:
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
   after_script:
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit*.xml nitrokey-hardware-test/artifacts/ || true
+    - >
+      if [ "$CI_JOB_STATUS" == "success" ]; then
+        echo "FULL_TEST_STATUS=success" >> build.env
+      elif [ "$CI_JOB_STATUS" == "failed" ]; then
+        echo "FULL_TEST_STATUS=failed" >> build.env
+      fi
     - !reference [notify_github, script] # use notify_github from include
   artifacts:
     when: always
@@ -268,11 +274,18 @@ full-hardware-tests-report:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
      - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  when: always
   tags:
     - docker
   stage: com-interface
   before_script: []
   after_script: []
   script:
-    - echo full hardware tests completed successfully > report.txt
+    - >
+      if [ "$FULL_TEST_STATUS" == "success" ]; then
+        echo Full hardware tests completed successfully > report.txt
+      elif [ "$FULL_TEST_STATUS" == "failed" ]; then
+        echo Full hardware tests completed with errors! > report.txt
+      fi
     - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) report.txt
+
