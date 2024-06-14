@@ -253,7 +253,8 @@ full-hardware-tests:
     paths:
       - nitrokey-hardware-test/artifacts
     reports:
-      junit: nitrokey-hardware-test/artifacts/report-junit.xml
+      junit: nitrokey-hardware-test/artifacts/report-junit*.xml
+      dotenv: build.env
 
 # com-interface stage
 
