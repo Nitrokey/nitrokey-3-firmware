@@ -240,7 +240,8 @@ full-hardware-tests:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch update-pynitrokey
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
   after_script:
-    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit*.xml nitrokey-hardware-test/artifacts/ || true
+    - cp nitrokey-hardware-test/artifacts/SecretsTestSuite/report-junit-secrets.xml nitrokey-hardware-test/artifacts/ || true
+    - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
     - >
       if [ "$CI_JOB_STATUS" == "success" ] && [ "$FULL_TEST_STATUS" != "failed" ]; then
         echo "FULL_TEST_STATUS=success" >> build.env
