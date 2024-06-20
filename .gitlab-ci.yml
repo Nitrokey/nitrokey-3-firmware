@@ -242,7 +242,7 @@ full-hardware-tests:
   after_script:
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit*.xml nitrokey-hardware-test/artifacts/ || true
     - >
-      if [ "$CI_JOB_STATUS" == "success" ]; then
+      if [ "$CI_JOB_STATUS" == "success" ] && [ "$FULL_TEST_STATUS" != "failed" ]; then
         echo "FULL_TEST_STATUS=success" >> build.env
       elif [ "$CI_JOB_STATUS" == "failed" ]; then
         echo "FULL_TEST_STATUS=failed" >> build.env
