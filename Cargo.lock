@@ -1480,7 +1480,6 @@ checksum = "7285eba272c6af3e9f15fb9e1c1b6e7d35aa70580ffe0d47af017e97dfb6f48b"
 dependencies = [
  "heapless",
  "serde",
- "serde_cbor",
  "typenum",
 ]
 
@@ -1615,9 +1614,9 @@ dependencies = [
 
 [[package]]
 name = "interchange"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92cfaa4be499da454ab279e04dee4837e71b3803eced4bd2b4cdec4bb3377b4f"
+checksum = "88dbb1ed0e8ee048061aa628677fd30712e76635fa51b3987693a93fa3dc23b2"
 dependencies = [
  "loom",
 ]
@@ -2085,8 +2084,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "opcard"
-version = "1.4.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=70e3f1aa21ecb75c1237b20b733d0e228a966b10#70e3f1aa21ecb75c1237b20b733d0e228a966b10"
+version = "1.4.1"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.4.1#bab66483cba9433b3ad8b7b6de19878362cc4817"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2193,8 +2192,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.4"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=2d0ae0312170adb9cfffd05f70ebc83af3c14679#2d0ae0312170adb9cfffd05f70ebc83af3c14679"
+version = "0.3.7"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?tag=v0.3.7#9c88e0bb586ef1c750cc043dff867e3306105d15"
 dependencies = [
  "apdu-dispatch",
  "delog",
@@ -2210,7 +2209,6 @@ dependencies = [
  "trussed-auth",
  "trussed-chunked",
  "trussed-rsa-alloc",
- "trussed-staging",
  "untrusted",
 ]
 
@@ -2716,16 +2714,6 @@ version = "0.11.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b8497c313fd43ab992087548117643f6fcd935cbf36f176ffda0aacf9591734"
 dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde_cbor"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bef2ebfde456fb76bbcf9f59315333decc4fda0b2b44b420243c11e0f5ec1f5"
-dependencies = [
- "half",
  "serde",
 ]
 
@@ -3254,8 +3242,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-rsa-alloc"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=9732a9a3e98af72112286afdc9b7174c66c2869a#9732a9a3e98af72112286afdc9b7174c66c2869a"
+version = "0.2.1"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.2.1#655eca355df59e85a9f1d803623bc2efa10a8b5a"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3269,7 +3257,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.2#a8cf2ad8c1bf33649912a4d19a5488ec2651552e"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.3#351a879379d2e50f6324d1501a4f5788a4a8ad8b"
 dependencies = [
  "admin-app",
  "bitflags 2.5.0",
@@ -3637,7 +3625,7 @@ checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc6#f636071c242f555318e5940c72b866e3a3a63000"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc7#d6327fd76f495feb5fe52c1dd3bc2814455472b9"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",

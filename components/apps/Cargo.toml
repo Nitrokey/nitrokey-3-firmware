@@ -21,7 +21,7 @@ littlefs2 = "0.4"
 
 # Backends
 trussed-auth = { version = "0.3.0", optional = true }
-trussed-rsa-alloc = { version = "0.1.0", optional = true }
+trussed-rsa-alloc = { version = "0.2.0", optional = true }
 trussed-se050-backend = { version = "0.3.0", optional = true }
 trussed-staging = { version = "0.3.0", features = ["wrap-key-to-file", "chunked", "hkdf", "manage"] }
 
