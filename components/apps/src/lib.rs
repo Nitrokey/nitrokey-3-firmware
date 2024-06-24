@@ -852,7 +852,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
         } else {
             Some(core::time::Duration::from_secs(2))
         };
-        let large_blobs = if cfg!(feature = "test") && runner.is_efs_available() {
+        let large_blobs = if cfg!(feature = "nk3-test") && runner.is_efs_available() {
             Some(fido_authenticator::LargeBlobsConfig {
                 location: Location::External,
                 max_size: 4096,
