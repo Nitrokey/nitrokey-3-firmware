@@ -275,7 +275,7 @@ command-test:
   after_script: []
   script:
     - echo test completed successfully > test_command.txt
-    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
+    - nitrokey-ci write-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) test_command.txt
 
 full-hardware-tests-report:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
@@ -296,5 +296,5 @@ full-hardware-tests-report:
         echo Full hardware tests completed with errors: > report.txt
         echo https://${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/-/pipelines/${CI_PIPELINE_ID}/test_report >> report.txt
       fi
-    - github-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) report.txt
+    - nitrokey-ci write-comment --owner Nitrokey --repo nitrokey-3-firmware --id ${CI_JOB_NAME}_${COMMENT_ID} --commit $(git rev-parse HEAD) report.txt
 
