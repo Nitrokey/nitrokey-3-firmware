@@ -25,6 +25,7 @@ variables:
   COMMON_UPDATE_DOCKER: "false"
   COMMON_UPLOAD_FILES: "false"
   COMMON_UPLOAD_NIGHTLY: "false"
+  COMMAND_MERGE_ENABLED: "true"
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
 
