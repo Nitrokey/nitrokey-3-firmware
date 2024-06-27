@@ -1,7 +1,6 @@
 
 include:
   - project: 'nitrokey/gitlab-ci'
-    ref: com-interface
     file:
       - 'common-jobs/common_jobs.yml'
       - 'common-jobs/github_commands.yml'
