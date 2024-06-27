@@ -238,7 +238,12 @@ full-hardware-tests:
   stage: test
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.nitrokey.com/nitrokey/nitrokey-hardware-test.git --recursive --branch update-pynitrokey
-    - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
+    - >
+      if [ "$COMMAND_ARGS" == "slow" ] ; then
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
+      else
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets-full
+      fi
   after_script:
     - cp nitrokey-hardware-test/artifacts/SecretsTestSuite/report-junit-secrets.xml nitrokey-hardware-test/artifacts/ || true
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
