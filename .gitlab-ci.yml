@@ -216,7 +216,7 @@ hardware-tests:
       - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
-    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.1
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
   artifacts:
@@ -236,12 +236,12 @@ full-hardware-tests:
       - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
-    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.1
     - >
       if [ "$COMMAND_ARGS" == "slow" ] ; then
-        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets_full
       else
-        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets-full
+        make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test,secrets
       fi
   after_script:
     - cp nitrokey-hardware-test/artifacts/SecretsTestSuite/report-junit-secrets.xml nitrokey-hardware-test/artifacts/ || true
