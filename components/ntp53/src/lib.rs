@@ -148,6 +148,7 @@ where
         datas: impl Iterator<Item = (u16, &'a [u8])>,
     ) -> Result<(), E> {
         for (addr, data) in datas {
+            debug_now!("Writing at {addr}");
             self.write_block_raw(addr, data)?;
         }
         Ok(())
@@ -289,10 +290,10 @@ where
 
         debug_now!("{:?}", self.read_status());
         debug_now!("Synch data addr: {:02X?}", self.read_synch_data_addr());
-        debug_now!(
-            "Writing data addr: {:?}",
-            self.write_synch_data_addr(0x00FF)
-        );
+        // debug_now!(
+        //     "Writing data addr: {:?}",
+        //     self.write_synch_data_addr(0x00FF)
+        // );
         debug_now!("Synch data addr: {:02X?}", self.read_synch_data_addr());
         debug_now!(
             "I2C slave config: {:02X?}",
@@ -317,6 +318,14 @@ where
         let mut pin_inital = (self.ed.is_high().ok(), self.ed.is_low().ok());
         let mut read_synch_data_addr_initial = self.read_synch_data_addr().ok();
         debug_now!("Status: {:?}", self.read_status());
+
+        let default_ndef_message = [0xE1,0x40,0x80,0x09,0x03,0x10,0xD1,0x01,0x0C,0x55,0x01,0x6E,0x78,0x70,0x2E,0x63,0x6F,0x6D,0x2F,0x6E,0x66,0x63,0xFE,0x00,];
+
+
+        let res = self.write_blocks_raw(default_ndef_message.chunks(4).enumerate().map(|(idx, block)| (idx as u16 *4, block)));
+        debug_now!("Wrote default ndef message: {res:?}");
+        // res?;
+        
         for i in 0..1000 {
             let pin_data = (self.ed.is_high().ok(), self.ed.is_low().ok());
             if pin_data != pin_inital {
