@@ -21,7 +21,7 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-n
 cbor-smol = { git = "https://github.com/Nitrokey/cbor-smol.git", tag = "v0.4.0-nitrokey.3"}
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.16" }
 lpc55-hal = { git = "https://github.com/Nitrokey/lpc55-hal", tag = "v0.3.0-nitrokey.2" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", rev = "0ccdd468859ea14b43e2e95790b9712c398ae5e1" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", rev = "540ad725ef44f0d6d3d2da7dd6ec0bacffaeb5bf" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
@@ -35,7 +35,7 @@ p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev =
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc8" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "9d16b5e33266ebf27b85e0d9e78ea1ad19b7a173" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "ddd97d28e6c15b2dd5b5313e3cf4bccb114105cd" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
@@ -46,7 +46,7 @@ trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.4" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "074b70526cf550347c295e3850d25f18c049ee95" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "30b9f4cd61fab6299c49b6e3d05fa36b668fc231" }
 
 [profile.release]
 codegen-units = 1
