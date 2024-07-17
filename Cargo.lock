@@ -3247,7 +3247,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=30b9f4cd61fab6299c49b6e3d05fa36b668fc231#30b9f4cd61fab6299c49b6e3d05fa36b668fc231"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=cfb8ec3224fdac4e324d1c1d266be0230cc9e1f7#cfb8ec3224fdac4e324d1c1d266be0230cc9e1f7"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",

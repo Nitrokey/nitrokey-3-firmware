@@ -999,8 +999,25 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         #[cfg(feature = "se050")]
         {
             if config.use_se050_backend {
-                options.allowed_imports = opcard::AllowedAlgorithms::all();
-                options.allowed_generation = opcard::AllowedAlgorithms::all();
+                use opcard::AllowedAlgorithms as Alg;
+                let algs = [
+                    Alg::P_256,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::P_384,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::BRAINPOOL_P256R1,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::BRAINPOOL_P384R1,
+                    Alg::RSA_2048,
+                    Alg::RSA_3072,
+                    Alg::RSA_4096,
+                    Alg::X_25519,
+                    Alg::ED_25519,
+                ]
+                .into_iter()
+                .fold(Alg::empty(), |acc, v| acc | v);
+                options.allowed_imports = algs;
+                options.allowed_generation = algs;
             }
         }
 
