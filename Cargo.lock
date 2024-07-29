@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?rev=c257432dbe2efb53424d6847d82d90ddb527c53b#c257432dbe2efb53424d6847d82d90ddb527c53b"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.13#c24149193fb9bdcaa9ed4dd99fd2a503159a66ee"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
