@@ -986,10 +986,38 @@ impl<R: Runner> App<R> for OpcardApp<R> {
         options.manufacturer = 0x000Fu16.to_be_bytes();
         options.serial = [uuid[0], uuid[1], uuid[2], uuid[3]];
         options.storage = Location::External;
+        {
+            use opcard::AllowedAlgorithms as Alg;
+            options.allowed_imports = Alg::P_256
+                | Alg::RSA_2048
+                | Alg::RSA_3072
+                | Alg::RSA_4096
+                | Alg::X_25519
+                | Alg::ED_25519;
+            options.allowed_generation = Alg::P_256 | Alg::RSA_2048 | Alg::X_25519 | Alg::ED_25519;
+        }
         #[cfg(feature = "se050")]
         {
             if config.use_se050_backend {
-                options.rsa_max_gen = opcard::RsaKeySizes::Rsa4096;
+                use opcard::AllowedAlgorithms as Alg;
+                let algs = [
+                    Alg::P_256,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::P_384,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::BRAINPOOL_P256R1,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::BRAINPOOL_P384R1,
+                    Alg::RSA_2048,
+                    Alg::RSA_3072,
+                    Alg::RSA_4096,
+                    Alg::X_25519,
+                    Alg::ED_25519,
+                ]
+                .into_iter()
+                .fold(Alg::empty(), |acc, v| acc | v);
+                options.allowed_imports = algs;
+                options.allowed_generation = algs;
             }
         }
 
