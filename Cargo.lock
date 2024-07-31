@@ -2092,7 +2092,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=ddd97d28e6c15b2dd5b5313e3cf4bccb114105cd#ddd97d28e6c15b2dd5b5313e3cf4bccb114105cd"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.5.0#0c0f18b0d17155874e06b18726647097d06cb0da"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -3151,7 +3151,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?rev=540ad725ef44f0d6d3d2da7dd6ec0bacffaeb5bf#540ad725ef44f0d6d3d2da7dd6ec0bacffaeb5bf"
+source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.21#66e8fa72939b769587df28550034ba66425dcefd"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3247,14 +3247,13 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=c32e0805ec96abfd89635218c19965663d70a733#c32e0805ec96abfd89635218c19965663d70a733"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.4#351a879379d2e50f6324d1501a4f5788a4a8ad8b"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
  "cbor-smol",
  "crypto-bigint",
  "delog",
- "der",
  "embedded-hal",
  "hex-literal 0.4.1",
  "hkdf",
