@@ -750,12 +750,13 @@ impl From<Variant> for u8 {
 bitflags! {
     #[derive(Default, Clone, Copy)]
     pub struct InitStatus: u8 {
-        const NFC_ERROR = 0b00000001;
+        const NFC_ERROR            = 0b00000001;
         const INTERNAL_FLASH_ERROR = 0b00000010;
         const EXTERNAL_FLASH_ERROR = 0b00000100;
-        const MIGRATION_ERROR = 0b00001000;
-        const SE050_ERROR = 0b00010000;
-        const CONFIG_ERROR = 0b00100000;
+        const MIGRATION_ERROR      = 0b00001000;
+        const SE050_ERROR          = 0b00010000;
+        const CONFIG_ERROR         = 0b00100000;
+        const RNG_ERROR            = 0b01000000;
     }
 }
 
@@ -788,10 +789,23 @@ impl<R: Runner> AdminData<R> {
     }
 }
 
-pub type AdminStatus = [u8; 5];
+pub struct AdminStatus {
+    init_status: InitStatus,
+    ifs_blocks: u8,
+    efs_blocks: u16,
+    variant: Variant,
+}
 
-impl<R: Runner> AdminData<R> {
-    fn status(&self) -> AdminStatus {
+impl admin_app::StatusBytes for AdminStatus {
+    type Serialized = [u8; 5];
+    fn set_random_error(&mut self, value: bool) {
+        self.init_status.set(InitStatus::RNG_ERROR, value);
+    }
+    fn get_random_error(&self) -> bool {
+        self.init_status.contains(InitStatus::RNG_ERROR)
+    }
+
+    fn serialize(&self) -> [u8; 5] {
         let efs_blocks = self.efs_blocks.to_be_bytes();
         [
             self.init_status.bits(),
@@ -800,6 +814,17 @@ impl<R: Runner> AdminData<R> {
             efs_blocks[1],
             self.variant.into(),
         ]
+    }
+}
+
+impl<R: Runner> AdminData<R> {
+    fn status(&self) -> AdminStatus {
+        AdminStatus {
+            init_status: self.init_status,
+            ifs_blocks: self.ifs_blocks,
+            efs_blocks: self.efs_blocks,
+            variant: self.variant,
+        }
     }
 }
 
