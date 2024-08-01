@@ -37,6 +37,7 @@ use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 use trussed_rsa_alloc::SoftwareRsa;
 
 use trussed_chunked::ChunkedExtension;
+use trussed_fs_info::FsInfoExtension;
 use trussed_hkdf::HkdfExtension;
 use trussed_manage::ManageExtension;
 use trussed_staging::{StagingBackend, StagingContext};
@@ -306,6 +307,15 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                     request,
                     resources,
                 ),
+                Extension::FsInfo => {
+                    ExtensionImpl::<FsInfoExtension>::extension_request_serialized(
+                        &mut self.staging,
+                        &mut ctx.core,
+                        &mut ctx.backends.staging,
+                        request,
+                        resources,
+                    )
+                }
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -395,6 +405,7 @@ pub enum Extension {
     Chunked,
     WrapKeyToFile,
     Manage,
+    FsInfo,
     #[cfg(feature = "webcrypt")]
     HmacSha256P256,
     #[cfg(feature = "se050")]
@@ -414,6 +425,7 @@ impl From<Extension> for u8 {
             #[cfg(feature = "se050")]
             Extension::Se050Manage => 5,
             Extension::Hkdf => 6,
+            Extension::FsInfo => 7,
         }
     }
 }
@@ -433,6 +445,7 @@ impl TryFrom<u8> for Extension {
             #[cfg(feature = "se050")]
             5 => Ok(Extension::Se050Manage),
             6 => Ok(Extension::Hkdf),
+            7 => Ok(Extension::FsInfo),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -481,6 +494,12 @@ impl<T: Twi, D: Delay> ExtensionId<Se050ManageExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::Se050Manage;
+}
+
+impl<T: Twi, D: Delay> ExtensionId<FsInfoExtension> for Dispatch<T, D> {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::FsInfo;
 }
 
 #[cfg(test)]

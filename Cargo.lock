@@ -178,6 +178,7 @@ dependencies = [
  "trussed",
  "trussed-auth",
  "trussed-chunked",
+ "trussed-fs-info",
  "trussed-hkdf",
  "trussed-manage",
  "trussed-rsa-alloc",
@@ -494,7 +495,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.0"
-source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.3#b2427e67ac8ff53f012986d954586fa18d5e6921"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.4#d6211450a8e29fcf8cd41b01104c32ac15370508"
 dependencies = [
  "delog",
  "heapless",
@@ -872,9 +873,9 @@ dependencies = [
 
 [[package]]
 name = "ctap-types"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb60d898980133d08bc1c5f3fc3facecf18833bf4ff3d962871bb43607ac0b81"
+checksum = "bf6a69fe79c279d4e06b0064d25ee7d05f87d55c06e07a1386043bc14bbd5c6d"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -1174,9 +1175,10 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.16#79b05b576863236fe54750b18e862ce0801f2040"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.19#0fdecc93df800543aed0f1de0ea0f7178cf93b80"
 dependencies = [
  "apdu-dispatch",
+ "cbor-smol",
  "cosey",
  "ctap-types",
  "ctaphid-dispatch",
@@ -1189,6 +1191,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-chunked",
+ "trussed-fs-info",
  "trussed-hkdf",
 ]
 
@@ -3213,6 +3216,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "trussed-fs-info"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=fs-info-v0.1.0#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
+dependencies = [
+ "serde",
+ "serde-byte-array",
+ "trussed",
+]
+
+[[package]]
 name = "trussed-hkdf"
 version = "0.2.0"
 source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=hkdf-v0.2.0#e016b25fbc49f3ba13272d58a9e9d47a16d8ea14"
@@ -3290,7 +3303,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.0#e016b25fbc49f3ba13272d58a9e9d47a16d8ea14"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.1#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
 dependencies = [
  "chacha20poly1305",
  "delog",
@@ -3302,6 +3315,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-chunked",
+ "trussed-fs-info",
  "trussed-hkdf",
  "trussed-manage",
  "trussed-wrap-key-to-file",
@@ -3614,7 +3628,7 @@ checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc8#d6705ab95cbc3dd2e4120a5dfa1b8b5a2707b1c7"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?tag=v0.8.0-rc9#5179795e6b1015efcfbbe22ad555fc5ae63d09bd"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -3840,3 +3854,8 @@ dependencies = [
  "quote",
  "syn 2.0.69",
 ]
+
+[[patch.unused]]
+name = "ctap-types"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/ctap-types.git?rev=72eb68b61e3f14957c5ab89bd22f776ac860eb62#72eb68b61e3f14957c5ab89bd22f776ac860eb62"
