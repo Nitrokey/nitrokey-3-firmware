@@ -22,8 +22,12 @@ function wait_and_attach() {
         if [ $retval -eq 0 ]; then
             # The device is available! Now attach it.
             sudo usbip attach -r "localhost" -b "1-1"
-            echo "Device attached!"
-            lsusb
+            sudo usbip attach -r "localhost" -b "1-1"
+            if lsusb | grep -q "Clay Logic Nitrokey 3"; then
+                echo "Device attached!"
+            else
+                >&2 echo "Failed to attach device"
+            fi
             return
         elif [ $retval -eq 1 ]; then
             # Couldn't find the port, so keep waiting
