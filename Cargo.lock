@@ -1744,7 +1744,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=960e57d9fc0d209308c8e15dc26252bbe1ff6ba8#960e57d9fc0d209308c8e15dc26252bbe1ff6ba8"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=2ad77859559c02c7a464ab4d3290a318cf81422d#2ad77859559c02c7a464ab4d3290a318cf81422d"
 dependencies = [
  "bitflags 1.3.2",
  "cstr_core",
