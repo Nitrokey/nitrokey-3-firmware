@@ -6,9 +6,16 @@
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 - piv: Fix crash when changing PUK ([piv-authenticator#38][])
+- OpenPGP: add support for additional curves when using the se050 backend: ([#524][])
+  - NIST P-384
+  - NIST P-521
+  - brainpoolp256r1
+  - brainpoolp384r1
+  - brainpoolp512r1
 
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
+[#524]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/524
 
 ## v1.7.2 (2024-06-11)
 

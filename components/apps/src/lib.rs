@@ -1005,9 +1005,13 @@ impl<R: Runner> App<R> for OpcardApp<R> {
                     #[cfg(feature = "nk3-test")]
                     Alg::P_384,
                     #[cfg(feature = "nk3-test")]
+                    Alg::P_521,
+                    #[cfg(feature = "nk3-test")]
                     Alg::BRAINPOOL_P256R1,
                     #[cfg(feature = "nk3-test")]
                     Alg::BRAINPOOL_P384R1,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::BRAINPOOL_P512R1,
                     Alg::RSA_2048,
                     Alg::RSA_3072,
                     Alg::RSA_4096,
