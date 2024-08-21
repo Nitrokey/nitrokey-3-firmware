@@ -3,7 +3,6 @@
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 function wait_and_attach() {
-    echo "PRELAUNCH TASK RUNNING!"
     pushd "$1"
 
     lsmod | grep vhci-hcd || sudo modprobe vhci-hcd
