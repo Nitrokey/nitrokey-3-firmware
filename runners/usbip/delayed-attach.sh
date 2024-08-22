@@ -8,7 +8,7 @@ set -e
 set -u
 total_timeout=30
 usbip_timeout=1
-attach_timeout=10
+attach_delay=5
 device_name="Clay Logic Nitrokey 3"
 
 endtime=$(($(date +%s) + $total_timeout))
@@ -48,7 +48,7 @@ while [ $(date +%s) -le $endtime ]; do
         sudo usbip attach -r "localhost" -b "1-1"
         set -e
 
-        sleep 4
+        sleep $attach_delay
 
         # Check if it's been attached
         if lsusb | grep -q "$device_name"; then
