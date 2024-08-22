@@ -1,50 +1,77 @@
 #!/bin/bash
 
-SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+# This script waits for the USB/IP device to be available, then attaches it.
+# It is designed to be used as a pre-launch task in a debugger, so that
+# the device is automatically mounted each time the debugger starts.
 
-function wait_and_attach() {
-    pushd "$1"
+set -e
+set -u
+total_timeout=30
+usbip_timeout=1
+attach_timeout=10
+device_name="Clay Logic Nitrokey 3"
 
-    lsmod | grep vhci-hcd || sudo modprobe vhci-hcd
+endtime=$(($(date +%s) + $total_timeout))
 
-    endtime=$(($(date +%s) + 10))
-    echo "$(date +%s) - $endtime"
-    while true; do
-        # Check if we've tried long enough and should time out
-        if [ $(date +%s) -gt $endtime ]; then
-            >&2 echo "Failed to find device before timeout"
-            return
-        fi
-        sleep 0.1
-        output=$(sudo usbip list -r "localhost" 2>&1)
-        retval=$?
-        if [ $retval -eq 0 ]; then
-            # The device is available! Now attach it.
-            sudo usbip attach -r "localhost" -b "1-1"
-            sudo usbip attach -r "localhost" -b "1-1"
-            if lsusb | grep -q "Clay Logic Nitrokey 3"; then
-                echo "Device attached!"
-            else
-                >&2 echo "Failed to attach device"
-            fi
-            return
-        elif [ $retval -eq 1 ]; then
-            # Couldn't find the port, so keep waiting
-            continue
+
+echo "Waiting for USB/IP device to be available..."
+
+# Check if we've tried long enough and should time out
+while [ $(date +%s) -le $endtime ]; do
+
+    sleep 0.1
+
+    set +e
+    # Get the list of usbip devices, with a timeout.
+    output=$(timeout -k $usbip_timeout $usbip_timeout sudo usbip list -r "localhost" 2>&1)
+    retval=$?
+    set -e
+
+    if [ $retval -eq 124 ] || [ $retval -eq 137 ]; then
+        echo "usbip list timed out"
+        # The command timed out, which means it's probably already been attached.
+        # Check to confirm.
+        if lsusb | grep -q "$device_name"; then
+            echo "Device attached!"
+            exit 0
         else
-            # Some unexpected error, exit out
-            >&2 echo "$output"
-            return
+            >&2 echo "Failed to attach device"
         fi
-    done
-}
 
-# Delete any existing output file
-sudo rm -f /tmp/DelayedUSBIPAttach
+    elif [ $retval -eq 0 ]; then
+        echo "Attaching..."
+        # The device is available! Now attach it.
+        
+        set +e
+        sudo usbip list -r "localhost"
+        sudo usbip attach -r "localhost" -b "1-1"
+        sudo usbip attach -r "localhost" -b "1-1"
+        set -e
 
-FUNC=$(declare -f wait_and_attach)
+        sleep 4
 
-# Run the function as sudo (so it catches sudo login requirement here instead of in the backgroun process).
-# Direct all output to the output file so we can review it later if we like.
-# Run the command in the background.
-sudo bash -c "$FUNC; wait_and_attach \"$SCRIPTPATH\" 2>&1 | tee /tmp/DelayedUSBIPAttach &"
+        # Check if it's been attached
+        if lsusb | grep -q "$device_name"; then
+            echo "Device attached!"
+            lsusb | grep "$device_name"
+            exit 0
+        fi
+
+        # It didn't attach. For some reason, we sometimes have
+        # to run this command multiple times for it to work,
+        # so start the loop again.
+        continue
+
+    elif [ $retval -eq 1 ]; then
+        # Couldn't find the port, so keep waiting
+        continue
+
+    else
+        # Some unexpected error, exit out
+        >&2 echo "$output"
+        exit $retval
+    fi
+done
+
+>&2 echo "Failed to find device before timeout"
+exit 1
