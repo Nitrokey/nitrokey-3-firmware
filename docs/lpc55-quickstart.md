@@ -74,7 +74,7 @@ Disconnect all Nitrokey 3 devices.  It is recommended to also disconnect other F
 - Nitrokey Nitrokey 3 (idVendor=20a0, idProduct=42b2)
 
 Now make sure that the device is listed in the output of `lpc55 ls` (first and second case) and/or `nitropy nk3 list` (second and third case).  If it is not listed, you have to install
-the [NXP](https://spsdk.readthedocs.io/en/latest/usage/installation.html#usb-under-linux) (first case) and/or [Nitrokey](https://docs.nitrokey.com/software/nitropy/linux/udev) udev rules (second and third case).
+the [NXP](https://spsdk.readthedocs.io/en/latest/examples/_knowledge_base/installation_guide.html#usb-under-linux) (first case) and/or [Nitrokey](https://docs.nitrokey.com/software/nitropy/linux/udev) udev rules (second and third case). For the first case, you can alternatively use the file `utils/lpc55-builder/70-lpc55.rules` from the firmware repository.
 
 To make sure that that the device is in a clean state, reset it:
 ```
