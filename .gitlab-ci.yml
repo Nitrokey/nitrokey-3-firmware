@@ -153,6 +153,8 @@ build-firmware:
     - docker
   stage: build
   script:
+    # Ensure that the lockfile is up-to-date
+    - cargo fetch --locked
     # Generate normal binaries
     - make binaries
     # Generate no-buttons firmware binaries for HIL
