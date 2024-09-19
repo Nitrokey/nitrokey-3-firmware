@@ -1,6 +1,7 @@
 use littlefs2::consts::PATH_MAX;
 use littlefs2::fs::{Attribute, DirEntry, Filesystem};
 
+use littlefs2::path;
 use littlefs2::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -167,12 +168,12 @@ pub trait BackupBackend {
         &mut self,
         fs: &Filesystem<S>,
     ) -> Result<(usize, usize)> {
-        let root_dir = PathBuf::from("/");
+        let root_dir = path!("/");
 
         let mut path_stack: Vec<PathCursor, MAX_FS_DEPTH> = Vec::new();
         path_stack
             .push(PathCursor {
-                path: root_dir,
+                path: root_dir.into(),
                 idx: 0,
                 attr: None,
             })
@@ -197,8 +198,9 @@ pub trait BackupBackend {
             // move index "pointer" to next item
             current.idx += 1;
 
+            let mut buffer = [0; Attribute::MAX_SIZE as _];
             let attr = fs
-                .attribute(entry.path(), USER_ATTRIBUTE_NUMBER)?
+                .attribute(entry.path(), USER_ATTRIBUTE_NUMBER, &mut buffer)?
                 .map(|v| UserAttribute::from_slice(v.data()))
                 .transpose()
                 .map_err(|_| FSBackupError::UserAttributeErr)?;
@@ -267,9 +269,7 @@ pub trait BackupBackend {
                         fs.create_dir(path)?;
 
                         if let Some(user_attr) = v.attr {
-                            let mut attr = Attribute::new(USER_ATTRIBUTE_NUMBER);
-                            attr.set_data(user_attr.as_slice());
-                            fs.set_attribute(path, &attr)?
+                            fs.set_attribute(path, USER_ATTRIBUTE_NUMBER, user_attr.as_slice())?
                         };
                     } else {
                         f_cnt += 1;
@@ -277,9 +277,7 @@ pub trait BackupBackend {
                         fs.write(path, content.as_slice())?;
 
                         if let Some(user_attr) = v.attr {
-                            let mut attr = Attribute::new(USER_ATTRIBUTE_NUMBER);
-                            attr.set_data(user_attr.as_slice());
-                            fs.set_attribute(path, &attr)?;
+                            fs.set_attribute(path, USER_ATTRIBUTE_NUMBER, user_attr.as_slice())?;
                         };
                     }
                 }
