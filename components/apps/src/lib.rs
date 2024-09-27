@@ -217,10 +217,7 @@ pub struct OpcardConfig {
 impl OpcardConfig {
     fn backends(&self) -> &'static [BackendId<Backend>] {
         const BACKENDS_OPCARD_DEFAULT: &[BackendId<Backend>] = &[
-            #[cfg(feature = "backend-rsa")]
             BackendId::Custom(Backend::SoftwareRsa),
-            #[cfg(feature = "backend-dilithium")]
-            BackendId::Custom(Backend::SoftwareDilithium),
             BackendId::Custom(Backend::Auth),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
@@ -983,7 +980,12 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
-        &[BackendId::Custom(Backend::Staging), BackendId::Core]
+        &[
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+            #[cfg(feature = "backend-dilithium")]
+            BackendId::Custom(Backend::SoftwareDilithium),
+        ]
     }
 }
 
@@ -1007,10 +1009,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
     }
     fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_WEBCRYPT: &[BackendId<Backend>] = &[
-            #[cfg(feature = "backend-rsa")]
             BackendId::Custom(Backend::SoftwareRsa),
-            #[cfg(feature = "backend-dilithium")]
-            BackendId::Custom(Backend::SoftwareDilithium),
             BackendId::Custom(Backend::Staging),
             BackendId::Custom(Backend::Auth),
             BackendId::Core,
@@ -1142,8 +1141,6 @@ impl<R: Runner> App<R> for PivApp<R> {
             BackendId::Custom(Backend::Se050),
             #[cfg(feature = "backend-rsa")]
             BackendId::Custom(Backend::SoftwareRsa),
-            #[cfg(feature = "backend-dilithium")]
-            BackendId::Custom(Backend::SoftwareDilithium),
             BackendId::Custom(Backend::Auth),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
