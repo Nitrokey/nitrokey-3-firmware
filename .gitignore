@@ -46,3 +46,5 @@ utils/nrf-builder/provisioner-nk3am-nrf52-1.2.2.bin
 utils/nrf-builder/provisioner-nk3am-nrf52-1.2.2.hex
 utils/nrf-builder/provisioner-nk3am-nrf52-1.2.2.zip
 utils/nrf-builder/test-certs/
+
+.vscode/
