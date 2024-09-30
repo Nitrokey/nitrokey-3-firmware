@@ -1136,8 +1136,8 @@ impl<R: Runner> App<R> for PivApp<R> {
     }
     fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
-            BackendId::Custom(Backend::SoftwareRsa),
-            BackendId::Custom(Backend::Auth),
+            #[cfg(feature = "se050")]
+            BackendId::Custom(Backend::Se050),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ];

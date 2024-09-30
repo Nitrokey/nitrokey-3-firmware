@@ -14,11 +14,13 @@
   - brainpoolp512r1
 - admin-app: Add command to list all supported config fields ([admin-app#28][])
 - admin-app: Add `opcard.disabled` configuration option to disable OpenPGP ([#539][])
+- piv: Use SE050 and encrypt data on external flash ([#534][])
 
 [admin-app#28]: https://github.com/Nitrokey/admin-app/issues/28
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 [#524]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/524
+[#534]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/534
 [#539]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/539
 
 ## v1.7.2 (2024-06-11)

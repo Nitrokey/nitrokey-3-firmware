@@ -181,6 +181,7 @@ dependencies = [
  "trussed-chunked",
  "trussed-fs-info",
  "trussed-hkdf",
+ "trussed-hpke",
  "trussed-manage",
  "trussed-rsa-alloc",
  "trussed-se050-backend",
@@ -2205,23 +2206,27 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.7"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?tag=v0.3.7#9c88e0bb586ef1c750cc043dff867e3306105d15"
+version = "0.3.8"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?tag=v0.3.8#e67a954cf93a4cbf3c364ca9ba6c612d3cc3d5ff"
 dependencies = [
  "apdu-dispatch",
+ "cfg-if",
  "delog",
  "flexiber",
  "heapless",
  "heapless-bytes",
  "hex-literal 0.3.4",
  "iso7816",
+ "littlefs2",
  "log",
  "serde",
  "subtle",
  "trussed",
  "trussed-auth",
  "trussed-chunked",
+ "trussed-hpke",
  "trussed-rsa-alloc",
+ "trussed-wrap-key-to-file",
  "untrusted",
 ]
 
@@ -3237,6 +3242,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "trussed-hpke"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=hpke-v0.1.0#7c99973187eb9ae2c1e410b5996169ccf2690efa"
+dependencies = [
+ "serde",
+ "serde-byte-array",
+ "trussed",
+]
+
+[[package]]
 name = "trussed-manage"
 version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=manage-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
@@ -3261,12 +3276,13 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.5#f04beb6e1d5cc0ec84af4fcdc05338450c24cb0e"
+version = "0.3.6"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.6#f12e134d001895c5e46d8892a4f88209f9a1a676"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
  "cbor-smol",
+ "chacha20poly1305",
  "crypto-bigint",
  "delog",
  "der",
@@ -3288,6 +3304,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-auth",
+ "trussed-hpke",
  "trussed-manage",
  "trussed-rsa-alloc",
  "trussed-se050-manage",
@@ -3305,14 +3322,18 @@ dependencies = [
 
 [[package]]
 name = "trussed-staging"
-version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.1#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
+version = "0.3.2"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.2#7c99973187eb9ae2c1e410b5996169ccf2690efa"
 dependencies = [
+ "aead",
  "chacha20poly1305",
  "delog",
+ "digest 0.10.7",
+ "hex-literal 0.4.1",
  "hkdf",
  "littlefs2",
  "rand_core",
+ "salty",
  "serde",
  "serde-byte-array",
  "sha2",
@@ -3320,6 +3341,7 @@ dependencies = [
  "trussed-chunked",
  "trussed-fs-info",
  "trussed-hkdf",
+ "trussed-hpke",
  "trussed-manage",
  "trussed-wrap-key-to-file",
 ]
