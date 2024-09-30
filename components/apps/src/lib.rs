@@ -981,10 +981,10 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
         &[
+             #[cfg(feature = "backend-dilithium")]
+            BackendId::Custom(Backend::SoftwareDilithium),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
-            #[cfg(feature = "backend-dilithium")]
-            BackendId::Custom(Backend::SoftwareDilithium),
         ]
     }
 }
