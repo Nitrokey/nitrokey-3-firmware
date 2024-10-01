@@ -37,18 +37,19 @@ ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "72e
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.5.0" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "bc4f5283eac08a1c9acbf793cdd9e9a2f2bdad65" }
 trussed-fs-info = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "fs-info-v0.1.0" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
 trussed-wrap-key-to-file = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "wrap-key-to-file-v0.1.0" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.1" }
+trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "f0babe53813e7882cfe5ce749ebe3a65fc143fd7" }
+trussed-hpke = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "f0babe53813e7882cfe5ce749ebe3a65fc143fd7" }
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "947ffe6cff426ccbbbb2d0f689437f427665919e" }
 trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "hkdf-v0.2.0" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.4" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag ="v0.3.5" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev ="4751fda5e2d31b63575d4c401195e721097ed1ba" }
 
 [profile.release]
 codegen-units = 1
