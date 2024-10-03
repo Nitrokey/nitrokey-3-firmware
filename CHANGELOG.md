@@ -12,7 +12,9 @@
   - brainpoolp256r1
   - brainpoolp384r1
   - brainpoolp512r1
+- admin-app: Add command to list all supported config fields ([admin-app#28][])
 
+[admin-app#28]: https://github.com/Nitrokey/admin-app/issues/28
 [fido-authenticator#38]: https://github.com/Nitrokey/fido-authenticator/issues/38
 [piv-authenticator#38]: https://github.com/Nitrokey/piv-authenticator/issues/38
 [#524]: https://github.com/Nitrokey/nitrokey-3-firmware/pull/524

@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.13#c24149193fb9bdcaa9ed4dd99fd2a503159a66ee"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.15#c5bddba53dbc0ca9ce9dce2ac03a28ed22f5b060"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -165,6 +165,7 @@ dependencies = [
  "embedded-hal",
  "fido-authenticator",
  "heapless",
+ "heapless-bytes",
  "hex",
  "if_chain",
  "littlefs2",
@@ -495,8 +496,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f2529cc8240fcc91e8642754ce85e5360c2ee7f4435a76aa150e4ed746a5da4"
+source = "git+https://github.com/trussed-dev/cbor-smol.git?rev=4a368461e06e3ca52d79638b9ab8f34b038491fc#4a368461e06e3ca52d79638b9ab8f34b038491fc"
 dependencies = [
  "delog",
  "heapless",

@@ -19,6 +19,7 @@ use littlefs2::path;
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
+use admin_app::{ConfigField, FieldType};
 
 #[macro_use]
 extern crate delog;
@@ -80,6 +81,26 @@ impl admin_app::Config for Config {
             "opcard" => self.opcard.field(key),
             _ => None,
         }
+    }
+
+    fn list_available_fields(&self) -> &'static [ConfigField] {
+        &[
+            ConfigField {
+                name: "fido.disable_skip_up_timeout",
+                requires_touch_confirmation: false,
+                requires_reboot: false,
+                destructive: false,
+                ty: FieldType::Bool,
+            },
+            #[cfg(feature = "se050")]
+            ConfigField {
+                name: "opcard.use_se050_backend",
+                requires_touch_confirmation: true,
+                requires_reboot: true,
+                destructive: true,
+                ty: FieldType::Bool,
+            },
+        ]
     }
 
     fn reset_client_id(
@@ -1104,7 +1125,7 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
 #[cfg(test)]
 mod tests {
     use super::{Config, FidoConfig, OpcardConfig};
-    use cbor_smol::{cbor_serialize_bytes, Bytes};
+    use cbor_smol::cbor_serialize_bytes;
 
     #[test]
     fn test_config_size() {
@@ -1118,7 +1139,7 @@ mod tests {
             },
             fs_version: 1,
         };
-        let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
+        let data: heapless_bytes::Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
         // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512
         // bytes for LPC55 and 256 bytes for NRF52.  As the block count is only problematic on the
         // LPC55, this could be increased to 128 if necessary.
