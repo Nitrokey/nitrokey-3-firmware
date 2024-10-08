@@ -3855,8 +3855,3 @@ dependencies = [
  "quote",
  "syn 2.0.69",
 ]
-
-[[patch.unused]]
-name = "ctap-types"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/ctap-types.git?rev=72eb68b61e3f14957c5ab89bd22f776ac860eb62#72eb68b61e3f14957c5ab89bd22f776ac860eb62"

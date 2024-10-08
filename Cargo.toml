@@ -31,7 +31,6 @@ littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev 
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-ctap-types = { git = "https://github.com/trussed-dev/ctap-types.git", rev = "72eb68b61e3f14957c5ab89bd22f776ac860eb62" }
 
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
