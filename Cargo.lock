@@ -494,8 +494,9 @@ dependencies = [
 
 [[package]]
 name = "cbor-smol"
-version = "0.4.0"
-source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.4#d6211450a8e29fcf8cd41b01104c32ac15370508"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f2529cc8240fcc91e8642754ce85e5360c2ee7f4435a76aa150e4ed746a5da4"
 dependencies = [
  "delog",
  "heapless",
@@ -1175,7 +1176,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.19#0fdecc93df800543aed0f1de0ea0f7178cf93b80"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.20#b34fa475c0c97bc7610ee65d11ecb2191f8d4770"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -1726,7 +1727,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
