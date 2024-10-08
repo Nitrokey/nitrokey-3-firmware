@@ -36,6 +36,9 @@ use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;
 
+#[cfg(feature = "backend-dilithium")]
+use trussed_pqc_backend::SoftwareDilithium;
+
 use trussed_chunked::ChunkedExtension;
 use trussed_fs_info::FsInfoExtension;
 use trussed_hkdf::HkdfExtension;
@@ -225,6 +228,10 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
             Backend::HmacSha256P256 => Err(TrussedError::RequestNotAvailable),
             #[cfg(feature = "backend-rsa")]
             Backend::SoftwareRsa => SoftwareRsa.request(&mut ctx.core, &mut (), request, resources),
+            #[cfg(feature = "backend-dilithium")]
+            Backend::SoftwareDilithium => {
+                SoftwareDilithium.request(&mut ctx.core, &mut (), request, resources)
+            }
             Backend::Staging => {
                 self.staging
                     .request(&mut ctx.core, &mut ctx.backends.staging, request, resources)
@@ -274,6 +281,8 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
             },
             #[cfg(feature = "backend-rsa")]
             Backend::SoftwareRsa => Err(TrussedError::RequestNotAvailable),
+            #[cfg(feature = "backend-dilithium")]
+            Backend::SoftwareDilithium => Err(TrussedError::RequestNotAvailable),
             Backend::Staging => match extension {
                 Extension::Chunked => {
                     ExtensionImpl::<ChunkedExtension>::extension_request_serialized(
@@ -387,6 +396,8 @@ pub enum Backend {
     HmacSha256P256,
     #[cfg(feature = "backend-rsa")]
     SoftwareRsa,
+    #[cfg(feature = "backend-dilithium")]
+    SoftwareDilithium,
     Staging,
     /// Separate BackendId to prevent non-priviledged apps from accessing the manage Extension
     StagingManage,
