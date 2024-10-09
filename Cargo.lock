@@ -1798,8 +1798,9 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
-version = "0.3.0"
-source = "git+https://github.com/Nitrokey/lpc55-hal?tag=v0.3.0-nitrokey.2#781c97372d07e98d48828ae345412cc311bd4113"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67e9bba980b3a2de5813c8db696806c59bdb5f57956c8137ebe1e10b2e988a53"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
