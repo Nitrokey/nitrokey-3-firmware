@@ -19,6 +19,7 @@ use littlefs2::path;
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
+use admin_app::{ConfigField, FieldType};
 
 #[macro_use]
 extern crate delog;
@@ -65,6 +66,9 @@ pub struct Config {
     fido: FidoConfig,
     #[serde(default, rename = "o", skip_serializing_if = "is_default")]
     opcard: OpcardConfig,
+    #[cfg(feature = "piv-authenticator")]
+    #[serde(default, rename = "p", skip_serializing_if = "is_default")]
+    piv: PivConfig,
     #[serde(default, rename = "v", skip_serializing_if = "is_default")]
     fs_version: u32,
     #[cfg(feature = "se050")]
@@ -78,8 +82,47 @@ impl admin_app::Config for Config {
         match app {
             "fido" => self.fido.field(key),
             "opcard" => self.opcard.field(key),
+            #[cfg(feature = "piv-authenticator")]
+            "piv" => self.piv.field(key),
             _ => None,
         }
+    }
+
+    fn list_available_fields(&self) -> &'static [ConfigField] {
+        &[
+            ConfigField {
+                name: "fido.disable_skip_up_timeout",
+                requires_touch_confirmation: false,
+                requires_reboot: false,
+                destructive: false,
+                ty: FieldType::Bool,
+            },
+            #[cfg(feature = "se050")]
+            ConfigField {
+                name: "opcard.use_se050_backend",
+                requires_touch_confirmation: true,
+                requires_reboot: true,
+                destructive: true,
+                ty: FieldType::Bool,
+            },
+            ConfigField {
+                name: "opcard.disabled",
+                requires_touch_confirmation: false,
+                // APDU dispatch does not handle well having the currently select application removed
+                requires_reboot: true,
+                destructive: false,
+                ty: FieldType::Bool,
+            },
+            #[cfg(feature = "piv-authenticator")]
+            ConfigField {
+                name: "piv.disabled",
+                requires_touch_confirmation: false,
+                // APDU dispatch does not handle well having the currently select application removed
+                requires_reboot: true,
+                destructive: false,
+                ty: FieldType::Bool,
+            },
+        ]
     }
 
     fn reset_client_id(
@@ -93,6 +136,11 @@ impl admin_app::Config for Config {
 
             (Some(("opcard", key)), _) => self.opcard.reset_client_id(key),
             (None, "opcard") => self.opcard.reset_client_id(""),
+
+            #[cfg(feature = "piv-authenticator")]
+            (Some(("piv", key)), _) => self.piv.reset_client_id(key),
+            #[cfg(feature = "piv-authenticator")]
+            (None, "piv") => self.piv.reset_client_id(""),
 
             _ => None,
         };
@@ -164,6 +212,8 @@ pub struct OpcardConfig {
     #[cfg(feature = "se050")]
     #[serde(default, rename = "s", skip_serializing_if = "is_default")]
     use_se050_backend: bool,
+    #[serde(default, rename = "d", skip_serializing_if = "is_default")]
+    disabled: bool,
 }
 
 #[cfg(feature = "opcard")]
@@ -201,6 +251,7 @@ impl OpcardConfig {
         Self {
             #[cfg(feature = "se050")]
             use_se050_backend: true,
+            disabled: false,
         }
     }
 
@@ -208,6 +259,7 @@ impl OpcardConfig {
         match key {
             #[cfg(feature = "se050")]
             "use_se050_backend" => Some(ConfigValueMut::Bool(&mut self.use_se050_backend)),
+            "disabled" => Some(ConfigValueMut::Bool(&mut self.disabled)),
             _ => None,
         }
     }
@@ -237,6 +289,31 @@ impl OpcardConfig {
             ResetConfigResult::Changed
         }
     }
+}
+
+#[cfg(feature = "piv-authenticator")]
+impl PivConfig {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        match key {
+            "disabled" => Some(ConfigValueMut::Bool(&mut self.disabled)),
+            _ => None,
+        }
+    }
+
+    #[cfg(feature = "factory-reset")]
+    fn reset_client_id(
+        &self,
+        _key: &str,
+    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
+        None
+    }
+}
+
+#[cfg(feature = "piv-authenticator")]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
+pub struct PivConfig {
+    #[serde(default, rename = "d", skip_serializing_if = "is_default")]
+    disabled: bool,
 }
 
 pub trait Runner {
@@ -578,12 +655,16 @@ impl<R: Runner> Apps<R> {
 
         #[cfg(feature = "opcard")]
         if let Some(opcard) = self.opcard.as_mut() {
-            apps.push(opcard).ok().unwrap();
+            if !self.admin.config().opcard.disabled {
+                apps.push(opcard).ok().unwrap();
+            }
         }
 
         #[cfg(feature = "piv-authenticator")]
         if let Some(piv) = self.piv.as_mut() {
-            apps.push(piv).ok().unwrap();
+            if !self.admin.config().piv.disabled {
+                apps.push(piv).ok().unwrap();
+            }
         }
 
         #[cfg(all(feature = "fido-authenticator", not(feature = "webcrypt")))]
@@ -1103,8 +1184,10 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "piv-authenticator")]
+    use super::PivConfig;
     use super::{Config, FidoConfig, OpcardConfig};
-    use cbor_smol::{cbor_serialize_bytes, Bytes};
+    use cbor_smol::cbor_serialize_bytes;
 
     #[test]
     fn test_config_size() {
@@ -1115,10 +1198,13 @@ mod tests {
             opcard: OpcardConfig {
                 #[cfg(feature = "se050")]
                 use_se050_backend: true,
+                disabled: true,
             },
+            #[cfg(feature = "piv-authenticator")]
+            piv: PivConfig { disabled: true },
             fs_version: 1,
         };
-        let data: Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
+        let data: heapless_bytes::Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
         // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512
         // bytes for LPC55 and 256 bytes for NRF52.  As the block count is only problematic on the
         // LPC55, this could be increased to 128 if necessary.

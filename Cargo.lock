@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.13#c24149193fb9bdcaa9ed4dd99fd2a503159a66ee"
+source = "git+https://github.com/Nitrokey/admin-app.git?rev=2bcefb3dda021a7e815016bf4f0719a84af13d3f#2bcefb3dda021a7e815016bf4f0719a84af13d3f"
 dependencies = [
  "apdu-dispatch",
  "cbor-smol",
@@ -165,6 +165,7 @@ dependencies = [
  "embedded-hal",
  "fido-authenticator",
  "heapless",
+ "heapless-bytes",
  "hex",
  "if_chain",
  "littlefs2",
@@ -495,8 +496,7 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f2529cc8240fcc91e8642754ce85e5360c2ee7f4435a76aa150e4ed746a5da4"
+source = "git+https://github.com/Nitrokey/cbor-smol.git?tag=v0.4.0-nitrokey.5#4a368461e06e3ca52d79638b9ab8f34b038491fc"
 dependencies = [
  "delog",
  "heapless",
@@ -3857,3 +3857,8 @@ dependencies = [
  "quote",
  "syn 2.0.69",
 ]
+
+[[patch.unused]]
+name = "lpc55-hal"
+version = "0.3.0"
+source = "git+https://github.com/Nitrokey/lpc55-hal?tag=v0.3.0-nitrokey.2#781c97372d07e98d48828ae345412cc311bd4113"
