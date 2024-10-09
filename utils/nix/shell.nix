@@ -13,7 +13,6 @@ let
     { };
   toolchain = fenix.fromToolchainFile {
     dir = ../..;
-    sha256 = "sha256-Q9UgzzvxLi4x9aWUJTn+/5EXekC98ODRU1TwhUs9RnY=";
   };
 in
 pkgs.mkShell {
