@@ -1736,7 +1736,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=a1f8d9e87bc70765b488625e5844dbce4c1568cc#a1f8d9e87bc70765b488625e5844dbce4c1568cc"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=ad1a0187f4dcfd5b683a770303a92b85c7c53136#ad1a0187f4dcfd5b683a770303a92b85c7c53136"
 dependencies = [
  "delog",
  "generic-array",
@@ -1748,7 +1748,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=a1f8d9e87bc70765b488625e5844dbce4c1568cc#a1f8d9e87bc70765b488625e5844dbce4c1568cc"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=ad1a0187f4dcfd5b683a770303a92b85c7c53136#ad1a0187f4dcfd5b683a770303a92b85c7c53136"
 dependencies = [
  "bitflags 2.6.0",
  "heapless",

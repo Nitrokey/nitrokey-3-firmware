@@ -28,8 +28,8 @@ trussed = { git = "https://github.com/Nitrokey/trussed.git", branch = "littlefs2
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "a1f8d9e87bc70765b488625e5844dbce4c1568cc" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "a1f8d9e87bc70765b488625e5844dbce4c1568cc" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "ad1a0187f4dcfd5b683a770303a92b85c7c53136" }
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "ad1a0187f4dcfd5b683a770303a92b85c7c53136" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", tag = "0.2.0" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
