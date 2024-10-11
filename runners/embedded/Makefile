@@ -43,7 +43,7 @@ RAW_OUT = $(CARGO_TARGET_DIR)/$(TARGET)/$(CUSTOM_PROFILE)/$(SOC)_runner
 # feature definition
 BUILD_FEATURES := board-$(BOARD),$(FEATURES),$(NO_DELOG_FEATURE),$(LITTLEFS_INTRINSICS_FEATURE)
 
-.PHONY: list build build-all reset program check doc check-all clean clean-all check-env set-vars lint-all lint
+.PHONY: list build build-all reset program check doc check-all bloat clean clean-all check-env set-vars lint-all lint
 
 # default target -> just build all "shortcuts"
 all: build-all $(ARTIFACTS)
@@ -142,6 +142,10 @@ lint: check-banner check-var-BOARD check-var-SOC
 	cargo clippy --target $(TARGET) \
 		--features $(BUILD_FEATURES) \
 		--quiet --profile $(CUSTOM_PROFILE)
+
+bloat: check-banner check-var-BOARD check-var-SOC
+	cargo --version
+	cargo bloat --target $(TARGET) --features $(BUILD_FEATURES) --profile $(CUSTOM_PROFILE) --message-format json -n 0 > $(ARTIFACTS)/bloat.json
 
 
 doc: check-banner check-var-BOARD check-var-SOC
