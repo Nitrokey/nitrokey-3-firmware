@@ -12,8 +12,7 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
-#[cfg(any(feature = "factory-reset", feature = "se050"))]
-use littlefs2::path;
+use littlefs2_core::path;
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
@@ -416,7 +415,7 @@ impl<R: Runner> Apps<R> {
         trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         mut make_client: impl FnMut(
             &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
-            &'static str,
+            &'static Path,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -492,7 +491,7 @@ impl<R: Runner> Apps<R> {
         trussed_service: &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
         make_client: impl FnOnce(
             &mut Service<P, Dispatch<R::Twi, R::Se050Timer>>,
-            &'static str,
+            &'static Path,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -762,12 +761,12 @@ trait App<R: Runner>: Sized {
     type Config;
 
     /// the desired client ID
-    const CLIENT_ID: &'static str;
+    const CLIENT_ID: &'static Path;
 
     fn new(
         runner: &R,
         make_client: impl FnOnce(
-            &'static str,
+            &'static Path,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -781,7 +780,7 @@ trait App<R: Runner>: Sized {
     fn client(
         runner: &R,
         make_client: impl FnOnce(
-            &'static str,
+            &'static Path,
             &'static [BackendId<Backend>],
             Option<&'static InterruptFlag>,
         ) -> Client<R>,
@@ -906,10 +905,10 @@ impl<R: Runner> AdminData<R> {
     }
 }
 
-const ADMIN_APP_CLIENT_ID: &str = "admin";
+const ADMIN_APP_CLIENT_ID: &Path = path!("admin");
 
 impl<R: Runner> App<R> for AdminApp<R> {
-    const CLIENT_ID: &'static str = ADMIN_APP_CLIENT_ID;
+    const CLIENT_ID: &'static Path = ADMIN_APP_CLIENT_ID;
 
     type Data = AdminData<R>;
     type Config = ();
@@ -944,7 +943,7 @@ pub struct FidoData {
 
 #[cfg(feature = "fido-authenticator")]
 impl<R: Runner> App<R> for FidoApp<R> {
-    const CLIENT_ID: &'static str = "fido";
+    const CLIENT_ID: &'static Path = path!("fido");
 
     type Data = FidoData;
     type Config = FidoConfig;
@@ -987,7 +986,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
 #[cfg(feature = "webcrypt")]
 impl<R: Runner> App<R> for WebcryptApp<R> {
-    const CLIENT_ID: &'static str = "webcrypt";
+    const CLIENT_ID: &'static Path = path!("webcrypt");
 
     type Data = ();
     type Config = ();
@@ -1017,7 +1016,7 @@ impl<R: Runner> App<R> for WebcryptApp<R> {
 
 #[cfg(feature = "secrets-app")]
 impl<R: Runner> App<R> for SecretsApp<R> {
-    const CLIENT_ID: &'static str = "secrets";
+    const CLIENT_ID: &'static Path = path!("secrets");
 
     type Data = ();
     type Config = ();
@@ -1050,7 +1049,7 @@ static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new()
 
 #[cfg(feature = "opcard")]
 impl<R: Runner> App<R> for OpcardApp<R> {
-    const CLIENT_ID: &'static str = "opcard";
+    const CLIENT_ID: &'static Path = path!("opcard");
 
     type Data = ();
     type Config = OpcardConfig;
@@ -1120,7 +1119,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
 
 #[cfg(feature = "piv-authenticator")]
 impl<R: Runner> App<R> for PivApp<R> {
-    const CLIENT_ID: &'static str = "piv";
+    const CLIENT_ID: &'static Path = path!("piv");
 
     type Data = ();
     type Config = ();
@@ -1157,7 +1156,7 @@ pub struct ProvisionerData<R: Runner> {
 
 #[cfg(feature = "provisioner-app")]
 impl<R: Runner> App<R> for ProvisionerApp<R> {
-    const CLIENT_ID: &'static str = "attn";
+    const CLIENT_ID: &'static Path = path!("attn");
 
     type Data = ProvisionerData<R>;
     type Config = ();

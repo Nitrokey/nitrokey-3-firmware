@@ -12,7 +12,7 @@ use trussed::{
 #[cfg(feature = "backend-auth")]
 use trussed::types::Location;
 
-use littlefs2::{path, path::Path};
+use littlefs2_core::{path, Path};
 
 use if_chain::if_chain;
 use trussed::{
@@ -88,7 +88,7 @@ fn should_preserve_file(file: &Path) -> bool {
 
     let mut components = file.iter();
     if_chain! {
-        if components.next() == Some("/".into());
+        if components.next().as_deref() == Some(path!("/"));
         if  components.next().is_some();
         if let Some(intermediary) = components.next();
         if DIRS.contains(&&*intermediary);

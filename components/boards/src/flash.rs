@@ -46,7 +46,7 @@ where
             return Ok(0);
         }*/
         if buf.len() > FLASH_PROPERTIES.size || off > FLASH_PROPERTIES.size - buf.len() {
-            return Err(Error::Unknown(0x6578_7046));
+            return Err(Error::IO);
         }
         let mut flash = self.s25flash.borrow_mut();
         let r = flash.read(off as u32, buf);
@@ -62,9 +62,7 @@ where
         for chunk in data.chunks(CHUNK_SIZE) {
             let buf = &mut buf[..chunk.len()];
             buf.copy_from_slice(chunk);
-            flash
-                .write_bytes(off, buf)
-                .map_err(|_| Error::Unknown(0x6565_6565))?;
+            flash.write_bytes(off, buf).map_err(|_| Error::IO)?;
             off += CHUNK_SIZE as u32;
         }
         Ok(data.len())
@@ -73,7 +71,7 @@ where
     fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
         trace!("EFe {:x} {:x}", off, len);
         if len > FLASH_PROPERTIES.size || off > FLASH_PROPERTIES.size - len {
-            return Err(Error::Unknown(0x6578_7046));
+            return Err(Error::IO);
         }
         let result = self
             .s25flash
@@ -93,7 +91,7 @@ where
 {
     match r {
         Ok(()) => Ok(len),
-        Err(_) => Err(Error::Unknown(0x6565_6565)),
+        Err(_) => Err(Error::IO),
     }
 }
 

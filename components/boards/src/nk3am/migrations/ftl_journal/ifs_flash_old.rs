@@ -78,8 +78,7 @@ fn nvmc_to_lfs_return(
     r: Result<(), nrf52840_hal::nvmc::NvmcError>,
     len: usize,
 ) -> Result<usize, littlefs2::io::Error> {
-    r.map(|_| len)
-        .map_err(|_| littlefs2::io::Error::Unknown(0x4e56_4d43)) // 'NVMC'
+    r.map(|_| len).map_err(|_| littlefs2::io::Error::IO) // 'NVMC'
 }
 
 impl FlashStorage {
