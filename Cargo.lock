@@ -842,16 +842,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cstr_core"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
-dependencies = [
- "cty",
- "memchr",
-]
-
-[[package]]
 name = "csv"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1086,7 +1076,7 @@ dependencies = [
  "embedded-hal",
  "interchange",
  "littlefs2",
- "littlefs2-sys",
+ "littlefs2-sys 0.1.7",
  "lpc55-hal",
  "lpc55-pac",
  "memory-regions",
@@ -1746,15 +1736,13 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=960e57d9fc0d209308c8e15dc26252bbe1ff6ba8#960e57d9fc0d209308c8e15dc26252bbe1ff6ba8"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=caad4110e4b0381a0dd5c3933b104756e831d000#caad4110e4b0381a0dd5c3933b104756e831d000"
 dependencies = [
  "bitflags 1.3.2",
- "cstr_core",
- "cty",
  "delog",
  "generic-array",
  "heapless",
- "littlefs2-sys",
+ "littlefs2-sys 0.2.0",
  "serde",
 ]
 
@@ -1766,6 +1754,16 @@ dependencies = [
  "bindgen",
  "cc",
  "cty",
+]
+
+[[package]]
+name = "littlefs2-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e9a93267fadc37e91758279342f2055b6c03b1187ec7a6b1419c3710172466e"
+dependencies = [
+ "bindgen",
+ "cc",
 ]
 
 [[package]]
