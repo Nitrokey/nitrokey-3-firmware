@@ -1085,6 +1085,7 @@ dependencies = [
  "delog",
  "embedded-hal",
  "interchange",
+ "littlefs2",
  "littlefs2-sys",
  "lpc55-hal",
  "lpc55-pac",
@@ -2097,7 +2098,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.5.0#0c0f18b0d17155874e06b18726647097d06cb0da"
+source = "git+https://github.com/Nitrokey/opcard-rs?branch=path#dbf5b3252e7b7c3beec4e38efd94fe8c5f7efbf6"
 dependencies = [
  "admin-app",
  "apdu-dispatch",
@@ -2108,6 +2109,7 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.4.1",
  "iso7816",
+ "littlefs2",
  "log",
  "serde",
  "serde_repr",
@@ -3156,7 +3158,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.21#66e8fa72939b769587df28550034ba66425dcefd"
+source = "git+https://github.com/nitrokey/trussed.git?branch=littlefs2-cleanup#ddf88deb1773000a0b151e23ca1f99909a535de6"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3193,7 +3195,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=947ffe6cff426ccbbbb2d0f689437f427665919e#947ffe6cff426ccbbbb2d0f689437f427665919e"
+source = "git+https://github.com/trussed-dev/trussed-auth?branch=path#2ae26ba455f9c7615692d5dc4eab15e79bad3a0a"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3262,7 +3264,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.3.5#f04beb6e1d5cc0ec84af4fcdc05338450c24cb0e"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=path#f5dec81dc6cc71ba57bad49d064c12025f6bdf2c"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
@@ -3306,7 +3308,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.1#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=path#e2397993635905504ad84e8d09a8a1f3e1c0bc09"
 dependencies = [
  "chacha20poly1305",
  "delog",
