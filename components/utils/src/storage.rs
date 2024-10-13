@@ -38,7 +38,7 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
 
     fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
         if off + data.len() > SIZE {
-            return Err(Error::NoSpace);
+            return Err(Error::NO_SPACE);
         }
         let write_size: usize = Self::WRITE_SIZE;
         debug_assert!(off % write_size == 0);
