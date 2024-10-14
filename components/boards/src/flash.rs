@@ -62,9 +62,7 @@ where
         for chunk in data.chunks(CHUNK_SIZE) {
             let buf = &mut buf[..chunk.len()];
             buf.copy_from_slice(chunk);
-            flash
-                .write_bytes(off, buf)
-                .map_err(|_| Error::IO)?;
+            flash.write_bytes(off, buf).map_err(|_| Error::IO)?;
             off += CHUNK_SIZE as u32;
         }
         Ok(data.len())

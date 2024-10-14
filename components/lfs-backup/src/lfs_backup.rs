@@ -1,7 +1,10 @@
 use littlefs2::consts::PATH_MAX;
 use littlefs2::fs::{DirEntry, Filesystem};
 
-use littlefs2::{path, path::{Path, PathBuf}};
+use littlefs2::{
+    path,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 

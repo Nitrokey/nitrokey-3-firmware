@@ -19,7 +19,10 @@ generate_macros!();
 
 use core::convert::TryFrom;
 use heapless::Vec;
-use littlefs2::{path, path::{Path, PathBuf}};
+use littlefs2::{
+    path,
+    path::{Path, PathBuf},
+};
 use trussed::{
     client,
     key::{Flags, Key, Kind as KeyKind},
@@ -245,10 +248,7 @@ where
                     &serialized_bytes,
                 )
                 .map_err(|_| Error::NotEnoughMemory)?;
-                info!(
-                    "stored to {}",
-                    FILENAME_P256_SECRET.as_str()
-                );
+                info!("stored to {}", FILENAME_P256_SECRET.as_str());
 
                 reply
                     .extend_from_slice(&keypair.public.to_untagged_bytes())
