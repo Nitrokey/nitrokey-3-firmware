@@ -17,27 +17,32 @@ version = "1.7.2"
 memory-regions = { path = "components/memory-regions" }
 
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.13" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
+# admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.13" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", branch = "littlefs2-path" }
+# fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "littlefs2-path" }
 # trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-cleanup" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-path" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 # littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "960e57d9fc0d209308c8e15dc26252bbe1ff6ba8" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "caad4110e4b0381a0dd5c3933b104756e831d000" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "9a97d10a72fbc57efcbc6c9e77ca92a565be9d59" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "39626c0dbc2f6c38b74889a5bf9d5a200614f121" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # unreleased crates
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
-webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
+# secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", branch = "littlefs2-path" }
+# webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", branch = "littlefs2-path" }
 # opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.5.0" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", branch = "path" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
+# piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", branch = "littlefs2-path" }
 trussed-fs-info = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "fs-info-v0.1.0" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
@@ -45,7 +50,7 @@ trussed-wrap-key-to-file = { git = "https://github.com/trussed-dev/trussed-stagi
 # trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.1" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "path" }
 # trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "947ffe6cff426ccbbbb2d0f689437f427665919e" }
-trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", branch = "path" }
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", branch = "littlefs2-path" }
 trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "hkdf-v0.2.0" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.4" }

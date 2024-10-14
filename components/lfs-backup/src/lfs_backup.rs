@@ -1,7 +1,7 @@
 use littlefs2::consts::PATH_MAX;
 use littlefs2::fs::{Attribute, DirEntry, Filesystem};
 
-use littlefs2::path::{Path, PathBuf};
+use littlefs2::{path, path::{Path, PathBuf}};
 
 use serde::{Deserialize, Serialize};
 
@@ -167,7 +167,7 @@ pub trait BackupBackend {
         &mut self,
         fs: &Filesystem<S>,
     ) -> Result<(usize, usize)> {
-        let root_dir = PathBuf::from("/");
+        let root_dir = PathBuf::from(path!("/"));
 
         let mut path_stack: Vec<PathCursor, MAX_FS_DEPTH> = Vec::new();
         path_stack
