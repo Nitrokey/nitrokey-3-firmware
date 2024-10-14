@@ -1737,7 +1737,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=9a97d10a72fbc57efcbc6c9e77ca92a565be9d59#9a97d10a72fbc57efcbc6c9e77ca92a565be9d59"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=ee539c764afcef1c011cc95b17ee945a1ad07e21#ee539c764afcef1c011cc95b17ee945a1ad07e21"
 dependencies = [
  "bitflags 1.3.2",
  "delog",
@@ -3159,7 +3159,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?branch=littlefs2-path#ea109c826b69c530fca7583104f1c8f07c25f9ab"
+source = "git+https://github.com/nitrokey/trussed.git?branch=littlefs2-error#d4a2d292357ea8756f4b9329c24062401ab27c73"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3196,7 +3196,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?branch=littlefs2-path#2654360393c30f365f11b6ccfa9307611a953dfb"
+source = "git+https://github.com/trussed-dev/trussed-auth?branch=littlefs2-error#f08264e5713ec818abb95ae303320be07758bc9a"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3265,7 +3265,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=path#f5dec81dc6cc71ba57bad49d064c12025f6bdf2c"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=littlefs2-error#cb7bdfeae4ce2d83e1ca411b0d35d2bc70312821"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
