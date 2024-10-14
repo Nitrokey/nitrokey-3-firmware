@@ -22,7 +22,7 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app.git", branch = "littl
 # fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "littlefs2-path" }
 # trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-heapless" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-virt" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }

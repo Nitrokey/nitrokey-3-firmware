@@ -3168,7 +3168,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?branch=littlefs2-heapless#6e92689c3568d222a604679f8bc0390e3fff9953"
+source = "git+https://github.com/nitrokey/trussed.git?branch=littlefs2-virt#edd676908ae8a7710da5c99f728ec81c47e08547"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
