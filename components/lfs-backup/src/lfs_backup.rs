@@ -1,5 +1,5 @@
 use littlefs2::consts::PATH_MAX;
-use littlefs2::fs::{Attribute, DirEntry, Filesystem};
+use littlefs2::fs::{DirEntry, Filesystem};
 
 use littlefs2::{path, path::{Path, PathBuf}};
 
@@ -197,11 +197,15 @@ pub trait BackupBackend {
             // move index "pointer" to next item
             current.idx += 1;
 
+            let mut buffer = UserAttribute::new();
+            buffer.resize_to_capacity();
             let attr = fs
-                .attribute(entry.path(), USER_ATTRIBUTE_NUMBER)?
-                .map(|v| UserAttribute::from_slice(v.data()))
-                .transpose()
-                .map_err(|_| FSBackupError::UserAttributeErr)?;
+                .attribute(entry.path(), USER_ATTRIBUTE_NUMBER, &mut buffer)?
+                .map(|v| v.data().len())
+                .map(|n| {
+                    buffer.truncate(n);
+                    buffer
+                });
 
             if entry.file_type().is_dir() {
                 d_cnt += 1;
@@ -267,9 +271,7 @@ pub trait BackupBackend {
                         fs.create_dir(path)?;
 
                         if let Some(user_attr) = v.attr {
-                            let mut attr = Attribute::new(USER_ATTRIBUTE_NUMBER);
-                            attr.set_data(user_attr.as_slice());
-                            fs.set_attribute(path, &attr)?
+                            fs.set_attribute(path, USER_ATTRIBUTE_NUMBER, &user_attr)?
                         };
                     } else {
                         f_cnt += 1;
@@ -277,9 +279,7 @@ pub trait BackupBackend {
                         fs.write(path, content.as_slice())?;
 
                         if let Some(user_attr) = v.attr {
-                            let mut attr = Attribute::new(USER_ATTRIBUTE_NUMBER);
-                            attr.set_data(user_attr.as_slice());
-                            fs.set_attribute(path, &attr)?;
+                            fs.set_attribute(path, USER_ATTRIBUTE_NUMBER, &user_attr)?;
                         };
                     }
                 }

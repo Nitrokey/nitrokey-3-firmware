@@ -22,14 +22,14 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app.git", branch = "littl
 # fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "littlefs2-path" }
 # trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-error" }
+trussed = { git = "https://github.com/nitrokey/trussed.git", branch = "littlefs2-attr" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 # littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "960e57d9fc0d209308c8e15dc26252bbe1ff6ba8" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "7356da54d19035fe56b81b93acb871b164bf1dbb" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "7356da54d19035fe56b81b93acb871b164bf1dbb" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "e21c691032ff758fb4fd83969be5620e52f8314f" }
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "e21c691032ff758fb4fd83969be5620e52f8314f" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "39626c0dbc2f6c38b74889a5bf9d5a200614f121" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
