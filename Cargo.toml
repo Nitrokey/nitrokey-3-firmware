@@ -17,12 +17,15 @@ version = "1.7.2"
 memory-regions = { path = "components/memory-regions" }
 
 # forked
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.15" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
+# admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.15" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", branch = "apdu-app" }
+# fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", branch = "apdu-app" }
 trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
 
 # unreleased upstream changes
-apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
+apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "6994b0ae966d2c9fe60c50fe20c5117546745d0f" }
+apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "6994b0ae966d2c9fe60c50fe20c5117546745d0f" }
 cbor-smol = { git = "https://github.com/trussed-dev/cbor-smol.git", rev = "4a368461e06e3ca52d79638b9ab8f34b038491fc" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "960e57d9fc0d209308c8e15dc26252bbe1ff6ba8" }
@@ -32,10 +35,14 @@ usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitro
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # unreleased crates
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
-webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.5.0" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
+# secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", branch = "apdu-app" }
+# webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
+webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", branch = "apdu-app" }
+# opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.5.0" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", branch = "apdu-app" }
+# piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.7" }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", branch = "apdu-app" }
 trussed-fs-info = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "fs-info-v0.1.0" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
