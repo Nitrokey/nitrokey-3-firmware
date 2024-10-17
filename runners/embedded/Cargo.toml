@@ -21,7 +21,7 @@ nfc-device = { path = "../../components/nfc-device" }
 utils = { path = "../../components/utils", features = ["storage"] }
 
 ### protocols and dispatchers
-apdu-dispatch = "0.1"
+apdu-dispatch = "0.3"
 ctaphid-dispatch = "0.1"
 
 ### trussed core

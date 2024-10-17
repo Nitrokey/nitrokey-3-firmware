@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 heapless = "0.7"
 
-apdu-dispatch = "0.1"
+apdu-app = "0.1"
 iso7816 = "0.1"
