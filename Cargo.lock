@@ -5,9 +5,9 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?branch=apdu-app#c47ea6a64373122ccfa26284774a6af25ff36bca"
+source = "git+https://github.com/Nitrokey/admin-app.git?branch=apdu-app#3da401325046239874a1c2989ad985fe96b43507"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "cbor-smol",
  "ctaphid-dispatch",
  "delog",
@@ -144,7 +144,8 @@ checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
 [[package]]
 name = "apdu-app"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=6994b0ae966d2c9fe60c50fe20c5117546745d0f#6994b0ae966d2c9fe60c50fe20c5117546745d0f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce391931a2cc4597eaf0d464db9d4d5e1939ccc8dd6eda0f86cda117e914c02d"
 dependencies = [
  "iso7816",
 ]
@@ -163,8 +164,9 @@ dependencies = [
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=6994b0ae966d2c9fe60c50fe20c5117546745d0f#6994b0ae966d2c9fe60c50fe20c5117546745d0f"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4063bce5a221fcef21017ead889f26468dbee476649d6a2181b0931197082904"
 dependencies = [
  "apdu-app",
  "delog",
@@ -178,7 +180,7 @@ name = "apps"
 version = "1.7.2"
 dependencies = [
  "admin-app",
- "apdu-dispatch 0.2.0",
+ "apdu-dispatch 0.3.0",
  "bitflags 2.6.0",
  "cbor-smol",
  "ctaphid-dispatch",
@@ -379,7 +381,7 @@ dependencies = [
 name = "boards"
 version = "1.7.2"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-dispatch 0.3.0",
  "apps",
  "cortex-m",
  "cortex-m-rt",
@@ -895,9 +897,9 @@ dependencies = [
 
 [[package]]
 name = "ctap-types"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf6a69fe79c279d4e06b0064d25ee7d05f87d55c06e07a1386043bc14bbd5c6d"
+checksum = "209c174878bcb580b4383484a09dd416c3e1e00fe01c813da57fb9248402de56"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -1095,7 +1097,7 @@ name = "embedded-runner-lib"
 version = "1.7.2"
 dependencies = [
  "alloc-cortex-m",
- "apdu-dispatch 0.2.0",
+ "apdu-dispatch 0.3.0",
  "apps",
  "boards",
  "cargo-lock",
@@ -1145,7 +1147,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=apdu-app#b0d35eb89d72b71439436e1258df0fe6ce54244a"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=apdu-app#dbb43813dd368e6b4ff6ab70d8a33a6b63c9cfa6"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -1197,9 +1199,9 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=apdu-app#d51fa896e1bc63b3919a0b120b6c355c95a97342"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=apdu-app#ab30496c76f332d7d0e22e12b229ad7c0bed3646"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "cbor-smol",
  "cosey",
  "ctap-types",
@@ -1679,9 +1681,9 @@ checksum = "f8478577c03552c21db0e2724ffb8986a5ce7af88107e6be5d2ee6e158c12800"
 
 [[package]]
 name = "iso7816"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3af73ac9c821e7aea3280532118e15cdf9e7bb45c923cbf0e319ae25b27d20c"
+checksum = "c75f5d3f2d959c5d37b382ed9b5a32d0a0e6112ab6ac9eb8fce82359db6f2367"
 dependencies = [
  "delog",
  "heapless",
@@ -1916,7 +1918,7 @@ checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 name = "ndef-app"
 version = "0.1.0"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "heapless",
  "iso7816",
 ]
@@ -1925,7 +1927,7 @@ dependencies = [
 name = "nfc-device"
 version = "0.0.1"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-dispatch 0.3.0",
  "delog",
  "embedded-time",
  "heapless",
@@ -1938,7 +1940,7 @@ dependencies = [
 name = "nkpk"
 version = "1.0.0"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-dispatch 0.3.0",
  "apps",
  "boards",
  "cargo-lock",
@@ -2124,10 +2126,10 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?branch=apdu-app#505e0a1045b190d7c66bf55071258cd2dcdc27f3"
+source = "git+https://github.com/Nitrokey/opcard-rs?branch=apdu-app#0843f0e1c3534114cb309eba49261cfe9a809eaa"
 dependencies = [
  "admin-app",
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "bitflags 2.6.0",
  "cfg-if",
  "delog",
@@ -2233,9 +2235,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "piv-authenticator"
 version = "0.3.7"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?branch=apdu-app#f0330c4702ce351d39ad7317c1af089ad50edb54"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?branch=apdu-app#9ab4425e6ef66d33d96c2969cad39a0985017f46"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "delog",
  "flexiber",
  "heapless",
@@ -2374,11 +2376,12 @@ dependencies = [
 name = "provisioner-app"
 version = "0.1.0"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "ctaphid-dispatch",
  "delog",
  "heapless",
  "heapless-bytes",
+ "iso7816",
  "littlefs2",
  "p256-cortex-m4",
  "salty",
@@ -2664,9 +2667,9 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=apdu-app#b0d35eb89d72b71439436e1258df0fe6ce54244a"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=apdu-app#dbb43813dd368e6b4ff6ab70d8a33a6b63c9cfa6"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "bitflags 2.6.0",
  "block-padding",
  "cbor-smol",
@@ -3658,9 +3661,9 @@ checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 [[package]]
 name = "webcrypt"
 version = "0.8.0"
-source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?branch=apdu-app#c3faac64e0a86dbbfa25ca5b7e8556e754e968dd"
+source = "git+https://github.com/nitrokey/nitrokey-websmartcard-rust?branch=apdu-app#0dca8a9e8d5cd6c79289c27dd9017798dffc26ae"
 dependencies = [
- "apdu-dispatch 0.2.0",
+ "apdu-app",
  "cbor-smol",
  "ctap-types",
  "ctaphid-dispatch",
@@ -3669,6 +3672,7 @@ dependencies = [
  "heapless",
  "heapless-bytes",
  "hmac",
+ "iso7816",
  "serde",
  "serde-indexed",
  "serde_bytes",

@@ -1,7 +1,4 @@
-use apdu_dispatch::{
-    app, command::SIZE as CommandSize, dispatch::Interface, response,
-    response::SIZE as ResponseSize, Command,
-};
+use apdu_app::{CommandView, Data, Interface};
 use iso7816::{Instruction, Status};
 
 pub struct App<'a> {
@@ -48,13 +45,13 @@ impl<'a> iso7816::App for App<'a> {
     }
 }
 
-impl<'a> app::App<CommandSize, ResponseSize> for App<'a> {
+impl<'a, const R: usize> apdu_app::App<R> for App<'a> {
     fn select(
         &mut self,
         _interface: Interface,
-        _apdu: &Command,
-        _reply: &mut response::Data,
-    ) -> app::Result {
+        _apdu: CommandView<'_>,
+        _reply: &mut Data<R>,
+    ) -> apdu_app::Result {
         Ok(())
     }
 
@@ -62,10 +59,10 @@ impl<'a> app::App<CommandSize, ResponseSize> for App<'a> {
 
     fn call(
         &mut self,
-        _type: app::Interface,
-        apdu: &Command,
-        reply: &mut response::Data,
-    ) -> app::Result {
+        _type: Interface,
+        apdu: CommandView<'_>,
+        reply: &mut Data<R>,
+    ) -> apdu_app::Result {
         let instruction = apdu.instruction();
         let p1 = apdu.p1;
         let p2 = apdu.p2;

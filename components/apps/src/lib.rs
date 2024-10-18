@@ -5,9 +5,7 @@ const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 #[cfg(feature = "webcrypt")]
 const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
-use apdu_dispatch::{
-    command::SIZE as ApduCommandSize, response::SIZE as ApduResponseSize, App as ApduApp,
-};
+use apdu_dispatch::{response::SIZE as ApduResponseSize, App as ApduApp};
 use bitflags::bitflags;
 use core::marker::PhantomData;
 use ctaphid_dispatch::app::App as CtaphidApp;
@@ -639,10 +637,9 @@ impl<R: Runner> Apps<R> {
 
     pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>]) -> T,
+        F: FnOnce(&mut [&mut dyn ApduApp<ApduResponseSize>]) -> T,
     {
-        let mut apps: Vec<&mut dyn ApduApp<ApduCommandSize, ApduResponseSize>, 7> =
-            Default::default();
+        let mut apps: Vec<&mut dyn ApduApp<ApduResponseSize>, 7> = Default::default();
 
         // App 1: ndef
         #[cfg(feature = "ndef-app")]
@@ -753,7 +750,7 @@ where
     #[cfg(feature = "trussed-usbip-ccid")]
     fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<ApduCommandSize, ApduResponseSize>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<ApduResponseSize>]) -> T,
     ) -> T {
         self.apdu_dispatch(f)
     }

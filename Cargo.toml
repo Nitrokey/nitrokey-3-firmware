@@ -24,8 +24,6 @@ fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git
 trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
 
 # unreleased upstream changes
-apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "6994b0ae966d2c9fe60c50fe20c5117546745d0f" }
-apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "6994b0ae966d2c9fe60c50fe20c5117546745d0f" }
 cbor-smol = { git = "https://github.com/trussed-dev/cbor-smol.git", rev = "4a368461e06e3ca52d79638b9ab8f34b038491fc" }
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "960e57d9fc0d209308c8e15dc26252bbe1ff6ba8" }
