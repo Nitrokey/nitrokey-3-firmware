@@ -1,13 +1,7 @@
 use crate::{Error, Provisioner};
-use apdu_dispatch::{
-    app::{App, Interface, Result},
-    command::SIZE as CommandSize,
-    iso7816::{self, Aid, Instruction, Status},
-    response,
-    response::SIZE as ResponseSize,
-    Command,
-};
+use apdu_app::{App, CommandView, Data, Interface, Result, Status};
 use core::convert::{TryFrom, TryInto};
+use iso7816::{Aid, Instruction};
 use trussed::{client, store::Store, types::LfsStorage, Client};
 
 const SOLO_PROVISIONER_AID: &[u8] = &[0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
@@ -47,7 +41,7 @@ where
     }
 }
 
-impl<S, FS, T> App<CommandSize, ResponseSize> for Provisioner<S, FS, T>
+impl<S, FS, T, const R: usize> App<R> for Provisioner<S, FS, T>
 where
     S: Store,
     FS: 'static + LfsStorage,
@@ -56,8 +50,8 @@ where
     fn select(
         &mut self,
         _interface: Interface,
-        _apdu: &Command,
-        reply: &mut response::Data,
+        _apdu: CommandView<'_>,
+        reply: &mut Data<R>,
     ) -> Result {
         self.buffer_file_contents.clear();
         self.buffer_filename.clear();
@@ -71,8 +65,8 @@ where
     fn call(
         &mut self,
         _interface_type: Interface,
-        apdu: &Command,
-        reply: &mut response::Data,
+        apdu: CommandView<'_>,
+        reply: &mut Data<R>,
     ) -> Result {
         apdu.instruction()
             .try_into()
