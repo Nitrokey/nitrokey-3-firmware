@@ -76,10 +76,11 @@ se050 = ["dep:se05x", "trussed-se050-backend", "trussed-se050-manage", "admin-ap
 # backends
 backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
+backend-software-hpke = ["trussed-staging/hpke"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 
-trussed-usbip-ccid = ["trussed-usbip/ccid", "trussed-staging/hpke"]
+trussed-usbip-ccid = ["trussed-usbip/ccid", "backend-software-hpke"]
 
 factory-reset = ["admin-app/factory-reset"]
 

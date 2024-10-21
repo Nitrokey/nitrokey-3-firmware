@@ -323,9 +323,7 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
-                #[cfg(feature = "piv-authenticator")]
-                // Don't use staging hpke if se050 is available
-                #[cfg(not(feature = "se050"))]
+                #[cfg(feature = "backend-software-hpke")]
                 Extension::Hpke => ExtensionImpl::<HpkeExtension>::extension_request_serialized(
                     &mut self.staging,
                     &mut ctx.core,
