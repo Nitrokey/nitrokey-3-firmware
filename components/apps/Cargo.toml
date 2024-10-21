@@ -46,7 +46,7 @@ piv-authenticator = { version = "0.3.8", features = ["apdu-dispatch", "delog", "
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]
-cbor-smol = "0.4"
+cbor-smol = "0.5"
 hex = "0.4"
 
 [features]

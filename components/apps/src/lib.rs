@@ -1184,7 +1184,7 @@ mod tests {
     #[cfg(feature = "piv-authenticator")]
     use super::PivConfig;
     use super::{Config, FidoConfig, OpcardConfig};
-    use cbor_smol::cbor_serialize_bytes;
+    use cbor_smol::cbor_serialize;
 
     #[test]
     fn test_config_size() {
@@ -1201,10 +1201,11 @@ mod tests {
             piv: PivConfig { disabled: true },
             fs_version: 1,
         };
-        let data: heapless_bytes::Bytes<1024> = cbor_serialize_bytes(&config).unwrap();
+        let mut buffer = [0; 1024];
+        let data = cbor_serialize(&config, &mut buffer).unwrap();
         // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512
         // bytes for LPC55 and 256 bytes for NRF52.  As the block count is only problematic on the
         // LPC55, this could be increased to 128 if necessary.
-        assert!(data.len() < 64, "{}: {}", data.len(), hex::encode(&data));
+        assert!(data.len() < 64, "{}: {}", data.len(), hex::encode(data));
     }
 }
