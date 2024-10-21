@@ -24,7 +24,7 @@ littlefs2 = "0.4"
 trussed-auth = { version = "0.3.0", optional = true }
 trussed-rsa-alloc = { version = "0.2.0", optional = true }
 trussed-se050-backend = { version = "0.3.6", optional = true }
-trussed-staging = { version = "0.3.2", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info", "hpke"] }
+trussed-staging = { version = "0.3.2", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
 
 # Extensions
 trussed-chunked = "0.1.0"
@@ -58,7 +58,7 @@ hex = "0.4"
 
 # nk3
 nk3 = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "factory-reset", "trussed/clients-4"]
-nk3-test = ["nk3", "piv-authenticator", "trussed/clients-6"]
+nk3-test = ["nk3", "piv-authenticator", "trussed/clients-5"]
 nk3-provisioner = ["nk3", "provisioner-app", "trussed/clients-5"]
 
 # nkpk
