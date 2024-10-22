@@ -23,8 +23,8 @@ littlefs2 = "0.4"
 # Backends
 trussed-auth = { version = "0.3.0", optional = true }
 trussed-rsa-alloc = { version = "0.2.0", optional = true }
-trussed-se050-backend = { version = "0.3.0", optional = true }
-trussed-staging = { version = "0.3.0", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
+trussed-se050-backend = { version = "0.3.6", optional = true }
+trussed-staging = { version = "0.3.2", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
 
 # Extensions
 trussed-chunked = "0.1.0"
@@ -33,6 +33,7 @@ trussed-manage = "0.1.0"
 trussed-se050-manage = { version = "0.1.0", optional = true }
 trussed-wrap-key-to-file = "0.1.0"
 trussed-fs-info = "0.1.0"
+trussed-hpke = "0.1.0"
 
 # apps
 admin-app = "0.1.0"
@@ -41,7 +42,7 @@ ndef-app = { path = "../ndef-app", optional = true }
 webcrypt = { version = "0.8.0", optional = true }
 secrets-app = { version = "0.13.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.4.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }
-piv-authenticator = { version = "0.3.4", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
+piv-authenticator = { version = "0.3.8", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]
@@ -57,7 +58,7 @@ hex = "0.4"
 
 # nk3
 nk3 = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "factory-reset", "trussed/clients-4"]
-nk3-test = ["nk3", "piv-authenticator", "webcrypt", "trussed/clients-6"]
+nk3-test = ["nk3", "piv-authenticator", "trussed/clients-5"]
 nk3-provisioner = ["nk3", "provisioner-app", "trussed/clients-5"]
 
 # nkpk
@@ -75,10 +76,11 @@ se050 = ["dep:se05x", "trussed-se050-backend", "trussed-se050-manage", "admin-ap
 # backends
 backend-auth = ["trussed-auth"]
 backend-rsa = ["trussed-rsa-alloc"]
+backend-software-hpke = ["trussed-staging/hpke"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 
-trussed-usbip-ccid = ["trussed-usbip/ccid"]
+trussed-usbip-ccid = ["trussed-usbip/ccid", "backend-software-hpke"]
 
 factory-reset = ["admin-app/factory-reset"]
 

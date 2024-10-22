@@ -55,6 +55,9 @@ use webcrypt::hmacsha256p256::{
     HmacSha256P256Extension,
 };
 
+#[cfg(feature = "piv-authenticator")]
+use trussed_hpke::HpkeExtension;
+
 pub struct Dispatch<T = (), D = ()> {
     #[cfg(feature = "backend-auth")]
     auth: AuthBackend,
@@ -118,6 +121,10 @@ const NAMESPACE: trussed_se050_backend::namespacing::Namespace = {
         NamespaceItem {
             client: path!("opcard"),
             value: NamespaceValue::Client2,
+        },
+        NamespaceItem {
+            client: path!("piv"),
+            value: NamespaceValue::Client3,
         },
     ])
 };
@@ -316,6 +323,14 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
+                #[cfg(feature = "backend-software-hpke")]
+                Extension::Hpke => ExtensionImpl::<HpkeExtension>::extension_request_serialized(
+                    &mut self.staging,
+                    &mut ctx.core,
+                    &mut ctx.backends.staging,
+                    request,
+                    resources,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => Err(TrussedError::RequestNotAvailable),
             },
@@ -350,6 +365,14 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
+                #[cfg(feature = "piv-authenticator")]
+                Extension::Hpke => ExtensionImpl::<HpkeExtension>::extension_request_serialized(
+                    self.se050.as_mut().ok_or(TrussedError::GeneralError)?,
+                    &mut ctx.core,
+                    &mut ctx.backends.se050,
+                    request,
+                    resources,
+                ),
                 _ => Err(TrussedError::RequestNotAvailable),
             },
             #[cfg(feature = "se050")]
@@ -410,6 +433,8 @@ pub enum Extension {
     HmacSha256P256,
     #[cfg(feature = "se050")]
     Se050Manage,
+    #[cfg(feature = "piv-authenticator")]
+    Hpke,
 }
 
 impl From<Extension> for u8 {
@@ -426,6 +451,8 @@ impl From<Extension> for u8 {
             Extension::Se050Manage => 5,
             Extension::Hkdf => 6,
             Extension::FsInfo => 7,
+            #[cfg(feature = "piv-authenticator")]
+            Extension::Hpke => 8,
         }
     }
 }
@@ -446,6 +473,8 @@ impl TryFrom<u8> for Extension {
             5 => Ok(Extension::Se050Manage),
             6 => Ok(Extension::Hkdf),
             7 => Ok(Extension::FsInfo),
+            #[cfg(feature = "piv-authenticator")]
+            8 => Ok(Extension::Hpke),
             _ => Err(TrussedError::InternalError),
         }
     }
@@ -500,6 +529,13 @@ impl<T: Twi, D: Delay> ExtensionId<FsInfoExtension> for Dispatch<T, D> {
     type Id = Extension;
 
     const ID: Self::Id = Self::Id::FsInfo;
+}
+
+#[cfg(feature = "piv-authenticator")]
+impl<T: Twi, D: Delay> ExtensionId<HpkeExtension> for Dispatch<T, D> {
+    type Id = Extension;
+
+    const ID: Self::Id = Self::Id::Hpke;
 }
 
 #[cfg(test)]
