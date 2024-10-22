@@ -19,7 +19,7 @@ memory-regions = { path = "components/memory-regions" }
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.15" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.20" }
-trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.21" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "cc9d367ffa76668e9419ad8a0c04a92903936efb" }
 
 # unreleased upstream changes
 apdu-dispatch = { git = "https://github.com/Nitrokey/apdu-dispatch.git", tag = "v0.1.2-nitrokey.3" }
@@ -34,7 +34,7 @@ p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev =
 # unreleased crates
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.13.0" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc9" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.5.0" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "4b4935a768f8601befef6dee3511ac9989bd0f47" }
 piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", tag = "v0.3.8" }
 trussed-fs-info = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "fs-info-v0.1.0" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
@@ -47,7 +47,7 @@ trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.4" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.3.6" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "04183749b38626c4514a8760075e652bf4d81b33" }
 
 [profile.release]
 codegen-units = 1
