@@ -17,6 +17,7 @@ cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rt = "0.6.15"
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
+littlefs2-core = "0.1"
 nfc-device = { path = "../../components/nfc-device" }
 utils = { path = "../../components/utils", features = ["storage"] }
 
@@ -45,7 +46,7 @@ systick-monotonic = { version = "1.0.0", optional = true }
 alloc-cortex-m = { version = "0.4.3", optional = true }
 
 # littlefs2-sys for intrinsics feature
-littlefs2-sys = { version = "0.1.7", optional = true }
+littlefs2-sys = { version = "0.2", optional = true }
 
 [build-dependencies]
 cargo-lock = "7"

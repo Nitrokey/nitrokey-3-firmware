@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use admin_app::migrations::Migrator;
-use littlefs2::path;
+use littlefs2_core::path;
 
 pub(crate) const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
 

@@ -19,7 +19,10 @@ generate_macros!();
 
 use core::convert::TryFrom;
 use heapless::Vec;
-use littlefs2::path::PathBuf;
+use littlefs2::{
+    path,
+    path::{Path, PathBuf},
+};
 use trussed::{
     client,
     key::{Flags, Key, Kind as KeyKind},
@@ -92,15 +95,15 @@ pub enum Error {
 
 type Uuid = [u8; 16];
 
-const FILENAME_T1_PUBLIC: &[u8] = b"/attn/pub/00";
+const FILENAME_T1_PUBLIC: &Path = path!("/attn/pub/00");
 
-const FILENAME_P256_SECRET: &[u8] = b"/attn/sec/01";
-const FILENAME_ED255_SECRET: &[u8] = b"/attn/sec/02";
-const FILENAME_X255_SECRET: &[u8] = b"/attn/sec/03";
+const FILENAME_P256_SECRET: &Path = path!("/attn/sec/01");
+const FILENAME_ED255_SECRET: &Path = path!("/attn/sec/02");
+const FILENAME_X255_SECRET: &Path = path!("/attn/sec/03");
 
-const FILENAME_P256_CERT: &[u8] = b"/attn/x5c/01";
-const FILENAME_ED255_CERT: &[u8] = b"/attn/x5c/02";
-const FILENAME_X255_CERT: &[u8] = b"/attn/x5c/03";
+const FILENAME_P256_CERT: &Path = path!("/attn/x5c/01");
+const FILENAME_ED255_CERT: &Path = path!("/attn/x5c/02");
+const FILENAME_X255_CERT: &Path = path!("/attn/x5c/03");
 
 enum SelectedBuffer {
     Filename,
@@ -180,7 +183,7 @@ where
             Instruction::WriteFile => {
                 if self.buffer_file_contents.is_empty() || self.buffer_filename.is_empty() {
                     Err(Error::IncorrectDataParameter)
-                } else {
+                } else if let Ok(buffer_path) = PathBuf::try_from(self.buffer_filename.as_slice()) {
                     // self.buffer_filename.push(0);
                     let _filename =
                         unsafe { core::str::from_utf8_unchecked(self.buffer_filename.as_slice()) };
@@ -194,7 +197,7 @@ where
                     let res = store::store(
                         self.store,
                         trussed::types::Location::Internal,
-                        &PathBuf::from(self.buffer_filename.as_slice()),
+                        &buffer_path,
                         &self.buffer_file_contents,
                     );
                     self.buffer_file_contents.clear();
@@ -206,6 +209,8 @@ where
                         info!("wrote file");
                         Ok(())
                     }
+                } else {
+                    Err(Error::IncorrectDataParameter)
                 }
             }
             Instruction::GenerateP256Key => {
@@ -239,14 +244,11 @@ where
                 store::store(
                     self.store,
                     trussed::types::Location::Internal,
-                    &PathBuf::from(FILENAME_P256_SECRET),
+                    FILENAME_P256_SECRET,
                     &serialized_bytes,
                 )
                 .map_err(|_| Error::NotEnoughMemory)?;
-                info!(
-                    "stored to {}",
-                    core::str::from_utf8(FILENAME_P256_SECRET).unwrap()
-                );
+                info!("stored to {}", FILENAME_P256_SECRET.as_str());
 
                 reply
                     .extend_from_slice(&keypair.public.to_untagged_bytes())
@@ -272,7 +274,7 @@ where
                 store::store(
                     self.store,
                     trussed::types::Location::Internal,
-                    &PathBuf::from(FILENAME_ED255_SECRET),
+                    FILENAME_ED255_SECRET,
                     &serialized_bytes,
                 )
                 .map_err(|_| Error::NotEnoughMemory)?;
@@ -301,7 +303,7 @@ where
                 store::store(
                     self.store,
                     trussed::types::Location::Internal,
-                    &PathBuf::from(FILENAME_X255_SECRET),
+                    FILENAME_X255_SECRET,
                     &serialized_bytes,
                 )
                 .map_err(|_| Error::NotEnoughMemory)?;
@@ -313,8 +315,7 @@ where
                 Ok(())
             }
             Instruction::SaveP256AttestationCertificate => {
-                let secret_path = PathBuf::from(FILENAME_P256_SECRET);
-                if !secret_path.exists(self.store.ifs()) || data.len() < 100 {
+                if !self.store.ifs().exists(FILENAME_P256_SECRET) || data.len() < 100 {
                     // Assuming certs will always be >100 bytes
                     Err(Error::IncorrectDataParameter)
                 } else {
@@ -322,7 +323,7 @@ where
                     store::store(
                         self.store,
                         trussed::types::Location::Internal,
-                        &PathBuf::from(FILENAME_P256_CERT),
+                        FILENAME_P256_CERT,
                         data,
                     )
                     .map_err(|_| Error::NotEnoughMemory)?;
@@ -330,8 +331,7 @@ where
                 }
             }
             Instruction::SaveEd255AttestationCertificate => {
-                let secret_path = PathBuf::from(FILENAME_ED255_SECRET);
-                if !secret_path.exists(self.store.ifs()) || data.len() < 100 {
+                if !self.store.ifs().exists(FILENAME_ED255_SECRET) || data.len() < 100 {
                     // Assuming certs will always be >100 bytes
                     Err(Error::IncorrectDataParameter)
                 } else {
@@ -339,7 +339,7 @@ where
                     store::store(
                         self.store,
                         trussed::types::Location::Internal,
-                        &PathBuf::from(FILENAME_ED255_CERT),
+                        FILENAME_ED255_CERT,
                         data,
                     )
                     .map_err(|_| Error::NotEnoughMemory)?;
@@ -347,8 +347,7 @@ where
                 }
             }
             Instruction::SaveX255AttestationCertificate => {
-                let secret_path = PathBuf::from(FILENAME_X255_SECRET);
-                if !secret_path.exists(self.store.ifs()) || data.len() < 100 {
+                if !self.store.ifs().exists(FILENAME_X255_SECRET) || data.len() < 100 {
                     // Assuming certs will always be >100 bytes
                     Err(Error::IncorrectDataParameter)
                 } else {
@@ -356,7 +355,7 @@ where
                     store::store(
                         self.store,
                         trussed::types::Location::Internal,
-                        &PathBuf::from(FILENAME_X255_CERT),
+                        FILENAME_X255_CERT,
                         data,
                     )
                     .map_err(|_| Error::NotEnoughMemory)?;
@@ -379,7 +378,7 @@ where
                     store::store(
                         self.store,
                         trussed::types::Location::Internal,
-                        &PathBuf::from(FILENAME_T1_PUBLIC),
+                        FILENAME_T1_PUBLIC,
                         &serialized_key,
                     )
                     .map_err(|_| Error::NotEnoughMemory)

@@ -57,11 +57,12 @@ use hal::{
     Pin,
 };
 use interchange::Channel;
+use littlefs2_core::path;
 use lpc55_hal as hal;
 #[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
-use trussed::types::{Location, PathBuf};
+use trussed::types::Location;
 use utils::OptionalStorage;
 
 use crate::{VERSION, VERSION_STRING};
@@ -754,7 +755,7 @@ impl Stage6 {
             let res = trussed::store::store(
                 self.store,
                 Location::Internal,
-                &PathBuf::from("fido/x5c/00"),
+                path!("fido/x5c/00"),
                 include_bytes!("../../data/fido-cert.der"),
             );
             if res.is_err() {
