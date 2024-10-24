@@ -372,15 +372,12 @@ impl Stage2 {
         );
         mux.disabled(&mut self.peripherals.syscon);
 
-        let force_nfc_reconfig = cfg!(feature = "reconfigure-nfc");
-
         let nfc = nfc::try_setup(
             spi,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
             nfc_irq,
             &mut self.basic.delay_timer,
-            force_nfc_reconfig,
             &mut self.status,
         )?;
 

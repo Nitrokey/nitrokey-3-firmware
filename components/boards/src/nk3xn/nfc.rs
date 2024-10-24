@@ -27,7 +27,6 @@ pub fn try_setup(
     nfc_irq: Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
     // fm: &mut NfcChip,
     timer: &mut Timer<impl lpc55_hal::peripherals::ctimer::Ctimer<Enabled>>,
-    always_reconfig: bool,
     status: &mut InitStatus,
 ) -> Option<NfcChip> {
     // Start unselected.
@@ -56,8 +55,7 @@ pub fn try_setup(
         return None;
     }
 
-    let reconfig =
-        always_reconfig || (current_regu_config != REGU_CONFIG) || (is_select_int_masked);
+    let reconfig = (current_regu_config != REGU_CONFIG) || (is_select_int_masked);
 
     if reconfig {
         // info_now!("{:?}", fm.dump_eeprom() );
