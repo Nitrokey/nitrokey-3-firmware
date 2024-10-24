@@ -12,7 +12,7 @@ use trussed::{
 #[cfg(feature = "backend-auth")]
 use trussed::types::Location;
 
-use littlefs2::{path, path::Path};
+use littlefs2_core::{path, Path};
 
 use if_chain::if_chain;
 use trussed::{

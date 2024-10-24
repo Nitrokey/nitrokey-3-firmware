@@ -28,7 +28,6 @@ trussed = { git = "https://github.com/Nitrokey/trussed.git", branch = "littlefs2
 ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", branch = "release-0.5.0" }
 littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", branch = "release-0.5.0" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "39626c0dbc2f6c38b74889a5bf9d5a200614f121" }
 lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal.git", branch = "littlefs2" }
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }

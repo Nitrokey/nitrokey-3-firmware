@@ -57,7 +57,7 @@ use hal::{
     Pin,
 };
 use interchange::Channel;
-use littlefs2::path;
+use littlefs2_core::path;
 use lpc55_hal as hal;
 #[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;

@@ -12,7 +12,7 @@ use ctaphid_dispatch::app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
-use littlefs2::path;
+use littlefs2_core::path;
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
