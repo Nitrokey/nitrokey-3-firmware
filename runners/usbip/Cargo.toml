@@ -26,3 +26,8 @@ utils = { path = "../../components/utils", features = ["build"] }
 test = ["apps/nk3-test"]
 provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid", "trussed-usbip/ccid"]
+
+# PQC
+backend-dilithium2 = ["apps/backend-dilithium2"]
+backend-dilithium3 = ["apps/backend-dilithium3"]
+backend-dilithium5 = ["apps/backend-dilithium5"]
