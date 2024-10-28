@@ -53,9 +53,6 @@ while [ $(date +%s) -le $endtime ]; do
         # Check if it's been attached
         if lsusb | tee /dev/tty | grep -q "$device_name"; then
             echo "Device attached!"
-            while true; do
-                sleep 100
-            done
             exit 0
         fi
 
