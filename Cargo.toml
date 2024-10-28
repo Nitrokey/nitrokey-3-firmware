@@ -40,7 +40,7 @@ trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", 
 trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "c030b82ad3441f337af09afe3a69e8a6da5785ea" }
 trussed-hkdf = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "hkdf-v0.2.0" }
 trussed-hpke = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "hpke-v0.1.0" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
+#trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.2.1" }
 trussed-usbip = { git = "https://github.com/Nitrokey/pc-usbip-runner.git", tag = "v0.0.1-nitrokey.5" }
 trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "se050-manage-v0.1.0" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "f4ff60b8aa0f322a424613165f66ed9112c7a94f" }
@@ -50,7 +50,7 @@ trussed = { path = "../trussed" }
 fido-authenticator = { path = "../fido-authenticator" }
 ctap-types = { path = "../ctap-types" }
 cosey = { path = "../cosey" }
-trussed-rsa-backend = { path = "../trussed-rsa-backend" }
+trussed-rsa-alloc = { path = "../trussed-rsa-backend" }
 
 [profile.release]
 codegen-units = 1

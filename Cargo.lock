@@ -3432,7 +3432,6 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.2.1"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.2.1#655eca355df59e85a9f1d803623bc2efa10a8b5a"
 dependencies = [
  "delog",
  "heapless-bytes",
