@@ -22,8 +22,8 @@
             "preLaunchTask": "DelayedUSBIPAttach",
             "program": "${cargo:program}",
             "args": [
-                // "--ifs",
-                // "${userHome}/nitrokey-usbip-ifs",
+                "--ifs",
+                "${userHome}/nitrokey-usbip-ifs",
                 "--user-presence",
                 "interactive"
             ],
