@@ -81,10 +81,10 @@ backend-software-hpke = ["trussed-staging/hpke"]
 # If any of the PQC algorithms are selected for compilation, then the
 # PQC backend must be included and the corresponding algorithm features
 # there must be set.
-backend-pqc = ["dep:trussed-pqc-backend"]
-backend-dilithium2 = ["backend-pqc", "trussed-pqc-backend/dilithium2", "fido-authenticator/backend-dilithium2"]
-backend-dilithium3 = ["backend-pqc", "trussed-pqc-backend/dilithium3", "fido-authenticator/backend-dilithium3"]
-backend-dilithium5 = ["backend-pqc", "trussed-pqc-backend/dilithium5", "fido-authenticator/backend-dilithium5"]
+backend-dilithium = ["dep:trussed-pqc-backend"]
+backend-dilithium2 = ["backend-dilithium", "trussed-pqc-backend/dilithium2", "fido-authenticator/backend-dilithium2"]
+backend-dilithium3 = ["backend-dilithium", "trussed-pqc-backend/dilithium3", "fido-authenticator/backend-dilithium3"]
+backend-dilithium5 = ["backend-dilithium", "trussed-pqc-backend/dilithium5", "fido-authenticator/backend-dilithium5"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 
