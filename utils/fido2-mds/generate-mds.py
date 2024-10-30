@@ -13,8 +13,12 @@ UPV_CTAP_2_0 = Version(1, 0)
 UPV_CTAP_2_1 = Version(1, 1)
 
 UVD_NONE = VerificationMethodDescriptor(user_verification_method="none")
-UVD_PRESENCE_INTERNAL = VerificationMethodDescriptor(user_verification_method="presence_internal")
-UVD_PASSCODE_EXTERNAL = VerificationMethodDescriptor(user_verification_method="passcode_external")
+UVD_PRESENCE_INTERNAL = VerificationMethodDescriptor(
+    user_verification_method="presence_internal"
+)
+UVD_PASSCODE_EXTERNAL = VerificationMethodDescriptor(
+    user_verification_method="passcode_external"
+)
 
 
 @enum.unique
@@ -85,7 +89,7 @@ class Authenticator:
             options["pinUvAuthToken"] = True
             pin_protocols = [2, 1]
         else:
-            options["credentialMgmtPreview"] = True,
+            options["credentialMgmtPreview"] = (True,)
             pin_protocols = [1]
 
         return MetadataStatement(
@@ -111,7 +115,6 @@ class Authenticator:
                 "transports": self.transports,
             },
             crypto_strength=0,
-
             # TODO: Do we want to set caDesc?
             user_verification_details=[
                 [UVD_NONE],
@@ -119,18 +122,14 @@ class Authenticator:
                 [UVD_PASSCODE_EXTERNAL],
                 [UVD_PRESENCE_INTERNAL, UVD_PASSCODE_EXTERNAL],
             ],
-
             # TODO: The spec says this should match the firmwareVersion
             # reported in authenticatorGetInfo, but that value does not exist
             authenticator_version=1,
-
             # TODO: Looks like this is only used for U2F.  Do we still need it?
             attestation_certificate_key_identifiers=None,
-
             # optional according to spec, but enforced by test suite
             # TODO: decide on icon, size and background
             icon=icon,
-
             # to be investigated
             authentication_algorithms=[
                 "ed25519_eddsa_sha512_raw",
