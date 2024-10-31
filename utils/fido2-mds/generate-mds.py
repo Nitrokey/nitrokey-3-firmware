@@ -89,7 +89,7 @@ class Authenticator:
             options["pinUvAuthToken"] = True
             pin_protocols = [2, 1]
         else:
-            options["credentialMgmtPreview"] = (True,)
+            options["credentialMgmtPreview"] = True
             pin_protocols = [1]
 
         return MetadataStatement(
