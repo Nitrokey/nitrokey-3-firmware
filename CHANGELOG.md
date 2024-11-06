@@ -2,10 +2,12 @@
 
 ## Unreleased
 
+- fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+
+## v1.8.0-rc.1 (2024-11-07)
+
 ### Features
 
-- fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
-- piv: Fix crash when changing PUK ([piv-authenticator#38][])
 - OpenPGP: add support for additional curves when using the se050 backend: ([#524][])
   - NIST P-384
   - NIST P-521
@@ -14,7 +16,7 @@
   - brainpoolp512r1
 - admin-app: Add command to list all supported config fields ([admin-app#28][])
 - admin-app: Add `opcard.disabled` configuration option to disable OpenPGP ([#539][])
-- piv: Use SE050 and encrypt data on external flash ([#534][])
+- piv: Add support for PIV, powered by the SE050 secure element ([#534][])
 - Improve external flash mounting to decrease startup time ([#440][])
 
 [admin-app#28]: https://github.com/Nitrokey/admin-app/issues/28
