@@ -23,7 +23,7 @@ build-all:
 
 .PHONY: jlink
 jlink:
-	JLinkGDBServer -strict -device LPC55S69 -if SWD -vd
+	JLinkGDBServerCLExe -strict -device LPC55S69 -if SWD -vd
 
 .PHONY: run
 run: build
