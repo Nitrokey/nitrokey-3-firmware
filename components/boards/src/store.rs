@@ -206,6 +206,14 @@ pub fn init_store<B: Board>(
         let vfs_storage = VOLATILE_STORAGE.insert(VolatileStorage::new());
         let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
 
+        let vfs = match init_vfs(vfs_storage, vfs_alloc) {
+            Ok(vfs) => VOLATILE_FS.insert(vfs),
+            Err(_e) => {
+                error!("VFS Mount Error {:?}", _e);
+                panic!("VFS");
+            }
+        };
+
         let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
             Ok(ifs) => B::ifs().insert(ifs),
             Err(_e) => {
@@ -221,15 +229,6 @@ pub fn init_store<B: Board>(
                 panic!("EFS");
             }
         };
-
-        let vfs = match init_vfs(vfs_storage, vfs_alloc) {
-            Ok(vfs) => VOLATILE_FS.insert(vfs),
-            Err(_e) => {
-                error!("VFS Mount Error {:?}", _e);
-                panic!("VFS");
-            }
-        };
-
         RunnerStore::new(ifs, efs, vfs)
     }
 }
