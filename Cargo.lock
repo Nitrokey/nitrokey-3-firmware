@@ -1088,6 +1088,7 @@ dependencies = [
  "delog",
  "embedded-hal",
  "interchange",
+ "littlefs2",
  "littlefs2-core",
  "littlefs2-sys",
  "lpc55-hal",

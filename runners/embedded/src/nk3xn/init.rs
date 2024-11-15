@@ -511,6 +511,7 @@ impl Stage3 {
             prince,
             rng,
         };
+
         Stage4 {
             status: self.status,
             peripherals: self.peripherals,
@@ -575,7 +576,7 @@ impl Stage4 {
         };
 
         #[cfg(not(feature = "no-encrypted-storage"))]
-        let internal = {
+        let mut internal = {
             #[cfg(feature = "write-undefined-flash")]
             initialize_fs_flash(&mut self.flash.flash_gordon, &mut self.flash.prince);
 
@@ -583,7 +584,20 @@ impl Stage4 {
         };
 
         #[cfg(feature = "no-encrypted-storage")]
-        let internal = InternalFlashStorage::new(self.flash.flash_gordon);
+        let mut internal = InternalFlashStorage::new(self.flash.flash_gordon);
+
+        let heap = unsafe { &mut *core::ptr::addr_of_mut!(crate::HEAP) };
+
+        use littlefs2::driver::Storage;
+        use lpc55_hal::drivers::flash::littlefs_params::BLOCK_SIZE;
+        for (idx, block) in heap.chunks_mut(BLOCK_SIZE).enumerate() {
+            let mut buf = [0; BLOCK_SIZE];
+            let off = idx * BLOCK_SIZE;
+            internal.read(off, &mut buf).unwrap();
+            for i in 0..BLOCK_SIZE {
+                block[i].write(buf[i]);
+            }
+        }
 
         // temporarily increase clock for the storage mounting or else it takes a long time.
         if self.clocks.is_nfc_passive {

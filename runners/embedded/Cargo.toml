@@ -18,6 +18,7 @@ cortex-m-rt = "0.6.15"
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
 littlefs2-core = "0.1"
+littlefs2 = "0.5.0"
 nfc-device = { path = "../../components/nfc-device" }
 utils = { path = "../../components/utils", features = ["storage"] }
 
