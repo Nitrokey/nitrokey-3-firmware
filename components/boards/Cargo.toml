@@ -60,6 +60,9 @@ board-nkpk = ["board-nk3am"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
+nk3 = []
+test = ["nk3"]
+
 log-all = []
 log-trace = []
 log-debug = []

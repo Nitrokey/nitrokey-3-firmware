@@ -4,7 +4,10 @@ use apdu_dispatch::{
 };
 #[cfg(any(feature = "trussed-auth", feature = "se050"))]
 use apps::AUTH_LOCATION;
-use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
+use apps::{AdminData, Data, Dispatch, InitStatus};
+
+#[cfg(any(feature = "nk3", feature = "board-nkpk"))]
+use apps::FidoData;
 
 use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
 #[cfg(not(feature = "no-delog"))]
@@ -165,7 +168,7 @@ pub fn init_apps<B: Board>(
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot as _;
-        let store = store.clone();
+        let store = *store;
         let int_flash_ref = unsafe { crate::store::steal_internal_storage::<B>() };
         let rebooter: fn() -> ! = B::Soc::reboot_to_firmware_update;
 
@@ -184,6 +187,7 @@ pub fn init_apps<B: Board>(
     };
     let data = Data {
         admin,
+        #[cfg(any(feature = "nk3", feature = "board-nkpk"))]
         fido: FidoData {
             has_nfc: B::HAS_NFC,
         },

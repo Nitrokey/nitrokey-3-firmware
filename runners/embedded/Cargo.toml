@@ -10,7 +10,7 @@ license = "MIT"
 
 [dependencies]
 ### base dependencies
-apps = { path = "../../components/apps", features = ["nk3"] }
+apps = { path = "../../components/apps" }
 boards = { path = "../../components/boards", features = ["trussed-auth"] }
 delog = "0.1"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
@@ -57,7 +57,8 @@ utils = { path = "../../components/utils", features = ["build"] }
 [features]
 default = ["alloc"]
 
-test = ["apps/nk3-test", "utils/test"]
+nk3 = ["apps/nk3", "boards/nk3"]
+test = ["apps/nk3-test", "utils/test", "boards/test"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
 provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]

@@ -222,7 +222,7 @@ where
                 // This should use the proper `random` method but is not possible without a `CryptoRng` implementation, which trussed is not
                 let keypair = loop {
                     seed.copy_from_slice(syscall!(self.trussed.random_bytes(32)).bytes.as_slice());
-                    match SecretKey::from_bytes(&seed) {
+                    match SecretKey::from_bytes(seed) {
                         Ok(secret) => {
                             break Keypair {
                                 public: secret.public_key(),

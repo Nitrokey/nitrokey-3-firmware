@@ -90,10 +90,10 @@ build-nightly:
   script:
     - rustup target add thumbv7em-none-eabihf thumbv8m.main-none-eabi
     - cargo --version
-    - make -C runners/embedded build-nk3am.bl
+    - make -C runners/embedded build-nk3am.bl FEATURES=nk3
     - make -C runners/embedded build-nk3am.bl FEATURES=test
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
-    - make -C runners/embedded build-nk3xn
+    - make -C runners/embedded build-nk3xn FEATURES=nk3
     - make -C runners/embedded build-nk3xn FEATURES=test
     - make -C runners/embedded build-nk3xn FEATURES=provisioner
     - cargo build --release --manifest-path runners/usbip/Cargo.toml
@@ -112,11 +112,11 @@ build-release-firmware:
     - export VERSION=`git describe --exact-match`
     - if echo $VERSION | grep test ; then export FEATURES=test ; fi
     - mkdir -p artifacts
-    - make -C runners/embedded build-nk3am.bl
+    - make -C runners/embedded build-nk3am.bl FEATURES=nk3
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nk3am-nrf52-$VERSION.ihex
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nk3am-nrf52-$VERSION.ihex
-    - make -C runners/embedded build-nk3xn
+    - make -C runners/embedded build-nk3xn FEATURES=nk3
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-nk3xn-lpc55-$VERSION.bin
     - make -C runners/embedded build-nk3xn FEATURES=provisioner
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-nk3xn-lpc55-$VERSION.bin
@@ -159,18 +159,24 @@ build-firmware:
     - make binaries
     # Generate no-buttons firmware binaries for HIL
     - mkdir -p artifacts
-    - make -C runners/embedded build-nk3xn FEATURES=no-buttons
+    - make -C runners/embedded build-nk3xn FEATURES=no-buttons,nk3
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/firmware-lpc55.bin
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf artifacts/firmware-lpc55.elf
     - make -C runners/embedded build-nk3xn FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin artifacts/provisioner-lpc55.bin
-    - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons
+    - cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf artifacts/provisioner-lpc55.elf
+    - make -C runners/embedded build-nk3am.bl FEATURES=no-buttons,nk3
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/firmware-nrf52.hex
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.elf artifacts/firmware-nrf52.elf
     - make -C runners/embedded build-nk3am.bl FEATURES=provisioner,no-buttons
     - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex artifacts/provisioner-nrf52.hex
+    - cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.elf artifacts/provisioner-nrf52.elf
     - make -C runners/nkpk build FEATURES=no-buttons
     - cp runners/nkpk/artifacts/runner-nkpk.bin.ihex artifacts/firmware-nkpk.hex
+    - cp runners/nkpk/artifacts/runner-nkpk.elf artifacts/firmware-nkpk.elf
     - make -C runners/nkpk build FEATURES=provisioner,no-buttons
     - cp runners/nkpk/artifacts/runner-nkpk.bin.ihex artifacts/provisioner-nkpk.hex
+    - cp runners/nkpk/artifacts/runner-nkpk.elf artifacts/provisioner-nkpk.elf
   artifacts:
     paths:
       - artifacts

@@ -59,7 +59,7 @@ hex = "0.4"
 # nk3
 nk3 = ["fido-authenticator", "ndef-app", "secrets-app", "opcard", "piv-authenticator", "factory-reset", "trussed/clients-5"]
 nk3-test = ["nk3", "trussed/clients-5"]
-nk3-provisioner = ["nk3", "provisioner-app", "trussed/clients-6"]
+nk3-provisioner = ["factory-reset", "ndef-app", "provisioner-app", "trussed/clients-6"]
 
 # nkpk
 nkpk = ["fido-authenticator", "factory-reset", "trussed/clients-2"]

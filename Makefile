@@ -1,6 +1,8 @@
 .PHONY: check
 check:
-	$(MAKE) -C runners/embedded check-all
+	$(MAKE) -C runners/embedded check-all FEATURES=nk3
+	$(MAKE) -C runners/embedded check-all FEATURES=test
+	$(MAKE) -C runners/embedded check-all FEATURES=provisioner
 	$(MAKE) -C runners/nkpk check
 	$(MAKE) -C runners/usbip check
 
@@ -11,14 +13,16 @@ doc:
 .PHONY: lint
 lint:
 	cargo fmt -- --check
-	$(MAKE) -C runners/embedded lint-all
+	$(MAKE) -C runners/embedded lint-all FEATURES=nk3
+	$(MAKE) -C runners/embedded lint-all FEATURES=test
+	$(MAKE) -C runners/embedded lint-all FEATURES=provisioner
 	$(MAKE) -C runners/nkpk lint
 	$(MAKE) -C runners/usbip lint
 
 .PHONY: binaries
 binaries:
 	mkdir -p binaries
-	$(MAKE) -C runners/embedded build-all FEATURES=
+	$(MAKE) -C runners/embedded build-all FEATURES=nk3
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin binaries/firmware-nk3xn.bin
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf binaries/firmware-nk3xn.elf
 	cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex binaries/firmware-nk3am.ihex
@@ -26,7 +30,7 @@ binaries:
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin binaries/provisioner-nk3xn.bin
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf binaries/provisioner-nk3xn.elf
 	cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex binaries/provisioner-nk3am.ihex
-	$(MAKE) -C runners/embedded build-all FEATURES=test
+	$(MAKE) -C runners/embedded build-all FEATURES=nk3,test
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.bin binaries/firmware-nk3xn-test.bin
 	cp runners/embedded/artifacts/runner-lpc55-nk3xn.elf binaries/firmware-nk3xn-test.elf
 	cp runners/embedded/artifacts/runner-nrf52-bootloader-nk3am.bin.ihex binaries/firmware-nk3am-test.ihex

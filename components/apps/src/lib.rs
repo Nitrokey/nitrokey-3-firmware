@@ -27,14 +27,12 @@ use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "opcard", feature = "se050"))]
 use trussed::{api::NotBefore, service::Filestore};
 use trussed::{
-    backend::BackendId,
-    client::ClientBuilder,
-    interrupt::InterruptFlag,
-    platform::Syscall,
-    store::filestore::ClientFilestore,
-    types::{Location, Path},
-    ClientImplementation, Platform, Service,
+    backend::BackendId, client::ClientBuilder, interrupt::InterruptFlag, platform::Syscall,
+    store::filestore::ClientFilestore, types::Path, ClientImplementation, Platform, Service,
 };
+
+#[cfg(any(feature = "nk3", feature = "nkpk"))]
+use trussed::types::Location;
 
 use utils::Version;
 
@@ -436,6 +434,7 @@ impl<R: Runner> Apps<R> {
 
         let mut make_client =
             |ids, backends, interrupt| make_client(trussed_service, ids, backends, interrupt);
+        #[allow(unused)]
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
         let config_has_error = init_status.contains(InitStatus::CONFIG_ERROR);

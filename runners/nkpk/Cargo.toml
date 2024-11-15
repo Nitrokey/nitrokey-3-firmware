@@ -25,6 +25,7 @@ memory-regions = "1"
 utils = { path = "../../components/utils", features = ["build"] }
 
 [features]
+no-delog = ["boards/no-delog", "delog/knock-it-off"]
 log-all = ["boards/log-all"]
 log-trace = []
 log-debug = []
