@@ -307,13 +307,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
-                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
                 Extension::FsInfo => {
                     ExtensionImpl::<FsInfoExtension>::extension_request_serialized(
                         &mut self.staging,
