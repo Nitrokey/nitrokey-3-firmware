@@ -219,7 +219,7 @@ hardware-tests:
       - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
-    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.3
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.4
     - make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,nk3test
   after_script:
     - cp nitrokey-hardware-test/artifacts/Nitrokey3TestSuite/report-junit.xml nitrokey-hardware-test/artifacts/report-junit.xml || true
@@ -241,7 +241,7 @@ full-hardware-tests:
       - MODEL: [ nrf52, lpc55, nkpk ]
   stage: test
   script:
-    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.2
+    - git clone https://github.com/Nitrokey/nitrokey-hardware-test.git --recursive --branch v1.3.4
     - >
       if [ "$COMMAND_ARGS" == "slow" ] ; then
         make -C nitrokey-hardware-test ci FW=../artifacts MODEL=$MODEL TESTS=pynitrokey,slow
