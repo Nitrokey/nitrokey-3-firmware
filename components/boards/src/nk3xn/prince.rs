@@ -19,40 +19,40 @@ use lpc55_hal::{
 
 use super::MEMORY_REGIONS;
 
+const FLASH_SIZE: usize = 631 * 1024 + 512;
 pub const FS_START: usize = MEMORY_REGIONS.filesystem.start;
-pub const FS_END: usize = MEMORY_REGIONS.filesystem.end;
-pub const BLOCK_COUNT: usize = (FS_END - FS_START) / BLOCK_SIZE;
-const _FLASH_SIZE: usize = 631 * 1024 + 512;
+pub const FS_END: usize = {
+    let end = MEMORY_REGIONS.filesystem.end;
+    assert!(end <= FLASH_SIZE);
+    end
+};
+pub const BLOCK_COUNT: usize = {
+    assert!(FS_START < FS_END);
+    assert!(FS_START % BLOCK_SIZE == 0);
+    assert!(FS_END % BLOCK_SIZE == 0);
+    (FS_END - FS_START) / BLOCK_SIZE
+};
 
 const PRINCE_REGION2_START: usize = 0x80_000;
 const PRINCE_SUBREGION_SIZE: usize = 8 * 1024;
 const PRINCE_REGION2_ENABLE: u32 = {
+    // FS must be placed in PRINCE Region 2
+    assert!(FS_START >= PRINCE_REGION2_START);
     let offset = FS_START - PRINCE_REGION2_START;
     let subregion_count = offset / PRINCE_SUBREGION_SIZE;
+
+    // Firmware may not overlap with the PRINCE subregions used for the FS
+    assert!(
+        MEMORY_REGIONS.firmware.end
+            <= PRINCE_REGION2_START + subregion_count * PRINCE_SUBREGION_SIZE
+    );
+
+    // subregion n is enabled if bit n is set
+    // --> disable subregion_count subregions, enable the remaining ones
     0xffffffff << subregion_count
 };
 const PRINCE_REGION2_DISABLE: u32 = 0;
 
-#[allow(clippy::assertions_on_constants)]
-mod checks {
-    use super::*;
-
-    // Check that the FS is placed in PRINCE Region 2
-    const _: () = assert!(FS_START >= PRINCE_REGION2_START);
-    const _: () = assert!(FS_START < FS_END);
-    const _: () = assert!(FS_END <= _FLASH_SIZE);
-    // Check that the firmware does not overlap with the PRINCE subregions used for the FS
-    const _: () = assert!(
-        MEMORY_REGIONS.firmware.end
-            <= PRINCE_REGION2_START
-                + (FS_START - PRINCE_REGION2_START) / PRINCE_SUBREGION_SIZE * PRINCE_SUBREGION_SIZE
-    );
-    // Check that offset and size are multiples of the block size
-    const _: () = assert!(FS_START % BLOCK_SIZE == 0);
-    const _: () = assert!(FS_END % BLOCK_SIZE == 0);
-    // Check that flash region does NOT spill over the flash boundary
-    const _: () = assert!(FS_START + BLOCK_COUNT * BLOCK_SIZE <= _FLASH_SIZE);
-}
 pub fn enable(prince: &mut Prince<Enabled>) {
     prince.set_region_enable(Region::Region2, PRINCE_REGION2_ENABLE);
 }
