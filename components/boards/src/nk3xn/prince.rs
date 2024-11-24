@@ -19,6 +19,35 @@ use lpc55_hal::{
 
 use super::MEMORY_REGIONS;
 
+// The PRINCE peripheral is described in the LPC55S69 user manual (NXP UM11126):
+// https://www.mouser.com/pdfDocs/NXP_LPC55S6x_UM.pdf
+//
+// PRINCE has three regions (§ 48.16.1):
+// - region 0: starts at 0x0
+// - region 1: starts at 0x40_000
+// - region 2: starts at 0x80_000
+//
+// During provisioning, we set the length of regions 0 and 1 to 0 and the length of region 2 to
+// 0x1d_e00.  See utils/lpc55-runner/config/keystore.toml for our configuration and § 7.5.4.2.2
+// for a description of the commands.
+//
+// The bootloader can transparently encrypt and decrypt writes and reads.  This only happens if
+// an entire enabled PRINCE region is written or read at once (§ 7.5.4.2.3).  As we always write
+// the firmware in one write starting at 0, this can never be the case in our setup.
+//
+// To use PRINCE from the firmware, it must be enabled first.  Each region is split into
+// subregions with a size of 8 kB that can be enabled separately (§ 48.16.2).  If PRINCE is
+// enabled, reads from the flash are decrypted transparently.  To encrypt writes, an additional
+// ENC_ENABLE register must be set.
+//
+// For our configuration, this means:
+// 1. PRINCE is only used for the filesystem, not for the firmware.
+// 2. When accessing the filesystem, we must ensure that we don’t enable decryption for the
+//    unencrypted firmware.
+// 3. Our filesystem starts at 0x93_000.  As this is not a multiple of the subregion size 8 kB, we
+//    need to restrict the firmware area to 0x92_000, the start of the subregion that contains
+//    0x93_000.
+
 const FLASH_SIZE: usize = 631 * 1024 + 512;
 pub const FS_START: usize = MEMORY_REGIONS.filesystem.start;
 pub const FS_END: usize = {
