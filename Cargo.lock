@@ -1180,7 +1180,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.23#5b6ae97b5f92962b545a1af1bf5b69fee66bca0a"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.24#63a14793877f49e0bd6a99d28834a0013fdb9d64"
 dependencies = [
  "apdu-app",
  "cbor-smol",

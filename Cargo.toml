@@ -18,7 +18,7 @@ memory-regions = { path = "components/memory-regions" }
 
 # forked
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.18" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.23" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git", tag = "v0.1.1-nitrokey.24" }
 trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.23" }
 
 # unreleased upstream changes
