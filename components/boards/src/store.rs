@@ -1,6 +1,7 @@
 use core::{
     marker::PhantomData,
     mem::MaybeUninit,
+    ptr::addr_of_mut,
     sync::atomic::{AtomicBool, Ordering},
 };
 
@@ -194,17 +195,17 @@ pub fn init_store<B: Board>(
         .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
         .expect("multiple instances of RunnerStore are not allowed");
 
-    static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-    static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-    static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
+    static mut VOLATILE_STORAGE: MaybeUninit<VolatileStorage> = MaybeUninit::uninit();
+    static mut VOLATILE_FS_ALLOC: MaybeUninit<Allocation<VolatileStorage>> = MaybeUninit::uninit();
+    static mut VOLATILE_FS: MaybeUninit<Filesystem<VolatileStorage>> = MaybeUninit::uninit();
 
     unsafe {
         let ifs_storage = B::ifs_storage().insert(int_flash);
         let ifs_alloc = B::ifs_alloc().insert(Filesystem::allocate());
         let efs_storage = B::efs_storage().insert(ext_flash);
         let efs_alloc = B::efs_alloc().insert(Filesystem::allocate());
-        let vfs_storage = VOLATILE_STORAGE.insert(VolatileStorage::new());
-        let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
+        let vfs_storage = (&mut *addr_of_mut!(VOLATILE_STORAGE)).write(VolatileStorage::new());
+        let vfs_alloc = (&mut *addr_of_mut!(VOLATILE_FS_ALLOC)).write(Filesystem::allocate());
 
         let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
             Ok(ifs) => B::ifs().insert(ifs),
@@ -223,7 +224,7 @@ pub fn init_store<B: Board>(
         };
 
         let vfs = match init_vfs(vfs_storage, vfs_alloc) {
-            Ok(vfs) => VOLATILE_FS.insert(vfs),
+            Ok(vfs) => (&mut *addr_of_mut!(VOLATILE_FS)).write(vfs),
             Err(_e) => {
                 error!("VFS Mount Error {:?}", _e);
                 panic!("VFS");
