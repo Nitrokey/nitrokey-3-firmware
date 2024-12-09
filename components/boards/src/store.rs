@@ -2,6 +2,7 @@ use core::{
     marker::PhantomData,
     mem::MaybeUninit,
     sync::atomic::{AtomicBool, Ordering},
+    ptr::addr_of_mut,
 };
 
 use apps::InitStatus;
@@ -194,7 +195,7 @@ pub fn init_store<B: Board>(
         .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
         .expect("multiple instances of RunnerStore are not allowed");
 
-    static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
+    static mut VOLATILE_STORAGE: VolatileStorage = VolatileStorage::new();
     static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
     static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
 
@@ -203,7 +204,6 @@ pub fn init_store<B: Board>(
         let ifs_alloc = B::ifs_alloc().insert(Filesystem::allocate());
         let efs_storage = B::efs_storage().insert(ext_flash);
         let efs_alloc = B::efs_alloc().insert(Filesystem::allocate());
-        let vfs_storage = VOLATILE_STORAGE.insert(VolatileStorage::new());
         let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
 
         let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
@@ -222,7 +222,7 @@ pub fn init_store<B: Board>(
             }
         };
 
-        let vfs = match init_vfs(vfs_storage, vfs_alloc) {
+        let vfs = match init_vfs(&mut *addr_of_mut!(VOLATILE_STORAGE), vfs_alloc) {
             Ok(vfs) => VOLATILE_FS.insert(vfs),
             Err(_e) => {
                 error!("VFS Mount Error {:?}", _e);
