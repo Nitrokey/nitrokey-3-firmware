@@ -3177,7 +3177,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.23#92dd7f010e61ba17895d7844ea31b8f288e308b8"
+source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.24#43ed1efcb19dc9c8bee45d4a1d3ad7dee2bba5ae"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3206,9 +3206,9 @@ dependencies = [
  "rand_core",
  "salty",
  "serde",
- "serde-indexed",
  "sha-1",
  "sha2",
+ "trussed-core",
  "zeroize",
 ]
 
@@ -3237,6 +3237,20 @@ dependencies = [
  "serde",
  "serde-byte-array",
  "trussed",
+]
+
+[[package]]
+name = "trussed-core"
+version = "0.1.0"
+source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.24#43ed1efcb19dc9c8bee45d4a1d3ad7dee2bba5ae"
+dependencies = [
+ "heapless",
+ "heapless-bytes",
+ "littlefs2-core",
+ "postcard 0.7.3",
+ "rand_core",
+ "serde",
+ "serde-indexed",
 ]
 
 [[package]]
