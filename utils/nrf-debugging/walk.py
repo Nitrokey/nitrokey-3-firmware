@@ -26,7 +26,7 @@ block_size = args.block_size
 read_size = args.read_size
 prog_size = args.prog_size
 
-block_count = img_size / block_size
+block_count = img_size // block_size
 if block_count * block_size != img_size:
     print("image size should be a multiple of block size")
     exit(1)
