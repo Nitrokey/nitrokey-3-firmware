@@ -34,6 +34,7 @@ log-error = []
 log-none = []
 
 log-rtt = ["boards/log-rtt"]
+no-delog = ["boards/no-delog", "delog/knock-it-off"]
 
 provisioner = ["apps/nkpk-provisioner", "boards/provisioner", "no-buttons", "apps/no-reset-time-window"]
 

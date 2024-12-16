@@ -1,4 +1,6 @@
-ALL_FEATURES := $(FEATURES),
+NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-semihosting' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
+
+ALL_FEATURES := $(FEATURES),$(NO_DELOG_FEATURE)
 BUILD_ID := nkpk
 ARTIFACTS := artifacts
 SYMBOLS := symbols-$(BUILD_ID).txt
