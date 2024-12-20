@@ -5,18 +5,20 @@ version = 3
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.18#599d205e47a7430dfed1c37263fa565597b6597f"
+source = "git+https://github.com/Nitrokey/admin-app.git?branch=trussed-core#1fcddea234c166f05335eb384e063d4cfdf51eca"
 dependencies = [
  "apdu-app",
  "cbor-smol",
  "ctaphid-dispatch",
  "delog",
+ "heapless",
  "hex-literal 0.4.1",
  "iso7816",
  "littlefs2-core",
  "serde",
  "strum_macros",
  "trussed",
+ "trussed-core",
  "trussed-manage",
  "trussed-se050-manage",
 ]
@@ -190,6 +192,7 @@ dependencies = [
  "trussed",
  "trussed-auth",
  "trussed-chunked",
+ "trussed-core",
  "trussed-fs-info",
  "trussed-hkdf",
  "trussed-hpke",
@@ -897,14 +900,14 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/ctaphid-dispatch.git?tag=v0.1.1-nitrokey.3#7f08ac0229ca49a5e2cd69e001658e1b43bc0a2b"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?branch=trussed-core#a8c3beaadde450f6742ccf47817d9e395b8bf305"
 dependencies = [
  "delog",
  "heapless",
  "heapless-bytes",
  "interchange",
  "ref-swap",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -1128,14 +1131,14 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=fae41aabe63fa674042b3d217d734955f1f2aac2#fae41aabe63fa674042b3d217d734955f1f2aac2"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=trussed-core#bfc476aa0e4872232572ef4a8eb44561e64071a9"
 dependencies = [
  "cbor-smol",
  "delog",
  "heapless",
  "heapless-bytes",
  "serde",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -1180,7 +1183,7 @@ dependencies = [
 [[package]]
 name = "fido-authenticator"
 version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.24#63a14793877f49e0bd6a99d28834a0013fdb9d64"
+source = "git+https://github.com/Nitrokey/fido-authenticator.git?branch=trussed-core#b6c35ff708b5f015d25fd6e68b534287b0478ea8"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -1195,8 +1198,8 @@ dependencies = [
  "serde-indexed",
  "serde_bytes",
  "sha2",
- "trussed",
  "trussed-chunked",
+ "trussed-core",
  "trussed-fs-info",
  "trussed-hkdf",
 ]
@@ -1716,7 +1719,7 @@ dependencies = [
  "rand",
  "serde",
  "serial_test",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -2111,11 +2114,12 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=1a0d5bf623af114e2adfc8ac89f7b0418ec49349#1a0d5bf623af114e2adfc8ac89f7b0418ec49349"
+source = "git+https://github.com/Nitrokey/opcard-rs?branch=trussed-core#74158b1cb9b9a05d022529f1b9a343bc41e89f70"
 dependencies = [
  "admin-app",
  "apdu-app",
  "bitflags 2.6.0",
+ "cbor-smol",
  "cfg-if",
  "delog",
  "heapless",
@@ -2127,9 +2131,9 @@ dependencies = [
  "serde",
  "serde_repr",
  "subtle",
- "trussed",
  "trussed-auth",
  "trussed-chunked",
+ "trussed-core",
  "trussed-rsa-alloc",
  "trussed-wrap-key-to-file",
 ]
@@ -2221,9 +2225,10 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "piv-authenticator"
 version = "0.3.8"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=84ebc022ebacbd1b1964f38f6173010a2fd514f8#84ebc022ebacbd1b1964f38f6173010a2fd514f8"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?branch=trussed-core#37144e01467b285ee0c0b74ae42eb96cd921e977"
 dependencies = [
  "apdu-app",
+ "cbor-smol",
  "cfg-if",
  "delog",
  "flexiber",
@@ -2235,9 +2240,9 @@ dependencies = [
  "log",
  "serde",
  "subtle",
- "trussed",
  "trussed-auth",
  "trussed-chunked",
+ "trussed-core",
  "trussed-hpke",
  "trussed-rsa-alloc",
  "trussed-wrap-key-to-file",
@@ -2657,7 +2662,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=fae41aabe63fa674042b3d217d734955f1f2aac2#fae41aabe63fa674042b3d217d734955f1f2aac2"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?branch=trussed-core#bfc476aa0e4872232572ef4a8eb44561e64071a9"
 dependencies = [
  "apdu-app",
  "bitflags 2.6.0",
@@ -2673,8 +2678,8 @@ dependencies = [
  "iso7816",
  "littlefs2-core",
  "serde",
- "trussed",
  "trussed-auth",
+ "trussed-core",
 ]
 
 [[package]]
@@ -3177,7 +3182,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.24#43ed1efcb19dc9c8bee45d4a1d3ad7dee2bba5ae"
+source = "git+https://github.com/trussed-dev/trussed.git?branch=mechanism-check#55c0879b82780affd5166646866b18d12594508b"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3215,7 +3220,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=c030b82ad3441f337af09afe3a69e8a6da5785ea#c030b82ad3441f337af09afe3a69e8a6da5785ea"
+source = "git+https://github.com/trussed-dev/trussed-auth?branch=trussed-core#f0e5aa5abe3144124afb7ea6ffe1bb89291c63c0"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3227,24 +3232,24 @@ dependencies = [
  "sha2",
  "subtle",
  "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-chunked"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=chunked-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "serde",
  "serde-byte-array",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-core"
 version = "0.1.0"
-source = "git+https://github.com/nitrokey/trussed.git?tag=v0.1.0-nitrokey.24#43ed1efcb19dc9c8bee45d4a1d3ad7dee2bba5ae"
+source = "git+https://github.com/trussed-dev/trussed.git?branch=mechanism-check#55c0879b82780affd5166646866b18d12594508b"
 dependencies = [
- "heapless",
  "heapless-bytes",
  "littlefs2-core",
  "postcard 0.7.3",
@@ -3256,45 +3261,46 @@ dependencies = [
 [[package]]
 name = "trussed-fs-info"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=fs-info-v0.1.0#72b082002e0869facfc11bf8d76a1272c7ddf4ee"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "serde",
  "serde-byte-array",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-hkdf"
 version = "0.2.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=hkdf-v0.2.0#e016b25fbc49f3ba13272d58a9e9d47a16d8ea14"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "serde",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-hpke"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=hpke-v0.1.0#7c99973187eb9ae2c1e410b5996169ccf2690efa"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "serde",
  "serde-byte-array",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-manage"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=manage-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
+ "littlefs2-core",
  "serde",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.2.1"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.2.1#655eca355df59e85a9f1d803623bc2efa10a8b5a"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?branch=trussed-core#dcaa67618882ef1b8627bc7932d0ad0df824a82e"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3303,12 +3309,13 @@ dependencies = [
  "rsa",
  "serde",
  "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=f4ff60b8aa0f322a424613165f66ed9112c7a94f#f4ff60b8aa0f322a424613165f66ed9112c7a94f"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=trussed-core#d7fd8a8b37d33052f617c1b67e5347a8f541c2f9"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
@@ -3335,6 +3342,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-auth",
+ "trussed-core",
  "trussed-hpke",
  "trussed-manage",
  "trussed-rsa-alloc",
@@ -3345,16 +3353,16 @@ dependencies = [
 [[package]]
 name = "trussed-se050-manage"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=se050-manage-v0.1.0#d70748efbde217bb6f2a7b1ecd579d2480f7edc0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=trussed-core#d7fd8a8b37d33052f617c1b67e5347a8f541c2f9"
 dependencies = [
  "serde",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
 name = "trussed-staging"
 version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=53eba84d2cd0bcacc3a7096d4b7a2490dcf6f069#53eba84d2cd0bcacc3a7096d4b7a2490dcf6f069"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3396,10 +3404,10 @@ dependencies = [
 [[package]]
 name = "trussed-wrap-key-to-file"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=wrap-key-to-file-v0.1.0#5fc00717e6aa3f43d4f72fd3bd589f2de3a89b98"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-core#7dcd4452734ce6460e8615ec320926897e4de660"
 dependencies = [
  "serde",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -3539,7 +3547,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8#dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?branch=trussed-core#c37c2323a7c24ce91dfb62a9ffb74ee7de0e27ef"
 dependencies = [
  "ctaphid-dispatch",
  "delog",
@@ -3549,7 +3557,7 @@ dependencies = [
  "interchange",
  "ref-swap",
  "serde",
- "trussed",
+ "trussed-core",
  "usb-device",
 ]
 

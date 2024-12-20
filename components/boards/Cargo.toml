@@ -23,7 +23,7 @@ rand = { version =  "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 ref-swap = "0.1.0"
 spi-memory = "0.2.0"
-trussed = "0.1"
+trussed = { version = "0.1", default-features = false }
 usb-device = "0.2"
 usbd-ccid = "0.2"
 usbd-ctaphid = "0.1"

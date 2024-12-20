@@ -5,7 +5,7 @@ use ctaphid_dispatch::{
     command::{Command, VendorCommand},
     types::{Error, Message},
 };
-use trussed::{client, store::Store, types::LfsStorage, Client};
+use trussed::{client, store::Store, types::LfsStorage};
 
 const COMMAND_PROVISIONER: VendorCommand = VendorCommand::H71;
 
@@ -13,7 +13,7 @@ impl<S, FS, T> App<'static> for Provisioner<S, FS, T>
 where
     S: Store,
     FS: 'static + LfsStorage,
-    T: Client + client::X255 + client::HmacSha256,
+    T: client::CryptoClient,
 {
     fn commands(&self) -> &'static [Command] {
         &[Command::Vendor(COMMAND_PROVISIONER)]
