@@ -32,7 +32,7 @@ use trussed::{
     interrupt::InterruptFlag,
     platform::Syscall,
     store::filestore::ClientFilestore,
-    types::{Location, Path},
+    types::{Location, Mechanism, Path},
     ClientImplementation, Platform, Service,
 };
 
@@ -409,6 +409,17 @@ pub struct Apps<R: Runner> {
     webcrypt: Option<PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>>,
 }
 
+const fn contains(data: &[Mechanism], item: Mechanism) -> bool {
+    let mut i = 0;
+    while i < data.len() {
+        if data[i] as u8 == item as u8 {
+            return true;
+        }
+        i += 1;
+    }
+    false
+}
+
 impl<R: Runner> Apps<R> {
     pub fn new<P: Platform>(
         runner: &R,
@@ -421,6 +432,57 @@ impl<R: Runner> Apps<R> {
         ) -> Client<R>,
         data: Data<R>,
     ) -> Self {
+        const {
+            let enabled = Mechanism::ENABLED;
+            let implemented = trussed::types::IMPLEMENTED_MECHANISMS;
+
+            // These mechanisms are implemented by backends and don’t need to be provided by
+            // Trussed itself.
+            let whitelist = &[
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP256R1,
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP384R1,
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP512R1,
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP256R1Prehashed,
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP384R1Prehashed,
+                #[cfg(feature = "se050")]
+                Mechanism::BrainpoolP512R1Prehashed,
+                #[cfg(feature = "se050")]
+                Mechanism::P384,
+                #[cfg(feature = "se050")]
+                Mechanism::P384Prehashed,
+                #[cfg(feature = "se050")]
+                Mechanism::P521,
+                #[cfg(feature = "se050")]
+                Mechanism::P521Prehashed,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa2048Raw,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa3072Raw,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa4096Raw,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa2048Pkcs1v15,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa3072Pkcs1v15,
+                #[cfg(any(feature = "backend-rsa", feature = "se050"))]
+                Mechanism::Rsa4096Pkcs1v15,
+            ];
+
+            let mut i = 0;
+            while i < enabled.len() {
+                let mechanism = enabled[i];
+                if !contains(whitelist, mechanism) && !contains(implemented, mechanism) {
+                    mechanism.panic();
+                }
+                i += 1;
+            }
+        }
+
         let _ = (runner, &mut make_client);
         let Data {
             admin,
