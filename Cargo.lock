@@ -2110,8 +2110,8 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "opcard"
-version = "1.4.1"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=1a0d5bf623af114e2adfc8ac89f7b0418ec49349#1a0d5bf623af114e2adfc8ac89f7b0418ec49349"
+version = "1.5.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=266176ece535e870f6c6c8f0a303ab329d5d26f3#266176ece535e870f6c6c8f0a303ab329d5d26f3"
 dependencies = [
  "admin-app",
  "apdu-app",
@@ -3308,7 +3308,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=f4ff60b8aa0f322a424613165f66ed9112c7a94f#f4ff60b8aa0f322a424613165f66ed9112c7a94f"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=9e1570a957b24995e5234d43f24b8f126c5de2e4#9e1570a957b24995e5234d43f24b8f126c5de2e4"
 dependencies = [
  "admin-app",
  "bitflags 2.6.0",
