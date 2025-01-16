@@ -8,7 +8,7 @@ use cortex_m_rt::{exception, ExceptionFrame};
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
-    use apps::Reboot;
+    use apps::{Endpoints, Reboot};
     use boards::{
         init::{Resources, UsbClasses},
         nk3am::{self, InternalFlashStorage, NK3AM},
@@ -44,6 +44,7 @@ mod app {
         gpiote: Gpiote,
         power: nrf52840_pac::POWER,
         watchdog_parts: Option<wdt::Parts<WatchdogHandle<Hdl0>>>,
+        endpoints: Endpoints,
     }
 
     #[monotonic(binds = RTC0, default = true)]
@@ -136,7 +137,7 @@ mod app {
             Some(se050),
         );
 
-        let apps = boards::init::init_apps(
+        let (apps, endpoints) = boards::init::init_apps(
             &soc,
             &mut trussed,
             init_status,
@@ -165,6 +166,7 @@ mod app {
                     watchdog: parts.watchdog,
                     handles: parts.handles.0,
                 }),
+                endpoints,
             },
             init::Monotonics(rtc_mono),
         )
@@ -214,13 +216,13 @@ mod app {
         }
     }
 
-    #[task(priority = 2, binds = SWI0_EGU0, shared = [trussed])]
+    #[task(priority = 2, binds = SWI0_EGU0, shared = [trussed], local = [endpoints])]
     fn task_trussed(ctx: task_trussed::Context) {
         let mut trussed = ctx.shared.trussed;
 
         //trace!("irq SWI0_EGU0");
         trussed.lock(|trussed| {
-            runtime::run_trussed(trussed);
+            runtime::run_trussed(trussed, ctx.local.endpoints);
         });
     }
 

@@ -182,6 +182,7 @@ dependencies = [
  "heapless-bytes",
  "hex",
  "if_chain",
+ "interchange",
  "littlefs2-core",
  "ndef-app",
  "opcard",
@@ -1780,9 +1781,9 @@ dependencies = [
 
 [[package]]
 name = "littlefs2-core"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "250ec1e3017a4540932dc8b33daca325cb6195cded097e1addd9111d9ea2c48f"
+checksum = "9a81a4745d38b288b7583fe8ea3736897628df81f4d0f1d0314fa5a3af570de4"
 dependencies = [
  "bitflags 2.6.0",
  "heapless-bytes",
@@ -3196,7 +3197,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=6bba8fde36d05c0227769eb63345744e87d84b2b#6bba8fde36d05c0227769eb63345744e87d84b2b"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=805fe7657e79e06b3220324481cd6325b94877d7#805fe7657e79e06b3220324481cd6325b94877d7"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3420,7 +3421,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=4fe4e4e287dac1d92fcd4f97e8926497bfa9d7a9#4fe4e4e287dac1d92fcd4f97e8926497bfa9d7a9"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=a0e9b855809577f0067a93e08c716aa285b03700#a0e9b855809577f0067a93e08c716aa285b03700"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",

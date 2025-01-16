@@ -4,7 +4,7 @@ use apdu_dispatch::{
 };
 #[cfg(any(feature = "trussed-auth", feature = "se050"))]
 use apps::AUTH_LOCATION;
-use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
+use apps::{AdminData, ClientBuilder, Data, Dispatch, Endpoints, FidoData, InitStatus};
 
 use ctaphid_dispatch::{Channel as CtapChannel, Dispatch as CtaphidDispatch};
 #[cfg(not(feature = "no-delog"))]
@@ -178,7 +178,7 @@ pub fn init_apps<B: Board>(
     nfc_powered: bool,
     version: Version,
     version_string: &'static str,
-) -> Apps<B> {
+) -> (Apps<B>, Endpoints) {
     let mut admin = AdminData::new(*store, B::Soc::VARIANT, version, version_string);
     admin.init_status = init_status;
     if !nfc_powered {
@@ -223,7 +223,11 @@ pub fn init_apps<B: Board>(
         provisioner,
         _marker: Default::default(),
     };
-    Apps::with_service(&runner, trussed, data)
+
+    let mut client_builder = ClientBuilder::new(Default::default());
+    let apps = Apps::new(&runner, trussed, &mut client_builder, data);
+    let endpoints = client_builder.into_endpoints();
+    (apps, endpoints)
 }
 
 #[cfg(feature = "se050")]
