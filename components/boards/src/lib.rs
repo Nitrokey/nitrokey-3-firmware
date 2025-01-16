@@ -129,6 +129,12 @@ pub struct RunnerSyscall<S: Soc> {
     _marker: PhantomData<S>,
 }
 
+impl<S: Soc> Clone for RunnerSyscall<S> {
+    fn clone(&self) -> Self {
+        Default::default()
+    }
+}
+
 impl<S: Soc> Default for RunnerSyscall<S> {
     fn default() -> Self {
         Self {
