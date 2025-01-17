@@ -47,7 +47,9 @@ use hal::{
         prince::Prince,
         rng::Rng,
         usbhs::Usbhs,
+        wwdt::{self, Wwdt},
     },
+    raw::WWDT,
     time::{DurationExtensions as _, RateExtensions as _},
     traits::wg::digital::v2::InputPin,
     typestates::{
@@ -68,6 +70,11 @@ use utils::OptionalStorage;
 use crate::{VERSION, VERSION_STRING};
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
+
+pub type WwdtEnabled = wwdt::Active;
+pub type WwdtResetting = wwdt::Active;
+pub type WwdtProtecting = wwdt::Inactive;
+pub type EnabledWwdt = Wwdt<WwdtEnabled, WwdtResetting, WwdtProtecting>;
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -141,7 +148,18 @@ impl Stage0 {
     }
 
     #[inline(never)]
-    pub fn next(mut self, iocon: hal::Iocon<Unknown>, gpio: hal::Gpio<Unknown>) -> Stage1 {
+    pub fn next(
+        mut self,
+        iocon: hal::Iocon<Unknown>,
+        gpio: hal::Gpio<Unknown>,
+        wwdt: WWDT,
+    ) -> Stage1 {
+        let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
+        // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier, 15min timer
+        wwdt.set_timer(3_515_625).unwrap();
+        wwdt.set_warning(0b1_1111_1111).unwrap();
+        let mut wwdt = wwdt.set_resetting().set_enabled();
+        debug_now!("Wwdt tv: {:?}", wwdt.timer());
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
@@ -158,10 +176,12 @@ impl Stage0 {
             iocon,
             gpio,
         };
+        debug_now!("Wwdt tv again: {:?}", wwdt.timer());
         Stage1 {
             status: self.status,
             peripherals: self.peripherals,
             clocks,
+            wwdt,
         }
     }
 }
@@ -170,6 +190,7 @@ pub struct Stage1 {
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage1 {
@@ -335,6 +356,7 @@ impl Stage1 {
             clocks: self.clocks,
             se050_timer,
             basic,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -345,6 +367,7 @@ pub struct Stage2 {
     clocks: Clocks,
     basic: Basic,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage2 {
@@ -471,6 +494,7 @@ impl Stage2 {
             spi,
             se050_timer: self.se050_timer,
             se050_i2c,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -485,6 +509,7 @@ pub struct Stage3 {
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage3 {
@@ -522,6 +547,7 @@ impl Stage3 {
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
             flash,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -537,6 +563,7 @@ pub struct Stage4 {
     flash: Flash,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage4 {
@@ -641,6 +668,7 @@ impl Stage4 {
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
             store,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -690,6 +718,7 @@ pub struct Stage5 {
     store: RunnerStore<NK3xN>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage5 {
@@ -738,6 +767,7 @@ impl Stage5 {
             nfc_rp: self.nfc_rp,
             store: self.store,
             trussed,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -751,6 +781,7 @@ pub struct Stage6 {
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore<NK3xN>,
     trussed: Trussed<NK3xN>,
+    wwdt: EnabledWwdt,
 }
 
 impl Stage6 {
@@ -837,6 +868,7 @@ impl Stage6 {
         };
 
         info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
+        debug_now!("Wwdt tv again: {:?}", self.wwdt.timer());
 
         All {
             basic: self.basic,
@@ -844,6 +876,7 @@ impl Stage6 {
             apps,
             clock_controller,
             usb_nfc,
+            wwdt: self.wwdt,
         }
     }
 }
@@ -854,6 +887,7 @@ pub struct All {
     pub trussed: Trussed<NK3xN>,
     pub apps: Apps<NK3xN>,
     pub clock_controller: Option<DynamicClockController>,
+    pub wwdt: EnabledWwdt,
 }
 
 #[inline(never)]
