@@ -2,8 +2,9 @@ use apps::Variant;
 use nrf52840_hal::{
     clocks::Clocks,
     usbd::{UsbPeripheral, Usbd},
+    wdt::{self, count::One, handles::Hdl0, Watchdog, WatchdogHandle},
 };
-use nrf52840_pac::{Interrupt, SCB};
+use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
 
 use super::{Soc, Uuid};
 use rtic_monotonic::{RtcDuration, RtcMonotonic};
@@ -53,11 +54,7 @@ impl apps::Reboot for Nrf52 {
     }
 }
 
-pub fn init_bootup(
-    ficr: &nrf52840_pac::FICR,
-    uicr: &nrf52840_pac::UICR,
-    power: &mut nrf52840_pac::POWER,
-) -> Nrf52 {
+pub fn init_bootup(ficr: &nrf52840_pac::FICR, uicr: &nrf52840_pac::UICR) -> Nrf52 {
     let deviceid0 = ficr.deviceid[0].read().bits();
     let deviceid1 = ficr.deviceid[1].read().bits();
 
@@ -132,4 +129,59 @@ pub fn setup_usb_bus(
     });
 
     Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
+}
+
+#[derive(Debug)]
+pub struct ResetReason {
+    pub resetpin: bool,
+    /// Reset from watchdog
+    pub dog: bool,
+    /// Soft Reset
+    pub sreq: bool,
+    pub lockup: bool,
+    pub off: bool,
+    pub lpcomp: bool,
+    pub dif: bool,
+    pub nfc: bool,
+    pub vbus: bool,
+}
+
+pub fn reset_reason(reset_reason: &RESETREAS) -> ResetReason {
+    debug_now!("Reset Reason: {:b}", reset_reason.read().bits());
+    let read = reset_reason.read();
+    let res = ResetReason {
+        resetpin: read.resetpin().bits(),
+        dog: read.dog().bits(),
+        sreq: read.sreq().bits(),
+        lockup: read.lockup().bits(),
+        off: read.off().bits(),
+        lpcomp: read.lpcomp().bits(),
+        dif: read.dif().bits(),
+        nfc: read.nfc().bits(),
+        vbus: read.vbus().bits(),
+    };
+    reset_reason.write(|w| w);
+    res
+}
+
+pub fn init_watchdog(wdt: WDT) -> Result<wdt::Parts<(WatchdogHandle<Hdl0>,)>, WDT> {
+    const WDT_FREQUENCY: u32 = 32_768;
+    // Watchdog triggers after 3 minutes
+    const DURATION_SECONS: u32 = 15 * 60;
+    const TICKS: u32 = DURATION_SECONS * WDT_FREQUENCY;
+
+    match Watchdog::try_new(wdt) {
+        Ok(mut watchdog) => {
+            watchdog.set_lfosc_ticks(TICKS);
+            watchdog.enable_interrupt();
+            let mut parts = watchdog.activate::<One>();
+            parts.handles.0.pet();
+            Ok(parts)
+        }
+        Err(wdt) => {
+            let mut parts = Watchdog::try_recover::<One>(wdt)?;
+            parts.handles.0.pet();
+            Ok(parts)
+        }
+    }
 }

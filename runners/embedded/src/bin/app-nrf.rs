@@ -61,7 +61,7 @@ mod app {
 
         boards::init::init_logger::<Board>(VERSION_STRING);
 
-        let reset_reason = nk3am::reset_reason(&ctx.device.POWER.resetreas);
+        let reset_reason = nrf52::reset_reason(&ctx.device.POWER.resetreas);
         debug_now!("Reset Reason: {reset_reason:?}");
 
         // Go to bootloader after watchdog failure
@@ -72,9 +72,9 @@ mod app {
             Nrf52::reboot_to_firmware_update();
         }
 
-        let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
+        let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR);
 
-        let wdt_parts = nk3am::init_watchdog(ctx.device.WDT);
+        let wdt_parts = nrf52::init_watchdog(ctx.device.WDT);
 
         let mut board_gpio = nk3am::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
@@ -184,10 +184,9 @@ mod app {
         // cortex_m::asm::wfi();
 
         loop {
-            ctx.local
-                .watchdog_parts
-                .as_mut()
-                .map(|mut parts| parts.handles.pet());
+            if let Some(ref mut parts) = ctx.local.watchdog_parts {
+                parts.handles.pet();
+            }
 
             #[cfg(not(feature = "no-delog"))]
             boards::init::Delogger::flush();
