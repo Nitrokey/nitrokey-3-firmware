@@ -155,8 +155,8 @@ fn print_version() {
     let crate_name = clap::crate_name!();
     let crate_version = clap::crate_version!();
     let enabled_features: &[&str] = &[
-        #[cfg(feature = "alpha")]
-        "alpha",
+        #[cfg(feature = "test")]
+        "test",
         #[cfg(feature = "provisioner")]
         "provisioner",
     ];
