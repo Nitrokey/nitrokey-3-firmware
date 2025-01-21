@@ -33,19 +33,19 @@ impl<'a> App<'a> {
     }
 }
 
-impl<'a> Default for App<'a> {
+impl Default for App<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> iso7816::App for App<'a> {
+impl iso7816::App for App<'_> {
     fn aid(&self) -> iso7816::Aid {
         iso7816::Aid::new(&[0xD2u8, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01])
     }
 }
 
-impl<'a, const R: usize> apdu_app::App<R> for App<'a> {
+impl<const R: usize> apdu_app::App<R> for App<'_> {
     fn select(
         &mut self,
         _interface: Interface,

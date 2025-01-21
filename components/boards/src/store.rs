@@ -72,8 +72,7 @@ macro_rules! impl_storage_pointers {
             {
                 static mut IFS_STORAGE: ::core::mem::MaybeUninit<$I> =
                     ::core::mem::MaybeUninit::uninit();
-                #[allow(static_mut_refs)]
-                &mut IFS_STORAGE
+                (&mut *&raw mut IFS_STORAGE)
             }
 
             unsafe fn ifs_alloc() -> &'static mut ::core::mem::MaybeUninit<
@@ -82,7 +81,7 @@ macro_rules! impl_storage_pointers {
                 static mut IFS_ALLOC: ::core::mem::MaybeUninit<::littlefs2::fs::Allocation<$I>> =
                     ::core::mem::MaybeUninit::uninit();
                 #[allow(static_mut_refs)]
-                &mut IFS_ALLOC
+                (&mut *&raw mut IFS_ALLOC)
             }
 
             unsafe fn ifs() -> &'static mut ::core::mem::MaybeUninit<
@@ -90,22 +89,21 @@ macro_rules! impl_storage_pointers {
             > {
                 static mut IFS: ::core::mem::MaybeUninit<::littlefs2::fs::Filesystem<$I>> =
                     ::core::mem::MaybeUninit::uninit();
-                #[allow(static_mut_refs)]
-                &mut IFS
+                (&mut *&raw mut IFS)
             }
 
             unsafe fn ifs_ptr() -> *mut ::trussed::store::Fs<Self::InternalStorage> {
                 static mut IFS: ::core::mem::MaybeUninit<::trussed::store::Fs<$I>> =
                     ::core::mem::MaybeUninit::uninit();
-                IFS.as_mut_ptr()
+                let ifs_ptr: *mut ::core::mem::MaybeUninit<::trussed::store::Fs<$I>> = &raw mut IFS;
+                ifs_ptr as _
             }
 
             unsafe fn efs_storage() -> &'static mut ::core::mem::MaybeUninit<Self::ExternalStorage>
             {
                 static mut EFS_STORAGE: ::core::mem::MaybeUninit<$E> =
                     ::core::mem::MaybeUninit::uninit();
-                #[allow(static_mut_refs)]
-                &mut EFS_STORAGE
+                (&mut *&raw mut EFS_STORAGE)
             }
 
             unsafe fn efs_alloc() -> &'static mut ::core::mem::MaybeUninit<
@@ -113,8 +111,7 @@ macro_rules! impl_storage_pointers {
             > {
                 static mut EFS_ALLOC: ::core::mem::MaybeUninit<::littlefs2::fs::Allocation<$E>> =
                     ::core::mem::MaybeUninit::uninit();
-                #[allow(static_mut_refs)]
-                &mut EFS_ALLOC
+                (&mut *&raw mut EFS_ALLOC)
             }
 
             unsafe fn efs() -> &'static mut ::core::mem::MaybeUninit<
@@ -122,14 +119,14 @@ macro_rules! impl_storage_pointers {
             > {
                 static mut EFS: ::core::mem::MaybeUninit<::littlefs2::fs::Filesystem<$E>> =
                     ::core::mem::MaybeUninit::uninit();
-                #[allow(static_mut_refs)]
-                &mut EFS
+                (&mut *&raw mut EFS)
             }
 
             unsafe fn efs_ptr() -> *mut ::trussed::store::Fs<Self::ExternalStorage> {
                 static mut EFS: ::core::mem::MaybeUninit<::trussed::store::Fs<$E>> =
                     ::core::mem::MaybeUninit::uninit();
-                EFS.as_mut_ptr()
+                let efs_ptr: *mut ::core::mem::MaybeUninit<::trussed::store::Fs<$E>> = &raw mut EFS;
+                efs_ptr as _
             }
         }
     };
@@ -164,7 +161,8 @@ impl<S: StoragePointers> RunnerStore<S> {
 
     unsafe fn vfs_ptr() -> *mut Fs<VolatileStorage> {
         static mut VFS: MaybeUninit<Fs<VolatileStorage>> = MaybeUninit::uninit();
-        VFS.as_mut_ptr()
+        let vfs_ptr: *mut MaybeUninit<Fs<VolatileStorage>> = &raw mut VFS;
+        vfs_ptr as _
     }
 }
 

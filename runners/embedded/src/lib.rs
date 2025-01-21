@@ -27,7 +27,7 @@ pub fn init_alloc() {
     use core::mem::MaybeUninit;
     const HEAP_SIZE: usize = 32 * 1024;
     static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
+    unsafe { ALLOCATOR.init(&raw mut HEAP as usize, HEAP_SIZE) }
 }
 
 pub fn init_usb_nfc<B: Board>(

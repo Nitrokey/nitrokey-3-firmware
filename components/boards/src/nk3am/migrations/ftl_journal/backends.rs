@@ -23,7 +23,7 @@ impl<'a> EFSBackupBackend<'a> {
     }
 }
 
-impl<'a> BackupBackend for EFSBackupBackend<'a> {
+impl BackupBackend for EFSBackupBackend<'_> {
     // would be good to get this from ext-flash directly
     const RW_SIZE: usize = 256;
 

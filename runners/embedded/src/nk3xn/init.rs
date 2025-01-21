@@ -783,7 +783,10 @@ impl Stage6 {
         usb.disable_high_speed();
 
         let usbd = lpc55_hal::drivers::UsbBus::new(usb, vbus_pin);
-        unsafe { USBD.insert(usbd) }
+
+        // Avoid referece to static mut
+        #[allow(clippy::deref_addrof)]
+        unsafe { &mut *&raw mut USBD }.insert(usbd)
     }
 
     #[inline(never)]
