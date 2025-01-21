@@ -8,7 +8,7 @@ use super::nk3am::{
     DummyNfc,
 };
 use crate::{
-    soc::nrf52::{flash::FlashStorage, Nrf52},
+    soc::nrf52::{flash::FlashStorage, Nrf52, UsbClockType},
     store::impl_storage_pointers,
     Board,
 };
@@ -21,6 +21,8 @@ pub struct NKPK;
 
 impl Board for NKPK {
     type Soc = Nrf52;
+
+    type Resources = UsbClockType;
 
     type NfcDevice = DummyNfc;
     type Buttons = HardwareButtons;

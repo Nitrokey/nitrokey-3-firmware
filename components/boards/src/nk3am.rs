@@ -16,7 +16,7 @@ use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3, TIMER1,
 
 use crate::{
     flash::ExtFlashStorage,
-    soc::nrf52::{flash::FlashStorage, rtic_monotonic::RtcMonotonic, Nrf52},
+    soc::nrf52::{flash::FlashStorage, rtic_monotonic::RtcMonotonic, Nrf52, UsbClockType},
     store::impl_storage_pointers,
     ui::UserInterface,
     Board,
@@ -37,6 +37,8 @@ pub struct NK3AM;
 
 impl Board for NK3AM {
     type Soc = Nrf52;
+
+    type Resources = UsbClockType;
 
     type NfcDevice = DummyNfc;
     type Buttons = HardwareButtons;

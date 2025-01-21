@@ -59,6 +59,8 @@ pub struct NK3xN;
 impl Board for NK3xN {
     type Soc = Lpc55;
 
+    type Resources = ();
+
     type NfcDevice = NfcChip;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;

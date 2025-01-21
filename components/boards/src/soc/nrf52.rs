@@ -107,27 +107,19 @@ pub fn init_bootup(
     Nrf52 { uuid }
 }
 
-type UsbClockType = Clocks<
+pub type UsbClockType = Clocks<
     nrf52840_hal::clocks::ExternalOscillator,
     nrf52840_hal::clocks::Internal,
     nrf52840_hal::clocks::LfOscStarted,
 >;
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
 
-static mut USB_CLOCK: Option<UsbClockType> = None;
-static mut USBD: Option<UsbBusType> = None;
-
 pub fn setup_usb_bus(
+    static_usb_clock: &'static mut Option<UsbClockType>,
     clock: nrf52840_pac::CLOCK,
     usb_pac: nrf52840_pac::USBD,
-) -> &'static UsbBusType {
-    let usb_clock = Clocks::new(clock).start_lfclk().enable_ext_hfosc();
-
-    // Avoid referece to static mut
-    #[allow(clippy::deref_addrof)]
-    let usb_clock_static = unsafe { &mut *&raw mut USB_CLOCK };
-    usb_clock_static.replace(usb_clock);
-    let usb_clock_ref = usb_clock_static.as_ref().unwrap();
+) -> UsbBusType {
+    let usb_clock = static_usb_clock.insert(Clocks::new(clock).start_lfclk().enable_ext_hfosc());
 
     usb_pac.intenset.write(|w| {
         w.usbreset()
@@ -142,14 +134,5 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
-    let usb_peripheral = UsbPeripheral::new(usb_pac, usb_clock_ref);
-
-    let usbd = Usbd::new(usb_peripheral);
-    // Avoid referece to static mut
-    #[allow(clippy::deref_addrof)]
-    let usbd_static = unsafe { &mut *&raw mut USBD };
-    usbd_static.replace(usbd);
-    let usbd_ref = usbd_static.as_ref().unwrap();
-
-    usbd_ref
+    Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
 }

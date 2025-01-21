@@ -6,7 +6,7 @@ use apps::InitStatus;
 use boards::nk3xn::TimerDelay;
 use boards::{
     flash::ExtFlashStorage,
-    init::{self, UsbNfc},
+    init::{self, UsbNfc, UsbResources},
     nk3xn::{
         button::ThreeButtons,
         led::RgbLed,
@@ -19,7 +19,7 @@ use boards::{
         lpc55::{clock_controller::DynamicClockController, Lpc55},
         Soc,
     },
-    store::{self, RunnerStore},
+    store::{self, RunnerStore, StoreResources},
     ui::{
         buttons::{self, Press},
         rgb_led::RgbLed as _,
@@ -563,7 +563,7 @@ impl Stage4 {
     }
 
     #[inline(never)]
-    pub fn next(mut self) -> Stage5 {
+    pub fn next(mut self, resources: &'static mut StoreResources<NK3xN>) -> Stage5 {
         info_now!("making fs");
 
         let external = if let Some(spi) = self.spi.take() {
@@ -604,7 +604,13 @@ impl Stage4 {
         );
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
-        let store = store::init_store(internal, external, simulated_efs, &mut self.status);
+        let store = store::init_store(
+            resources,
+            internal,
+            external,
+            simulated_efs,
+            &mut self.status,
+        );
         info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
@@ -765,9 +771,7 @@ impl Stage6 {
         }
     }
 
-    fn setup_usb_bus(&mut self, usbp: Usbhs) -> &'static UsbBusType {
-        static mut USBD: Option<UsbBusType> = None;
-
+    fn setup_usb_bus(&mut self, usbp: Usbhs) -> UsbBusType {
         let vbus_pin = pins::Pio0_22::take()
             .unwrap()
             .into_usb0_vbus_pin(&mut self.clocks.iocon);
@@ -782,15 +786,15 @@ impl Stage6 {
         // TODO: do we need this one?
         usb.disable_high_speed();
 
-        let usbd = lpc55_hal::drivers::UsbBus::new(usb, vbus_pin);
-
-        // Avoid referece to static mut
-        #[allow(clippy::deref_addrof)]
-        unsafe { &mut *&raw mut USBD }.insert(usbd)
+        lpc55_hal::drivers::UsbBus::new(usb, vbus_pin)
     }
 
     #[inline(never)]
-    pub fn next(mut self, usbhs: Usbhs<Unknown>) -> All {
+    pub fn next(
+        mut self,
+        resources: &'static mut UsbResources<NK3xN>,
+        usbhs: Usbhs<Unknown>,
+    ) -> All {
         self.perform_data_migrations();
         let apps = init::init_apps(
             &Lpc55::new(),
@@ -808,7 +812,7 @@ impl Stage6 {
             None
         };
 
-        let usb_nfc = crate::init_usb_nfc(usb_bus, self.nfc, self.nfc_rp);
+        let usb_nfc = crate::init_usb_nfc(resources, usb_bus, self.nfc, self.nfc_rp);
 
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();

@@ -9,7 +9,7 @@ use cortex_m_rt::{exception, ExceptionFrame};
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
     use boards::{
-        init::UsbClasses,
+        init::{Resources, UsbClasses},
         nk3am::{self, InternalFlashStorage, NK3AM},
         runtime,
         soc::nrf52::{self, rtic_monotonic::RtcDuration},
@@ -43,7 +43,7 @@ mod app {
     #[monotonic(binds = RTC0, default = true)]
     type RtcMonotonic = nrf52::rtic_monotonic::RtcMonotonic;
 
-    #[init()]
+    #[init(local = [resources: Resources<NK3AM> = Resources::new()])]
     fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
         let mut init_status = apps::InitStatus::default();
 
@@ -59,7 +59,11 @@ mod app {
 
         let mut board_gpio = nk3am::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
-        let usb_bus = nrf52::setup_usb_bus(ctx.device.CLOCK, ctx.device.USBD);
+        let usb_bus = nrf52::setup_usb_bus(
+            &mut ctx.local.resources.board,
+            ctx.device.CLOCK,
+            ctx.device.USBD,
+        );
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
         let external_flash = nk3am::init_external_flash(
@@ -67,11 +71,22 @@ mod app {
             board_gpio.flashnfc_spi.take().unwrap(),
             board_gpio.flash_cs.take().unwrap(),
         );
-        let store = store::init_store(internal_flash, external_flash, false, &mut init_status);
+        let store = store::init_store(
+            &mut ctx.local.resources.store,
+            internal_flash,
+            external_flash,
+            false,
+            &mut init_status,
+        );
 
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
-        let usb_nfc = embedded_runner_lib::init_usb_nfc::<Board>(Some(usb_bus), None, nfc_rp);
+        let usb_nfc = embedded_runner_lib::init_usb_nfc(
+            &mut ctx.local.resources.usb,
+            Some(usb_bus),
+            None,
+            nfc_rp,
+        );
 
         #[cfg(feature = "se050")]
         let se050 = nk3am::init_se050(

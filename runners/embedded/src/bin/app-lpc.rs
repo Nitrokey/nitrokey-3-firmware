@@ -18,7 +18,7 @@ pub fn msp() -> u32 {
 mod app {
     use apdu_dispatch::dispatch::ApduDispatch;
     use boards::{
-        init::UsbClasses,
+        init::{Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
         runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
@@ -99,7 +99,7 @@ mod app {
     #[monotonic(binds = SysTick, default = true)]
     type Monotonic = SystickMonotonic;
 
-    #[init()]
+    #[init(local = [resources: Resources<NK3xN> = Resources::new()])]
     fn init(c: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
@@ -110,7 +110,7 @@ mod app {
             trussed,
             apps,
             clock_controller,
-        } = nk3xn::init(c.device, c.core);
+        } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
 

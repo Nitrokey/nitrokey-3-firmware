@@ -45,6 +45,8 @@ pub type Apps<B> = apps::Apps<Runner<B>>;
 pub trait Board: StoragePointers {
     type Soc: Soc;
 
+    type Resources;
+
     type NfcDevice: NfcDevice;
     type Buttons: UserPresence;
     type Led: RgbLed;
