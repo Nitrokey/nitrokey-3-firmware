@@ -122,10 +122,12 @@ pub fn setup_usb_bus(
     usb_pac: nrf52840_pac::USBD,
 ) -> &'static UsbBusType {
     let usb_clock = Clocks::new(clock).start_lfclk().enable_ext_hfosc();
-    unsafe {
-        USB_CLOCK.replace(usb_clock);
-    }
-    let usb_clock_ref = unsafe { USB_CLOCK.as_ref().unwrap() };
+
+    // Avoid referece to static mut
+    #[allow(clippy::deref_addrof)]
+    let usb_clock_static = unsafe { &mut *&raw mut USB_CLOCK };
+    usb_clock_static.replace(usb_clock);
+    let usb_clock_ref = usb_clock_static.as_ref().unwrap();
 
     usb_pac.intenset.write(|w| {
         w.usbreset()
@@ -143,10 +145,11 @@ pub fn setup_usb_bus(
     let usb_peripheral = UsbPeripheral::new(usb_pac, usb_clock_ref);
 
     let usbd = Usbd::new(usb_peripheral);
-    unsafe {
-        USBD.replace(usbd);
-    }
-    let usbd_ref = unsafe { USBD.as_ref().unwrap() };
+    // Avoid referece to static mut
+    #[allow(clippy::deref_addrof)]
+    let usbd_static = unsafe { &mut *&raw mut USBD };
+    usbd_static.replace(usbd);
+    let usbd_ref = usbd_static.as_ref().unwrap();
 
     usbd_ref
 }

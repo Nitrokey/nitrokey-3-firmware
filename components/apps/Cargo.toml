@@ -80,6 +80,12 @@ backend-rsa = ["trussed-rsa-alloc"]
 backend-software-hpke = ["trussed-staging/hpke"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
+log-error = []
+log-warn = []
+log-info = []
+log-debug = []
+log-trace = []
+log-none = []
 
 trussed-usbip-ccid = ["trussed-usbip/ccid", "backend-software-hpke"]
 
