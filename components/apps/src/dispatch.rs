@@ -31,7 +31,9 @@ use trussed_se050_backend::{Context as Se050Context, Se050Backend};
 use trussed_se050_manage::Se050ManageExtension;
 
 #[cfg(feature = "backend-auth")]
-use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
+use trussed_auth::AuthExtension;
+#[cfg(feature = "backend-auth")]
+use trussed_auth_backend::{AuthBackend, AuthContext, MAX_HW_KEY_LEN};
 
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;

@@ -192,6 +192,7 @@ dependencies = [
  "serde",
  "trussed",
  "trussed-auth",
+ "trussed-auth-backend",
  "trussed-chunked",
  "trussed-core",
  "trussed-fs-info",
@@ -1143,7 +1144,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=01728a5a5cdd825835a1bea00807b8a8e080e2b8#01728a5a5cdd825835a1bea00807b8a8e080e2b8"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=700863bdfa90a3616cbb695d6638c7aea7730c03#700863bdfa90a3616cbb695d6638c7aea7730c03"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -2128,7 +2129,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 [[package]]
 name = "opcard"
 version = "1.5.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=84fd887ac32b59f3451d1fbee21b04a56b07780b#84fd887ac32b59f3451d1fbee21b04a56b07780b"
+source = "git+https://github.com/Nitrokey/opcard-rs?rev=39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2#39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2"
 dependencies = [
  "admin-app",
  "apdu-app",
@@ -2239,7 +2240,7 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "piv-authenticator"
 version = "0.3.8"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=95408fceeb8035fa055516d9848519a6e54305c5#95408fceeb8035fa055516d9848519a6e54305c5"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=65552820b4f931c21e1c7675b1bd6072cb872531#65552820b4f931c21e1c7675b1bd6072cb872531"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -2676,7 +2677,7 @@ dependencies = [
 [[package]]
 name = "secrets-app"
 version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=01728a5a5cdd825835a1bea00807b8a8e080e2b8#01728a5a5cdd825835a1bea00807b8a8e080e2b8"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=700863bdfa90a3616cbb695d6638c7aea7730c03#700863bdfa90a3616cbb695d6638c7aea7730c03"
 dependencies = [
  "apdu-app",
  "bitflags 2.6.0",
@@ -3233,8 +3234,18 @@ dependencies = [
 
 [[package]]
 name = "trussed-auth"
-version = "0.3.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?rev=fc53539536d7658c45a492585041742d8cdc45d0#fc53539536d7658c45a492585041742d8cdc45d0"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3110004319491b9210f50c3653a574d354e27a3de73ae5a3dfc2e686027702e7"
+dependencies = [
+ "serde",
+ "trussed-core",
+]
+
+[[package]]
+name = "trussed-auth-backend"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/trussed-auth?tag=v0.4.0#ab6ad8422531fb4801fee795cb44baa375320f15"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3246,6 +3257,7 @@ dependencies = [
  "sha2",
  "subtle",
  "trussed",
+ "trussed-auth",
  "trussed-core",
 ]
 
@@ -3335,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=58b442331e997b0c50525276258d66d069478f15#58b442331e997b0c50525276258d66d069478f15"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=131c973fbe74d677fb8c8df97c210f78608994f0#131c973fbe74d677fb8c8df97c210f78608994f0"
 dependencies = [
  "bitflags 2.6.0",
  "cbor-smol",
@@ -3361,6 +3373,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-auth",
+ "trussed-auth-backend",
  "trussed-core",
  "trussed-hpke",
  "trussed-manage",

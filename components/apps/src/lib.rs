@@ -582,8 +582,8 @@ impl<R: Runner> Apps<R> {
             && !app.config().opcard.use_se050_backend
         {
             use core::mem;
-            let opcard_trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
-                trussed_auth::FilesystemLayout::V0,
+            let opcard_trussed_auth_used = trussed_auth_backend::AuthBackend::is_client_active(
+                trussed_auth_backend::FilesystemLayout::V0,
                 dispatch::AUTH_LOCATION,
                 path!("opcard"),
                 data.store,

@@ -6,8 +6,8 @@ use littlefs2_core::path;
 pub(crate) const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
 
 #[cfg(feature = "backend-auth")]
-pub(crate) const TRUSSED_AUTH_FS_LAYOUT: trussed_auth::FilesystemLayout =
-    trussed_auth::FilesystemLayout::V1;
+pub(crate) const TRUSSED_AUTH_FS_LAYOUT: trussed_auth_backend::FilesystemLayout =
+    trussed_auth_backend::FilesystemLayout::V1;
 #[cfg(feature = "se050")]
 pub(crate) const SE050_BACKEND_FS_LAYOUT: trussed_se050_backend::FilesystemLayout =
     trussed_se050_backend::FilesystemLayout::V1;
@@ -25,7 +25,7 @@ pub(crate) const MIGRATORS: &[Migrator] = &[
     #[cfg(feature = "backend-auth")]
     Migrator {
         migrate: |ifs, _efs| {
-            trussed_auth::migrate::migrate_remove_dat(
+            trussed_auth_backend::migrate::migrate_remove_dat(
                 ifs,
                 &[
                     path!("opcard"),
