@@ -194,7 +194,7 @@ mod app {
     #[task(priority = 2, binds = SWI0_EGU0, shared = [trussed], local = [endpoints])]
     fn task_trussed(ctx: task_trussed::Context) {
         let mut trussed = ctx.shared.trussed;
-        
+
         //trace!("irq SWI0_EGU0");
         trussed.lock(|trussed| {
             runtime::run_trussed(trussed, ctx.local.endpoints);

@@ -16,8 +16,8 @@ pub fn msp() -> u32 {
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
-    use apps::Endpoints;
     use apdu_dispatch::dispatch::ApduDispatch;
+    use apps::Endpoints;
     use boards::{
         init::{Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
@@ -139,9 +139,7 @@ mod app {
             clock_ctrl: clock_controller,
             wait_extender,
         };
-        let local = LocalResources {
-            endpoints
-        };
+        let local = LocalResources { endpoints };
         (shared, local, init::Monotonics(systick.into()))
     }
 

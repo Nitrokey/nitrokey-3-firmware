@@ -455,7 +455,10 @@ impl<R: Runner> ClientBuilder<R> {
         let backends = A::backends(runner, config);
         let (requester, responder) = A::channel().split().unwrap();
         let context = CoreContext::with_interrupt(A::CLIENT_ID.into(), interrupt);
-        self.endpoints.push(Endpoint::new(responder, context, backends)).ok().unwrap();
+        self.endpoints
+            .push(Endpoint::new(responder, context, backends))
+            .ok()
+            .unwrap();
         Client::<R>::new(requester, self.syscall.clone(), interrupt)
     }
 
@@ -522,8 +525,7 @@ impl<R: Runner> Apps<R> {
             ..
         } = data;
 
-        let (admin, init_status) =
-            Self::admin_app(runner, trussed_service, client_builder, admin);
+        let (admin, init_status) = Self::admin_app(runner, trussed_service, client_builder, admin);
 
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
@@ -583,7 +585,7 @@ impl<R: Runner> Apps<R> {
     ) -> (AdminApp<R>, InitStatus) {
         #[cfg(not(feature = "se050"))]
         let _ = trussed_service;
-        
+
         let trussed = client_builder.client::<AdminApp<R>>(runner, &());
         // TODO: use CLIENT_ID directly
         let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
@@ -788,12 +790,7 @@ where
         (runner, data): (R, Data<R>),
     ) -> Self {
         let mut client_builder = ClientBuilder::new(syscall);
-        let apps = Self::new(
-            &runner,
-            trussed_service,
-            &mut client_builder,
-            data,
-        );
+        let apps = Self::new(&runner, trussed_service, &mut client_builder, data);
         endpoints.extend(client_builder.into_endpoints());
         apps
     }
