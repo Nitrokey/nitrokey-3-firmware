@@ -431,7 +431,8 @@ const CLIENT_COUNT: usize = const {
         }
         i += 1;
     }
-    n
+    // admin-app is always enabled
+    n + 1
 };
 
 pub type Endpoint = ServiceEndpoint<'static, Backend, DispatchContext>;
