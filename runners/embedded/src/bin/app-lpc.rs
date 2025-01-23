@@ -160,7 +160,7 @@ mod app {
             mut perf_timer,
             mut usb_classes,
         } = c.shared;
-        let idle::LocalResources { mut wwdt } = c.local;
+        let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
@@ -175,8 +175,6 @@ mod app {
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {
-                let counter = wwdt.timer();
-                info_now!("Current wwdt counter: {}", wwdt.timer());
                 boards::init::Delogger::flush();
             }
 
