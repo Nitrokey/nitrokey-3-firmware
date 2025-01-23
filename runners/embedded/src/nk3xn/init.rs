@@ -155,10 +155,11 @@ impl Stage0 {
         wwdt: WWDT,
     ) -> Stage1 {
         let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
-        // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier, 15min timer
-        wwdt.set_timer(3_515_625).unwrap();
+        // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
+        const TIMER_COUNT: u32 = (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
+        wwdt.set_timer(TIMER_COUNT).unwrap();
         wwdt.set_warning(0b1_1111_1111).unwrap();
-        let mut wwdt = wwdt.set_resetting().set_enabled();
+        let wwdt = wwdt.set_resetting().set_enabled();
         debug_now!("Wwdt tv: {:?}", wwdt.timer());
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);

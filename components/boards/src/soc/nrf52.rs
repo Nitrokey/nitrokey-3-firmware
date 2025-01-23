@@ -7,6 +7,7 @@ use nrf52840_hal::{
 use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
 
 use super::{Soc, Uuid};
+use crate::WATCHDOG_DURATION_SECONDS;
 use rtic_monotonic::{RtcDuration, RtcMonotonic};
 
 pub mod flash;
@@ -166,9 +167,7 @@ pub fn reset_reason(reset_reason: &RESETREAS) -> ResetReason {
 
 pub fn init_watchdog(wdt: WDT) -> Result<wdt::Parts<(WatchdogHandle<Hdl0>,)>, WDT> {
     const WDT_FREQUENCY: u32 = 32_768;
-    // Watchdog triggers after 15 minutes
-    const DURATION_SECONDS: u32 = 15 * 60;
-    const TICKS: u32 = DURATION_SECONDS * WDT_FREQUENCY;
+    const TICKS: u32 = (WATCHDOG_DURATION_SECONDS as u32) * WDT_FREQUENCY;
 
     match Watchdog::try_new(wdt) {
         Ok(mut watchdog) => {
