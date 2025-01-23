@@ -441,6 +441,29 @@ const fn validate_mechanisms() {
         if contains(trussed_se050_backend::MECHANISMS, mechanism) {
             continue;
         }
+        // The usbip runner does not have the mechanisms normally provided by the se050 backend.
+        // Until there is a backend implementing them in software, we ignore them and return an
+        // error at runtime.
+        #[cfg(feature = "trussed-usbip")]
+        if contains(
+            &[
+                Mechanism::BrainpoolP256R1,
+                Mechanism::BrainpoolP256R1Prehashed,
+                Mechanism::BrainpoolP384R1,
+                Mechanism::BrainpoolP384R1Prehashed,
+                Mechanism::BrainpoolP512R1,
+                Mechanism::BrainpoolP512R1Prehashed,
+                Mechanism::P384,
+                Mechanism::P384Prehashed,
+                Mechanism::P521,
+                Mechanism::P521Prehashed,
+                Mechanism::Secp256k1,
+                Mechanism::Secp256k1Prehashed,
+            ],
+            mechanism,
+        ) {
+            continue;
+        }
 
         // This mechanism is not implemented by Trussed or any of the backends.
         mechanism.panic();
