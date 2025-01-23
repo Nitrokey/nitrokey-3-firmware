@@ -1,7 +1,7 @@
 use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
-use apps::InitStatus;
+use apps::{Endpoints, InitStatus};
 #[cfg(feature = "se050")]
 use boards::nk3xn::TimerDelay;
 use boards::{
@@ -796,7 +796,7 @@ impl Stage6 {
         usbhs: Usbhs<Unknown>,
     ) -> All {
         self.perform_data_migrations();
-        let apps = init::init_apps(
+        let (apps, endpoints) = init::init_apps(
             &Lpc55::new(),
             &mut self.trussed,
             self.status,
@@ -842,6 +842,7 @@ impl Stage6 {
             basic: self.basic,
             trussed: self.trussed,
             apps,
+            endpoints,
             clock_controller,
             usb_nfc,
         }
@@ -853,6 +854,7 @@ pub struct All {
     pub usb_nfc: UsbNfc<NK3xN>,
     pub trussed: Trussed<NK3xN>,
     pub apps: Apps<NK3xN>,
+    pub endpoints: Endpoints,
     pub clock_controller: Option<DynamicClockController>,
 }
 

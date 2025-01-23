@@ -17,6 +17,7 @@ pub fn msp() -> u32 {
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
     use apdu_dispatch::dispatch::ApduDispatch;
+    use apps::Endpoints;
     use boards::{
         init::{Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
@@ -93,7 +94,10 @@ mod app {
     }
 
     #[local]
-    struct LocalResources {}
+    struct LocalResources {
+        /// The endpoints that are polled by the Trussed service.
+        endpoints: Endpoints,
+    }
 
     // TODO: replace
     #[monotonic(binds = SysTick, default = true)]
@@ -109,6 +113,7 @@ mod app {
             usb_nfc,
             trussed,
             apps,
+            endpoints,
             clock_controller,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
@@ -134,7 +139,8 @@ mod app {
             clock_ctrl: clock_controller,
             wait_extender,
         };
-        (shared, LocalResources {}, init::Monotonics(systick.into()))
+        let local = LocalResources { endpoints };
+        (shared, local, init::Monotonics(systick.into()))
     }
 
     #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes])]
@@ -268,10 +274,12 @@ mod app {
         });
     }
 
-    #[task(binds = OS_EVENT, shared = [trussed], priority = 5)]
+    #[task(binds = OS_EVENT, shared = [trussed], local = [endpoints], priority = 5)]
     fn os_event(mut c: os_event::Context) {
         // debug_now!("os event: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
-        c.shared.trussed.lock(runtime::run_trussed);
+        c.shared.trussed.lock(|trussed| {
+            runtime::run_trussed(trussed, c.local.endpoints);
+        });
     }
 
     #[task(shared = [trussed], priority = 1)]

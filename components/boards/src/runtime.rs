@@ -1,4 +1,5 @@
 use apdu_dispatch::dispatch::{ApduDispatch, Interface};
+use apps::Endpoints;
 use ctaphid_dispatch::Dispatch as CtaphidDispatch;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
@@ -119,6 +120,6 @@ where
     };
 }
 
-pub fn run_trussed<B: Board>(trussed: &mut Trussed<B>) {
-    trussed.process();
+pub fn run_trussed<B: Board>(trussed: &mut Trussed<B>, endpoints: &mut Endpoints) {
+    trussed.process(endpoints);
 }
