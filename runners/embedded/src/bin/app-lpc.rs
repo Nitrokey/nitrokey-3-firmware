@@ -114,7 +114,7 @@ mod app {
             trussed,
             apps,
             clock_controller,
-            wwdt, 
+            wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
