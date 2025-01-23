@@ -166,9 +166,9 @@ pub fn reset_reason(reset_reason: &RESETREAS) -> ResetReason {
 
 pub fn init_watchdog(wdt: WDT) -> Result<wdt::Parts<(WatchdogHandle<Hdl0>,)>, WDT> {
     const WDT_FREQUENCY: u32 = 32_768;
-    // Watchdog triggers after 3 minutes
-    const DURATION_SECONS: u32 = 15 * 60;
-    const TICKS: u32 = DURATION_SECONS * WDT_FREQUENCY;
+    // Watchdog triggers after 15 minutes
+    const DURATION_SECONDS: u32 = 15 * 60;
+    const TICKS: u32 = DURATION_SECONDS * WDT_FREQUENCY;
 
     match Watchdog::try_new(wdt) {
         Ok(mut watchdog) => {
