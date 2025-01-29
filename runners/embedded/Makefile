@@ -31,10 +31,10 @@ OUT_IHEX = $(OUT_BIN).ihex
 CUSTOM_PROFILE=$(shell python3 -c "p = 'release-thin-lto' if '$(BOARD)' == 'nk3am' and 'test' in '$(FEATURES)'.split(',')  else 'release'; print(p); " )
 NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-semihosting' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
 
-# SHOULD_BUILD_STD=$(shell python3 -c "p = True if '$(BOARD)' == 'nk3xn' and 'test' in '$(FEATURES)'.split(',') else False; print(p)")
+SHOULD_BUILD_STD=$(shell python3 -c "p = True if '$(BOARD)' == 'nk3xn' else False; print(p)")
 # ifeq ($(SHOULD_BUILD_STD), True)
 # 	BUILD_STD=-Zbuild-std=core,alloc,panic_abort -Zbuild-std-features=panic_immediate_abort
-# 	export RUSTUP_TOOLCHAIN=nightly-2024-04-01
+# 	export RUSTUP_TOOLCHAIN=nightly-2024-12-30
 # 	LITTLEFS_INTRINSICS_FEATURE=littlefs-software-intrinsics
 # endif
 

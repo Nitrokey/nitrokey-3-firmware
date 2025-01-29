@@ -5,8 +5,11 @@ use embedded_time::duration::Microseconds;
 #[cfg(feature = "se050")]
 use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
-    drivers::pins::{Pio0_9, Pio1_14},
-    peripherals::{ctimer, flexcomm::I2c5},
+    drivers::pins::{Pio0_9, Pio1_14, Pio1_20, Pio1_21},
+    peripherals::{
+        ctimer,
+        flexcomm::{I2c4, I2c5},
+    },
     typestates::{
         init_state::Unknown,
         pin::{
@@ -38,7 +41,6 @@ lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 
-use nfc::NfcChip;
 use spi::{FlashCs, Spi};
 
 pub const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
@@ -63,7 +65,7 @@ impl Board for NK3xN {
 
     type Resources = ();
 
-    type NfcDevice = NfcChip;
+    type NfcDevice = nfc::Nt3h2111;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;
 

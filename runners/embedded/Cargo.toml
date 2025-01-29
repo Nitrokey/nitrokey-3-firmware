@@ -81,8 +81,8 @@ format-filesystem = ["boards/format-filesystem"]
 
 alloc = ["embedded-alloc"]
 
-board-nk3am = ["boards/board-nk3am", "soc-nrf52", "se050"]
-board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050"]
+board-nk3am = ["boards/board-nk3am", "soc-nrf52"]
+board-nk3xn = ["boards/board-nk3xn", "soc-lpc55"]
 
 soc-nrf52 = ["nrf52840-hal", "nrf52840-pac"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "nb", "systick-monotonic"]

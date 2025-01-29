@@ -30,9 +30,10 @@ usbd-ctaphid = "0.3"
 utils = { path = "../utils" }
 
 # soc-lpc55
-lpc55-hal = { version = "0.4", optional = true }
+lpc55-hal = { version = "0.4", optional = true, features = ["littlefs"] }
 lpc55-pac = { version = "0.4", optional = true }
 systick-monotonic = { version = "1.0.0", optional = true }
+nt3h2111 = { version = "0.1.0", optional = true }
 
 # soc-nrf52
 embedded-storage = { version = "0.3", optional = true }
@@ -62,7 +63,7 @@ board-nk3am = ["soc-nrf52", "lfs-backup", "se05x/embedded-hal-v0.2.7"]
 board-nk3xn = ["soc-lpc55", "fm11nc08", "utils/storage", "se05x/embedded-hal-v0.2.7"]
 board-nkpk = ["board-nk3am", "utils/storage"]
 
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic", "nt3h2111"]
 soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
 log-all = []

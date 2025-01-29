@@ -8,7 +8,7 @@ use boards::{
     nk3xn::{
         button::ThreeButtons,
         led::RgbLed,
-        nfc::{self, NfcChip},
+        nfc::{self, NfcChip, OldNfcChip},
         prince,
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
@@ -26,7 +26,7 @@ use boards::{
     Apps, Trussed,
 };
 use embedded_hal::{
-    blocking::i2c::{Read, Write},
+    blocking::i2c::{Read, Write, WriteRead},
     timer::{Cancel, CountDown},
 };
 use hal::{
@@ -38,7 +38,7 @@ use hal::{
     },
     peripherals::{
         ctimer::{self, Ctimer},
-        flexcomm::{Flexcomm0, Flexcomm5},
+        flexcomm::{Flexcomm0, Flexcomm4, Flexcomm5},
         inputmux::InputMux,
         pfr::Pfr,
         pint::Pint,
@@ -384,7 +384,7 @@ impl Stage2 {
         inputmux: InputMux<Unknown>,
         pint: Pint<Unknown>,
         nfc_rq: CcidRequester<'static>,
-    ) -> Option<Iso14443<NfcChip>> {
+    ) -> Option<Iso14443<OldNfcChip>> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
@@ -413,6 +413,48 @@ impl Stage2 {
         Some(iso14443)
     }
 
+    fn get_nfc_chip(&mut self, flexcomm4: Flexcomm4<Unknown>) -> NfcChip {
+        // Blue
+        pins::Pio1_4::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+        // Red
+        pins::Pio1_6::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+        // Green
+        pins::Pio1_7::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_low();
+        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        let i2c = flexcomm4.enabled_as_i2c(&mut self.peripherals.syscon, &token);
+        let scl = pins::Pio1_20::take()
+            .unwrap()
+            .into_i2c4_scl_pin(&mut self.clocks.iocon);
+        let sda = pins::Pio1_21::take()
+            .unwrap()
+            .into_i2c4_sda_pin(&mut self.clocks.iocon);
+        let i2c = hal::I2cMaster::new(
+            i2c,
+            (scl, sda),
+            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+        );
+        let ed = pins::Pio1_9::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_input();
+
+        let mut nfc = NfcChip::new(i2c, ed);
+
+        debug_now!("nfc init: {:?}", nfc.init());
+        nfc.test(&mut self.basic.delay_timer);
+
+        nfc
+    }
+
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
@@ -437,25 +479,25 @@ impl Stage2 {
             hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
         );
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+        // self.basic.delay_timer.start(100_000.microseconds());
+        // nb::block!(self.basic.delay_timer.wait()).ok();
 
-        // RESYNC command
-        let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-        i2c.write(0x48, &command)
-            .expect("failed to send RESYNC command");
+        // // RESYNC command
+        // let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+        // i2c.write(0x48, &command)
+        //     .expect("failed to send RESYNC command");
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+        // self.basic.delay_timer.start(100_000.microseconds());
+        // nb::block!(self.basic.delay_timer.wait()).ok();
 
-        // RESYNC response
-        let mut response = [0; 5];
-        i2c.read(0x48, &mut response)
-            .expect("failed to read RESYNC response");
+        // // RESYNC response
+        // let mut response = [0; 5];
+        // i2c.read(0x48, &mut response)
+        //     .expect("failed to read RESYNC response");
 
-        if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
-            panic!("Unexpected RESYNC response: {:?}", response);
-        }
+        // if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
+        //     panic!("Unexpected RESYNC response: {:?}", response);
+        // }
 
         info_now!("hardware checks successful");
         i2c
@@ -465,6 +507,7 @@ impl Stage2 {
     pub fn next(
         mut self,
         flexcomm0: Flexcomm0<Unknown>,
+        flexcomm4: Flexcomm4<Unknown>,
         flexcomm5: Flexcomm5<Unknown>,
         mux: InputMux<Unknown>,
         pint: Pint<Unknown>,
@@ -473,13 +516,16 @@ impl Stage2 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
 
+        let nfc = self.get_nfc_chip(flexcomm4);
+
         let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc, spi) = if use_nfc {
             let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-            let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
-            (nfc, None)
+            // let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
+            // let nfc = self.get_nfc_chip(flexcomm4);
+            (Some(Iso14443::new(nfc, nfc_rq)), None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
             (None, Some(spi))

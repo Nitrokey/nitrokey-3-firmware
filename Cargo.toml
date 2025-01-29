@@ -40,6 +40,7 @@ cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
+nt3h2111 = { path =  "components/nt3h2111" }
 
 [profile.release]
 codegen-units = 1
