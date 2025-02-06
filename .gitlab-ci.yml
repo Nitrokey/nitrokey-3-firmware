@@ -65,6 +65,16 @@ check-usbip:
     - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
     - cargo check --manifest-path runners/usbip/Cargo.toml --features test
 
+check-components:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - make check-components
+
 lint:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:

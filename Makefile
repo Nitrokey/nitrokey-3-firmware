@@ -4,6 +4,31 @@ check:
 	$(MAKE) -C runners/nkpk check
 	$(MAKE) -C runners/usbip check
 
+.PHONY: check-components
+check-components:
+	cargo check --manifest-path components/fm11nc08/Cargo.toml
+	cargo check --manifest-path components/lfs-backup/Cargo.toml
+	cargo check --manifest-path components/memory-regions/Cargo.toml
+	cargo check --manifest-path components/ndef-app/Cargo.toml
+	cargo check --manifest-path components/nfc-device/Cargo.toml
+	cargo check --manifest-path components/provisioner-app/Cargo.toml
+
+	cargo check --manifest-path components/apps/Cargo.toml
+	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner ; do \
+	echo "apps: $$feature" ; \
+	cargo check --manifest-path components/apps/Cargo.toml --features $$feature ; \
+	done
+	cargo check --manifest-path components/apps/Cargo.toml --all-features
+
+	cargo check --manifest-path components/boards/Cargo.toml
+	for feature in board-nk3am board-nk3xn board-nkpk ; do \
+	echo "boards: $$feature" ; \
+	cargo check --manifest-path components/boards/Cargo.toml --features $$feature ; \
+	done
+
+	cargo check --manifest-path components/utils/Cargo.toml
+	cargo check --manifest-path components/utils/Cargo.toml --all-features
+
 .PHONY: doc
 doc: 
 	$(MAKE) -C runners/embedded doc-nk3am
