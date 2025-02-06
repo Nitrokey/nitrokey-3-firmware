@@ -54,8 +54,8 @@ se05x = { version = "0.1.7", optional = true }
 
 [features]
 board-nk3am = ["soc-nrf52", "lfs-backup"]
-board-nk3xn = ["soc-lpc55", "fm11nc08"]
-board-nkpk = ["board-nk3am"]
+board-nk3xn = ["soc-lpc55", "fm11nc08", "utils/storage"]
+board-nkpk = ["board-nk3am", "utils/storage"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
