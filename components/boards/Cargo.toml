@@ -5,7 +5,7 @@ version.workspace = true
 
 [dependencies]
 apdu-dispatch = "0.3"
-apps = { path = "../apps" }
+apps = { path = "../apps", features = ["fido-authenticator"] }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
 cortex-m-rt = "0.6.15"
