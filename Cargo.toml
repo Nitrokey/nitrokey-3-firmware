@@ -10,7 +10,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.8.0"
+version = "1.8.1"
 
 [patch.crates-io]
 # components
@@ -31,7 +31,7 @@ p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev =
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "fae41aabe63fa674042b3d217d734955f1f2aac2" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc10" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "1a0d5bf623af114e2adfc8ac89f7b0418ec49349" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "84ebc022ebacbd1b1964f38f6173010a2fd514f8" }
+piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "ead47bc985cda111c37c011b5946ec342ccc2b49" }
 trussed-fs-info = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "fs-info-v0.1.0" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "chunked-v0.1.0" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "manage-v0.1.0" }
