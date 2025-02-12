@@ -21,7 +21,7 @@ pub fn init(
     let boot_to_bootrom = true;
 
     init::start(hal.syscon, hal.pmc, hal.anactrl)
-        .next(hal.iocon, hal.gpio)
+        .next(hal.iocon, hal.gpio, hal.wwdt)
         .next(
             hal.adc,
             hal.ctimer.0,

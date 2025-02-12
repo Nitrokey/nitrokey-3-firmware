@@ -93,7 +93,9 @@ mod app {
     }
 
     #[local]
-    struct LocalResources {}
+    struct LocalResources {
+        wwdt: nk3xn::init::EnabledWwdt,
+    }
 
     // TODO: replace
     #[monotonic(binds = SysTick, default = true)]
@@ -101,6 +103,8 @@ mod app {
 
     #[init(local = [resources: Resources<NK3xN> = Resources::new()])]
     fn init(c: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+        let was_reset_from_wwdt = c.device.PMC.aoreg1.read().wdtreset().bit();
+
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
 
@@ -110,6 +114,7 @@ mod app {
             trussed,
             apps,
             clock_controller,
+            wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
@@ -123,6 +128,11 @@ mod app {
         let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
         let systick = Systick::new(systick, 96_000_000); // TODO: read out sysclk
 
+        debug_now!("Reset from watchdog: {}", was_reset_from_wwdt);
+        if was_reset_from_wwdt {
+            lpc55_hal::boot_to_bootrom();
+        }
+
         let shared = SharedResources {
             apdu_dispatch: usb_nfc.apdu_dispatch,
             ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
@@ -134,10 +144,14 @@ mod app {
             clock_ctrl: clock_controller,
             wait_extender,
         };
-        (shared, LocalResources {}, init::Monotonics(systick.into()))
+        (
+            shared,
+            LocalResources { wwdt },
+            init::Monotonics(systick.into()),
+        )
     }
 
-    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes])]
+    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes], local = [wwdt])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources {
             mut apdu_dispatch,
@@ -146,6 +160,7 @@ mod app {
             mut perf_timer,
             mut usb_classes,
         } = c.shared;
+        let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
@@ -156,6 +171,7 @@ mod app {
                     perf_timer.start(60_000_000.microseconds());
                 }
             });
+            wwdt.feed();
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {

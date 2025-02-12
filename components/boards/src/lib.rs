@@ -162,3 +162,5 @@ pub fn handle_hard_fault<B: Board>(_ef: &ExceptionFrame) -> ! {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
+
+pub const WATCHDOG_DURATION_SECONDS: u64 = 15 * 60;

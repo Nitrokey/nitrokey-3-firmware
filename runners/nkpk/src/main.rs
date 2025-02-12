@@ -8,16 +8,21 @@ use cortex_m_rt::{exception, ExceptionFrame};
 #[rtic::app(device = nrf52840_pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
+    use apps::Reboot;
     use boards::{
         init::{Resources, UsbClasses},
         nkpk::{self, ExternalFlashStorage, InternalFlashStorage, NKPK},
         runtime,
-        soc::nrf52::{self, rtic_monotonic::RtcDuration},
+        soc::nrf52::{self, rtic_monotonic::RtcDuration, Nrf52},
         store, Apps, Trussed,
     };
     use ctaphid_dispatch::Dispatch as CtaphidDispatch;
     use interchange::Channel;
-    use nrf52840_hal::{gpiote::Gpiote, rng::Rng};
+    use nrf52840_hal::{
+        gpiote::Gpiote,
+        rng::Rng,
+        wdt::{self, handles::Hdl0, WatchdogHandle},
+    };
     use utils::Version;
 
     pub type Board = NKPK;
@@ -40,6 +45,7 @@ mod app {
     struct LocalResources {
         gpiote: Gpiote,
         power: nrf52840_pac::POWER,
+        watchdog_parts: Option<wdt::Parts<WatchdogHandle<Hdl0>>>,
     }
 
     #[monotonic(binds = RTC0, default = true)]
@@ -54,7 +60,20 @@ mod app {
 
         boards::init::init_logger::<Board>(VERSION_STRING);
 
-        let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR, &mut ctx.device.POWER);
+        let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR);
+
+        let reset_reason = nrf52::reset_reason(&ctx.device.POWER.resetreas);
+        debug_now!("Reset Reason: {reset_reason:?}");
+
+        // Go to bootloader after watchdog failure
+        // After a soft reset, go back to normal operation
+        // This is required because for some reason the `RESETREAS` register
+        // is not cleared until a full poweroff
+        if reset_reason.dog && !reset_reason.sreq {
+            Nrf52::reboot_to_firmware_update();
+        }
+
+        let wdt_parts = nrf52::init_watchdog(ctx.device.WDT);
 
         let board_gpio = nkpk::init_pins(ctx.device.GPIOTE, ctx.device.P0, ctx.device.P1);
 
@@ -126,12 +145,16 @@ mod app {
             LocalResources {
                 gpiote: board_gpio.gpiote,
                 power: ctx.device.POWER,
+                watchdog_parts: wdt_parts.ok().map(|parts| wdt::Parts {
+                    watchdog: parts.watchdog,
+                    handles: parts.handles.0,
+                }),
             },
             init::Monotonics(rtc_mono),
         )
     }
 
-    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes])]
+    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes], local = [watchdog_parts])]
     fn idle(ctx: idle::Context) -> ! {
         let idle::SharedResources {
             mut apps,
@@ -145,6 +168,10 @@ mod app {
         // cortex_m::asm::wfi();
 
         loop {
+            if let Some(ref mut parts) = ctx.local.watchdog_parts {
+                parts.handles.pet();
+            }
+
             #[cfg(not(feature = "no-delog"))]
             boards::init::Delogger::flush();
 
