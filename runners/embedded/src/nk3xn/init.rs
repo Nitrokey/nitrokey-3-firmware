@@ -11,7 +11,7 @@ use boards::{
         button::ThreeButtons,
         led::RgbLed,
         nfc::{self, NfcChip},
-        prince,
+        prince::PrinceConfig,
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
     },
@@ -97,6 +97,7 @@ struct Flash {
     #[allow(unused)]
     prince: Prince<Enabled>,
     rng: Rng<Enabled>,
+    prince_config: PrinceConfig,
 }
 
 pub struct Stage0 {
@@ -494,6 +495,7 @@ impl Stage3 {
         rng: Rng<Unknown>,
         prince: Prince<Unknown>,
         flash: hal::peripherals::flash::Flash<Unknown>,
+        prince_config: PrinceConfig,
     ) -> Stage4 {
         info_now!("making flash");
         let syscon = &mut self.peripherals.syscon;
@@ -502,7 +504,7 @@ impl Stage3 {
         let mut rng = rng.enabled(syscon);
 
         let mut prince = prince.enabled(&rng);
-        prince::disable(&mut prince);
+        prince_config.disable_filesystem(&mut prince);
 
         let flash_gordon = FlashGordon::new(flash.enabled(syscon));
 
@@ -510,6 +512,7 @@ impl Stage3 {
             flash_gordon,
             prince,
             rng,
+            prince_config,
         };
         Stage4 {
             status: self.status,
@@ -579,7 +582,11 @@ impl Stage4 {
             #[cfg(feature = "write-undefined-flash")]
             initialize_fs_flash(&mut self.flash.flash_gordon, &mut self.flash.prince);
 
-            InternalFlashStorage::new(self.flash.flash_gordon, self.flash.prince)
+            InternalFlashStorage::new(
+                self.flash.flash_gordon,
+                self.flash.prince,
+                self.flash.prince_config,
+            )
         };
 
         #[cfg(feature = "no-encrypted-storage")]
