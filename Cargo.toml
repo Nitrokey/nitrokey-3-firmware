@@ -37,6 +37,7 @@ trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", ta
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "131c973fbe74d677fb8c8df97c210f78608994f0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7922d67e9637a87e5625aaff9e5111f0d4ec0346" }
+cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
 
 [profile.release]
 codegen-units = 1
