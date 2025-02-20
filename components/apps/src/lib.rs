@@ -1031,7 +1031,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
                 skip_up_timeout,
-                max_resident_credential_count: Some(10),
+                max_resident_credential_count: Some(100),
                 large_blobs,
                 nfc_transport: data.has_nfc,
             },
