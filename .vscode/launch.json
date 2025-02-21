@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--features",
-                    "provisioner,backend-dilithium2,backend-dilithium3,backend-dilithium5",
+                    "provisioner,backend-dilithium2,backend-dilithium3",
                     "--bin=usbip-runner",
                 ],
                 "filter": {
@@ -22,14 +22,14 @@
             "preLaunchTask": "DelayedUSBIPAttach",
             "program": "${cargo:program}",
             "args": [
-                "--ifs",
-                "${userHome}/nitrokey-usbip-ifs",
-                "--user-presence",
-                "interactive"
+                // "--ifs",
+                // "${userHome}/nitrokey-usbip-ifs",
+                // "--user-presence",
+                // "interactive"
             ],
             "env": {
                 "RUST_BACKTRACE": "1",
-                "RUST_LOG": "debug",
+                //"RUST_LOG": "debug",
             },
             "cwd": "${workspaceFolder}/runners/usbip",
         },

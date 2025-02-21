@@ -22,8 +22,8 @@ admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-n
 #trussed = { git = "https://github.com/nitrokey/trussed.git", tag = "v0.1.0-nitrokey.23" }
 
 # unreleased upstream changes
-ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
+#TODO: revert ctaphid-dispatch = { git = "https://github.com/Nitrokey/ctaphid-dispatch.git", tag = "v0.1.1-nitrokey.3" }
+#TODO: revert usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "dcff9009c3cd1ef9e5b09f8f307aca998fc9a8c8" }
 usbd-ccid = { git = "https://github.com/Nitrokey/usbd-ccid", tag = "v0.2.0-nitrokey.1" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
@@ -46,11 +46,14 @@ trussed-se050-manage = { git = "https://github.com/Nitrokey/trussed-se050-backen
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "f4ff60b8aa0f322a424613165f66ed9112c7a94f" }
 
 trussed-pqc-backend = { path = "../trussed-pqc-backend" }
+trussed-core = { path = "../trussed/core" }
 trussed = { path = "../trussed" }
 fido-authenticator = { path = "../fido-authenticator" }
 ctap-types = { path = "../ctap-types" }
 cosey = { path = "../cosey" }
 trussed-rsa-alloc = { path = "../trussed-rsa-backend" }
+ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
+usbd-ctaphid = { path = "../usbd-ctaphid" }
 
 [profile.release]
 codegen-units = 1
