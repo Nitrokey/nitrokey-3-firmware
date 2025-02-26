@@ -31,7 +31,9 @@ use trussed_se050_backend::{Context as Se050Context, Se050Backend};
 use trussed_se050_manage::Se050ManageExtension;
 
 #[cfg(feature = "backend-auth")]
-use trussed_auth::{AuthBackend, AuthContext, AuthExtension, MAX_HW_KEY_LEN};
+use trussed_auth::AuthExtension;
+#[cfg(feature = "backend-auth")]
+use trussed_auth_backend::{AuthBackend, AuthContext, MAX_HW_KEY_LEN};
 
 #[cfg(feature = "backend-rsa")]
 use trussed_rsa_alloc::SoftwareRsa;
@@ -316,13 +318,6 @@ impl<T: Twi, D: Delay> ExtensionDispatch for Dispatch<T, D> {
                         resources,
                     )
                 }
-                Extension::Hkdf => ExtensionImpl::<HkdfExtension>::extension_request_serialized(
-                    &mut self.staging,
-                    &mut ctx.core,
-                    &mut ctx.backends.staging,
-                    request,
-                    resources,
-                ),
                 Extension::FsInfo => {
                     ExtensionImpl::<FsInfoExtension>::extension_request_serialized(
                         &mut self.staging,

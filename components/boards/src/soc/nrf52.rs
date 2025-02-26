@@ -2,10 +2,12 @@ use apps::Variant;
 use nrf52840_hal::{
     clocks::Clocks,
     usbd::{UsbPeripheral, Usbd},
+    wdt::{self, count::One, handles::Hdl0, Watchdog, WatchdogHandle},
 };
-use nrf52840_pac::{Interrupt, SCB};
+use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
 
 use super::{Soc, Uuid};
+use crate::WATCHDOG_DURATION_SECONDS;
 use rtic_monotonic::{RtcDuration, RtcMonotonic};
 
 pub mod flash;
@@ -53,20 +55,13 @@ impl apps::Reboot for Nrf52 {
     }
 }
 
-pub fn init_bootup(
-    ficr: &nrf52840_pac::FICR,
-    uicr: &nrf52840_pac::UICR,
-    power: &mut nrf52840_pac::POWER,
-) -> Nrf52 {
+pub fn init_bootup(ficr: &nrf52840_pac::FICR, uicr: &nrf52840_pac::UICR) -> Nrf52 {
     let deviceid0 = ficr.deviceid[0].read().bits();
     let deviceid1 = ficr.deviceid[1].read().bits();
 
     let mut uuid = Uuid::default();
     uuid[0..4].copy_from_slice(&deviceid0.to_be_bytes());
     uuid[4..8].copy_from_slice(&deviceid1.to_be_bytes());
-
-    info!("RESET Reason: {:x}", power.resetreas.read().bits());
-    power.resetreas.write(|w| w);
 
     info!("FICR DeviceID {}", delog::hex_str!(&uuid),);
     info!(
@@ -107,25 +102,19 @@ pub fn init_bootup(
     Nrf52 { uuid }
 }
 
-type UsbClockType = Clocks<
+pub type UsbClockType = Clocks<
     nrf52840_hal::clocks::ExternalOscillator,
     nrf52840_hal::clocks::Internal,
     nrf52840_hal::clocks::LfOscStarted,
 >;
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
 
-static mut USB_CLOCK: Option<UsbClockType> = None;
-static mut USBD: Option<UsbBusType> = None;
-
 pub fn setup_usb_bus(
+    static_usb_clock: &'static mut Option<UsbClockType>,
     clock: nrf52840_pac::CLOCK,
     usb_pac: nrf52840_pac::USBD,
-) -> &'static UsbBusType {
-    let usb_clock = Clocks::new(clock).start_lfclk().enable_ext_hfosc();
-    unsafe {
-        USB_CLOCK.replace(usb_clock);
-    }
-    let usb_clock_ref = unsafe { USB_CLOCK.as_ref().unwrap() };
+) -> UsbBusType {
+    let usb_clock = static_usb_clock.insert(Clocks::new(clock).start_lfclk().enable_ext_hfosc());
 
     usb_pac.intenset.write(|w| {
         w.usbreset()
@@ -140,13 +129,58 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
-    let usb_peripheral = UsbPeripheral::new(usb_pac, usb_clock_ref);
+    Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
+}
 
-    let usbd = Usbd::new(usb_peripheral);
-    unsafe {
-        USBD.replace(usbd);
+#[derive(Debug)]
+pub struct ResetReason {
+    pub resetpin: bool,
+    /// Reset from watchdog
+    pub dog: bool,
+    /// Soft Reset
+    pub sreq: bool,
+    pub lockup: bool,
+    pub off: bool,
+    pub lpcomp: bool,
+    pub dif: bool,
+    pub nfc: bool,
+    pub vbus: bool,
+}
+
+pub fn reset_reason(reset_reason: &RESETREAS) -> ResetReason {
+    debug_now!("Reset Reason: {:b}", reset_reason.read().bits());
+    let read = reset_reason.read();
+    let res = ResetReason {
+        resetpin: read.resetpin().bits(),
+        dog: read.dog().bits(),
+        sreq: read.sreq().bits(),
+        lockup: read.lockup().bits(),
+        off: read.off().bits(),
+        lpcomp: read.lpcomp().bits(),
+        dif: read.dif().bits(),
+        nfc: read.nfc().bits(),
+        vbus: read.vbus().bits(),
+    };
+    reset_reason.write(|w| w);
+    res
+}
+
+pub fn init_watchdog(wdt: WDT) -> Result<wdt::Parts<(WatchdogHandle<Hdl0>,)>, WDT> {
+    const WDT_FREQUENCY: u32 = 32_768;
+    const TICKS: u32 = (WATCHDOG_DURATION_SECONDS as u32) * WDT_FREQUENCY;
+
+    match Watchdog::try_new(wdt) {
+        Ok(mut watchdog) => {
+            watchdog.set_lfosc_ticks(TICKS);
+            watchdog.enable_interrupt();
+            let mut parts = watchdog.activate::<One>();
+            parts.handles.0.pet();
+            Ok(parts)
+        }
+        Err(wdt) => {
+            let mut parts = Watchdog::try_recover::<One>(wdt)?;
+            parts.handles.0.pet();
+            Ok(parts)
+        }
     }
-    let usbd_ref = unsafe { USBD.as_ref().unwrap() };
-
-    usbd_ref
 }

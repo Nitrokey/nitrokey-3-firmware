@@ -2,7 +2,11 @@
 #![warn(trivial_casts, unused, unused_qualifications)]
 
 use apdu_dispatch::interchanges::Responder as CcidResponder;
-use boards::{init::UsbNfc, soc::Soc, Board};
+use boards::{
+    init::{UsbNfc, UsbResources},
+    soc::Soc,
+    Board,
+};
 use nfc_device::Iso14443;
 use usb_device::bus::UsbBusAllocator;
 use utils::Version;
@@ -27,15 +31,24 @@ pub fn init_alloc() {
     use core::mem::MaybeUninit;
     const HEAP_SIZE: usize = 32 * 1024;
     static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
+    unsafe { ALLOCATOR.init(&raw mut HEAP as usize, HEAP_SIZE) }
 }
 
 pub fn init_usb_nfc<B: Board>(
-    usb_bus: Option<&'static UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    resources: &'static mut UsbResources<B>,
+    usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfc<B> {
     const USB_PRODUCT: &str = "Nitrokey 3";
     const USB_PRODUCT_ID: u16 = 0x42B2;
-    boards::init::init_usb_nfc(usb_bus, nfc, nfc_rp, USB_PRODUCT, USB_PRODUCT_ID, VERSION)
+    boards::init::init_usb_nfc(
+        resources,
+        usb_bus,
+        nfc,
+        nfc_rp,
+        USB_PRODUCT,
+        USB_PRODUCT_ID,
+        VERSION,
+    )
 }

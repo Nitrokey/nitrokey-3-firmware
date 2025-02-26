@@ -63,7 +63,7 @@ pub fn configure(spi: Spi0<Enabled>, pins: (Sck, Mosi, Miso, NoCs), config: SpiC
 
 pub struct SpiMut<'a, SPI: Transfer<u8>>(pub &'a mut SPI);
 
-impl<'a, SPI: Transfer<u8>> Transfer<u8> for SpiMut<'a, SPI> {
+impl<SPI: Transfer<u8>> Transfer<u8> for SpiMut<'_, SPI> {
     type Error = SPI::Error;
 
     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {

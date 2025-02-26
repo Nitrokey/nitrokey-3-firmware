@@ -1,8 +1,4 @@
-use core::{
-    marker::PhantomData,
-    mem::MaybeUninit,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use core::{marker::PhantomData, mem::MaybeUninit};
 
 use apps::InitStatus;
 use littlefs2::{
@@ -33,11 +29,37 @@ const_ram_storage!(
     result = LfsResult,
 );
 
+pub struct StoreResources<B: Board> {
+    ifs: MaybeUninit<Filesystem<'static, B::InternalStorage>>,
+    ifs_alloc: MaybeUninit<Allocation<B::InternalStorage>>,
+    efs: MaybeUninit<Filesystem<'static, B::ExternalStorage>>,
+    efs_alloc: MaybeUninit<Allocation<B::ExternalStorage>>,
+    efs_storage: MaybeUninit<B::ExternalStorage>,
+    vfs: MaybeUninit<Filesystem<'static, VolatileStorage>>,
+    vfs_alloc: MaybeUninit<Allocation<VolatileStorage>>,
+    vfs_storage: MaybeUninit<VolatileStorage>,
+}
+
+impl<B: Board> StoreResources<B> {
+    pub const fn new() -> Self {
+        Self {
+            ifs: MaybeUninit::uninit(),
+            ifs_alloc: MaybeUninit::uninit(),
+            efs: MaybeUninit::uninit(),
+            efs_alloc: MaybeUninit::uninit(),
+            efs_storage: MaybeUninit::uninit(),
+            vfs: MaybeUninit::uninit(),
+            vfs_alloc: MaybeUninit::uninit(),
+            vfs_storage: MaybeUninit::uninit(),
+        }
+    }
+}
+
 // FIXME: document safety
 #[allow(clippy::missing_safety_doc)]
 #[cfg(feature = "provisioner")]
 pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
-    S::ifs_storage().as_mut().unwrap()
+    S::ifs_storage().assume_init_mut()
 }
 
 // FIXME: document safety
@@ -46,14 +68,9 @@ pub trait StoragePointers: 'static {
     type InternalStorage: Storage;
     type ExternalStorage: Storage;
 
-    unsafe fn ifs_storage() -> &'static mut Option<Self::InternalStorage>;
-    unsafe fn ifs_alloc() -> &'static mut Option<Allocation<Self::InternalStorage>>;
-    unsafe fn ifs() -> &'static mut Option<Filesystem<'static, Self::InternalStorage>>;
+    unsafe fn ifs_storage() -> &'static mut MaybeUninit<Self::InternalStorage>;
     unsafe fn ifs_ptr() -> *mut Fs<Self::InternalStorage>;
 
-    unsafe fn efs_storage() -> &'static mut Option<Self::ExternalStorage>;
-    unsafe fn efs_alloc() -> &'static mut Option<Allocation<Self::ExternalStorage>>;
-    unsafe fn efs() -> &'static mut Option<Filesystem<'static, Self::ExternalStorage>>;
     unsafe fn efs_ptr() -> *mut Fs<Self::ExternalStorage>;
 }
 
@@ -67,58 +84,25 @@ macro_rules! impl_storage_pointers {
             type InternalStorage = $I;
             type ExternalStorage = $E;
 
-            unsafe fn ifs_storage() -> &'static mut Option<Self::InternalStorage> {
-                static mut IFS_STORAGE: Option<$I> = None;
-                #[allow(static_mut_refs)]
-                &mut IFS_STORAGE
-            }
-
-            unsafe fn ifs_alloc(
-            ) -> &'static mut Option<::littlefs2::fs::Allocation<Self::InternalStorage>> {
-                static mut IFS_ALLOC: Option<::littlefs2::fs::Allocation<$I>> = None;
-                #[allow(static_mut_refs)]
-                &mut IFS_ALLOC
-            }
-
-            unsafe fn ifs(
-            ) -> &'static mut Option<::littlefs2::fs::Filesystem<'static, Self::InternalStorage>>
+            unsafe fn ifs_storage() -> &'static mut ::core::mem::MaybeUninit<Self::InternalStorage>
             {
-                static mut IFS: Option<::littlefs2::fs::Filesystem<$I>> = None;
-                #[allow(static_mut_refs)]
-                &mut IFS
+                static mut IFS_STORAGE: ::core::mem::MaybeUninit<$I> =
+                    ::core::mem::MaybeUninit::uninit();
+                (&mut *&raw mut IFS_STORAGE)
             }
 
             unsafe fn ifs_ptr() -> *mut ::trussed::store::Fs<Self::InternalStorage> {
-                use ::core::mem::MaybeUninit;
-                static mut IFS: MaybeUninit<::trussed::store::Fs<$I>> = MaybeUninit::uninit();
-                IFS.as_mut_ptr()
-            }
-
-            unsafe fn efs_storage() -> &'static mut Option<Self::ExternalStorage> {
-                static mut EFS_STORAGE: Option<$E> = None;
-                #[allow(static_mut_refs)]
-                &mut EFS_STORAGE
-            }
-
-            unsafe fn efs_alloc(
-            ) -> &'static mut Option<::littlefs2::fs::Allocation<Self::ExternalStorage>> {
-                static mut EFS_ALLOC: Option<::littlefs2::fs::Allocation<$E>> = None;
-                #[allow(static_mut_refs)]
-                &mut EFS_ALLOC
-            }
-
-            unsafe fn efs(
-            ) -> &'static mut Option<::littlefs2::fs::Filesystem<'static, Self::ExternalStorage>>
-            {
-                static mut EFS: Option<::littlefs2::fs::Filesystem<$E>> = None;
-                #[allow(static_mut_refs)]
-                &mut EFS
+                static mut IFS: ::core::mem::MaybeUninit<::trussed::store::Fs<$I>> =
+                    ::core::mem::MaybeUninit::uninit();
+                let ifs_ptr: *mut ::core::mem::MaybeUninit<::trussed::store::Fs<$I>> = &raw mut IFS;
+                ifs_ptr as _
             }
 
             unsafe fn efs_ptr() -> *mut ::trussed::store::Fs<Self::ExternalStorage> {
-                use ::core::mem::MaybeUninit;
-                static mut EFS: MaybeUninit<::trussed::store::Fs<$E>> = MaybeUninit::uninit();
-                EFS.as_mut_ptr()
+                static mut EFS: ::core::mem::MaybeUninit<::trussed::store::Fs<$E>> =
+                    ::core::mem::MaybeUninit::uninit();
+                let efs_ptr: *mut ::core::mem::MaybeUninit<::trussed::store::Fs<$E>> = &raw mut EFS;
+                efs_ptr as _
             }
         }
     };
@@ -153,7 +137,8 @@ impl<S: StoragePointers> RunnerStore<S> {
 
     unsafe fn vfs_ptr() -> *mut Fs<VolatileStorage> {
         static mut VFS: MaybeUninit<Fs<VolatileStorage>> = MaybeUninit::uninit();
-        VFS.as_mut_ptr()
+        let vfs_ptr: *mut MaybeUninit<Fs<VolatileStorage>> = &raw mut VFS;
+        vfs_ptr as _
     }
 }
 
@@ -184,54 +169,45 @@ unsafe impl<S: StoragePointers> Store for RunnerStore<S> {
 }
 
 pub fn init_store<B: Board>(
+    resources: &'static mut StoreResources<B>,
     int_flash: B::InternalStorage,
     ext_flash: B::ExternalStorage,
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> RunnerStore<B> {
-    static CLAIMED: AtomicBool = AtomicBool::new(false);
-    CLAIMED
-        .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
-        .expect("multiple instances of RunnerStore are not allowed");
+    let ifs_alloc = resources.ifs_alloc.write(Filesystem::allocate());
+    let efs_storage = resources.efs_storage.write(ext_flash);
+    let efs_alloc = resources.efs_alloc.write(Filesystem::allocate());
+    let vfs_storage = resources.vfs_storage.write(VolatileStorage::new());
+    let vfs_alloc = resources.vfs_alloc.write(Filesystem::allocate());
 
-    static mut VOLATILE_STORAGE: Option<VolatileStorage> = None;
-    static mut VOLATILE_FS_ALLOC: Option<Allocation<VolatileStorage>> = None;
-    static mut VOLATILE_FS: Option<Filesystem<VolatileStorage>> = None;
+    let ifs_storage = unsafe { B::ifs_storage().write(int_flash) };
 
-    unsafe {
-        let ifs_storage = B::ifs_storage().insert(int_flash);
-        let ifs_alloc = B::ifs_alloc().insert(Filesystem::allocate());
-        let efs_storage = B::efs_storage().insert(ext_flash);
-        let efs_alloc = B::efs_alloc().insert(Filesystem::allocate());
-        let vfs_storage = VOLATILE_STORAGE.insert(VolatileStorage::new());
-        let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
+    let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
+        Ok(ifs) => resources.ifs.write(ifs),
+        Err(_e) => {
+            error!("IFS Mount Error {:?}", _e);
+            panic!("IFS");
+        }
+    };
 
-        let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
-            Ok(ifs) => B::ifs().insert(ifs),
-            Err(_e) => {
-                error!("IFS Mount Error {:?}", _e);
-                panic!("IFS");
-            }
-        };
+    let efs = match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
+        Ok(efs) => resources.efs.write(efs),
+        Err(_e) => {
+            error!("EFS Mount Error {:?}", _e);
+            panic!("EFS");
+        }
+    };
 
-        let efs = match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
-            Ok(efs) => B::efs().insert(efs),
-            Err(_e) => {
-                error!("EFS Mount Error {:?}", _e);
-                panic!("EFS");
-            }
-        };
+    let vfs = match init_vfs(vfs_storage, vfs_alloc) {
+        Ok(vfs) => resources.vfs.write(vfs),
+        Err(_e) => {
+            error!("VFS Mount Error {:?}", _e);
+            panic!("VFS");
+        }
+    };
 
-        let vfs = match init_vfs(vfs_storage, vfs_alloc) {
-            Ok(vfs) => VOLATILE_FS.insert(vfs),
-            Err(_e) => {
-                error!("VFS Mount Error {:?}", _e);
-                panic!("VFS");
-            }
-        };
-
-        RunnerStore::new(ifs, efs, vfs)
-    }
+    RunnerStore::new(ifs, efs, vfs)
 }
 
 #[inline(always)]

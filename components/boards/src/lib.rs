@@ -45,6 +45,8 @@ pub type Apps<B> = apps::Apps<Runner<B>>;
 pub trait Board: StoragePointers {
     type Soc: Soc;
 
+    type Resources;
+
     type NfcDevice: NfcDevice;
     type Buttons: UserPresence;
     type Led: RgbLed;
@@ -160,3 +162,5 @@ pub fn handle_hard_fault<B: Board>(_ef: &ExceptionFrame) -> ! {
         core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
     }
 }
+
+pub const WATCHDOG_DURATION_SECONDS: u64 = 15 * 60;

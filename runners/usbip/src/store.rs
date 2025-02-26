@@ -211,7 +211,10 @@ impl StoreProvider for FilesystemOrRam {
     type Store = Store;
 
     unsafe fn ifs() -> &'static mut InternalStorage {
-        INTERNAL_STORAGE.as_mut().expect("ifs not initialized")
+        #[allow(clippy::deref_addrof)]
+        (*&raw mut INTERNAL_STORAGE)
+            .as_mut()
+            .expect("ifs not initialized")
     }
 
     unsafe fn store() -> Self::Store {
@@ -233,10 +236,13 @@ unsafe fn reset_internal(
     if ifs.format() {
         Filesystem::format(&mut ifs).expect("failed to format storage");
     }
-    let ifs_storage = INTERNAL_STORAGE.insert(ifs);
-    let ifs_alloc = INTERNAL_FS_ALLOC.insert(Filesystem::allocate());
+    #[allow(clippy::deref_addrof)]
+    let ifs_storage = (*&raw mut INTERNAL_STORAGE).insert(ifs);
+    #[allow(clippy::deref_addrof)]
+    let ifs_alloc = (*&raw mut INTERNAL_FS_ALLOC).insert(Filesystem::allocate());
     let fs = Filesystem::mount(ifs_alloc, ifs_storage).expect("failed to mount IFS");
-    INTERNAL_FS.insert(fs)
+    #[allow(clippy::deref_addrof)]
+    (*&raw mut INTERNAL_FS).insert(fs)
 }
 
 unsafe fn reset_external(
@@ -245,18 +251,24 @@ unsafe fn reset_external(
     if efs.format() {
         Filesystem::format(&mut efs).expect("failed to format storage");
     }
-    let efs_storage = EXTERNAL_STORAGE.insert(efs);
-    let efs_alloc = EXTERNAL_FS_ALLOC.insert(Filesystem::allocate());
+    #[allow(clippy::deref_addrof)]
+    let efs_storage = (*&raw mut EXTERNAL_STORAGE).insert(efs);
+    #[allow(clippy::deref_addrof)]
+    let efs_alloc = (*&raw mut EXTERNAL_FS_ALLOC).insert(Filesystem::allocate());
     let fs = Filesystem::mount(efs_alloc, efs_storage).expect("failed to mount EFS");
-    EXTERNAL_FS.insert(fs)
+    #[allow(clippy::deref_addrof)]
+    (*&raw mut EXTERNAL_FS).insert(fs)
 }
 
 unsafe fn reset_volatile(
     mut vfs: VolatileStorage,
 ) -> &'static Filesystem<'static, VolatileStorage> {
     Filesystem::format(&mut vfs).expect("failed to format VFS");
-    let vfs_storage = VOLATILE_STORAGE.insert(vfs);
-    let vfs_alloc = VOLATILE_FS_ALLOC.insert(Filesystem::allocate());
+    #[allow(clippy::deref_addrof)]
+    let vfs_storage = (*&raw mut VOLATILE_STORAGE).insert(vfs);
+    #[allow(clippy::deref_addrof)]
+    let vfs_alloc = (*&raw mut VOLATILE_FS_ALLOC).insert(Filesystem::allocate());
     let fs = Filesystem::mount(vfs_alloc, vfs_storage).expect("failed to mount VFS");
-    VOLATILE_FS.insert(fs)
+    #[allow(clippy::deref_addrof)]
+    (*&raw mut VOLATILE_FS).insert(fs)
 }

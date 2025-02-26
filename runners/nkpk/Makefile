@@ -1,10 +1,12 @@
-ALL_FEATURES := $(FEATURES),
 BUILD_ID := nkpk
 ARTIFACTS := artifacts
 SYMBOLS := symbols-$(BUILD_ID).txt
 OUT_ELF = $(ARTIFACTS)/runner-$(BUILD_ID).elf
 OUT_BIN = $(ARTIFACTS)/runner-$(BUILD_ID).bin
 OUT_IHEX = $(OUT_BIN).ihex
+
+NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(FEATURES)'.split(',') and 'log-rtt' not in '$(FEATURES)'.split(',') else None; ")
+ALL_FEATURES := $(FEATURES),$(NO_DELOG_FEATURE)
 
 .PHONY: build
 build:

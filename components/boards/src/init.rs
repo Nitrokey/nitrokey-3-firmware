@@ -6,7 +6,7 @@ use apdu_dispatch::{
 use apps::AUTH_LOCATION;
 use apps::{AdminData, Data, Dispatch, FidoData, InitStatus};
 
-use ctaphid_dispatch::{dispatch::Dispatch as CtaphidDispatch, types::Channel as CtapChannel};
+use ctaphid_dispatch::{Channel as CtapChannel, Dispatch as CtaphidDispatch};
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
 use interchange::Channel;
@@ -23,10 +23,39 @@ use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
 use utils::Version;
 
-use crate::{soc::Soc, Apps, Board, Runner, RunnerPlatform, RunnerStore, Trussed, UserInterface};
+use crate::{
+    soc::Soc, store::StoreResources, Apps, Board, Runner, RunnerPlatform, RunnerStore, Trussed,
+    UserInterface,
+};
 
 #[cfg(not(feature = "no-delog"))]
 delog!(Delogger, 3 * 1024, 512, DelogFlusher);
+
+pub struct Resources<B: Board> {
+    pub board: Option<B::Resources>,
+    pub store: StoreResources<B>,
+    pub usb: UsbResources<B>,
+}
+
+impl<B: Board> Resources<B> {
+    pub const fn new() -> Self {
+        Self {
+            board: None,
+            store: StoreResources::new(),
+            usb: UsbResources::new(),
+        }
+    }
+}
+
+pub struct UsbResources<B: Board> {
+    usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+}
+
+impl<B: Board> UsbResources<B> {
+    pub const fn new() -> Self {
+        Self { usb_bus: None }
+    }
+}
 
 #[derive(Debug)]
 pub struct DelogFlusher {}
@@ -84,7 +113,8 @@ const USB_MANUFACTURER: &str = "Nitrokey";
 const USB_VENDOR_ID: u16 = 0x20A0;
 
 pub fn init_usb_nfc<B: Board>(
-    usb_bus: Option<&'static UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    resources: &'static mut UsbResources<B>,
+    usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
     usb_product: &'static str,
@@ -105,6 +135,8 @@ pub fn init_usb_nfc<B: Board>(
 
     /* populate requesters (if bus options are provided) */
     let usb_classes = usb_bus.map(|usb_bus| {
+        let usb_bus = resources.usb_bus.insert(usb_bus);
+
         /* Class #1: CCID */
         let ccid = Ccid::new(usb_bus, ccid_rq, Some(CARD_ISSUER));
 

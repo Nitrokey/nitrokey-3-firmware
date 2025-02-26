@@ -8,7 +8,7 @@ const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 use apdu_dispatch::{response::SIZE as ApduResponseSize, App as ApduApp};
 use bitflags::bitflags;
 use core::marker::PhantomData;
-use ctaphid_dispatch::app::App as CtaphidApp;
+use ctaphid_dispatch::{app::App as CtaphidApp, MESSAGE_SIZE as CTAPHID_MESSAGE_SIZE};
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
@@ -32,7 +32,7 @@ use trussed::{
     interrupt::InterruptFlag,
     platform::Syscall,
     store::filestore::ClientFilestore,
-    types::{Location, Path},
+    types::{Location, Mechanism, Path},
     ClientImplementation, Platform, Service,
 };
 
@@ -409,6 +409,67 @@ pub struct Apps<R: Runner> {
     webcrypt: Option<PeekingBypass<'static, FidoApp<R>, WebcryptApp<R>>>,
 }
 
+const fn contains(data: &[Mechanism], item: Mechanism) -> bool {
+    let mut i = 0;
+    while i < data.len() {
+        if data[i].const_eq(item) {
+            return true;
+        }
+        i += 1;
+    }
+    false
+}
+
+/// This function ensures that every mechanism that is enabled in trussed-core is implemented by
+/// at least one backend (trussed or a custom backend).  It panics if it finds an enabled but
+/// unimplemented mechanism.
+const fn validate_mechanisms() {
+    let enabled = Mechanism::ENABLED;
+    let mut i = 0;
+    while i < enabled.len() {
+        let mechanism = enabled[i];
+        i += 1;
+
+        if contains(trussed::types::IMPLEMENTED_MECHANISMS, mechanism) {
+            continue;
+        }
+        #[cfg(feature = "backend-rsa")]
+        if contains(trussed_rsa_alloc::MECHANISMS, mechanism) {
+            continue;
+        }
+        #[cfg(feature = "se050")]
+        if contains(trussed_se050_backend::MECHANISMS, mechanism) {
+            continue;
+        }
+        // The usbip runner does not have the mechanisms normally provided by the se050 backend.
+        // Until there is a backend implementing them in software, we ignore them and return an
+        // error at runtime.
+        #[cfg(feature = "trussed-usbip")]
+        if contains(
+            &[
+                Mechanism::BrainpoolP256R1,
+                Mechanism::BrainpoolP256R1Prehashed,
+                Mechanism::BrainpoolP384R1,
+                Mechanism::BrainpoolP384R1Prehashed,
+                Mechanism::BrainpoolP512R1,
+                Mechanism::BrainpoolP512R1Prehashed,
+                Mechanism::P384,
+                Mechanism::P384Prehashed,
+                Mechanism::P521,
+                Mechanism::P521Prehashed,
+                Mechanism::Secp256k1,
+                Mechanism::Secp256k1Prehashed,
+            ],
+            mechanism,
+        ) {
+            continue;
+        }
+
+        // This mechanism is not implemented by Trussed or any of the backends.
+        mechanism.panic();
+    }
+}
+
 impl<R: Runner> Apps<R> {
     pub fn new<P: Platform>(
         runner: &R,
@@ -421,6 +482,10 @@ impl<R: Runner> Apps<R> {
         ) -> Client<R>,
         data: Data<R>,
     ) -> Self {
+        const {
+            validate_mechanisms();
+        }
+
         let _ = (runner, &mut make_client);
         let Data {
             admin,
@@ -540,8 +605,8 @@ impl<R: Runner> Apps<R> {
             && !app.config().opcard.use_se050_backend
         {
             use core::mem;
-            let opcard_trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
-                trussed_auth::FilesystemLayout::V0,
+            let opcard_trussed_auth_used = trussed_auth_backend::AuthBackend::is_client_active(
+                trussed_auth_backend::FilesystemLayout::V0,
                 dispatch::AUTH_LOCATION,
                 path!("opcard"),
                 data.store,
@@ -680,9 +745,10 @@ impl<R: Runner> Apps<R> {
 
     pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>]) -> T,
     {
-        let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
+        let mut apps: Vec<&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>, 4> =
+            Default::default();
 
         // App 1: webcrypt or fido
         #[cfg(feature = "webcrypt")]
@@ -741,7 +807,7 @@ where
 
     fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>]) -> T,
     ) -> T {
         self.ctaphid_dispatch(f)
     }
@@ -1084,16 +1150,13 @@ impl<R: Runner> App<R> for OpcardApp<R> {
                 use opcard::AllowedAlgorithms as Alg;
                 let algs = [
                     Alg::P_256,
-                    #[cfg(feature = "nk3-test")]
                     Alg::P_384,
-                    #[cfg(feature = "nk3-test")]
                     Alg::P_521,
-                    #[cfg(feature = "nk3-test")]
                     Alg::BRAINPOOL_P256R1,
-                    #[cfg(feature = "nk3-test")]
                     Alg::BRAINPOOL_P384R1,
-                    #[cfg(feature = "nk3-test")]
                     Alg::BRAINPOOL_P512R1,
+                    #[cfg(feature = "nk3-test")]
+                    Alg::SECP256K1,
                     Alg::RSA_2048,
                     Alg::RSA_3072,
                     Alg::RSA_4096,
