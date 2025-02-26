@@ -1046,7 +1046,12 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
-        &[BackendId::Custom(Backend::Staging), BackendId::Core]
+        &[
+            #[cfg(feature = "backend-dilithium")]
+            BackendId::Custom(Backend::SoftwareDilithium),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+        ]
     }
 }
 
@@ -1197,6 +1202,9 @@ impl<R: Runner> App<R> for PivApp<R> {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
             #[cfg(feature = "se050")]
             BackendId::Custom(Backend::Se050),
+            #[cfg(feature = "backend-rsa")]
+            BackendId::Custom(Backend::SoftwareRsa),
+            BackendId::Custom(Backend::Auth),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ];

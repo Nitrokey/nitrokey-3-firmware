@@ -36,6 +36,16 @@ trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "131c973fbe74d677fb8c8df97c210f78608994f0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "1e1ca03a3a62ea9b802f4070ea4bce002eeb4bec" }
 
+trussed-pqc-backend = { path = "../trussed-pqc-backend" }
+trussed-core = { path = "../trussed/core" }
+trussed = { path = "../trussed" }
+fido-authenticator = { path = "../fido-authenticator" }
+ctap-types = { path = "../ctap-types" }
+cosey = { path = "../cosey" }
+trussed-rsa-alloc = { path = "../trussed-rsa-backend" }
+ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
+usbd-ctaphid = { path = "../usbd-ctaphid" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

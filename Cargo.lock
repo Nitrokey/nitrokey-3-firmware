@@ -162,7 +162,7 @@ dependencies = [
  "apdu-app",
  "delog",
  "heapless",
- "interchange",
+ "interchange 0.3.1",
  "iso7816",
 ]
 
@@ -199,6 +199,7 @@ dependencies = [
  "trussed-hkdf",
  "trussed-hpke",
  "trussed-manage",
+ "trussed-pqc-backend",
  "trussed-rsa-alloc",
  "trussed-se050-backend",
  "trussed-se050-manage",
@@ -323,7 +324,7 @@ dependencies = [
  "regex",
  "rustc-hash",
  "shlex",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -388,7 +389,7 @@ dependencies = [
  "embedded-time",
  "fm11nc08",
  "generic-array",
- "interchange",
+ "interchange 0.3.1",
  "lfs-backup",
  "littlefs2",
  "lpc55-hal",
@@ -527,6 +528,11 @@ name = "cc"
 version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "066fce287b1d4eafef758e89e09d724a24808a9196fe9756b8ca90e86d0719a2"
+dependencies = [
+ "jobserver",
+ "libc",
+ "once_cell",
+]
 
 [[package]]
 name = "cexpr"
@@ -650,7 +656,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -792,12 +798,15 @@ dependencies = [
 [[package]]
 name = "cosey"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39323fe531b92e7acad90b8550b58cec63d29a6c5a56e02de4b25b6aeedbf82e"
 dependencies = [
+ "cfg-if",
  "heapless-bytes",
+ "paste",
+ "pqcrypto-mldsa",
  "serde",
+ "serde-big-array",
  "serde_repr",
+ "with_builtin_macros",
 ]
 
 [[package]]
@@ -883,11 +892,10 @@ dependencies = [
 [[package]]
 name = "ctap-types"
 version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1beeb5a05e42c7cbfb788ce3e9fd6ce7d0aa214893b5ca6cd38d09ac9afe722"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
+ "cfg-if",
  "cosey",
  "delog",
  "heapless",
@@ -979,7 +987,7 @@ checksum = "5fe87ce4529967e0ba1dcf8450bab64d97dfd5010a6256187ffe2e43e6f0e049"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -1021,6 +1029,12 @@ dependencies = [
  "crypto-common",
  "subtle",
 ]
+
+[[package]]
+name = "dunce"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "ecdsa"
@@ -1103,7 +1117,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-hal",
- "interchange",
+ "interchange 0.3.1",
  "littlefs2-core",
  "littlefs2-sys",
  "lpc55-hal",
@@ -1648,6 +1662,12 @@ dependencies = [
 
 [[package]]
 name = "interchange"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "310d743c23f798f10d5ba2f77fdd3eff06aaf2d8f8b9d78beba7fb1167f4ccbf"
+
+[[package]]
+name = "interchange"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88dbb1ed0e8ee048061aa628677fd30712e76635fa51b3987693a93fa3dc23b2"
@@ -1696,6 +1716,15 @@ name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
+
+[[package]]
+name = "jobserver"
+version = "0.1.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "js-sys"
@@ -1933,7 +1962,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless",
- "interchange",
+ "interchange 0.3.1",
  "iso7816",
  "nb 1.1.0",
 ]
@@ -1951,7 +1980,7 @@ dependencies = [
  "cortex-m-rtic",
  "ctaphid-dispatch",
  "delog",
- "interchange",
+ "interchange 0.3.1",
  "memory-regions",
  "nrf52840-hal",
  "nrf52840-pac",
@@ -2219,6 +2248,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2328,6 +2363,131 @@ name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+
+[[package]]
+name = "pqcrypto"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ac15ee741fa95113ea76e7b08ce966e55c7e725621119ec1a59cf88a96e94b4"
+dependencies = [
+ "pqcrypto-classicmceliece",
+ "pqcrypto-dilithium",
+ "pqcrypto-falcon",
+ "pqcrypto-hqc",
+ "pqcrypto-kyber",
+ "pqcrypto-sphincsplus",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-classicmceliece"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "020d75adba68e21bcd1a6268a7145bff549fe7559e75a122e19f6f00bfb896d7"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-dilithium"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "685de0fa68c6786559d5fcdaa414f0cd68ef3f5d162f61823bd7424cd276726f"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-falcon"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35d1d53b8392f416aa11943f83c0372d88090d9c236b21a7f19352e61542119d"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-hqc"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e945bdfba5a47894067969abaa04d773c8dae56d1f33efa93fc5b84636b85bf"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-internals"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e10cdd9eee50fe65bbd4f40211f1a492f1ee52e97a51100950b6f1fa319ab7cd"
+dependencies = [
+ "cc",
+ "dunce",
+ "getrandom",
+ "libc",
+]
+
+[[package]]
+name = "pqcrypto-kyber"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15c00293cf898859d0c771455388054fd69ab712263c73fdc7f287a39b1ba000"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-mldsa"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5439d511d79dcacbc91a11e9e78013aec955e399669bfae3955442d2f724b140"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "paste",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-sphincsplus"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82ea17a14b7623f262460f07e2773ae62b25c65e935db87581addd60cc9316c3"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+ "pqcrypto-internals",
+ "pqcrypto-traits",
+]
+
+[[package]]
+name = "pqcrypto-traits"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94e851c7654eed9e68d7d27164c454961a616cf8c203d500607ef22c737b51bb"
 
 [[package]]
 name = "pretty_env_logger"
@@ -2722,11 +2882,20 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.204"
+version = "1.0.213"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc76f558e0cbb2a839d37354c575f1dc3fdc6546b5be373ba43d95f231bf7c12"
+checksum = "3ea7893ff5e2466df8d720bb615088341b295f849602c6956047f8f80f0e9bc1"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11fc7cc2c76d73e0f27ee52abbd64eec84d46f370c88371120433196934e4b7f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -2746,7 +2915,7 @@ checksum = "fca2da10b1f1623f47130256065e05e94fd7a98dbd26a780a4c5de831b21e5c2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -2760,13 +2929,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.204"
+version = "1.0.213"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0cd7e117be63d3c3678776753929474f3b04a43a080c744d6b0ae2a8c28e222"
+checksum = "7e85ad2009c50b58e87caa8cd6dac16bdf511bbfb7af6c33df902396aa480fa5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -2788,7 +2957,7 @@ checksum = "6c64451ba24fc7a6a2d60fc75dd9c83c90903b19028d4eff35e88fc1e86564e9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -2981,7 +3150,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -3003,9 +3172,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.69"
+version = "2.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "201fcda3845c23e8212cd466bfebf0bd20694490fc0356ae8e428e0824a915a6"
+checksum = "5023162dfcd14ef8f32034d8bcd4cc5ddc61ef7a247c024a33e24e1f24d21b56"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3061,7 +3230,7 @@ checksum = "46c3384250002a6d5af4d114f2845d37b57521033f30d5c3f46c4d70e1197533"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -3151,7 +3320,7 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -3215,12 +3384,13 @@ dependencies = [
  "heapless-bytes",
  "hex-literal 0.4.1",
  "hmac",
- "interchange",
+ "interchange 0.3.1",
  "littlefs2",
  "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
  "postcard 0.7.3",
+ "pqcrypto-mldsa",
  "rand_chacha",
  "rand_core",
  "salty",
@@ -3297,6 +3467,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "trussed-fs-info"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44822e0abc5a32b3f370f82644ee9cb08aa693847aac0d48f6dc115389157aea"
+dependencies = [
+ "serde",
+ "serde-byte-array",
+ "trussed-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "trussed-hkdf"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3304,6 +3485,16 @@ checksum = "17884daee9214e24c7bb9cf2429d0f53c569cfa4a8d728106e459e60aed5be69"
 dependencies = [
  "serde",
  "trussed-core",
+]
+
+[[package]]
+name = "trussed-hkdf"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17884daee9214e24c7bb9cf2429d0f53c569cfa4a8d728106e459e60aed5be69"
+dependencies = [
+ "serde",
+ "trussed-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3326,6 +3517,20 @@ dependencies = [
  "littlefs2-core",
  "serde",
  "trussed-core",
+]
+
+[[package]]
+name = "trussed-pqc-backend"
+version = "0.1.0"
+dependencies = [
+ "cosey",
+ "der",
+ "pkcs8",
+ "pqcrypto",
+ "pqcrypto-mldsa",
+ "serde",
+ "serde-big-array",
+ "trussed",
 ]
 
 [[package]]
@@ -3409,9 +3614,9 @@ dependencies = [
  "serde-byte-array",
  "sha2",
  "trussed",
- "trussed-chunked",
- "trussed-fs-info",
- "trussed-hkdf",
+ "trussed-chunked 0.1.0",
+ "trussed-fs-info 0.1.0",
+ "trussed-hkdf 0.2.0",
  "trussed-hpke",
  "trussed-manage",
  "trussed-wrap-key-to-file",
@@ -3424,7 +3629,7 @@ source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=4fe4e4e287d
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
- "interchange",
+ "interchange 0.3.1",
  "log",
  "trussed",
  "usb-device",
@@ -3460,7 +3665,7 @@ checksum = "560b82d656506509d43abe30e0ba64c56b1953ab3d4fe7ba5902747a7a3cedd5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
 
 [[package]]
@@ -3559,7 +3764,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless",
- "interchange",
+ "interchange 0.3.1",
  "iso7816",
  "usb-device",
 ]
@@ -3570,11 +3775,12 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "092fad7bf817001ecade9272fe6ccbea4e5d0c02f99ca24c4c5ce97fbbff5371"
 dependencies = [
+ "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
  "heapless-bytes",
- "interchange",
+ "interchange 0.3.1",
  "ref-swap",
  "serde",
  "trussed-core",
@@ -3690,7 +3896,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
  "wasm-bindgen-shared",
 ]
 
@@ -3712,7 +3918,7 @@ checksum = "e94f17b526d0a461a191c78ea52bbce64071ed5c04c9ffe424dcb38f74171bb7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -3938,6 +4144,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "with_builtin_macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24deb3cd6e530e7617b12b1f0f1ce160a3a71d92feb351c4db5156d1d10e398a"
+dependencies = [
+ "with_builtin_macros-proc_macros",
+]
+
+[[package]]
+name = "with_builtin_macros-proc_macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2259ae9b1285596f1ee52ce8f627013c65853d4d7f271cb10bfe2d048769804a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "zeroize"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3954,5 +4180,9 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.69",
+ "syn 2.0.85",
 ]
+
+[[patch.unused]]
+name = "ctaphid-dispatch"
+version = "0.2.0"
