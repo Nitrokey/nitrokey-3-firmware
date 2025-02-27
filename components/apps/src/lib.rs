@@ -30,6 +30,7 @@ use trussed::{
     backend::BackendId,
     client::ClientBuilder,
     interrupt::InterruptFlag,
+    pipe::ServiceEndpoint,
     platform::Syscall,
     store::filestore::ClientFilestore,
     types::{Location, Mechanism, Path},
@@ -788,6 +789,13 @@ where
 
     fn new(
         trussed_service: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
+        endpoints: &mut Vec<
+            ServiceEndpoint<
+                'static,
+                <dispatch::Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer> as trussed::backend::Dispatch>::BackendId,
+                <dispatch::Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer> as trussed::backend::Dispatch>::Context,
+            >,
+        >,
         syscall: trussed_usbip::Syscall,
         (runner, data): (R, Data<R>),
     ) -> Self {
@@ -1047,8 +1055,8 @@ impl<R: Runner> App<R> for FidoApp<R> {
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
         &[
-            #[cfg(feature = "backend-dilithium")]
-            BackendId::Custom(Backend::SoftwareDilithium),
+            #[cfg(feature = "backend-mldsa")]
+            BackendId::Custom(Backend::SoftwareMldsa),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ]

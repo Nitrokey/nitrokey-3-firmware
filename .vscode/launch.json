@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--features",
-                    "provisioner,backend-dilithium2,backend-dilithium3",
+                    "provisioner,backend-mldsa44,backend-mldsa65",
                     "--bin=usbip-runner",
                 ],
                 "filter": {
