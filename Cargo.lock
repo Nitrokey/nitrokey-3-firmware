@@ -1824,7 +1824,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.4.0"
-source = "git+https://github.com/lpc55/lpc55-hal.git?rev=f2a9135a9f1d2cb3dbda48d7ad0e2da862222e94#f2a9135a9f1d2cb3dbda48d7ad0e2da862222e94"
+source = "git+https://github.com/lpc55/lpc55-hal.git?rev=1a25fc366013503b46af938646c88aed4e36d74c#1a25fc366013503b46af938646c88aed4e36d74c"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
@@ -1833,7 +1833,6 @@ dependencies = [
  "embedded-hal",
  "embedded-time",
  "generic-array",
- "littlefs2",
  "lpc55-pac",
  "nb 1.1.0",
  "rand_core",
