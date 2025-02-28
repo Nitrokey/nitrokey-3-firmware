@@ -183,6 +183,7 @@ dependencies = [
  "heapless-bytes",
  "hex",
  "if_chain",
+ "interchange",
  "littlefs2-core",
  "ndef-app",
  "opcard",
@@ -3640,7 +3641,6 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git#a0e9b855809577f0067a93e08c716aa285b03700"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
