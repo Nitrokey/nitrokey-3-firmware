@@ -79,9 +79,9 @@ backend-software-hpke = ["trussed-staging/hpke"]
 # PQC backend must be included and the corresponding algorithm features
 # there must be set.
 backend-mldsa = ["dep:trussed-pqc-backend"]
-backend-mldsa44 = ["backend-mldsa", "trussed-pqc-backend/mldsa44", "fido-authenticator/mldsa44"]
-backend-mldsa65 = ["backend-mldsa", "trussed-pqc-backend/mldsa65", "fido-authenticator/mldsa65"]
-backend-mldsa87 = ["backend-mldsa", "trussed-pqc-backend/mldsa87", "fido-authenticator/mldsa87"]
+backend-mldsa44 = ["backend-mldsa", "trussed-pqc-backend/mldsa44", "fido-authenticator/mldsa44", "usbd-ctaphid/mldsa44", "ctaphid-dispatch/mldsa44"]
+backend-mldsa65 = ["backend-mldsa", "trussed-pqc-backend/mldsa65", "fido-authenticator/mldsa65", "usbd-ctaphid/mldsa65", "ctaphid-dispatch/mldsa65"]
+backend-mldsa87 = ["backend-mldsa", "trussed-pqc-backend/mldsa87", "fido-authenticator/mldsa87", "usbd-ctaphid/mldsa87", "ctaphid-dispatch/mldsa87"]
 
 log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "webcrypt?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 log-error = []
