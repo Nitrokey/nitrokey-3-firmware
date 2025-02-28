@@ -15,7 +15,7 @@ embedded-hal = "0.2.3"
 embedded-time = "0.12"
 generic-array = "0.14"
 interchange = "0.3"
-littlefs2 = { version = "0.5", features = ["c-stubs"] }
+littlefs2 = { workspace = true, features = ["c-stubs"] }
 memory-regions = { path = "../memory-regions" }
 nb = "1"
 nfc-device = { path = "../nfc-device" }
