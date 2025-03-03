@@ -197,6 +197,8 @@ metrics:
   stage: metrics
   script:
     - repometrics generate --cache > metrics.toml
+  after_script:
+    - !reference [notify_github, script] # use notify_github from include
     - repometrics run --base origin/main --output-format markdown | tee --append metrics-comment.md
     - if [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" != "main" ] ; then
           nitrokey-ci write-comment --owner Nitrokey --repo nitrokey-3-firmware --id repometrics --commit $(git rev-parse HEAD) metrics-comment.md ;
