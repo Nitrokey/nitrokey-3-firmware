@@ -40,9 +40,7 @@ pub(crate) const MIGRATORS: &[Migrator] = &[
     },
     #[cfg(feature = "fido-authenticator")]
     Migrator {
-        migrate: |ifs, _efs| {
-            fido_authenticator::migrate::migrate_no_rp_dir(ifs, path!("fido/dat"))
-        },
+        migrate: |ifs, _efs| fido_authenticator::migrate::migrate_no_rp_dir(ifs, path!("fido/dat")),
         version: MIGRATION_VERSION_FIDO_RK_DIR,
-    }
+    },
 ];
