@@ -2211,6 +2211,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3188,7 +3194,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=5003249c3187dca841f83551ba625921611a5ace#5003249c3187dca841f83551ba625921611a5ace"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=refs/pull/162/head#32d3d9fff1998423166112a4230b7c6c2a610a13"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3211,6 +3217,7 @@ dependencies = [
  "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
+ "paste",
  "postcard 0.7.3",
  "rand_chacha",
  "rand_core",
@@ -3337,7 +3344,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=131c973fbe74d677fb8c8df97c210f78608994f0#131c973fbe74d677fb8c8df97c210f78608994f0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=refs/pull/50/head#b0069916316912644f88db9a0f174a1ce779d3ee"
 dependencies = [
  "bitflags 2.6.0",
  "cbor-smol",
