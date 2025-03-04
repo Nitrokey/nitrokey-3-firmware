@@ -2,14 +2,13 @@ use crate::{Instruction, Provisioner};
 use core::convert::TryFrom;
 use ctaphid_app::{App, Command, Error, VendorCommand};
 use heapless_bytes::Bytes;
-use trussed::{client, store::Store, types::LfsStorage};
+use trussed::{client, store::Store};
 
 const COMMAND_PROVISIONER: VendorCommand = VendorCommand::H71;
 
-impl<S, FS, T, const N: usize> App<'_, N> for Provisioner<S, FS, T>
+impl<S, T, const N: usize> App<'_, N> for Provisioner<S, T>
 where
     S: Store,
-    FS: 'static + LfsStorage,
     T: client::CryptoClient,
 {
     fn commands(&self) -> &'static [Command] {

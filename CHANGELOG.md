@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+- provisioner-app: Remove ReformatFilesystem command
 
 ## v1.8.0 (2024-12-06)
 

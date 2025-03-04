@@ -9,7 +9,6 @@ use super::nk3am::{
 };
 use crate::{
     soc::nrf52::{flash::FlashStorage, Nrf52, UsbClockType},
-    store::impl_storage_pointers,
     Board,
 };
 
@@ -27,6 +26,9 @@ impl Board for NKPK {
     type NfcDevice = DummyNfc;
     type Buttons = HardwareButtons;
     type Led = RgbLed;
+
+    type InternalStorage = InternalFlashStorage;
+    type ExternalStorage = ExternalFlashStorage;
 
     type Twi = ();
     type Se050Timer = ();
@@ -54,9 +56,3 @@ pub type InternalFlashStorage =
     FlashStorage<{ MEMORY_REGIONS.filesystem.start }, { MEMORY_REGIONS.filesystem.end }>;
 // TODO: Do we want to mirror the NK3AM EFS?
 pub type ExternalFlashStorage = RamStorage<nk3am::ExternalFlashStorage, 256>;
-
-impl_storage_pointers!(
-    NKPK,
-    Internal = InternalFlashStorage,
-    External = ExternalFlashStorage,
-);

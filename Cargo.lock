@@ -2383,7 +2383,7 @@ dependencies = [
  "heapless",
  "heapless-bytes",
  "iso7816",
- "littlefs2",
+ "littlefs2-core",
  "p256-cortex-m4",
  "salty",
  "trussed",

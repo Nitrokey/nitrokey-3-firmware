@@ -17,7 +17,6 @@ use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3, TIMER1,
 use crate::{
     flash::ExtFlashStorage,
     soc::nrf52::{flash::FlashStorage, rtic_monotonic::RtcMonotonic, Nrf52, UsbClockType},
-    store::impl_storage_pointers,
     ui::UserInterface,
     Board,
 };
@@ -43,6 +42,9 @@ impl Board for NK3AM {
     type NfcDevice = DummyNfc;
     type Buttons = HardwareButtons;
     type Led = RgbLed;
+
+    type InternalStorage = InternalFlashStorage;
+    type ExternalStorage = ExternalFlashStorage;
 
     #[cfg(feature = "se050")]
     type Twi = Twim<TWIM1>;
@@ -103,12 +105,6 @@ impl Board for NK3AM {
 pub type InternalFlashStorage =
     FlashStorage<{ MEMORY_REGIONS.filesystem.start }, { MEMORY_REGIONS.filesystem.end }>;
 pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
-
-impl_storage_pointers!(
-    NK3AM,
-    Internal = InternalFlashStorage,
-    External = ExternalFlashStorage,
-);
 
 pub struct DummyNfc;
 

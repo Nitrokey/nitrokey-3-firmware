@@ -28,72 +28,36 @@ const_ram_storage!(
 );
 
 pub struct StoreResources<B: Board> {
-    ifs: MaybeUninit<Filesystem<'static, B::InternalStorage>>,
-    ifs_alloc: MaybeUninit<Allocation<B::InternalStorage>>,
-    efs: MaybeUninit<Filesystem<'static, B::ExternalStorage>>,
-    efs_alloc: MaybeUninit<Allocation<B::ExternalStorage>>,
-    efs_storage: MaybeUninit<B::ExternalStorage>,
-    vfs: MaybeUninit<Filesystem<'static, VolatileStorage>>,
-    vfs_alloc: MaybeUninit<Allocation<VolatileStorage>>,
-    vfs_storage: MaybeUninit<VolatileStorage>,
+    internal: StorageResources<B::InternalStorage>,
+    external: StorageResources<B::ExternalStorage>,
+    volatile: StorageResources<VolatileStorage>,
 }
 
 impl<B: Board> StoreResources<B> {
     pub const fn new() -> Self {
         Self {
-            ifs: MaybeUninit::uninit(),
-            ifs_alloc: MaybeUninit::uninit(),
-            efs: MaybeUninit::uninit(),
-            efs_alloc: MaybeUninit::uninit(),
-            efs_storage: MaybeUninit::uninit(),
-            vfs: MaybeUninit::uninit(),
-            vfs_alloc: MaybeUninit::uninit(),
-            vfs_storage: MaybeUninit::uninit(),
+            internal: StorageResources::new(),
+            external: StorageResources::new(),
+            volatile: StorageResources::new(),
         }
     }
 }
 
-// FIXME: document safety
-#[allow(clippy::missing_safety_doc)]
-#[cfg(feature = "provisioner")]
-pub unsafe fn steal_internal_storage<S: StoragePointers>() -> &'static mut S::InternalStorage {
-    S::ifs_storage().assume_init_mut()
+pub struct StorageResources<S: Storage + 'static> {
+    fs: MaybeUninit<Filesystem<'static, S>>,
+    alloc: MaybeUninit<Allocation<S>>,
+    storage: MaybeUninit<S>,
 }
 
-// FIXME: document safety
-#[allow(clippy::missing_safety_doc)]
-pub trait StoragePointers: 'static {
-    type InternalStorage: Storage;
-    type ExternalStorage: Storage;
-
-    unsafe fn ifs_storage() -> &'static mut MaybeUninit<Self::InternalStorage>;
-}
-
-#[cfg_attr(
-    not(any(feature = "board-nk3am", feature = "board-nk3xn")),
-    allow(unused)
-)]
-macro_rules! impl_storage_pointers {
-    ($name:ident, Internal = $I:ty, External = $E:ty,) => {
-        impl $crate::store::StoragePointers for $name {
-            type InternalStorage = $I;
-            type ExternalStorage = $E;
-
-            unsafe fn ifs_storage() -> &'static mut ::core::mem::MaybeUninit<Self::InternalStorage>
-            {
-                static mut IFS_STORAGE: ::core::mem::MaybeUninit<$I> =
-                    ::core::mem::MaybeUninit::uninit();
-                (&mut *&raw mut IFS_STORAGE)
-            }
+impl<S: Storage + 'static> StorageResources<S> {
+    pub const fn new() -> Self {
+        Self {
+            fs: MaybeUninit::uninit(),
+            alloc: MaybeUninit::uninit(),
+            storage: MaybeUninit::uninit(),
         }
-    };
+    }
 }
-
-#[cfg_attr(
-    not(any(feature = "board-nk3am", feature = "board-nk3xn")),
-    allow(unused)
-)]
-pub(crate) use impl_storage_pointers;
 
 struct StorePointers {
     ifs: MaybeUninit<&'static dyn DynFilesystem>,
@@ -111,11 +75,11 @@ impl StorePointers {
     }
 }
 
-pub struct RunnerStore<S> {
-    _marker: PhantomData<*mut S>,
+pub struct RunnerStore<B> {
+    _marker: PhantomData<*mut B>,
 }
 
-impl<S: StoragePointers> RunnerStore<S> {
+impl<B: Board> RunnerStore<B> {
     fn new(
         ifs: &'static dyn DynFilesystem,
         efs: &'static dyn DynFilesystem,
@@ -139,15 +103,15 @@ impl<S: StoragePointers> RunnerStore<S> {
     }
 }
 
-impl<S> Clone for RunnerStore<S> {
+impl<B> Clone for RunnerStore<B> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<S> Copy for RunnerStore<S> {}
+impl<B> Copy for RunnerStore<B> {}
 
-impl<S: StoragePointers> Store for RunnerStore<S> {
+impl<B: Board> Store for RunnerStore<B> {
     fn ifs(&self) -> &dyn DynFilesystem {
         unsafe { Self::pointers().ifs.assume_init() }
     }
@@ -168,16 +132,15 @@ pub fn init_store<B: Board>(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> RunnerStore<B> {
-    let ifs_alloc = resources.ifs_alloc.write(Filesystem::allocate());
-    let efs_storage = resources.efs_storage.write(ext_flash);
-    let efs_alloc = resources.efs_alloc.write(Filesystem::allocate());
-    let vfs_storage = resources.vfs_storage.write(VolatileStorage::new());
-    let vfs_alloc = resources.vfs_alloc.write(Filesystem::allocate());
-
-    let ifs_storage = unsafe { B::ifs_storage().write(int_flash) };
+    let ifs_storage = resources.internal.storage.write(int_flash);
+    let ifs_alloc = resources.internal.alloc.write(Filesystem::allocate());
+    let efs_storage = resources.external.storage.write(ext_flash);
+    let efs_alloc = resources.external.alloc.write(Filesystem::allocate());
+    let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
+    let vfs_alloc = resources.volatile.alloc.write(Filesystem::allocate());
 
     let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
-        Ok(ifs) => resources.ifs.write(ifs),
+        Ok(ifs) => resources.internal.fs.write(ifs),
         Err(_e) => {
             error!("IFS Mount Error {:?}", _e);
             panic!("IFS");
@@ -185,7 +148,7 @@ pub fn init_store<B: Board>(
     };
 
     let efs = match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
-        Ok(efs) => resources.efs.write(efs),
+        Ok(efs) => resources.external.fs.write(efs),
         Err(_e) => {
             error!("EFS Mount Error {:?}", _e);
             panic!("EFS");
@@ -193,7 +156,7 @@ pub fn init_store<B: Board>(
     };
 
     let vfs = match init_vfs(vfs_storage, vfs_alloc) {
-        Ok(vfs) => resources.vfs.write(vfs),
+        Ok(vfs) => resources.volatile.fs.write(vfs),
         Err(_e) => {
             error!("VFS Mount Error {:?}", _e);
             panic!("VFS");
