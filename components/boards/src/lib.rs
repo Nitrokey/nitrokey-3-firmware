@@ -109,7 +109,7 @@ pub struct RunnerPlatform<B: Board> {
     pub user_interface: UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>,
 }
 
-unsafe impl<B: Board> Platform for RunnerPlatform<B> {
+impl<B: Board> Platform for RunnerPlatform<B> {
     type R = ChaCha8Rng;
     type S = RunnerStore<B>;
     type UI = UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>;

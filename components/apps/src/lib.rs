@@ -486,7 +486,7 @@ const fn validate_mechanisms() {
         let mechanism = enabled[i];
         i += 1;
 
-        if contains(trussed::types::IMPLEMENTED_MECHANISMS, mechanism) {
+        if contains(trussed::service::IMPLEMENTED_MECHANISMS, mechanism) {
             continue;
         }
         #[cfg(feature = "backend-rsa")]

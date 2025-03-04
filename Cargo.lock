@@ -3218,7 +3218,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=ac106d63ab5e19021b0e37f0efb4313f8168a110#ac106d63ab5e19021b0e37f0efb4313f8168a110"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=024e0eca5fb7dbd2457831f7c7bffe4341e08775#024e0eca5fb7dbd2457831f7c7bffe4341e08775"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3367,7 +3367,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=131c973fbe74d677fb8c8df97c210f78608994f0#131c973fbe74d677fb8c8df97c210f78608994f0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=dd30e9f3ad39a062ce9f7cb8e8c525454ceb89af#dd30e9f3ad39a062ce9f7cb8e8c525454ceb89af"
 dependencies = [
  "bitflags 2.6.0",
  "cbor-smol",
@@ -3441,7 +3441,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=d0774abda2a178bba5e20602e44f7fa80cd191a4#d0774abda2a178bba5e20602e44f7fa80cd191a4"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=2a002fdbcb4d1d989c896e0a249170b7da7f5ca5#2a002fdbcb4d1d989c896e0a249170b7da7f5ca5"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
