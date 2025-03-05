@@ -77,7 +77,7 @@ write-undefined-flash = []
 no-buttons = ["boards/no-buttons"]
 
 # Format filesystem anyway
-format-filesystem = []
+format-filesystem = ["boards/format-filesystem"]
 
 alloc = ["embedded-alloc"]
 
