@@ -2230,8 +2230,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.9"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=2fec80ff825408a3d479668ff5557fdd32ead342#2fec80ff825408a3d479668ff5557fdd32ead342"
+version = "0.4.0"
+source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=81489bbc1dc04d9a435494c2af363e821a9b3df0#81489bbc1dc04d9a435494c2af363e821a9b3df0"
 dependencies = [
  "apdu-app",
  "cbor-smol",
