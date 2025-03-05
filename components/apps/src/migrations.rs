@@ -4,6 +4,7 @@ use admin_app::migrations::Migrator;
 use littlefs2_core::path;
 
 pub(crate) const MIGRATION_VERSION_SPACE_EFFICIENCY: u32 = 1;
+const MIGRATION_VERSION_FIDO_RK_DIR: u32 = 2;
 
 #[cfg(feature = "backend-auth")]
 pub(crate) const TRUSSED_AUTH_FS_LAYOUT: trussed_auth_backend::FilesystemLayout =
@@ -36,5 +37,10 @@ pub(crate) const MIGRATORS: &[Migrator] = &[
             )
         },
         version: MIGRATION_VERSION_SPACE_EFFICIENCY,
+    },
+    #[cfg(feature = "fido-authenticator")]
+    Migrator {
+        migrate: |ifs, _efs| fido_authenticator::migrate::migrate_no_rp_dir(ifs, path!("fido/dat")),
+        version: MIGRATION_VERSION_FIDO_RK_DIR,
     },
 ];

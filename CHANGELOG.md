@@ -3,6 +3,8 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+- fido-authenticator: Increase the maximum number of discoverable credentials (resident keys) to 50.
+  - Note that the actual number of discoverable credentials that can be stored on a device depends on the model and the space used by other applications.
 
 ## v1.8.0 (2024-12-06)
 
