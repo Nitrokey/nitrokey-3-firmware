@@ -195,6 +195,7 @@ metrics:
   tags:
     - docker
   stage: metrics
+  allow_failure: true
   script:
     - repometrics generate --cache > metrics.toml
     - if [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" != "main" ] ; then
