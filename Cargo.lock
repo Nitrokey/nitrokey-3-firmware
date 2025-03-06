@@ -155,9 +155,9 @@ dependencies = [
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4063bce5a221fcef21017ead889f26468dbee476649d6a2181b0931197082904"
+checksum = "2d6e6883b2c23b9fe1a488913705c7b68f751bdb73da036ff8191da729337a5d"
 dependencies = [
  "apdu-app",
  "delog",
@@ -2230,8 +2230,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.3.8"
-source = "git+https://github.com/Nitrokey/piv-authenticator.git?rev=65552820b4f931c21e1c7675b1bd6072cb872531#65552820b4f931c21e1c7675b1bd6072cb872531"
+version = "0.5.0"
+source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.5.0#bed5b42ff3bbef9d826c9b0da06e658d75db693f"
 dependencies = [
  "apdu-app",
  "cbor-smol",
