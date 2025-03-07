@@ -3386,7 +3386,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=refs/pull/35/head#7922d67e9637a87e5625aaff9e5111f0d4ec0346"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7922d67e9637a87e5625aaff9e5111f0d4ec0346#7922d67e9637a87e5625aaff9e5111f0d4ec0346"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3412,7 +3412,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=refs/pull/41/head#deaf9ffa27f6213e5236d69c90bc1ba688df8295"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=d0774abda2a178bba5e20602e44f7fa80cd191a4#d0774abda2a178bba5e20602e44f7fa80cd191a4"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
