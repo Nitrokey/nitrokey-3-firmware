@@ -797,15 +797,14 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R, S> trussed_usbip::Apps<'static, S, Dispatch<R::Twi, R::Se050Timer>> for Apps<R>
+impl<R> trussed_usbip::Apps<'static, Dispatch<R::Twi, R::Se050Timer>> for Apps<R>
 where
     R: Runner<Syscall = trussed_usbip::Syscall>,
-    S: trussed::virt::StoreProvider,
 {
     type Data = (R, Data<R>);
 
     fn new(
-        trussed_service: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<trussed_usbip::Platform, Dispatch<R::Twi, R::Se050Timer>>,
         endpoints: &mut alloc::vec::Vec<Endpoint>,
         syscall: trussed_usbip::Syscall,
         (runner, data): (R, Data<R>),

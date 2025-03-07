@@ -1760,9 +1760,9 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 
 [[package]]
 name = "littlefs2"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d186e7f379f2b23fad33d368ad02a357ba84167d3634c8f86d88d72c92d73c4"
+checksum = "32a43f3c0c6a7d127e3e1241665dd896d8bf1ca31cf9d826a1dc65239bd59868"
 dependencies = [
  "delog",
  "generic-array",
@@ -3189,7 +3189,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=5003249c3187dca841f83551ba625921611a5ace#5003249c3187dca841f83551ba625921611a5ace"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=ac106d63ab5e19021b0e37f0efb4313f8168a110#ac106d63ab5e19021b0e37f0efb4313f8168a110"
 dependencies = [
  "aes",
  "bitflags 2.6.0",
@@ -3386,7 +3386,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7f305b8db3cc9dc0cd2c1bfb8470e9f531e34abe#7f305b8db3cc9dc0cd2c1bfb8470e9f531e34abe"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7922d67e9637a87e5625aaff9e5111f0d4ec0346#7922d67e9637a87e5625aaff9e5111f0d4ec0346"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3412,12 +3412,15 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=a0e9b855809577f0067a93e08c716aa285b03700#a0e9b855809577f0067a93e08c716aa285b03700"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=d0774abda2a178bba5e20602e44f7fa80cd191a4#d0774abda2a178bba5e20602e44f7fa80cd191a4"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
  "interchange",
+ "littlefs2-core",
  "log",
+ "rand_chacha",
+ "rand_core",
  "trussed",
  "usb-device",
  "usbd-ccid",
@@ -3595,6 +3598,7 @@ dependencies = [
  "delog",
  "dialoguer",
  "littlefs2",
+ "littlefs2-core",
  "log",
  "pretty_env_logger",
  "rand_core",
