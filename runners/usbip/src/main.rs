@@ -7,11 +7,10 @@ use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
-use trussed::{types::Location, virt::StoreProvider as _, Bytes, Platform};
-use trussed_usbip::Syscall;
+use trussed::{platform::Platform as _, types::Location, Bytes};
+use trussed_usbip::{Platform, Store, Syscall};
 use utils::Version;
 
-use store::FilesystemOrRam;
 use ui::{Signals, UserInterface, UserPresence};
 
 const VERSION: Version = Version::from_env();
@@ -112,7 +111,7 @@ impl apps::Runner for Runner {
 
     type Reboot = Reboot;
 
-    type Store = store::Store;
+    type Store = Store;
 
     type Twi = ();
     type Se050Timer = ();
@@ -143,9 +142,9 @@ fn main() {
         pid: PID,
     };
 
-    let store_provider = FilesystemOrRam::new(args.ifs, args.efs);
+    let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store_provider, options, args.serial, user_presence)
+    exec(store, options, args.serial, user_presence)
 }
 
 fn print_version() {
@@ -166,7 +165,7 @@ fn print_version() {
 }
 
 fn exec(
-    store: FilesystemOrRam,
+    store: Store,
     options: trussed_usbip::Options,
     serial: Option<u128>,
     user_presence: UserPresence,
@@ -179,29 +178,28 @@ fn exec(
     }
 
     log::info!("Initializing Trussed");
-    trussed_usbip::Builder::new(store, options)
+    let mut platform = Platform::new(store);
+    let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
+        Box::new(UserInterface::new(user_presence.clone()));
+    platform.user_interface().set_inner(ui);
+
+    let data = apps::Data {
+        admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
+        fido: FidoData { has_nfc: false },
+        #[cfg(feature = "provisioner")]
+        provisioner: apps::ProvisionerData {
+            store,
+            rebooter: || unimplemented!(),
+        },
+        _marker: Default::default(),
+    };
+    let runner = Runner::new(serial);
+
+    trussed_usbip::Builder::new(options)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
             Bytes::from_slice(b"Unique hw key").unwrap(),
         ))
-        .init_platform(move |platform| {
-            let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
-                Box::new(UserInterface::new(user_presence.clone()));
-            platform.user_interface().set_inner(ui);
-        })
         .build::<Apps<Runner>>()
-        .exec(move |_platform| {
-            let store = unsafe { FilesystemOrRam::store() };
-            let data = apps::Data {
-                admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
-                fido: FidoData { has_nfc: false },
-                #[cfg(feature = "provisioner")]
-                provisioner: apps::ProvisionerData {
-                    store,
-                    rebooter: || unimplemented!(),
-                },
-                _marker: Default::default(),
-            };
-            (Runner::new(serial), data)
-        });
+        .exec(platform, (runner, data));
 }
