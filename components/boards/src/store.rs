@@ -173,6 +173,10 @@ fn init_ifs<B: Board>(
     efs_storage: &mut B::ExternalStorage,
     status: &mut InitStatus,
 ) -> Result<Filesystem<'static, B::InternalStorage>> {
+    if cfg!(feature = "format-filesystem") {
+        Filesystem::format(ifs_storage).ok();
+    }
+
     if !Filesystem::is_mountable(ifs_storage) {
         // handle provisioner
         if cfg!(feature = "provisioner") {
@@ -197,6 +201,10 @@ fn init_efs<B: Board>(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> Result<Filesystem<'static, B::ExternalStorage>> {
+    if cfg!(feature = "format-filesystem") {
+        Filesystem::format(efs_storage).ok();
+    }
+
     Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
         error_now!("EFS Mount Error {:?}", _err);
         let fmt_ext = Filesystem::format(storage);
