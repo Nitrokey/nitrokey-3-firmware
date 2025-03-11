@@ -12,29 +12,32 @@ resolver = "2"
 [workspace.package]
 version = "1.8.0"
 
+[workspace.dependencies]
+littlefs2 = "0.6"
+
 [patch.crates-io]
 # components
 memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal.git", rev ="1a25fc366013503b46af938646c88aed4e36d74c" }
-#trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "805fe7657e79e06b3220324481cd6325b94877d7" }
-#trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "a0e9b855809577f0067a93e08c716aa285b03700" }
+#trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "024e0eca5fb7dbd2457831f7c7bffe4341e08775" }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "2a002fdbcb4d1d989c896e0a249170b7da7f5ca5" }
 
 # applications
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.19" }
-#fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.25" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
+#fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.26" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2" }
-piv-authenticator = { git = "https://github.com/Nitrokey/piv-authenticator.git", rev = "65552820b4f931c21e1c7675b1bd6072cb872531" }
+piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.5.0" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "700863bdfa90a3616cbb695d6638c7aea7730c03" }
 webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag = "v0.8.0-rc11" }
 
 # backends
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
 #trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "131c973fbe74d677fb8c8df97c210f78608994f0" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "1e1ca03a3a62ea9b802f4070ea4bce002eeb4bec" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "dd30e9f3ad39a062ce9f7cb8e8c525454ceb89af" }
+trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7922d67e9637a87e5625aaff9e5111f0d4ec0346" }
+cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
 
 # TODO: revert these to Git versions
 #trussed-pqc-backend = { path = "../trussed-pqc-backend" }

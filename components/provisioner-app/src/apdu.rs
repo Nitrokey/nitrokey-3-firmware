@@ -2,7 +2,7 @@ use crate::{Error, Provisioner};
 use apdu_app::{App, CommandView, Data, Interface, Result, Status};
 use core::convert::{TryFrom, TryInto};
 use iso7816::{Aid, Instruction};
-use trussed::{client, store::Store, types::LfsStorage};
+use trussed::{client, store::Store};
 
 const SOLO_PROVISIONER_AID: &[u8] = &[0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
 
@@ -30,10 +30,9 @@ impl From<Error> for Status {
     }
 }
 
-impl<S, FS, T> iso7816::App for Provisioner<S, FS, T>
+impl<S, T> iso7816::App for Provisioner<S, T>
 where
     S: Store,
-    FS: 'static + LfsStorage,
     T: client::CryptoClient,
 {
     fn aid(&self) -> Aid {
@@ -41,10 +40,9 @@ where
     }
 }
 
-impl<S, FS, T, const R: usize> App<R> for Provisioner<S, FS, T>
+impl<S, T, const R: usize> App<R> for Provisioner<S, T>
 where
     S: Store,
-    FS: 'static + LfsStorage,
     T: client::CryptoClient,
 {
     fn select(

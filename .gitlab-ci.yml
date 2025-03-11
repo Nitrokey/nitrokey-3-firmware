@@ -195,10 +195,11 @@ metrics:
   tags:
     - docker
   stage: metrics
+  allow_failure: true
   script:
     - repometrics generate --cache > metrics.toml
-    - repometrics run --base origin/main --output-format markdown | tee --append metrics-comment.md
     - if [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" != "main" ] ; then
+          repometrics run --base origin/main --output-format markdown | tee --append metrics-comment.md ;
           nitrokey-ci write-comment --owner Nitrokey --repo nitrokey-3-firmware --id repometrics --commit $(git rev-parse HEAD) metrics-comment.md ;
       fi
   artifacts:

@@ -19,16 +19,12 @@ generate_macros!();
 
 use core::convert::TryFrom;
 use heapless::Vec;
-use littlefs2::{
-    path,
-    path::{Path, PathBuf},
-};
+use littlefs2_core::{path, Path, PathBuf};
 use trussed::{
     client,
     key::{Flags, Key, Kind as KeyKind},
     store::{self, Store},
     syscall,
-    types::LfsStorage,
 };
 
 const TESTER_FILENAME_ID: [u8; 2] = [0xe1, 0x01];
@@ -42,7 +38,6 @@ pub enum Instruction {
     WriteFile,
 
     BootToBootrom,
-    ReformatFilesystem,
     GetUuid,
 
     GenerateP256Key,
@@ -67,7 +62,6 @@ impl TryFrom<u8> for Instruction {
             0xbf => Self::WriteFile,
 
             0x51 => Self::BootToBootrom,
-            0xbd => Self::ReformatFilesystem,
             0x62 => Self::GetUuid,
 
             0xbc => Self::GenerateP256Key,
@@ -109,10 +103,9 @@ enum SelectedBuffer {
     File,
 }
 
-pub struct Provisioner<S, FS, T>
+pub struct Provisioner<S, T>
 where
     S: Store,
-    FS: 'static + LfsStorage,
     T: client::CryptoClient,
 {
     trussed: T,
@@ -122,35 +115,22 @@ where
     buffer_file_contents: Vec<u8, 8192>,
 
     store: S,
-    stolen_filesystem: &'static mut FS,
-    #[allow(dead_code)]
-    is_passive: bool,
     uuid: Uuid,
     rebooter: fn() -> !,
 }
 
-impl<S, FS, T> Provisioner<S, FS, T>
+impl<S, T> Provisioner<S, T>
 where
     S: Store,
-    FS: 'static + LfsStorage,
     T: client::CryptoClient,
 {
-    pub fn new(
-        trussed: T,
-        store: S,
-        stolen_filesystem: &'static mut FS,
-        is_passive: bool,
-        uuid: Uuid,
-        rebooter: fn() -> !,
-    ) -> Provisioner<S, FS, T> {
+    pub fn new(trussed: T, store: S, uuid: Uuid, rebooter: fn() -> !) -> Provisioner<S, T> {
         Self {
             trussed,
             selected_buffer: SelectedBuffer::Filename,
             buffer_filename: Vec::new(),
             buffer_file_contents: Vec::new(),
             store,
-            stolen_filesystem,
-            is_passive,
             uuid,
             rebooter,
         }
@@ -172,13 +152,6 @@ where
                 .unwrap();
                 Ok(())
             }
-            Instruction::ReformatFilesystem => {
-                // Provide a method to reset the FS.
-                info!("Reformatting the FS..");
-                littlefs2::fs::Filesystem::format(self.stolen_filesystem)
-                    .map_err(|_| Error::NotEnoughMemory)?;
-                Ok(())
-            }
             Instruction::WriteFile => {
                 if self.buffer_file_contents.is_empty() || self.buffer_filename.is_empty() {
                     Err(Error::IncorrectDataParameter)
@@ -194,7 +167,7 @@ where
                     // logging::dump_hex(&self.buffer_file_contents, self.buffer_file_contents.len());
 
                     let res = store::store(
-                        self.store,
+                        &self.store,
                         trussed::types::Location::Internal,
                         &buffer_path,
                         &self.buffer_file_contents,
@@ -221,7 +194,7 @@ where
                 // This should use the proper `random` method but is not possible without a `CryptoRng` implementation, which trussed is not
                 let keypair = loop {
                     seed.copy_from_slice(syscall!(self.trussed.random_bytes(32)).bytes.as_slice());
-                    match SecretKey::from_bytes(&seed) {
+                    match SecretKey::from_bytes(seed) {
                         Ok(secret) => {
                             break Keypair {
                                 public: secret.public_key(),
@@ -241,7 +214,7 @@ where
                 let serialized_bytes = serialized_key.serialize();
 
                 store::store(
-                    self.store,
+                    &self.store,
                     trussed::types::Location::Internal,
                     FILENAME_P256_SECRET,
                     &serialized_bytes,
@@ -271,7 +244,7 @@ where
                 let serialized_bytes = serialized_key.serialize();
 
                 store::store(
-                    self.store,
+                    &self.store,
                     trussed::types::Location::Internal,
                     FILENAME_ED255_SECRET,
                     &serialized_bytes,
@@ -300,7 +273,7 @@ where
                 let serialized_bytes = serialized_key.serialize();
 
                 store::store(
-                    self.store,
+                    &self.store,
                     trussed::types::Location::Internal,
                     FILENAME_X255_SECRET,
                     &serialized_bytes,
@@ -320,7 +293,7 @@ where
                 } else {
                     info!("saving P256 CERT, {} bytes", data.len());
                     store::store(
-                        self.store,
+                        &self.store,
                         trussed::types::Location::Internal,
                         FILENAME_P256_CERT,
                         data,
@@ -336,7 +309,7 @@ where
                 } else {
                     info!("saving ED25519 CERT, {} bytes", data.len());
                     store::store(
-                        self.store,
+                        &self.store,
                         trussed::types::Location::Internal,
                         FILENAME_ED255_CERT,
                         data,
@@ -352,7 +325,7 @@ where
                 } else {
                     info!("saving X25519 CERT, {} bytes", data.len());
                     store::store(
-                        self.store,
+                        &self.store,
                         trussed::types::Location::Internal,
                         FILENAME_X255_CERT,
                         data,
@@ -375,7 +348,7 @@ where
                     let serialized_key = serialized_key.serialize();
 
                     store::store(
-                        self.store,
+                        &self.store,
                         trussed::types::Location::Internal,
                         FILENAME_T1_PUBLIC,
                         &serialized_key,

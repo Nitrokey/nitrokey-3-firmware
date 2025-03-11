@@ -319,9 +319,7 @@ pub trait Runner {
     type Syscall: Syscall + Clone + 'static;
 
     type Reboot: Reboot;
-    type Store: trussed::store::Store;
-    #[cfg(feature = "provisioner-app")]
-    type Filesystem: trussed::types::LfsStorage + 'static;
+    type Store: trussed::store::Store + Clone;
     #[cfg(feature = "se050")]
     type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(feature = "se050")]
@@ -364,8 +362,7 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 #[cfg(feature = "piv-authenticator")]
 type PivApp<R> = piv_authenticator::Authenticator<Client<R>>;
 #[cfg(feature = "provisioner-app")]
-type ProvisionerApp<R> =
-    provisioner_app::Provisioner<<R as Runner>::Store, <R as Runner>::Filesystem, Client<R>>;
+type ProvisionerApp<R> = provisioner_app::Provisioner<<R as Runner>::Store, Client<R>>;
 
 #[repr(u8)]
 pub enum CustomStatus {
@@ -489,7 +486,7 @@ const fn validate_mechanisms() {
         let mechanism = enabled[i];
         i += 1;
 
-        if contains(trussed::types::IMPLEMENTED_MECHANISMS, mechanism) {
+        if contains(trussed::service::IMPLEMENTED_MECHANISMS, mechanism) {
             continue;
         }
         #[cfg(feature = "backend-rsa")]
@@ -595,7 +592,7 @@ impl<R: Runner> Apps<R> {
 
         let trussed = client_builder.client::<AdminApp<R>>(runner, &());
         // TODO: use CLIENT_ID directly
-        let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store);
+        let mut filestore = ClientFilestore::new(ADMIN_APP_CLIENT_ID.into(), data.store.clone());
         let version = data.version.encode();
 
         let valid_migrators = migrations::MIGRATORS;
@@ -636,10 +633,10 @@ impl<R: Runner> Apps<R> {
                 trussed_auth::FilesystemLayout::V0,
                 dispatch::AUTH_LOCATION,
                 path!("opcard"),
-                data.store,
+                data.store.clone(),
             )
             .unwrap_or_default();
-            let mut fs = ClientFilestore::new(path!("opcard").into(), data.store);
+            let mut fs = ClientFilestore::new(path!("opcard").into(), data.store.clone());
             let opcard_used = fs
                 .read_dir_first(path!(""), Location::External, &NotBefore::None)
                 .unwrap_or_default()
@@ -694,7 +691,7 @@ impl<R: Runner> Apps<R> {
             .unwrap_or_default();
 
         let migration_success = app
-            .migrate(migration_version, data.store, &mut filestore)
+            .migrate(migration_version, data.store.clone(), &mut filestore)
             .is_ok();
         if !migration_success {
             data.init_status.insert(InitStatus::MIGRATION_ERROR);
@@ -783,15 +780,14 @@ impl<R: Runner> Apps<R> {
 }
 
 #[cfg(feature = "trussed-usbip")]
-impl<R, S> trussed_usbip::Apps<'static, S, Dispatch<R::Twi, R::Se050Timer>> for Apps<R>
+impl<R> trussed_usbip::Apps<'static, Dispatch<R::Twi, R::Se050Timer>> for Apps<R>
 where
     R: Runner<Syscall = trussed_usbip::Syscall>,
-    S: trussed::virt::StoreProvider,
 {
     type Data = (R, Data<R>);
 
     fn new(
-        trussed_service: &mut Service<trussed::virt::Platform<S>, Dispatch<R::Twi, R::Se050Timer>>,
+        trussed_service: &mut Service<trussed_usbip::Platform, Dispatch<R::Twi, R::Se050Timer>>,
         endpoints: &mut alloc::vec::Vec<Endpoint>,
         syscall: trussed_usbip::Syscall,
         (runner, data): (R, Data<R>),
@@ -1018,7 +1014,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
             fido_authenticator::Config {
                 max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
                 skip_up_timeout,
-                max_resident_credential_count: Some(10),
+                max_resident_credential_count: Some(100),
                 large_blobs,
                 nfc_transport: data.has_nfc,
             },
@@ -1234,8 +1230,6 @@ impl<R: Runner> App<R> for PivApp<R> {
 #[cfg(feature = "provisioner-app")]
 pub struct ProvisionerData<R: Runner> {
     pub store: R::Store,
-    pub stolen_filesystem: &'static mut R::Filesystem,
-    pub nfc_powered: bool,
     pub rebooter: fn() -> !,
 }
 
@@ -1248,14 +1242,7 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
 
     fn with_client(runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
         let uuid = runner.uuid();
-        Self::new(
-            trussed,
-            data.store,
-            data.stolen_filesystem,
-            data.nfc_powered,
-            uuid,
-            data.rebooter,
-        )
+        Self::new(trussed, data.store.clone(), uuid, data.rebooter)
     }
 
     fn channel() -> &'static TrussedChannel {

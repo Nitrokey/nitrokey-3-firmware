@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 delog = "0.1"
-apdu-dispatch = "0.3"
+apdu-dispatch = "0.3.1"
 bitflags = "2"
 ctaphid-dispatch = "0.2"
 embedded-hal = "0.2.7"
@@ -46,7 +46,7 @@ ndef-app = { path = "../ndef-app", optional = true }
 webcrypt = { version = "0.8.0", optional = true }
 secrets-app = { version = "0.13.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.4.0", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }
-piv-authenticator = { version = "0.3.8", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
+piv-authenticator = { version = "0.5.0", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]
