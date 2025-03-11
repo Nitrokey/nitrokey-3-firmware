@@ -37,15 +37,23 @@ trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backe
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "1e1ca03a3a62ea9b802f4070ea4bce002eeb4bec" }
 
 # TODO: revert these to Git versions
-trussed-pqc-backend = { path = "../trussed-pqc-backend" }
-trussed-core = { path = "../trussed/core" }
-trussed = { path = "../trussed" }
-fido-authenticator = { path = "../fido-authenticator" }
-ctap-types = { path = "../ctap-types" }
-cosey = { path = "../cosey" }
-trussed-rsa-alloc = { path = "../trussed-rsa-backend" }
-ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
-usbd-ctaphid = { path = "../usbd-ctaphid" }
+#trussed-pqc-backend = { path = "../trussed-pqc-backend" }
+#trussed-core = { path = "../trussed/core" }
+#trussed = { path = "../trussed" }
+#fido-authenticator = { path = "../fido-authenticator" }
+#ctap-types = { path = "../ctap-types" }
+#cosey = { path = "../cosey" }
+#ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
+#usbd-ctaphid = { path = "../usbd-ctaphid" }
+trussed-core = { git = "https://github.com/sandbox-quantum/trussed.git", branch = "feat/pqc"}
+trussed = { git = "https://github.com/sandbox-quantum/trussed.git", branch = "feat/pqc"}
+trussed-pqc-backend = { git = "https://github.com/sandbox-quantum/trussed-pqc-backend.git", branch = "dev"}
+fido-authenticator = { git = "https://github.com/sandbox-quantum/fido-authenticator.git", branch = "feat/pqc"}
+ctap-types = { git =  "https://github.com/sandbox-quantum/ctap-types.git", branch = "feat/pqc-v2" }
+cosey = { git = "https://github.com/sandbox-quantum/cosey.git", branch = "feat/pqc-v2" }
+trussed-rsa-alloc = { git = "https://github.com/sandbox-quantum/trussed-rsa-backend.git", branch = "feat/pqc" }
+ctaphid-dispatch = { git = "https://github.com/sandbox-quantum/ctaphid-dispatch.git", branch = "feat/pqc"}
+usbd-ctaphid = { git = "https://github.com/sandbox-quantum/usbd-ctaphid.git", branch = "feat/pqc" }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git"}
 
 [profile.release]
