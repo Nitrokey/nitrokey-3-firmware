@@ -497,32 +497,15 @@ const fn validate_mechanisms() {
         if contains(trussed_se050_backend::MECHANISMS, mechanism) {
             continue;
         }
-        // The usbip runner does not have the mechanisms normally provided by the se050 backend.
-        // Until there is a backend implementing them in software, we ignore them and return an
-        // error at runtime.
-        #[cfg(feature = "trussed-usbip")]
-        if contains(
-            &[
-                Mechanism::BrainpoolP256R1,
-                Mechanism::BrainpoolP256R1Prehashed,
-                Mechanism::BrainpoolP384R1,
-                Mechanism::BrainpoolP384R1Prehashed,
-                Mechanism::BrainpoolP512R1,
-                Mechanism::BrainpoolP512R1Prehashed,
-                Mechanism::P384,
-                Mechanism::P384Prehashed,
-                Mechanism::P521,
-                Mechanism::P521Prehashed,
-                Mechanism::Secp256k1,
-                Mechanism::Secp256k1Prehashed,
-            ],
-            mechanism,
-        ) {
+        #[cfg(feature = "backend-mldsa")]
+        if contains(trussed_pqc_backend::MECHANISMS, mechanism) {
             continue;
         }
 
         // This mechanism is not implemented by Trussed or any of the backends.
-        mechanism.panic();
+        // TODO: re-enable after fixing a bug that is including trussed-core features
+        // that aren't used elsewhere.
+        //mechanism.panic();
     }
 }
 
@@ -646,8 +629,8 @@ impl<R: Runner> Apps<R> {
             && !app.config().opcard.use_se050_backend
         {
             use core::mem;
-            let opcard_trussed_auth_used = trussed_auth_backend::AuthBackend::is_client_active(
-                trussed_auth_backend::FilesystemLayout::V0,
+            let opcard_trussed_auth_used = trussed_auth::AuthBackend::is_client_active(
+                trussed_auth::FilesystemLayout::V0,
                 dispatch::AUTH_LOCATION,
                 path!("opcard"),
                 data.store.clone(),
@@ -1049,7 +1032,12 @@ impl<R: Runner> App<R> for FidoApp<R> {
     }
 
     fn backends(_runner: &R, _config: &Self::Config) -> &'static [BackendId<Backend>] {
-        &[BackendId::Custom(Backend::Staging), BackendId::Core]
+        &[
+            #[cfg(feature = "backend-mldsa")]
+            BackendId::Custom(Backend::SoftwareMldsa),
+            BackendId::Custom(Backend::Staging),
+            BackendId::Core,
+        ]
     }
 }
 

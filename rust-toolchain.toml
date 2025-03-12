@@ -1,4 +1,4 @@
 [toolchain]
-channel = "1.82.0"
+channel = "1.85.0"
 components = ["rustfmt", "llvm-tools-preview", "clippy"]
 targets = ["thumbv7em-none-eabihf", "thumbv8m.main-none-eabi"]
