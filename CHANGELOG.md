@@ -6,6 +6,14 @@
 - provisioner-app: Remove ReformatFilesystem command
 - fido-authenticator: Increase the maximum number of discoverable credentials (resident keys) to 100.
   - Note that the actual number of discoverable credentials that can be stored on a device depends on the model and the space used by other applications.
+- piv-authenticator: Update to [v0.5.0](https://github.com/trussed-dev/piv-authenticator/releases/tag/v0.5.0)
+  - Add support for RSA 3072, RSA 4096 and NIST P-384
+
+## v1.8.1 (2025-02-11)
+
+### Security Fixes
+
+- piv-authenticator: Fix [CVE-2025-25201](https://github.com/Nitrokey/nitrokey-3-firmware/security/advisories/GHSA-jfhm-ppq8-7hgx). For more information, see the [blog post](https://www.nitrokey.com/blog/2025/nitrokey-3-firmware-v181-security-update).
 
 ## v1.8.0 (2024-12-06)
 
