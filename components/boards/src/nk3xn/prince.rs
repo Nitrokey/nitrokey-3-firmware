@@ -135,7 +135,7 @@ impl Storage for InternalFilesystem {
     }
 
     type CACHE_BUFFER = [u8; 512];
-    type LOOKAHEAD_BUFFER = [u8; 8*8];
+    type LOOKAHEAD_BUFFER = [u8; 8 * 8];
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize> {
         with_enabled(&mut self.prince, || {
