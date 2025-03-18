@@ -23,6 +23,8 @@ memory-regions = { path = "components/memory-regions" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "ac106d63ab5e19021b0e37f0efb4313f8168a110" }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "d0774abda2a178bba5e20602e44f7fa80cd191a4" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "6a411670149dd62d28c3e6d142045f5c28b9c353"}
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "6a411670149dd62d28c3e6d142045f5c28b9c353"}
 
 # applications
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }

@@ -1774,11 +1774,9 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a43f3c0c6a7d127e3e1241665dd896d8bf1ca31cf9d826a1dc65239bd59868"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=6a411670149dd62d28c3e6d142045f5c28b9c353#6a411670149dd62d28c3e6d142045f5c28b9c353"
 dependencies = [
  "delog",
- "generic-array",
  "heapless",
  "littlefs2-core",
  "littlefs2-sys",
@@ -1787,8 +1785,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a81a4745d38b288b7583fe8ea3736897628df81f4d0f1d0314fa5a3af570de4"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=6a411670149dd62d28c3e6d142045f5c28b9c353#6a411670149dd62d28c3e6d142045f5c28b9c353"
 dependencies = [
  "bitflags 2.6.0",
  "heapless-bytes",

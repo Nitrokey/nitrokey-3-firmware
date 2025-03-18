@@ -18,13 +18,11 @@ const_ram_storage!(
     erase_value = 0xff,
     read_size = 16,
     write_size = 256,
-    cache_size_ty = littlefs2::consts::U256,
+    cache_size = 256,
     // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
     block_size = 256,
     block_count = 8192 / 256,
-    lookahead_size_ty = littlefs2::consts::U1,
-    filename_max_plus_one_ty = littlefs2::consts::U256,
-    path_max_plus_one_ty = littlefs2::consts::U256,
+    lookahead_size = 1,
 );
 
 pub struct StoreResources<B: Board> {
@@ -133,11 +131,11 @@ pub fn init_store<B: Board>(
     status: &mut InitStatus,
 ) -> RunnerStore<B> {
     let ifs_storage = resources.internal.storage.write(int_flash);
-    let ifs_alloc = resources.internal.alloc.write(Filesystem::allocate());
+    let ifs_alloc = resources.internal.alloc.write(Filesystem::allocate(&ifs_storage));
     let efs_storage = resources.external.storage.write(ext_flash);
-    let efs_alloc = resources.external.alloc.write(Filesystem::allocate());
+    let efs_alloc = resources.external.alloc.write(Filesystem::allocate(&efs_storage));
     let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
-    let vfs_alloc = resources.volatile.alloc.write(Filesystem::allocate());
+    let vfs_alloc = resources.volatile.alloc.write(Filesystem::allocate(&vfs_storage));
 
     let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
         Ok(ifs) => resources.internal.fs.write(ifs),

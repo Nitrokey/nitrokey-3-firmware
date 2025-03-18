@@ -13,16 +13,35 @@ pub struct RamStorage<S, const SIZE: usize> {
 }
 
 impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
-    const BLOCK_SIZE: usize = S::BLOCK_SIZE;
-    const READ_SIZE: usize = S::READ_SIZE;
-    const WRITE_SIZE: usize = S::WRITE_SIZE;
-    const BLOCK_COUNT: usize = S::BLOCK_COUNT;
+    fn read_size(&self) -> usize {
+        256
+    }
 
-    type CACHE_SIZE = S::CACHE_SIZE;
-    type LOOKAHEAD_SIZE = S::LOOKAHEAD_SIZE;
+    fn write_size(&self) -> usize {
+        256
+    }
+
+    fn block_size(&self) -> usize {
+        256
+    }
+
+    fn cache_size(&self) -> usize {
+        256
+    }
+
+    fn lookahead_size(&self) -> usize {
+        1
+    }
+
+    fn block_count(&self) -> usize {
+        self.block_size() / SIZE
+    }
+    
+    type CACHE_BUFFER = S::CACHE_BUFFER;
+    type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
-        let read_size: usize = Self::READ_SIZE;
+        let read_size = self.read_size();
         debug_assert!(off % read_size == 0);
         debug_assert!(buf.len() % read_size == 0);
         for (from, to) in self.buf.iter().skip(off).zip(buf.iter_mut()) {
@@ -40,7 +59,7 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
         if off + data.len() > SIZE {
             return Err(Error::NO_SPACE);
         }
-        let write_size: usize = Self::WRITE_SIZE;
+        let write_size = self.write_size();
         debug_assert!(off % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
         for (from, to) in data.iter().zip(self.buf.iter_mut().skip(off)) {
@@ -51,7 +70,7 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
     }
 
     fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
-        let block_size: usize = Self::BLOCK_SIZE;
+        let block_size = self.block_size();
         debug_assert!(off % block_size == 0);
         debug_assert!(len % block_size == 0);
         for byte in self.buf.iter_mut().skip(off).take(len) {
@@ -82,13 +101,51 @@ impl<S: Storage, const RAM_SIZE: usize> OptionalStorage<S, RAM_SIZE> {
 }
 
 impl<S: Storage, const RAM_SIZE: usize> Storage for OptionalStorage<S, RAM_SIZE> {
-    const BLOCK_SIZE: usize = S::BLOCK_SIZE;
-    const READ_SIZE: usize = S::READ_SIZE;
-    const WRITE_SIZE: usize = S::WRITE_SIZE;
-    const BLOCK_COUNT: usize = S::BLOCK_COUNT;
+    fn read_size(&self) -> usize {
+        match self {
+            Self::Storage(s) => s.read_size(),
+            Self::Ram(s) => s.read_size(),
+        }
+    }
 
-    type CACHE_SIZE = S::CACHE_SIZE;
-    type LOOKAHEAD_SIZE = S::LOOKAHEAD_SIZE;
+    fn write_size(&self) -> usize {
+        match self {
+            Self::Storage(s) => s.write_size(),
+            Self::Ram(s) => s.write_size(),
+        }
+    }
+
+    fn block_size(&self) -> usize {
+        match self {
+            Self::Storage(s) => s.block_size(),
+            Self::Ram(s) => s.block_size(),
+        }
+    }
+
+    fn cache_size(&self) -> usize {
+        match self {
+            Self::Storage(s) => s.cache_size(),
+            Self::Ram(s) => s.cache_size(),
+        }
+    }
+
+    fn lookahead_size(&self) -> usize {
+        match self {
+            Self::Storage(s) => s.lookahead_size(),
+            Self::Ram(s) => s.lookahead_size(),
+        }
+    }
+
+    fn block_count(&self) -> usize {
+        match self {
+            Self::Storage(s)  => s.block_count(),
+            Self::Ram(s) => s.block_count(),
+        }
+    }
+    
+    type CACHE_BUFFER = S::CACHE_BUFFER;
+    type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
+
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         info_now!("EFr {:x} {:x}", off, buf.len());
