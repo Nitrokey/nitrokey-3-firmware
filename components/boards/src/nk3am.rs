@@ -76,7 +76,7 @@ impl Board for NK3AM {
         // regular mount failed, try mounting "old" (pre-journaling) IFS
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
         let mut old_ifs_storage = OldFlashStorage::new(pac.NVMC);
-        let mut old_ifs_alloc: Allocation<OldFlashStorage> = Filesystem::allocate();
+        let mut old_ifs_alloc: Allocation<OldFlashStorage> = Filesystem::allocate(&old_ifs_storage);
         let old_mountable = Filesystem::is_mountable(&mut old_ifs_storage);
 
         // we can mount the old ifs filesystem, thus we need to migrate

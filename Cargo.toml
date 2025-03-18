@@ -37,8 +37,8 @@ trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.5.0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.3" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "d0ebffac28f264990e8eedea98074005f318f0f4"}
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "d0ebffac28f264990e8eedea98074005f318f0f4"}
 
 [profile.release]
 codegen-units = 1
