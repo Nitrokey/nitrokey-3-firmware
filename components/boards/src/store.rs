@@ -42,6 +42,12 @@ impl<B: Board> StoreResources<B> {
     }
 }
 
+impl<B: Board> Default for StoreResources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct StorageResources<S: Storage + 'static> {
     fs: MaybeUninit<Filesystem<'static, S>>,
     alloc: MaybeUninit<Allocation<S>>,
@@ -55,6 +61,12 @@ impl<S: Storage + 'static> StorageResources<S> {
             alloc: MaybeUninit::uninit(),
             storage: MaybeUninit::uninit(),
         }
+    }
+}
+
+impl<S: Storage + 'static> Default for StorageResources<S> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -135,17 +147,17 @@ pub fn init_store<B: Board>(
     let ifs_alloc = resources
         .internal
         .alloc
-        .write(Filesystem::allocate(&ifs_storage));
+        .write(Filesystem::allocate(ifs_storage));
     let efs_storage = resources.external.storage.write(ext_flash);
     let efs_alloc = resources
         .external
         .alloc
-        .write(Filesystem::allocate(&efs_storage));
+        .write(Filesystem::allocate(efs_storage));
     let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
     let vfs_alloc = resources
         .volatile
         .alloc
-        .write(Filesystem::allocate(&vfs_storage));
+        .write(Filesystem::allocate(vfs_storage));
 
     let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
         Ok(ifs) => resources.internal.fs.write(ifs),

@@ -111,7 +111,7 @@ impl<S: Storage> Storage for FilesystemStorage<S> {
     fn block_count(&self) -> usize {
         self.block_size() / IFS_STORAGE_SIZE
     }
-    
+
     type CACHE_BUFFER = S::CACHE_BUFFER;
     type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
 

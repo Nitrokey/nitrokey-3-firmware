@@ -36,7 +36,7 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
     fn block_count(&self) -> usize {
         self.block_size() / SIZE
     }
-    
+
     type CACHE_BUFFER = S::CACHE_BUFFER;
     type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
 
@@ -138,14 +138,13 @@ impl<S: Storage, const RAM_SIZE: usize> Storage for OptionalStorage<S, RAM_SIZE>
 
     fn block_count(&self) -> usize {
         match self {
-            Self::Storage(s)  => s.block_count(),
+            Self::Storage(s) => s.block_count(),
             Self::Ram(s) => s.block_count(),
         }
     }
-    
+
     type CACHE_BUFFER = S::CACHE_BUFFER;
     type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
-
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         info_now!("EFr {:x} {:x}", off, buf.len());
