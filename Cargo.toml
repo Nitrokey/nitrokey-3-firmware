@@ -21,7 +21,7 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e107ed315a07dc6c992fac39d542e847cc3a1b6c" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "7c19c00a8959a88a498032fb096d4574d1a85007" }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
 
 # applications
