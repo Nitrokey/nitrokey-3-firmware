@@ -9,28 +9,33 @@ const ERASED: u8 = 0xff;
 
 pub struct RamStorage<S, const SIZE: usize> {
     buf: [u8; SIZE],
+    read_size: usize,
+    write_size: usize,
+    block_size: usize,
+    cache_size: usize,
+    lookahead_size: usize,
     _marker: PhantomData<S>,
 }
 
 impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
     fn read_size(&self) -> usize {
-        256
+        self.read_size
     }
 
     fn write_size(&self) -> usize {
-        256
+        self.write_size
     }
 
     fn block_size(&self) -> usize {
-        256
+        self.block_size
     }
 
     fn cache_size(&self) -> usize {
-        256
+        self.cache_size
     }
 
     fn lookahead_size(&self) -> usize {
-        1
+        self.lookahead_size
     }
 
     fn block_count(&self) -> usize {
@@ -77,15 +82,6 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
             *byte = ERASED;
         }
         Ok(len)
-    }
-}
-
-impl<S, const SIZE: usize> Default for RamStorage<S, SIZE> {
-    fn default() -> Self {
-        Self {
-            buf: [0xff; SIZE],
-            _marker: Default::default(),
-        }
     }
 }
 
@@ -171,9 +167,41 @@ impl<S: Storage, const RAM_SIZE: usize> Storage for OptionalStorage<S, RAM_SIZE>
     }
 }
 
-impl<S, const RAM_SIZE: usize> Default for OptionalStorage<S, RAM_SIZE> {
-    fn default() -> Self {
-        Self::Ram(Default::default())
+impl<S, const RAM_SIZE: usize> OptionalStorage<S, RAM_SIZE> {
+    pub fn with_ram_parameters(
+        read_size: usize,
+        write_size: usize,
+        block_size: usize,
+        cache_size: usize,
+        lookahead_size: usize,
+    ) -> Self {
+        Self::Ram(RamStorage::with_parameters(
+            read_size,
+            write_size,
+            block_size,
+            cache_size,
+            lookahead_size,
+        ))
+    }
+}
+
+impl<S, const RAM_SIZE: usize> RamStorage<S, RAM_SIZE> {
+    pub fn with_parameters(
+        read_size: usize,
+        write_size: usize,
+        block_size: usize,
+        cache_size: usize,
+        lookahead_size: usize,
+    ) -> Self {
+        RamStorage {
+            read_size,
+            write_size,
+            block_size,
+            cache_size,
+            lookahead_size,
+            buf: [0; RAM_SIZE],
+            _marker: PhantomData,
+        }
     }
 }
 

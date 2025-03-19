@@ -586,7 +586,7 @@ impl Stage4 {
         } else {
             self.status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
             info!("failed to initialize external flash, using fallback");
-            OptionalStorage::default()
+            OptionalStorage::with_ram_parameters(4, 256, 4096, 256, 1)
         }
     }
 
@@ -599,7 +599,7 @@ impl Stage4 {
             self.setup_external_flash(spi)
         } else {
             info_now!("simulating external flash with RAM");
-            OptionalStorage::default()
+            OptionalStorage::with_ram_parameters(4, 256, 4096, 256, 1)
         };
 
         #[cfg(not(feature = "no-encrypted-storage"))]

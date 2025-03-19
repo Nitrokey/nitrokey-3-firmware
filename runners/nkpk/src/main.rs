@@ -84,7 +84,7 @@ mod app {
         );
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
-        let external_flash = ExternalFlashStorage::default();
+        let external_flash = ExternalFlashStorage::with_parameters(4, 256, 256, 256, 1);
         let store = store::init_store(
             &mut ctx.local.resources.store,
             internal_flash,

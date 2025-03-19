@@ -33,6 +33,7 @@ log-warn = []
 log-error = []
 log-none = []
 no-delog = ["boards/no-delog", "delog/knock-it-off"]
+develop = []
 
 log-rtt = ["boards/log-rtt"]
 
