@@ -582,11 +582,11 @@ impl Stage4 {
         nb::block!(self.basic.delay_timer.wait()).ok();
 
         if let Some(storage) = ExtFlashStorage::try_new(spi, flash_cs) {
-            storage.into()
+            Some(storage).into()
         } else {
             self.status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
             info!("failed to initialize external flash, using fallback");
-            OptionalStorage::with_ram_parameters(4, 256, 4096, 256, 1)
+            None.into()
         }
     }
 
@@ -599,7 +599,7 @@ impl Stage4 {
             self.setup_external_flash(spi)
         } else {
             info_now!("simulating external flash with RAM");
-            OptionalStorage::with_ram_parameters(4, 256, 4096, 256, 1)
+            None.into()
         };
 
         #[cfg(not(feature = "no-encrypted-storage"))]
@@ -631,7 +631,7 @@ impl Stage4 {
             self.basic.perf_timer.elapsed().0 / 1000
         );
         // TODO: poll iso14443
-        let simulated_efs = external.is_ram();
+        let simulated_efs = external.0.is_none();
         let store = store::init_store(
             resources,
             internal,

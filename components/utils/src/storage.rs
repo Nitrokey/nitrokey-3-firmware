@@ -1,212 +1,140 @@
 use core::marker::PhantomData;
 
-use littlefs2::{driver::Storage, io::Error};
+use littlefs2::{
+    driver::Storage,
+    fs::{Attribute, FileOpenFlags, Metadata},
+    io::{Error, OpenSeekFrom},
+    object_safe::{DirEntriesCallback, DynFilesystem, FileCallback, Predicate},
+    path::Path,
+};
 
-// Chosen so that the littlefs2 header fits.  Note that using this size will cause a `NoSpace`
-// error during formatting.  The filesystem will still be mountable though.
-const DEFAULT_RAM_SIZE: usize = 256;
-const ERASED: u8 = 0xff;
+pub struct EmptyFilesystem;
 
-pub struct RamStorage<S, const SIZE: usize> {
-    buf: [u8; SIZE],
-    read_size: usize,
-    write_size: usize,
-    block_size: usize,
-    cache_size: usize,
-    lookahead_size: usize,
-    _marker: PhantomData<S>,
-}
-
-impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
-    fn read_size(&self) -> usize {
-        self.read_size
+impl DynFilesystem for EmptyFilesystem {
+    fn total_blocks(&self) -> usize {
+        0
     }
 
-    fn write_size(&self) -> usize {
-        self.write_size
+    fn total_space(&self) -> usize {
+        0
+    }
+    fn available_blocks(&self) -> Result<usize, Error> {
+        Ok(0)
+    }
+    fn available_space(&self) -> Result<usize, Error> {
+        Ok(0)
     }
 
-    fn block_size(&self) -> usize {
-        self.block_size
+    fn remove(&self, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn remove_dir(&self, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn remove_dir_all(&self, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn remove_dir_all_where(&self, _: &Path, _: Predicate) -> Result<usize, Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn rename(&self, _: &Path, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn exists(&self, _: &Path) -> bool {
+        false
+    }
+    fn metadata(&self, _: &Path) -> Result<Metadata, Error> {
+        Err(Error::NO_SPACE)
     }
 
-    fn cache_size(&self) -> usize {
-        self.cache_size
+    fn create_file_and_then_unit(&self, _: &Path, _: FileCallback) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn open_file_and_then_unit(&self, _: &Path, _: FileCallback) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn open_file_with_flags_and_then_unit(
+        &self,
+        _: FileOpenFlags,
+        _: &Path,
+        _: FileCallback,
+    ) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn attribute<'a>(
+        &self,
+        _: &Path,
+        _: u8,
+        _: &'a mut [u8],
+    ) -> Result<Option<Attribute<'a>>, Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn remove_attribute<'a>(&self, _: &Path, _: u8) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
+    }
+    fn set_attribute(&self, _: &Path, _: u8, _: &[u8]) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
 
-    fn lookahead_size(&self) -> usize {
-        self.lookahead_size
+    fn create_dir(&self, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
 
-    fn block_count(&self) -> usize {
-        self.block_size() / SIZE
+    fn create_dir_all(&self, _: &Path) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
-
-    type CACHE_BUFFER = S::CACHE_BUFFER;
-    type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
-
-    fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
-        let read_size = self.read_size();
-        debug_assert!(off % read_size == 0);
-        debug_assert!(buf.len() % read_size == 0);
-        for (from, to) in self.buf.iter().skip(off).zip(buf.iter_mut()) {
-            *to = *from;
-        }
-        // Data outside of the RAM part is always erased
-        for to in buf.iter_mut().skip(self.buf.len().saturating_sub(off)) {
-            *to = ERASED;
-        }
-        info!("{}: {:?}", buf.len(), buf);
-        Ok(buf.len())
+    fn write(&self, _: &Path, _: &[u8]) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
-
-    fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
-        if off + data.len() > SIZE {
-            return Err(Error::NO_SPACE);
-        }
-        let write_size = self.write_size();
-        debug_assert!(off % write_size == 0);
-        debug_assert!(data.len() % write_size == 0);
-        for (from, to) in data.iter().zip(self.buf.iter_mut().skip(off)) {
-            *to = *from;
-        }
-        info!("{}: {:?}", data.len(), data);
-        Ok(data.len())
+    fn write_chunk(&self, _: &Path, _: &[u8], _: OpenSeekFrom) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
-
-    fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
-        let block_size = self.block_size();
-        debug_assert!(off % block_size == 0);
-        debug_assert!(len % block_size == 0);
-        for byte in self.buf.iter_mut().skip(off).take(len) {
-            *byte = ERASED;
-        }
-        Ok(len)
-    }
-}
-
-pub enum OptionalStorage<S, const RAM_SIZE: usize = DEFAULT_RAM_SIZE> {
-    Storage(S),
-    Ram(RamStorage<S, RAM_SIZE>),
-}
-
-impl<S: Storage, const RAM_SIZE: usize> OptionalStorage<S, RAM_SIZE> {
-    pub fn is_ram(&self) -> bool {
-        matches!(self, Self::Ram(_))
+    fn read_dir_and_then_unit(&self, _: &Path, _: DirEntriesCallback<'_>) -> Result<(), Error> {
+        Err(Error::NO_SPACE)
     }
 }
 
-impl<S: Storage, const RAM_SIZE: usize> Storage for OptionalStorage<S, RAM_SIZE> {
-    fn read_size(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.read_size(),
-            Self::Ram(s) => s.read_size(),
-        }
-    }
+pub trait MaybeStorage: 'static {
+    type Storage: Storage + 'static;
 
-    fn write_size(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.write_size(),
-            Self::Ram(s) => s.write_size(),
-        }
-    }
+    fn as_storage(&mut self) -> Option<&mut Self::Storage>;
+}
 
-    fn block_size(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.block_size(),
-            Self::Ram(s) => s.block_size(),
-        }
-    }
+/// Exists only to avoid conflicting impls
+pub struct OptionalStorage<S>(pub Option<S>);
 
-    fn cache_size(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.cache_size(),
-            Self::Ram(s) => s.cache_size(),
-        }
-    }
-
-    fn lookahead_size(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.lookahead_size(),
-            Self::Ram(s) => s.lookahead_size(),
-        }
-    }
-
-    fn block_count(&self) -> usize {
-        match self {
-            Self::Storage(s) => s.block_count(),
-            Self::Ram(s) => s.block_count(),
-        }
-    }
-
-    type CACHE_BUFFER = S::CACHE_BUFFER;
-    type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
-
-    fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
-        info_now!("EFr {:x} {:x}", off, buf.len());
-        match self {
-            Self::Storage(s) => s.read(off, buf),
-            Self::Ram(s) => s.read(off, buf),
-        }
-    }
-
-    fn write(&mut self, off: usize, data: &[u8]) -> Result<usize, Error> {
-        info_now!("EFw {:x} {:x}", off, data.len());
-        match self {
-            Self::Storage(s) => s.write(off, data),
-            Self::Ram(s) => s.write(off, data),
-        }
-    }
-
-    fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
-        info_now!("EFe {:x} {:x}", off, len);
-        match self {
-            Self::Storage(s) => s.erase(off, len),
-            Self::Ram(s) => s.erase(off, len),
-        }
+impl<T> From<Option<T>> for OptionalStorage<T> {
+    fn from(value: Option<T>) -> Self {
+        Self(value)
     }
 }
 
-impl<S, const RAM_SIZE: usize> OptionalStorage<S, RAM_SIZE> {
-    pub fn with_ram_parameters(
-        read_size: usize,
-        write_size: usize,
-        block_size: usize,
-        cache_size: usize,
-        lookahead_size: usize,
-    ) -> Self {
-        Self::Ram(RamStorage::with_parameters(
-            read_size,
-            write_size,
-            block_size,
-            cache_size,
-            lookahead_size,
-        ))
+/// Exists only to avoid conflicting impls
+pub struct PhantomStorage<S>(pub PhantomData<S>);
+
+impl<S> Default for PhantomStorage<S> {
+    fn default() -> Self {
+        Self(PhantomData)
     }
 }
 
-impl<S, const RAM_SIZE: usize> RamStorage<S, RAM_SIZE> {
-    pub fn with_parameters(
-        read_size: usize,
-        write_size: usize,
-        block_size: usize,
-        cache_size: usize,
-        lookahead_size: usize,
-    ) -> Self {
-        RamStorage {
-            read_size,
-            write_size,
-            block_size,
-            cache_size,
-            lookahead_size,
-            buf: [0; RAM_SIZE],
-            _marker: PhantomData,
-        }
+impl<S: Storage + 'static> MaybeStorage for OptionalStorage<S> {
+    type Storage = S;
+    fn as_storage(&mut self) -> Option<&mut S> {
+        self.0.as_mut()
     }
 }
 
-impl<S, const RAM_SIZE: usize> From<S> for OptionalStorage<S, RAM_SIZE> {
-    fn from(storage: S) -> Self {
-        Self::Storage(storage)
+impl<S: Storage + 'static> MaybeStorage for S {
+    type Storage = S;
+    fn as_storage(&mut self) -> Option<&mut S> {
+        Some(self)
+    }
+}
+
+impl<S: Storage + 'static> MaybeStorage for PhantomStorage<S> {
+    type Storage = S;
+    fn as_storage(&mut self) -> Option<&mut S> {
+        None
     }
 }
