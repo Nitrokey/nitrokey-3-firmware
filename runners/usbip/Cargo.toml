@@ -27,3 +27,8 @@ utils = { path = "../../components/utils", features = ["build"] }
 test = ["apps/nk3-test"]
 provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid", "trussed-usbip/ccid"]
+
+# PQC
+backend-mldsa44 = ["apps/backend-mldsa44"]
+backend-mldsa65 = ["apps/backend-mldsa65"]
+backend-mldsa87 = ["apps/backend-mldsa87"]
