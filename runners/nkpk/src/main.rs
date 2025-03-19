@@ -11,7 +11,7 @@ mod app {
     use apps::{Endpoints, Reboot};
     use boards::{
         init::{Resources, UsbClasses},
-        nkpk::{self, ExternalFlashStorage, InternalFlashStorage, NKPK},
+        nkpk::{self, InternalFlashStorage, NKPK},
         runtime,
         soc::nrf52::{self, rtic_monotonic::RtcDuration, Nrf52},
         store, Apps, Trussed,
@@ -85,7 +85,7 @@ mod app {
         );
 
         let internal_flash = InternalFlashStorage::new(ctx.device.NVMC);
-        let external_flash = ExternalFlashStorage::with_parameters(4, 256, 256, 256, 1);
+        let external_flash = Default::default();
         let store = store::init_store(
             &mut ctx.local.resources.store,
             internal_flash,

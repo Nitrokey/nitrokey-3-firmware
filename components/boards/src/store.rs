@@ -9,6 +9,7 @@ use littlefs2::{
     object_safe::DynFilesystem,
 };
 use trussed::store::Store;
+use utils::{EmptyFilesystem, MaybeStorage};
 
 use crate::Board;
 
@@ -29,6 +30,8 @@ pub struct StoreResources<B: Board> {
     internal: StorageResources<B::InternalStorage>,
     external: StorageResources<B::ExternalStorage>,
     volatile: StorageResources<VolatileStorage>,
+    // Used in cases where EFS is "faked"
+    empty_efs: MaybeUninit<EmptyFilesystem>,
 }
 
 impl<B: Board> StoreResources<B> {
@@ -37,6 +40,7 @@ impl<B: Board> StoreResources<B> {
             internal: StorageResources::new(),
             external: StorageResources::new(),
             volatile: StorageResources::new(),
+            empty_efs: MaybeUninit::uninit(),
         }
     }
 }
@@ -47,13 +51,13 @@ impl<B: Board> Default for StoreResources<B> {
     }
 }
 
-pub struct StorageResources<S: Storage + 'static> {
-    fs: MaybeUninit<Filesystem<'static, S>>,
-    alloc: MaybeUninit<Allocation<S>>,
+pub struct StorageResources<S: MaybeStorage + 'static> {
+    fs: MaybeUninit<Filesystem<'static, S::Storage>>,
+    alloc: MaybeUninit<Allocation<S::Storage>>,
     storage: MaybeUninit<S>,
 }
 
-impl<S: Storage + 'static> StorageResources<S> {
+impl<S: MaybeStorage + 'static> StorageResources<S> {
     pub const fn new() -> Self {
         Self {
             fs: MaybeUninit::uninit(),
@@ -143,21 +147,13 @@ pub fn init_store<B: Board>(
     status: &mut InitStatus,
 ) -> RunnerStore<B> {
     let ifs_storage = resources.internal.storage.write(int_flash);
+    let efs_storage = resources.external.storage.write(ext_flash);
+    let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
+
     let ifs_alloc = resources
         .internal
         .alloc
         .write(Filesystem::allocate(ifs_storage));
-    let efs_storage = resources.external.storage.write(ext_flash);
-    let efs_alloc = resources
-        .external
-        .alloc
-        .write(Filesystem::allocate(efs_storage));
-    let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
-    let vfs_alloc = resources
-        .volatile
-        .alloc
-        .write(Filesystem::allocate(vfs_storage));
-
     let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
         Ok(ifs) => resources.internal.fs.write(ifs),
         Err(_e) => {
@@ -166,14 +162,27 @@ pub fn init_store<B: Board>(
         }
     };
 
-    let efs = match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
-        Ok(efs) => resources.external.fs.write(efs),
-        Err(_e) => {
-            error!("EFS Mount Error {:?}", _e);
-            panic!("EFS");
+    let efs: &mut dyn DynFilesystem = if let Some(efs_storage) = efs_storage.as_storage() {
+        let efs_alloc = resources
+            .external
+            .alloc
+            .write(Filesystem::allocate(efs_storage));
+
+        match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
+            Ok(efs) => resources.external.fs.write(efs),
+            Err(_e) => {
+                error!("EFS Mount Error {:?}", _e);
+                panic!("EFS");
+            }
         }
+    } else {
+        resources.empty_efs.write(EmptyFilesystem)
     };
 
+    let vfs_alloc = resources
+        .volatile
+        .alloc
+        .write(Filesystem::allocate(vfs_storage));
     let vfs = match init_vfs(vfs_storage, vfs_alloc) {
         Ok(vfs) => resources.volatile.fs.write(vfs),
         Err(_e) => {
@@ -211,11 +220,11 @@ fn init_ifs<B: Board>(
 
 #[inline(always)]
 fn init_efs<B: Board>(
-    efs_storage: &'static mut B::ExternalStorage,
-    efs_alloc: &'static mut Allocation<B::ExternalStorage>,
+    efs_storage: &'static mut <B::ExternalStorage as MaybeStorage>::Storage,
+    efs_alloc: &'static mut Allocation<<B::ExternalStorage as MaybeStorage>::Storage>,
     simulated_efs: bool,
     status: &mut InitStatus,
-) -> Result<Filesystem<'static, B::ExternalStorage>> {
+) -> Result<Filesystem<'static, <B::ExternalStorage as MaybeStorage>::Storage>> {
     Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
         error_now!("EFS Mount Error {:?}", _err);
         let fmt_ext = Filesystem::format(storage);

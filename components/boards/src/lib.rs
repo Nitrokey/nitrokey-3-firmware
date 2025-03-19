@@ -32,6 +32,7 @@ use littlefs2::{
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::{client::Syscall, Platform};
+use utils::MaybeStorage;
 
 use crate::{
     soc::{Soc, Uuid},
@@ -53,7 +54,7 @@ pub trait Board {
     type Led: RgbLed;
 
     type InternalStorage: Storage + 'static;
-    type ExternalStorage: Storage + 'static;
+    type ExternalStorage: MaybeStorage;
 
     #[cfg(feature = "se050")]
     type Se050Timer: DelayUs<u32> + 'static;
