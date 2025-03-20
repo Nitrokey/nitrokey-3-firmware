@@ -131,7 +131,7 @@ impl Storage for InternalFilesystem {
     }
 
     fn block_count(&self) -> usize {
-        BLOCK_SIZE
+        BLOCK_COUNT
     }
 
     type CACHE_BUFFER = [u8; 512];
