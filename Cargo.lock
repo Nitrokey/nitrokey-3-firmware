@@ -161,10 +161,10 @@ name = "apps"
 version = "1.8.2"
 dependencies = [
  "admin-app",
- "apdu-dispatch",
+ "apdu-app",
  "bitflags 2.6.0",
  "cbor-smol",
- "ctaphid-dispatch",
+ "ctaphid-app",
  "delog",
  "embedded-hal",
  "fido-authenticator",
@@ -376,7 +376,7 @@ dependencies = [
  "cortex-m-rt",
  "cortex-m-rtic",
  "cortex-m-semihosting",
- "ctaphid-dispatch",
+ "ctaphid-dispatch 0.3.0",
  "delog",
  "embedded-hal",
  "embedded-storage",
@@ -924,6 +924,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctaphid-dispatch"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38fd4316573df369820c5a9f8285fe522d8871c0b20bcf7d390f73b8e6caee28"
+dependencies = [
+ "ctaphid-app",
+ "delog",
+ "heapless-bytes",
+ "interchange",
+ "ref-swap",
+ "trussed-core",
+]
+
+[[package]]
 name = "cty"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1111,7 +1125,6 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
- "ctaphid-dispatch",
  "delog",
  "embedded-alloc",
  "embedded-hal",
@@ -1955,7 +1968,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
- "ctaphid-dispatch",
+ "ctaphid-dispatch 0.3.0",
  "delog",
  "interchange",
  "memory-regions",
@@ -3441,10 +3454,10 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=2a002fdbcb4d1d989c896e0a249170b7da7f5ca5#2a002fdbcb4d1d989c896e0a249170b7da7f5ca5"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=504674453c9573a30aa2f155101df49eb2af1ba7#504674453c9573a30aa2f155101df49eb2af1ba7"
 dependencies = [
  "apdu-dispatch",
- "ctaphid-dispatch",
+ "ctaphid-dispatch 0.3.0",
  "interchange",
  "littlefs2-core",
  "log",
@@ -3590,11 +3603,11 @@ dependencies = [
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "092fad7bf817001ecade9272fe6ccbea4e5d0c02f99ca24c4c5ce97fbbff5371"
+checksum = "82f5a2aa6898726b4eeb3fa3796fb8dc49e76e2a16bd683db103f63bc8ceca97"
 dependencies = [
- "ctaphid-dispatch",
+ "ctaphid-dispatch 0.3.0",
  "delog",
  "embedded-time",
  "heapless-bytes",
@@ -3624,6 +3637,7 @@ dependencies = [
  "cfg-if",
  "clap",
  "clap-num",
+ "ctaphid-dispatch 0.3.0",
  "delog",
  "dialoguer",
  "littlefs2",
@@ -3757,7 +3771,7 @@ dependencies = [
  "cbor-smol",
  "ctap-types",
  "ctaphid-app",
- "ctaphid-dispatch",
+ "ctaphid-dispatch 0.2.0",
  "delog",
  "generic-array",
  "heapless",

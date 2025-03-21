@@ -19,13 +19,12 @@ mod app {
     use apdu_dispatch::dispatch::ApduDispatch;
     use apps::Endpoints;
     use boards::{
-        init::{Resources, UsbClasses},
+        init::{CtaphidDispatch, Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
         runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
         Apps, Trussed,
     };
-    use ctaphid_dispatch::Dispatch as CtaphidDispatch;
     use embedded_runner_lib::nk3xn;
     use lpc55_hal::{
         drivers::timer::Elapsed,

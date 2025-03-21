@@ -6,6 +6,7 @@ use std::{path::PathBuf, sync::Arc, thread};
 use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
+use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
 use trussed::{platform::Platform as _, types::Location, Bytes};
 use trussed_usbip::{Platform, Store, Syscall};
@@ -185,7 +186,10 @@ fn exec(
 
     let data = apps::Data {
         admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
-        fido: FidoData { has_nfc: false },
+        fido: FidoData {
+            has_nfc: false,
+            max_message_size: DEFAULT_MESSAGE_SIZE,
+        },
         #[cfg(feature = "provisioner")]
         provisioner: apps::ProvisionerData {
             store,

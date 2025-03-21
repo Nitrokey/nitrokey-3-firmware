@@ -22,7 +22,7 @@ memory-regions = { path = "components/memory-regions" }
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "024e0eca5fb7dbd2457831f7c7bffe4341e08775" }
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "2a002fdbcb4d1d989c896e0a249170b7da7f5ca5" }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
 
 # applications
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }

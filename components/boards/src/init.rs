@@ -6,7 +6,7 @@ use apdu_dispatch::{
 use apps::AUTH_LOCATION;
 use apps::{AdminData, ClientBuilder, Data, Dispatch, Endpoints, FidoData, InitStatus};
 
-use ctaphid_dispatch::{Channel as CtapChannel, Dispatch as CtaphidDispatch};
+use ctaphid_dispatch::Channel as CtapChannel;
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
 use interchange::Channel;
@@ -27,6 +27,12 @@ use crate::{
     soc::Soc, store::StoreResources, Apps, Board, Runner, RunnerPlatform, RunnerStore, Trussed,
     UserInterface,
 };
+
+// This is not the theoretical maximum but a realistic upper bound to reduce stack usage.
+pub const CTAPHID_MESSAGE_SIZE: usize = 3072;
+
+pub type CtaphidDispatch<'pipe, 'interrupt> =
+    ctaphid_dispatch::Dispatch<'pipe, 'interrupt, CTAPHID_MESSAGE_SIZE>;
 
 #[cfg(not(feature = "no-delog"))]
 delog!(Delogger, 3 * 1024, 512, DelogFlusher);
@@ -90,7 +96,7 @@ pub fn init_logger<B: Board>(_version: &str) {
 pub struct UsbClasses<S: Soc> {
     pub usbd: UsbDevice<'static, S::UsbBus>,
     pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
-    pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus>,
+    pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus, CTAPHID_MESSAGE_SIZE>,
 }
 
 impl<S: Soc> UsbClasses<S> {
@@ -122,7 +128,7 @@ pub fn init_usb_nfc<B: Board>(
     version: Version,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
-    static CTAP_CHANNEL: CtapChannel = Channel::new();
+    static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
@@ -212,6 +218,7 @@ pub fn init_apps<B: Board>(
         admin,
         fido: FidoData {
             has_nfc: B::HAS_NFC,
+            max_message_size: CTAPHID_MESSAGE_SIZE,
         },
         #[cfg(feature = "provisioner")]
         provisioner,

@@ -8,6 +8,7 @@ apps = { path = "../../components/apps", features = ["log-all", "nk3", "trussed-
 cfg-if = { version = "1.0.0" }
 clap = { version = "4.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
+ctaphid-dispatch = "0.3"
 delog = { version = "0.1.6", features = ["std-log"] }
 dialoguer = { version = "0.10.4", default-features = false }
 littlefs2.workspace = true

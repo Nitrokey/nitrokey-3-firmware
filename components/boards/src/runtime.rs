@@ -1,10 +1,13 @@
 use apdu_dispatch::dispatch::{ApduDispatch, Interface};
 use apps::Endpoints;
-use ctaphid_dispatch::Dispatch as CtaphidDispatch;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
 
-use crate::{init::UsbClasses, soc::Soc, ui, Apps, Board, Trussed};
+use crate::{
+    init::{CtaphidDispatch, UsbClasses},
+    soc::Soc,
+    ui, Apps, Board, Trussed,
+};
 
 pub fn poll_dispatchers<B: Board>(
     apdu_dispatch: &mut ApduDispatch<'_>,

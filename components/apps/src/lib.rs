@@ -8,10 +8,10 @@ const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 #[cfg(feature = "webcrypt")]
 const WEBCRYPT_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
-use apdu_dispatch::{response::SIZE as ApduResponseSize, App as ApduApp};
+use apdu_app::App as ApduApp;
 use bitflags::bitflags;
 use core::marker::PhantomData;
-use ctaphid_dispatch::{app::App as CtaphidApp, MESSAGE_SIZE as CTAPHID_MESSAGE_SIZE};
+use ctaphid_app::App as CtaphidApp;
 #[cfg(feature = "se050")]
 use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
@@ -717,11 +717,11 @@ impl<R: Runner> Apps<R> {
         (app, data.init_status)
     }
 
-    pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
+    pub fn apdu_dispatch<F, T, const N: usize>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn ApduApp<ApduResponseSize>]) -> T,
+        F: FnOnce(&mut [&mut dyn ApduApp<N>]) -> T,
     {
-        let mut apps: Vec<&mut dyn ApduApp<ApduResponseSize>, 7> = Default::default();
+        let mut apps: Vec<&mut dyn ApduApp<N>, 7> = Default::default();
 
         // App 1: ndef
         #[cfg(feature = "ndef-app")]
@@ -761,12 +761,11 @@ impl<R: Runner> Apps<R> {
         f(&mut apps)
     }
 
-    pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
+    pub fn ctaphid_dispatch<F, T, const N: usize>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>]) -> T,
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static, N>]) -> T,
     {
-        let mut apps: Vec<&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>, 4> =
-            Default::default();
+        let mut apps: Vec<&mut dyn CtaphidApp<'static, N>, 4> = Default::default();
 
         // App 1: webcrypt or fido
         #[cfg(feature = "webcrypt")]
@@ -815,17 +814,17 @@ where
         apps
     }
 
-    fn with_ctaphid_apps<T>(
+    fn with_ctaphid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static, CTAPHID_MESSAGE_SIZE>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static, N>]) -> T,
     ) -> T {
         self.ctaphid_dispatch(f)
     }
 
     #[cfg(feature = "trussed-usbip-ccid")]
-    fn with_ccid_apps<T>(
+    fn with_ccid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::App<ApduResponseSize>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_app::App<N>]) -> T,
     ) -> T {
         self.apdu_dispatch(f)
     }
@@ -1002,6 +1001,7 @@ impl<R: Runner> App<R> for AdminApp<R> {
 #[cfg(feature = "fido-authenticator")]
 pub struct FidoData {
     pub has_nfc: bool,
+    pub max_message_size: usize,
 }
 
 #[cfg(feature = "fido-authenticator")]
@@ -1029,7 +1029,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
             trussed,
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
-                max_msg_size: usbd_ctaphid::constants::MESSAGE_SIZE,
+                max_msg_size: data.max_message_size,
                 skip_up_timeout,
                 max_resident_credential_count: Some(100),
                 large_blobs,
