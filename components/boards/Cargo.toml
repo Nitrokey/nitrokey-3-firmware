@@ -9,7 +9,7 @@ apps = { path = "../apps", features = ["fido-authenticator"] }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
 cortex-m-rt = "0.6.15"
-ctaphid-dispatch = "0.2"
+ctaphid-dispatch = "0.3"
 delog = "0.1"
 embedded-hal = "0.2.3"
 embedded-time = "0.12"
@@ -26,7 +26,7 @@ spi-memory = "0.2.0"
 trussed = { version = "0.1", default-features = false }
 usb-device = "0.2"
 usbd-ccid = "0.3"
-usbd-ctaphid = "0.2"
+usbd-ctaphid = "0.3"
 utils = { path = "../utils" }
 
 # soc-lpc55

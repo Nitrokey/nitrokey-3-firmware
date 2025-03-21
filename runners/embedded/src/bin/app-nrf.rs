@@ -10,13 +10,12 @@ mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
     use apps::{Endpoints, Reboot};
     use boards::{
-        init::{Resources, UsbClasses},
+        init::{CtaphidDispatch, Resources, UsbClasses},
         nk3am::{self, InternalFlashStorage, NK3AM},
         runtime,
         soc::nrf52::{self, rtic_monotonic::RtcDuration, Nrf52},
         store, Apps, Trussed,
     };
-    use ctaphid_dispatch::Dispatch as CtaphidDispatch;
     use interchange::Channel;
     use nrf52840_hal::{
         gpiote::Gpiote,
