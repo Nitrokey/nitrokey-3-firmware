@@ -16,6 +16,8 @@ use lpc55_hal::{
     },
     I2cMaster, Pin,
 };
+#[cfg(feature = "se050")]
+use se05x::embedded_hal::Hal027;
 
 use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
@@ -69,9 +71,9 @@ impl Board for NK3xN {
     type ExternalStorage = ExternalFlashStorage;
 
     #[cfg(feature = "se050")]
-    type Se050Timer = TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>;
+    type Se050Timer = Hal027<TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>>;
     #[cfg(feature = "se050")]
-    type Twi = I2C;
+    type Twi = Hal027<I2C>;
     #[cfg(not(feature = "se050"))]
     type Twi = ();
     #[cfg(not(feature = "se050"))]

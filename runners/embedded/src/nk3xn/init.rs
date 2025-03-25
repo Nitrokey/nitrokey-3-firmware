@@ -2,8 +2,6 @@ use apdu_dispatch::interchanges::{
     Channel as CcidChannel, Requester as CcidRequester, Responder as CcidResponder,
 };
 use apps::{Endpoints, InitStatus};
-#[cfg(feature = "se050")]
-use boards::nk3xn::TimerDelay;
 use boards::{
     flash::ExtFlashStorage,
     init::{self, UsbNfc, UsbResources},
@@ -66,6 +64,8 @@ use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
 use trussed::types::Location;
 use utils::OptionalStorage;
+#[cfg(feature = "se050")]
+use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
 
 use crate::{VERSION, VERSION_STRING};
 
@@ -750,7 +750,7 @@ impl Stage5 {
             None,
             #[cfg(feature = "se050")]
             self.se050_i2c
-                .map(|i2c| (i2c, TimerDelay(self.se050_timer))),
+                .map(|i2c| (Hal027(i2c), Hal027(TimerDelay(self.se050_timer)))),
         );
 
         #[cfg(not(feature = "se050"))]

@@ -22,9 +22,7 @@ use trussed::{
 };
 
 #[cfg(feature = "se050")]
-use embedded_hal::blocking::delay::DelayUs;
-#[cfg(feature = "se050")]
-use se05x::{se05x::Se05X, t1::I2CForT1};
+use se05x::{embedded_hal::Delay as DelayForT1, se05x::Se05X, t1::I2CForT1};
 #[cfg(feature = "se050")]
 use trussed_se050_backend::{Context as Se050Context, Se050Backend};
 #[cfg(feature = "se050")]
@@ -198,9 +196,9 @@ pub trait Twi: I2CForT1 {}
 #[cfg(feature = "se050")]
 impl<T: I2CForT1> Twi for T {}
 #[cfg(feature = "se050")]
-pub trait Delay: DelayUs<u32> {}
+pub trait Delay: DelayForT1 {}
 #[cfg(feature = "se050")]
-impl<D: DelayUs<u32>> Delay for D {}
+impl<D: DelayForT1> Delay for D {}
 
 #[cfg(not(feature = "se050"))]
 pub trait Twi {}
