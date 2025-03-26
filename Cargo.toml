@@ -34,7 +34,7 @@ webcrypt = { git = "https://github.com/nitrokey/nitrokey-websmartcard-rust", tag
 
 # backends
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
-#trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0" }
+trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "53fb6505f505366f6d13dba7d2ae9fe902d0193c" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "dd30e9f3ad39a062ce9f7cb8e8c525454ceb89af" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7922d67e9637a87e5625aaff9e5111f0d4ec0346" }
 cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
@@ -46,7 +46,6 @@ cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "
 #fido-authenticator = { path = "../fido-authenticator" }
 #ctap-types = { path = "../ctap-types" }
 #cosey = { path = "../cosey" }
-#trussed-rsa-alloc = { path = "../trussed-rsa-backend" }
 #ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
 #usbd-ctaphid = { path = "../usbd-ctaphid" }
 trussed-pqc-backend = { git = "https://github.com/sandbox-quantum/trussed-pqc-backend.git", branch = "dev"}
@@ -55,7 +54,6 @@ trussed = { git = "https://github.com/sandbox-quantum/trussed.git", branch = "fe
 fido-authenticator = { git = "https://github.com/sandbox-quantum/fido-authenticator.git", branch = "feat/pqc"}
 ctap-types = { git =  "https://github.com/sandbox-quantum/ctap-types.git", branch = "feat/pqc" }
 cosey = { git = "https://github.com/sandbox-quantum/cosey.git", branch = "feat/pqc" }
-trussed-rsa-alloc = { git = "https://github.com/sandbox-quantum/trussed-rsa-backend.git", branch = "feat/pqc" }
 ctaphid-dispatch = { git = "https://github.com/sandbox-quantum/ctaphid-dispatch.git", branch = "feat/pqc"}
 usbd-ctaphid = { git = "https://github.com/sandbox-quantum/usbd-ctaphid.git", branch = "feat/pqc" }
 

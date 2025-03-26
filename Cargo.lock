@@ -799,14 +799,12 @@ dependencies = [
 [[package]]
 name = "cosey"
 version = "0.3.2"
-source = "git+https://github.com/sandbox-quantum/cosey.git?branch=feat%2Fpqc#d31b98ddb7712f4b1964310a3d0ae6aa04004ce1"
+source = "git+https://github.com/sandbox-quantum/cosey.git?branch=feat%2Fpqc#934ba2511342fd466b6e4af87a4068f9e6b0aece"
 dependencies = [
- "cfg-if",
  "heapless-bytes",
  "paste",
  "pqcrypto-mldsa",
  "serde",
- "serde-big-array",
  "serde_repr",
  "with_builtin_macros",
 ]
@@ -3437,13 +3435,12 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/sandbox-quantum/trussed.git?branch=feat%2Fpqc#12562439b80907c2732a4604e9ffe2848f69bd2b"
+source = "git+https://github.com/sandbox-quantum/trussed.git?branch=feat%2Fpqc#ae5650877a8b29ddc0a0b3e0d65b85e7b82e713d"
 dependencies = [
  "aes",
  "bitflags 2.9.0",
  "cbc",
  "cbor-smol",
- "cfg-if",
  "chacha20",
  "chacha20poly1305",
  "cosey",
@@ -3461,7 +3458,6 @@ dependencies = [
  "nb 1.1.0",
  "p256-cortex-m4",
  "postcard 0.7.3",
- "pqcrypto-mldsa",
  "rand_chacha",
  "rand_core",
  "salty",
@@ -3515,13 +3511,11 @@ dependencies = [
 [[package]]
 name = "trussed-core"
 version = "0.1.0"
-source = "git+https://github.com/sandbox-quantum/trussed.git?branch=feat%2Fpqc#12562439b80907c2732a4604e9ffe2848f69bd2b"
+source = "git+https://github.com/sandbox-quantum/trussed.git?branch=feat%2Fpqc#ae5650877a8b29ddc0a0b3e0d65b85e7b82e713d"
 dependencies = [
- "cfg-if",
  "heapless-bytes",
  "littlefs2-core",
  "postcard 0.7.3",
- "pqcrypto-mldsa",
  "rand_core",
  "serde",
  "serde-indexed",
@@ -3573,7 +3567,7 @@ dependencies = [
 [[package]]
 name = "trussed-pqc-backend"
 version = "0.1.0"
-source = "git+https://github.com/sandbox-quantum/trussed-pqc-backend.git?branch=dev#bfb77d46633d627e7c4956bfea2459104dfafaae"
+source = "git+https://github.com/sandbox-quantum/trussed-pqc-backend.git?branch=dev#f045894c01386eb86eacba63e9a5b0c5146e8219"
 dependencies = [
  "cosey",
  "der",
@@ -3589,7 +3583,7 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.2.1"
-source = "git+https://github.com/sandbox-quantum/trussed-rsa-backend.git?branch=feat%2Fpqc#e7085a00931da583d15057eab21d12924dc13bc9"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=53fb6505f505366f6d13dba7d2ae9fe902d0193c#53fb6505f505366f6d13dba7d2ae9fe902d0193c"
 dependencies = [
  "delog",
  "heapless-bytes",
