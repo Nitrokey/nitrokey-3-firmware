@@ -232,11 +232,7 @@ pub fn init_apps<B: Board>(
 }
 
 #[cfg(feature = "se050")]
-fn init_se050<
-    I2C: se05x::t1::I2CForT1,
-    D: embedded_hal::blocking::delay::DelayUs<u32>,
-    R: CryptoRng + RngCore,
->(
+fn init_se050<I2C: se05x::t1::I2CForT1, D: se05x::embedded_hal::Delay, R: CryptoRng + RngCore>(
     i2c: I2C,
     delay: D,
     dev_rng: &mut R,

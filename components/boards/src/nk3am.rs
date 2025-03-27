@@ -7,12 +7,16 @@ use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as N
 use nrf52840_hal::{
     gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
-    prelude::OutputPin as _,
-    spim,
-    timer::Timer,
-    twim, Spim, Twim,
+    spim, twim, Spim,
 };
-use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3, TIMER1, TWIM1};
+use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3};
+
+#[cfg(feature = "se050")]
+use {
+    nrf52840_hal::{prelude::OutputPin as _, timer::Timer, Twim},
+    nrf52840_pac::{TIMER1, TWIM1},
+    se05x::embedded_hal::Hal027,
+};
 
 use crate::{
     flash::ExtFlashStorage,
@@ -47,9 +51,9 @@ impl Board for NK3AM {
     type ExternalStorage = ExternalFlashStorage;
 
     #[cfg(feature = "se050")]
-    type Twi = Twim<TWIM1>;
+    type Twi = Hal027<Twim<TWIM1>>;
     #[cfg(feature = "se050")]
-    type Se050Timer = Timer<TIMER1>;
+    type Se050Timer = Hal027<Timer<TIMER1>>;
     #[cfg(not(feature = "se050"))]
     type Twi = ();
     #[cfg(not(feature = "se050"))]
@@ -212,16 +216,17 @@ pub fn init_external_flash(spim3: SPIM3, spi: spim::Pins, cs: OutPin) -> Externa
     ExtFlashStorage::try_new(spim, cs).unwrap()
 }
 
+#[cfg(feature = "se050")]
 pub fn init_se050(
     twim1: TWIM1,
     pins: twim::Pins,
     mut power: OutPin,
     timer1: TIMER1,
-) -> (Twim<TWIM1>, Timer<TIMER1>) {
+) -> (Hal027<Twim<TWIM1>>, Hal027<Timer<TIMER1>>) {
     power.set_high().unwrap();
     let twim = Twim::new(twim1, pins, twim::Frequency::K400);
     let timer = Timer::new(timer1);
-    (twim, timer)
+    (Hal027(twim), Hal027(timer))
 }
 
 pub fn hw_key(ficr: &FICR) -> [u8; 16] {

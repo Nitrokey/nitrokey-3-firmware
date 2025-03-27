@@ -22,8 +22,6 @@ pub mod nkpk;
 use core::marker::PhantomData;
 
 use apps::Dispatch;
-#[cfg(feature = "se050")]
-use embedded_hal::blocking::delay::DelayUs;
 use littlefs2::{
     driver::Storage,
     fs::{Allocation, Filesystem},
@@ -56,7 +54,7 @@ pub trait Board {
     type ExternalStorage: Storage + 'static;
 
     #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32> + 'static;
+    type Se050Timer: se05x::embedded_hal::Delay + 'static;
     #[cfg(feature = "se050")]
     type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(not(feature = "se050"))]

@@ -12,8 +12,6 @@ use apdu_app::App as ApduApp;
 use bitflags::bitflags;
 use core::marker::PhantomData;
 use ctaphid_app::App as CtaphidApp;
-#[cfg(feature = "se050")]
-use embedded_hal::blocking::delay::DelayUs;
 use heapless::Vec;
 use littlefs2_core::path;
 
@@ -323,7 +321,7 @@ pub trait Runner {
     #[cfg(feature = "se050")]
     type Twi: se05x::t1::I2CForT1 + 'static;
     #[cfg(feature = "se050")]
-    type Se050Timer: DelayUs<u32> + 'static;
+    type Se050Timer: se05x::embedded_hal::Delay + 'static;
     #[cfg(not(feature = "se050"))]
     type Twi: 'static;
     #[cfg(not(feature = "se050"))]
