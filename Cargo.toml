@@ -48,7 +48,7 @@ cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "
 #cosey = { path = "../cosey" }
 #ctaphid-dispatch = { path = "../ctaphid-dispatch/dispatch" }
 #usbd-ctaphid = { path = "../usbd-ctaphid" }
-trussed-pqc-backend = { git = "https://github.com/sandbox-quantum/trussed-pqc-backend.git", branch = "dev"}
+trussed-pqc-backend = { git = "https://github.com/sandbox-quantum/trussed-pqc-backend.git", branch = "main"}
 trussed-core = { git = "https://github.com/sandbox-quantum/trussed.git", branch = "feat/pqc"}
 trussed = { git = "https://github.com/sandbox-quantum/trussed.git", branch = "feat/pqc"}
 fido-authenticator = { git = "https://github.com/sandbox-quantum/fido-authenticator.git", branch = "feat/pqc"}
