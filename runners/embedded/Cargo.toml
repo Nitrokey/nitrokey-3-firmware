@@ -46,7 +46,7 @@ systick-monotonic = { version = "1.0.0", optional = true }
 embedded-alloc = { version = "0.6.0", optional = true }
 
 # littlefs2-sys for intrinsics feature
-littlefs2-sys = { version = "0.3", optional = true }
+littlefs2-sys = { version = "0.3", features = ["unstable-disable-block-count-check"] }
 
 [build-dependencies]
 cargo-lock = "7"
@@ -65,7 +65,7 @@ provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-fl
 no-delog = ["boards/no-delog", "delog/knock-it-off"]
 
 # Disable littlefs use of compiler intrinsics
-littlefs-software-intrinsics = ["dep:littlefs2-sys", "littlefs2-sys/software-intrinsics"]
+littlefs-software-intrinsics = ["littlefs2-sys/software-intrinsics"]
 
 # Do not use encryption for the filesystem
 no-encrypted-storage = ["boards/no-encrypted-storage"]
