@@ -202,12 +202,42 @@ fn init_efs<B: Board>(
     simulated_efs: bool,
     status: &mut InitStatus,
 ) -> Result<Filesystem<'static, B::ExternalStorage>> {
+    use littlefs2::fs::{Config as LfsConfig, MountFlags};
     if cfg!(feature = "format-filesystem") {
         Filesystem::format(efs_storage).ok();
     }
 
-    let fs = Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
-        error_now!("EFS Mount Error {:?}", _err);
+    let fs = Filesystem::mount_or_else(efs_alloc, efs_storage, |err, storage, efs_alloc| {
+        error_now!("EFS Mount Error {:?}", err);
+
+        // Maybe the case is that the block count is wrong
+        if err == littlefs2::io::Error::INVALID {
+            let mut config = LfsConfig::default();
+            config.mount_flags = MountFlags::DISABLE_BLOCK_COUNT_CHECK;
+
+            let mut mounted_with_wrong_block_count = false;
+
+            let shrink_res =
+                Filesystem::mount_and_then_with_config(storage, config.clone(), |fs| {
+                    mounted_with_wrong_block_count = true;
+                    fs.shrink(B::ExternalStorage::BLOCK_COUNT)
+                });
+            match shrink_res {
+                Ok(_) => return Ok(()),
+                // The error is just the block count and shrinking failed, we warn that reformat is required
+                Err(_) if mounted_with_wrong_block_count => {
+                    status.insert(InitStatus::EXT_FLASH_NEED_REFORMAT);
+                    *efs_alloc = Allocation::with_config(config);
+                    return Ok(());
+                }
+                // Failed to mount when ignoring block count check. Error is something else
+                // Go to normal flow
+                Err(_) => {
+                    status.insert(InitStatus::EXT_FLASH_NEED_REFORMAT);
+                }
+            }
+        }
+
         let fmt_ext = Filesystem::format(storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NO_SPACE) {
             info_now!("Formatting simulated EFS failed as expected");

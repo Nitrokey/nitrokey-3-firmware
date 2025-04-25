@@ -162,7 +162,7 @@ version = "1.8.2"
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cbor-smol",
  "ctaphid-app",
  "delog",
@@ -308,7 +308,7 @@ version = "0.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f49d8fed880d473ea71efb9bf597651e77201bdd4893efe54c9e5d65ae04ce6f"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cexpr",
  "clang-sys",
  "itertools",
@@ -334,9 +334,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.6.0"
+version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
+checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "block-buffer"
@@ -1773,9 +1773,9 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a43f3c0c6a7d127e3e1241665dd896d8bf1ca31cf9d826a1dc65239bd59868"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=3d33ff513fef44fdbfd772ef31202c1981802d59#3d33ff513fef44fdbfd772ef31202c1981802d59"
 dependencies = [
+ "bitflags 2.9.0",
  "delog",
  "generic-array",
  "heapless",
@@ -1786,10 +1786,9 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a81a4745d38b288b7583fe8ea3736897628df81f4d0f1d0314fa5a3af570de4"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=3d33ff513fef44fdbfd772ef31202c1981802d59#3d33ff513fef44fdbfd772ef31202c1981802d59"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "heapless-bytes",
  "serde",
 ]
@@ -1797,7 +1796,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.3.1"
-source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=55d0f974341d38185837ed3467c03e5cd6edf2a4#55d0f974341d38185837ed3467c03e5cd6edf2a4"
+source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=c0f90bd7c12b41984c8eff550004f1de89c8b1d6#c0f90bd7c12b41984c8eff550004f1de89c8b1d6"
 dependencies = [
  "bindgen",
  "cc",
@@ -2136,7 +2135,7 @@ source = "git+https://github.com/Nitrokey/opcard-rs?rev=39ec4c37f808c0cfeb84e0a8
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cbor-smol",
  "cfg-if",
  "delog",
@@ -2463,7 +2462,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c82cf8cff14456045f55ec4241383baeff27af886adb72ffb2162f99911de0fd"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
 ]
 
 [[package]]
@@ -2660,7 +2659,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49ada869105531d741c32f9b444ebf5546c8bf0320b1f51aff83d3b65d58d761"
 dependencies = [
  "aes",
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cmac",
  "crc16",
  "delog",
@@ -2695,7 +2694,7 @@ version = "0.13.0"
 source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=700863bdfa90a3616cbb695d6638c7aea7730c03#700863bdfa90a3616cbb695d6638c7aea7730c03"
 dependencies = [
  "apdu-app",
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "block-padding",
  "cbor-smol",
  "ctaphid-app",
@@ -3219,7 +3218,7 @@ version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed.git?rev=e107ed315a07dc6c992fac39d542e847cc3a1b6c#e107ed315a07dc6c992fac39d542e847cc3a1b6c"
 dependencies = [
  "aes",
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cbc",
  "cbor-smol",
  "cfg-if",
@@ -3367,7 +3366,7 @@ name = "trussed-se050-backend"
 version = "0.3.6"
 source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=be89dc04fc6b06505d2eed484802107b4aa3fe71#be89dc04fc6b06505d2eed484802107b4aa3fe71"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags 2.9.0",
  "cbor-smol",
  "chacha20poly1305",
  "crypto-bigint",
