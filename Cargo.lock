@@ -3412,7 +3412,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7922d67e9637a87e5625aaff9e5111f0d4ec0346#7922d67e9637a87e5625aaff9e5111f0d4ec0346"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=c87feda92ea027ed09b83ffc04759a45094a9a4b#c87feda92ea027ed09b83ffc04759a45094a9a4b"
 dependencies = [
  "aead",
  "chacha20poly1305",

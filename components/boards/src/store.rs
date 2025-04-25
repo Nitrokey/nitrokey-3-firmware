@@ -7,6 +7,7 @@ use littlefs2::{
     fs::{Allocation, Filesystem},
     io::Result,
     object_safe::DynFilesystem,
+    path,
 };
 use trussed::store::Store;
 
@@ -205,7 +206,7 @@ fn init_efs<B: Board>(
         Filesystem::format(efs_storage).ok();
     }
 
-    Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
+    let fs = Filesystem::mount_or_else(efs_alloc, efs_storage, |_err, storage| {
         error_now!("EFS Mount Error {:?}", _err);
         let fmt_ext = Filesystem::format(storage);
         if simulated_efs && fmt_ext == Err(littlefs2::io::Error::NO_SPACE) {
@@ -215,7 +216,16 @@ fn init_efs<B: Board>(
             status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
         }
         Ok(())
-    })
+    })?;
+
+    if fs.exists(path!("/factory-reset-must-reformat")) {
+        debug_now!("Reformatting EFS filesystem");
+        let (efs_alloc, efs_storage) = fs.into_inner();
+        Filesystem::format(efs_storage).ok();
+        Filesystem::mount(efs_alloc, efs_storage)
+    } else {
+        Ok(fs)
+    }
 }
 
 #[inline(always)]
