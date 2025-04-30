@@ -385,6 +385,7 @@ dependencies = [
  "interchange",
  "lfs-backup",
  "littlefs2",
+ "littlefs2-core",
  "lpc55-hal",
  "lpc55-pac",
  "memory-regions",
@@ -400,6 +401,7 @@ dependencies = [
  "spi-memory",
  "systick-monotonic",
  "trussed",
+ "trussed-manage",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -1773,7 +1775,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=3d33ff513fef44fdbfd772ef31202c1981802d59#3d33ff513fef44fdbfd772ef31202c1981802d59"
+source = "git+https://github.com/sosthene-nitrokey/littlefs2.git?rev=33cea6dfd901b44ac2228edfd8284c158c87756e#33cea6dfd901b44ac2228edfd8284c158c87756e"
 dependencies = [
  "bitflags 2.9.0",
  "delog",
@@ -1786,7 +1788,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=3d33ff513fef44fdbfd772ef31202c1981802d59#3d33ff513fef44fdbfd772ef31202c1981802d59"
+source = "git+https://github.com/sosthene-nitrokey/littlefs2.git?rev=33cea6dfd901b44ac2228edfd8284c158c87756e#33cea6dfd901b44ac2228edfd8284c158c87756e"
 dependencies = [
  "bitflags 2.9.0",
  "heapless-bytes",
@@ -1796,7 +1798,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-sys"
 version = "0.3.1"
-source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=c0f90bd7c12b41984c8eff550004f1de89c8b1d6#c0f90bd7c12b41984c8eff550004f1de89c8b1d6"
+source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=e1fbf664e24d03fc39b538900c681a41a2dd8c88#e1fbf664e24d03fc39b538900c681a41a2dd8c88"
 dependencies = [
  "bindgen",
  "cc",
@@ -3338,8 +3340,7 @@ dependencies = [
 [[package]]
 name = "trussed-manage"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47b8d85d7ca4bd11e0508d9874e17f5058faaf5030cfc9efdd6a35ab779b87ca"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7fd09fc762ae16e629c22a606540a4808940ce0b#7fd09fc762ae16e629c22a606540a4808940ce0b"
 dependencies = [
  "littlefs2-core",
  "serde",
@@ -3411,7 +3412,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=c87feda92ea027ed09b83ffc04759a45094a9a4b#c87feda92ea027ed09b83ffc04759a45094a9a4b"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7fd09fc762ae16e629c22a606540a4808940ce0b#7fd09fc762ae16e629c22a606540a4808940ce0b"
 dependencies = [
  "aead",
  "chacha20poly1305",

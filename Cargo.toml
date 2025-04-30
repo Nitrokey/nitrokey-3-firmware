@@ -35,11 +35,12 @@ secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "be89dc04fc6b06505d2eed484802107b4aa3fe71" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "c87feda92ea027ed09b83ffc04759a45094a9a4b" }
+trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7fd09fc762ae16e629c22a606540a4808940ce0b" }
+trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7fd09fc762ae16e629c22a606540a4808940ce0b" }
 cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "c0f90bd7c12b41984c8eff550004f1de89c8b1d6" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "3d33ff513fef44fdbfd772ef31202c1981802d59" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "3d33ff513fef44fdbfd772ef31202c1981802d59" }
+littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "e1fbf664e24d03fc39b538900c681a41a2dd8c88" }
+littlefs2 = { git = "https://github.com/sosthene-nitrokey/littlefs2.git", rev = "33cea6dfd901b44ac2228edfd8284c158c87756e" }
+littlefs2-core = { git = "https://github.com/sosthene-nitrokey/littlefs2.git", rev = "33cea6dfd901b44ac2228edfd8284c158c87756e" }
 
 [profile.release]
 codegen-units = 1
