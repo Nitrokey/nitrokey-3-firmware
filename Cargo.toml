@@ -39,8 +39,8 @@ trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", 
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "7fd09fc762ae16e629c22a606540a4808940ce0b" }
 cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
-littlefs2 = { git = "https://github.com/sosthene-nitrokey/littlefs2.git", rev = "f8d509fe8245f3b43d3011aab92f52c4211e0b63" }
-littlefs2-core = { git = "https://github.com/sosthene-nitrokey/littlefs2.git", rev = "f8d509fe8245f3b43d3011aab92f52c4211e0b63" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 
 [profile.release]
 codegen-units = 1

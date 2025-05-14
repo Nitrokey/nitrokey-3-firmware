@@ -1775,7 +1775,7 @@ checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "git+https://github.com/sosthene-nitrokey/littlefs2.git?rev=f8d509fe8245f3b43d3011aab92f52c4211e0b63#f8d509fe8245f3b43d3011aab92f52c4211e0b63"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
 dependencies = [
  "bitflags 2.9.0",
  "delog",
@@ -1788,7 +1788,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "git+https://github.com/sosthene-nitrokey/littlefs2.git?rev=f8d509fe8245f3b43d3011aab92f52c4211e0b63#f8d509fe8245f3b43d3011aab92f52c4211e0b63"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
 dependencies = [
  "bitflags 2.9.0",
  "heapless-bytes",
