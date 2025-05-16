@@ -3339,8 +3339,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-manage"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7fd09fc762ae16e629c22a606540a4808940ce0b#7fd09fc762ae16e629c22a606540a4808940ce0b"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd9663f2c1b5bddbb02f9edbbe9085313ae8cd03e53a2eb266f43b1dba365287"
 dependencies = [
  "littlefs2-core",
  "serde",
@@ -3411,8 +3412,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-staging"
-version = "0.3.2"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?rev=7fd09fc762ae16e629c22a606540a4808940ce0b#7fd09fc762ae16e629c22a606540a4808940ce0b"
+version = "0.3.3"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.3#2e44cf8ca3e6597880a1e59757228da2d6cce3f1"
 dependencies = [
  "aead",
  "chacha20poly1305",
