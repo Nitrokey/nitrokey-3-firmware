@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![warn(trivial_casts, unused, unused_qualifications)]
 
 delog::generate_macros!();

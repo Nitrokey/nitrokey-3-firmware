@@ -854,15 +854,16 @@ impl From<Variant> for u8 {
 }
 
 bitflags! {
-    #[derive(Default, Clone, Copy)]
+    #[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
     pub struct InitStatus: u8 {
-        const NFC_ERROR            = 0b00000001;
-        const INTERNAL_FLASH_ERROR = 0b00000010;
-        const EXTERNAL_FLASH_ERROR = 0b00000100;
-        const MIGRATION_ERROR      = 0b00001000;
-        const SE050_ERROR          = 0b00010000;
-        const CONFIG_ERROR         = 0b00100000;
-        const RNG_ERROR            = 0b01000000;
+        const NFC_ERROR               = 0b00000001;
+        const INTERNAL_FLASH_ERROR    = 0b00000010;
+        const EXTERNAL_FLASH_ERROR    = 0b00000100;
+        const MIGRATION_ERROR         = 0b00001000;
+        const SE050_ERROR             = 0b00010000;
+        const CONFIG_ERROR            = 0b00100000;
+        const RNG_ERROR               = 0b01000000;
+        const EXT_FLASH_NEED_REFORMAT = 0b10000000;
     }
 }
 

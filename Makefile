@@ -74,3 +74,8 @@ commands.bd:
 
 manifest.json:
 	sed "s/@VERSION@/`git describe --always`/g" utils/manifest.template.json > manifest.json
+
+.PHONY: software-tests
+software-tests:
+	cd components/apps && cargo test
+	cd components/boards && cargo test

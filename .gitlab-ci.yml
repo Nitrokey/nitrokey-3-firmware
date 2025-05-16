@@ -218,7 +218,7 @@ software-tests:
     - docker
   stage: test
   script:
-    - cd components/apps && cargo test
+    - make software-tests
 
 hardware-tests:
   rules:
