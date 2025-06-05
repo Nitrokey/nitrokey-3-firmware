@@ -1,0 +1,23 @@
+# Copyright (C) Nitrokey GmbH
+# SPDX-License-Identifier: CC0-1.0
+
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Install reuse
+      run: |
+        sudo apt install -y reuse 
+    - name: Install rust
+      run: |
+        rustup show
+        rustup install nightly
+        rustup component add --toolchain nightly miri
+    - name: Execute checks
+      run: make ci

@@ -1,0 +1,35 @@
+# A block
+[metadata]
+address = 0x00
+
+[metadata.address]
+# The bytes offset of this part
+starts_at = 0
+len  = 1
+type = "u8"
+
+[metadata.serial_number]
+starts_at = 1
+len = 6
+type = "[u8; 6]"
+
+[metadata.internal]
+starts_at = 7
+len = 2
+type = "[u8; 2]"
+
+[metadata.static_lock_bytes]
+starts_at = 10
+len = 2
+type = "[u8; 2]"
+
+[metadata.capability_container]
+starts_at = 12
+len = 4
+type = "[u8; 4]"
+
+[user_memory]
+address = 0x1
+count = 54
+
+
