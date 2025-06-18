@@ -39,6 +39,11 @@ pub const NDEF: [u8; 20] = [
     0x2f, /* nitrokey.com/ */
 ];
 
+/// Time to wait after writing to the EEPROM
+const EEPROM_RAM_WAIT: Microseconds = Microseconds(4_500);
+/// Time to wait after writing to the SRAM
+const SRAM_RAM_WAIT: Microseconds = Microseconds(400);
+
 impl<I2C, E, FD> Nt3h2111<I2C, FD>
 where
     I2C: WriteRead<Error = E> + Write<Error = E> + Read<Error = E>,
@@ -55,7 +60,7 @@ where
 
     pub fn read_block_raw(&mut self, address: u8) -> Result<[u8; 16], E> {
         let mut buffer = [0; 16];
-        debug_now!("Read block raw");
+        // debug_now!("Read block raw");
         self.i2c.write_read(self.address, &[address], &mut buffer)?;
         Ok(buffer)
     }
@@ -81,8 +86,6 @@ where
     }
 
     pub fn slow_wdt(&mut self, countdown: &mut impl CountDown<Time = Microseconds>) {
-        debug_now!("Testing nfc chip");
-
         self.write_session_register(0xFF, WdtMs(0xFF)).unwrap();
         self.write_session_register(0xFF, WdtLs(0xFF)).unwrap();
 
@@ -95,7 +98,24 @@ where
         debug_now!("NSReg: {ns_reg:?}");
     }
 
+    pub fn free_i2c_lock(&mut self, _countdown: &mut impl CountDown<Time = Microseconds>) {
+        let mut nc_reg: NcReg = self.read_session_register().unwrap();
+        debug_now!("{nc_reg:?}");
+        nc_reg.set_transfer_dir(true);
+        self.write_session_register(NcReg::TRANSFER_DIR, nc_reg)
+            .unwrap();
+        let mut ns_reg_to_write = NsReg(0);
+        ns_reg_to_write.set_i2c_locked(false);
+        debug_now!("Writing: {ns_reg_to_write:?}");
+        self.write_session_register(NsReg::I2C_LOCKED, ns_reg_to_write)
+            .unwrap();
+    }
     pub fn lock_to_i2c(&mut self, countdown: &mut impl CountDown<Time = Microseconds>) {
+        let mut nc_reg: NcReg = self.read_session_register().unwrap();
+        debug_now!("{nc_reg:?}");
+        nc_reg.set_transfer_dir(false);
+        self.write_session_register(NcReg::TRANSFER_DIR, nc_reg)
+            .unwrap();
         let mut ns_reg_to_write = NsReg(0);
         ns_reg_to_write.set_i2c_locked(true);
         debug_now!("Writing: {ns_reg_to_write:?}");
@@ -110,6 +130,13 @@ where
             countdown.start(Microseconds(1_000_000));
             // debug_now!("Waiting for timer");
             nb::block!(countdown.wait()).unwrap();
+
+            // let mut nc_reg: NcReg = self.read_session_register().unwrap();
+            // debug_now!("{nc_reg:?}");
+            // nc_reg.set_transfer_dir(false);
+            // self.write_session_register(NcReg::TRANSFER_DIR, nc_reg)
+            //     .unwrap();
+
             let mut ns_reg_to_write = NsReg(0);
             ns_reg_to_write.set_i2c_locked(true);
             debug_now!("Writing: {ns_reg_to_write:?}");
@@ -129,19 +156,26 @@ where
         let mut buffer = [0u8; 64];
         for i in 0xF8..0xFB {
             // debug_now!("Starting timer for block {i:02x}");
-            countdown.start(Microseconds(10_000));
+            // countdown.start(Microseconds(10_000));
             // debug_now!("Waiting for timer");
-            nb::block!(countdown.wait()).unwrap();
-            let block = self.read_block_raw(i.try_into().unwrap()).unwrap();
+            // nb::block!(countdown.wait()).unwrap();
+            let block = match self.read_block_raw(i.try_into().unwrap()) {
+                Ok(b) => b,
+                Err(err) => {
+                    error_now!("Error reading block: {err:?}");
+                    return;
+                }
+            };
             buffer[(i - 0xF8) * 16..][..16].copy_from_slice(&block);
         }
+        self.free_i2c_lock(countdown);
         debug_now!("SRAM: {}", hexstr!(&buffer));
     }
 
     pub fn fill_sram_with_ndef(&mut self, countdown: &mut impl CountDown<Time = Microseconds>) {
         for i in 0xF8..=0xFB {
             // debug_now!("Starting timer for block {i:02x}");
-            countdown.start(Microseconds(10_000));
+            countdown.start(SRAM_RAM_WAIT);
             // debug_now!("Waiting for timer");
             nb::block!(countdown.wait()).unwrap();
             // debug_now!("Waited for timer");
@@ -158,9 +192,9 @@ where
         debug_now!("Waiting for field");
         for _i in 0..usize::MAX {
             // debug_now!("Starting timer");
-            countdown.start(Microseconds(10000));
+            // countdown.start(Microseconds(1_000));
             // debug_now!("Waiting for timer");
-            nb::block!(countdown.wait()).unwrap();
+            // nb::block!(countdown.wait()).unwrap();
             // debug_now!("Waiting for field {_i}");
 
             let ns_reg = match self.read_session_register::<NsReg>() {
@@ -188,9 +222,12 @@ where
     }
 
     pub fn test(&mut self, countdown: &mut impl CountDown<Time = Microseconds>) {
+        debug_now!("Testing nfc chip");
+
         self.slow_wdt(countdown);
         self.fill_sram_with_ndef(countdown);
 
+        debug_now!("Locking i2c");
         self.lock_to_i2c(countdown);
         self.wait_for_field(countdown);
         assert!(matches!(self.fd.is_low(), Ok(true)));
@@ -202,24 +239,48 @@ where
         passthrough.set_pthru_on_off(true);
         let res = self.write_session_register(NcReg::PTHRU_ON_OFF, passthrough);
         debug_now!("Passthough set: {res:?}");
-        countdown.start(Microseconds(100));
+        countdown.start(Microseconds(500_000));
         nb::block!(countdown.wait()).unwrap();
 
-        let ns_reg: NsReg = self.read_session_register().unwrap();
-        debug_now!("NSReg: {ns_reg:?}");
+        // let ns_reg: NsReg = self.read_session_register().unwrap();
+        // debug_now!("NSReg: {ns_reg:?}");
 
-        countdown.start(Microseconds(100));
-        nb::block!(countdown.wait()).unwrap();
+        // countdown.start(Microseconds(100));
+        // nb::block!(countdown.wait()).unwrap();
 
-        let passthrough = self.read_session_register::<NcReg>();
-        debug_now!("Passthough value: {passthrough:?}");
+        // let passthrough = self.read_session_register::<NcReg>();
+        // debug_now!("Passthough value: {passthrough:?}");
 
-        self.debug_dump_sram(countdown);
+        // self.debug_dump_sram(countdown);
 
-        let ns_reg: NsReg = self.read_session_register().unwrap();
-        debug_now!("NsReg: {ns_reg:?}");
-        self.lock_to_i2c(countdown);
-        self.debug_dump_sram(countdown);
+        // let ns_reg: NsReg = self.read_session_register().unwrap();
+        // debug_now!("NsReg: {ns_reg:?}");
+        // self.lock_to_i2c(countdown);
+        // self.debug_dump_sram(countdown);
+
+        debug_now!("Entering loop");
+        loop {
+            debug_now!("Looping");
+
+            let mut nc_reg: NcReg = self.read_session_register().unwrap();
+            debug_now!("{nc_reg:?}");
+            nc_reg.set_transfer_dir(true);
+            self.write_session_register(NcReg::TRANSFER_DIR, nc_reg)
+                .unwrap();
+            countdown.start(Microseconds(500_000));
+            nb::block!(countdown.wait()).unwrap();
+            let mut nc_reg: NcReg = self.read_session_register().unwrap();
+            debug_now!("{nc_reg:?}");
+            nc_reg.set_transfer_dir(false);
+            self.write_session_register(NcReg::TRANSFER_DIR, nc_reg)
+                .unwrap();
+            // self.lock_to_i2c(countdown);
+            // countdown.start(Microseconds(500));
+            // nb::block!(countdown.wait()).unwrap();
+            self.debug_dump_sram(countdown);
+            countdown.start(EEPROM_RAM_WAIT);
+            nb::block!(countdown.wait()).unwrap();
+        }
     }
 
     pub fn read_session_register<T: SessionRegister>(&mut self) -> Result<T, E> {
