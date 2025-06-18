@@ -10,6 +10,7 @@ use littlefs2::{
 };
 use trussed::store::Store;
 use trussed_manage::FACTORY_RESET_MARKER_FILE;
+use utils::{EmptyFilesystem, MaybeStorage};
 
 use crate::Board;
 
@@ -19,19 +20,19 @@ const_ram_storage!(
     erase_value = 0xff,
     read_size = 16,
     write_size = 256,
-    cache_size_ty = littlefs2::consts::U256,
+    cache_size = 256,
     // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
     block_size = 256,
     block_count = 8192 / 256,
-    lookahead_size_ty = littlefs2::consts::U1,
-    filename_max_plus_one_ty = littlefs2::consts::U256,
-    path_max_plus_one_ty = littlefs2::consts::U256,
+    lookahead_size = 1,
 );
 
 pub struct StoreResources<B: Board> {
     internal: StorageResources<B::InternalStorage>,
     external: StorageResources<B::ExternalStorage>,
     volatile: StorageResources<VolatileStorage>,
+    // Used in cases where EFS is "faked"
+    empty_efs: MaybeUninit<EmptyFilesystem>,
 }
 
 impl<B: Board> StoreResources<B> {
@@ -40,23 +41,36 @@ impl<B: Board> StoreResources<B> {
             internal: StorageResources::new(),
             external: StorageResources::new(),
             volatile: StorageResources::new(),
+            empty_efs: MaybeUninit::uninit(),
         }
     }
 }
 
-pub struct StorageResources<S: Storage + 'static> {
-    fs: MaybeUninit<Filesystem<'static, S>>,
-    alloc: MaybeUninit<Allocation<S>>,
+impl<B: Board> Default for StoreResources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub struct StorageResources<S: MaybeStorage + 'static> {
+    fs: MaybeUninit<Filesystem<'static, S::Storage>>,
+    alloc: MaybeUninit<Allocation<S::Storage>>,
     storage: MaybeUninit<S>,
 }
 
-impl<S: Storage + 'static> StorageResources<S> {
+impl<S: MaybeStorage + 'static> StorageResources<S> {
     pub const fn new() -> Self {
         Self {
             fs: MaybeUninit::uninit(),
             alloc: MaybeUninit::uninit(),
             storage: MaybeUninit::uninit(),
         }
+    }
+}
+
+impl<S: Storage + 'static> Default for StorageResources<S> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -134,12 +148,13 @@ pub fn init_store<B: Board>(
     status: &mut InitStatus,
 ) -> RunnerStore<B> {
     let ifs_storage = resources.internal.storage.write(int_flash);
-    let ifs_alloc = resources.internal.alloc.write(Filesystem::allocate());
     let efs_storage = resources.external.storage.write(ext_flash);
-    let efs_alloc = resources.external.alloc.write(Filesystem::allocate());
     let vfs_storage = resources.volatile.storage.write(VolatileStorage::new());
-    let vfs_alloc = resources.volatile.alloc.write(Filesystem::allocate());
 
+    let ifs_alloc = resources
+        .internal
+        .alloc
+        .write(Filesystem::allocate(ifs_storage));
     let ifs = match init_ifs::<B>(ifs_storage, ifs_alloc, efs_storage, status) {
         Ok(ifs) => resources.internal.fs.write(ifs),
         Err(_e) => {
@@ -148,14 +163,27 @@ pub fn init_store<B: Board>(
         }
     };
 
-    let efs = match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
-        Ok(efs) => resources.external.fs.write(efs),
-        Err(_e) => {
-            error!("EFS Mount Error {:?}", _e);
-            panic!("EFS");
+    let efs: &mut dyn DynFilesystem = if let Some(efs_storage) = efs_storage.as_storage() {
+        let efs_alloc = resources
+            .external
+            .alloc
+            .write(Filesystem::allocate(efs_storage));
+
+        match init_efs::<B>(efs_storage, efs_alloc, simulated_efs, status) {
+            Ok(efs) => resources.external.fs.write(efs),
+            Err(_e) => {
+                error!("EFS Mount Error {:?}", _e);
+                panic!("EFS");
+            }
         }
+    } else {
+        resources.empty_efs.write(EmptyFilesystem)
     };
 
+    let vfs_alloc = resources
+        .volatile
+        .alloc
+        .write(Filesystem::allocate(vfs_storage));
     let vfs = match init_vfs(vfs_storage, vfs_alloc) {
         Ok(vfs) => resources.volatile.fs.write(vfs),
         Err(_e) => {
@@ -197,11 +225,11 @@ fn init_ifs<B: Board>(
 
 #[inline(always)]
 fn init_efs<'a, B: Board>(
-    efs_storage: &'a mut B::ExternalStorage,
-    efs_alloc: &'a mut Allocation<B::ExternalStorage>,
+    efs_storage: &'a mut <B::ExternalStorage as MaybeStorage>::Storage,
+    efs_alloc: &'a mut Allocation<<B::ExternalStorage as MaybeStorage>::Storage>,
     simulated_efs: bool,
     status: &mut InitStatus,
-) -> Result<Filesystem<'a, B::ExternalStorage>> {
+) -> Result<Filesystem<'a, <B::ExternalStorage as MaybeStorage>::Storage>> {
     use littlefs2::fs::{Config as LfsConfig, MountFlags};
     if cfg!(feature = "format-filesystem") {
         Filesystem::format(efs_storage).ok();
@@ -220,14 +248,14 @@ fn init_efs<'a, B: Board>(
             let shrink_res =
                 Filesystem::mount_and_then_with_config(storage, config.clone(), |fs| {
                     mounted_with_wrong_block_count = true;
-                    fs.shrink(B::ExternalStorage::BLOCK_COUNT)
+                    fs.shrink(fs.total_blocks())
                 });
             match shrink_res {
                 Ok(_) => return Ok(()),
                 // The error is just the block count and shrinking failed, we warn that reformat is required
                 Err(_) if mounted_with_wrong_block_count => {
                     status.insert(InitStatus::EXT_FLASH_NEED_REFORMAT);
-                    *efs_alloc = Allocation::with_config(config);
+                    *efs_alloc = Allocation::with_config(storage, config);
                     return Ok(());
                 }
                 // Failed to mount when ignoring block count check. Error is something else
