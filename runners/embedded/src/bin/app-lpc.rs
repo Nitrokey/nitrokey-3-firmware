@@ -178,13 +178,9 @@ mod app {
                 boards::init::Delogger::flush();
             }
 
-            let (usb_activity, nfc_activity) = apps.lock(|apps| {
-                apdu_dispatch.lock(|apdu_dispatch| {
-                    ctaphid_dispatch.lock(|ctaphid_dispatch| {
-                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
-                    })
-                })
-            });
+            let (usb_activity, nfc_activity) =
+                (&mut apps, &mut apdu_dispatch, &mut ctaphid_dispatch)
+                    .lock(|apps, apdu, ctaphid| runtime::poll_dispatchers(apdu, ctaphid, apps));
             if usb_activity {
                 rtic::pend(USB_INTERRUPT);
             }
@@ -304,50 +300,49 @@ mod app {
     fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
         c.shared.contactless.lock(|contactless| {
             if let Some(contactless) = contactless.as_mut() {
-                c.shared.wait_extender.lock(|wait_extender| {
-                    c.shared.perf_timer.lock(|_perf_timer| {
-                        // clear the interrupt
-                        wait_extender.cancel().ok();
+                (c.shared.wait_extender, c.shared.perf_timer).lock(|wait_extender, _perf_timer| {
+                    // clear the interrupt
+                    wait_extender.cancel().ok();
 
-                        info!("<{}", _perf_timer.elapsed().0 / 100);
-                        let status = contactless.poll_wait_extensions();
-                        match status {
-                            nfc_device::Iso14443Status::Idle => {}
-                            nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                                wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
-                            }
+                    info!("<{}", _perf_timer.elapsed().0 / 100);
+                    let status = contactless.poll_wait_extensions();
+                    match status {
+                        nfc_device::Iso14443Status::Idle => {}
+                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                         }
-                        info!(" {}>", _perf_timer.elapsed().0 / 100);
-                    });
+                    }
+                    info!(" {}>", _perf_timer.elapsed().0 / 100);
                 });
             }
         });
     }
 
     #[task(binds = PIN_INT0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
-    fn nfc_irq(mut c: nfc_irq::Context) {
-        c.shared.contactless.lock(|contactless| {
-            c.shared.perf_timer.lock(|perf_timer| {
-                c.shared.wait_extender.lock(|wait_extender| {
-                    let contactless = contactless.as_mut().unwrap();
-                    let _starttime = perf_timer.elapsed().0 / 100;
+    fn nfc_irq(c: nfc_irq::Context) {
+        (
+            c.shared.contactless,
+            c.shared.perf_timer,
+            c.shared.wait_extender,
+        )
+            .lock(|contactless, perf_timer, wait_extender| {
+                let contactless = contactless.as_mut().unwrap();
+                let _starttime = perf_timer.elapsed().0 / 100;
 
-                    info!("[");
-                    let status = contactless.poll();
-                    match status {
-                        nfc_device::Iso14443Status::Idle => {}
-                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                            wait_extender.cancel().ok();
-                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
-                        }
+                info!("[");
+                let status = contactless.poll();
+                match status {
+                    nfc_device::Iso14443Status::Idle => {}
+                    nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                        wait_extender.cancel().ok();
+                        wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                     }
-                    info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
+                }
+                info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
 
-                    perf_timer.cancel().ok();
-                    perf_timer.start(60_000_000.microseconds());
-                });
+                perf_timer.cancel().ok();
+                perf_timer.start(60_000_000.microseconds());
             });
-        });
     }
 
     #[task(binds = ADC0, shared = [clock_ctrl], priority = 8)]
