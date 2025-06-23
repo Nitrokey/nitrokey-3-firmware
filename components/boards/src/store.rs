@@ -467,12 +467,10 @@ mod tests {
         erase_value = 0xFF,
         read_size = 4,
         write_size = 256,
-        cache_size_ty = littlefs2::consts::U256,
+        cache_size = 256,
         block_size = 4096,
         block_count = FULL_EXTERNAL_STORAGE_BLOCK_COUNT,
-        lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
+        lookahead_size = 1,
     );
 
     const_ram_storage!(
@@ -480,12 +478,10 @@ mod tests {
         erase_value = 0xFF,
         read_size = 4,
         write_size = 256,
-        cache_size_ty = littlefs2::consts::U256,
+        cache_size = 256,
         block_size = 4096,
         block_count = CROPPED_EXTERNAL_STORAGE_BLOCK_COUNT,
-        lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
+        lookahead_size = 1,
     );
 
     const_ram_storage!(
@@ -493,12 +489,10 @@ mod tests {
         erase_value = 0xFF,
         read_size = 4,
         write_size = 256,
-        cache_size_ty = littlefs2::consts::U256,
+        cache_size = 256,
         block_size = 4096,
         block_count = 0x20_0000 / 4096,
-        lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
+        lookahead_size = 1,
     );
 
     impl<EfsStorage: Storage + 'static> Board for TestBoard<EfsStorage> {
@@ -542,8 +536,8 @@ mod tests {
             .unwrap();
         let efs_storage_cropped: &mut ExternalStorageCropped =
             unsafe { &mut *(&raw mut *efs_storage_cropped as *mut ExternalStorageCropped) };
-        let efs_alloc = &mut Allocation::new();
-        let efs_alloc_cropped = &mut Allocation::new();
+        let efs_alloc = &mut Allocation::new(efs_storage_full);
+        let efs_alloc_cropped = &mut Allocation::new(efs_storage_cropped);
         let storage = init_efs::<TestBoard<ExternalStorageFull>>(
             efs_storage_full,
             efs_alloc,
@@ -568,7 +562,7 @@ mod tests {
         // Check that factory reset correctly reformats the filesystem
         storage.write(FACTORY_RESET_MARKER_FILE, &[]).unwrap();
         let (_, efs_storage_full) = storage.into_inner();
-        let efs_alloc = &mut Allocation::new();
+        let efs_alloc = &mut Allocation::new(efs_storage_full);
 
         let storage = init_efs::<TestBoard<ExternalStorageFull>>(
             efs_storage_full,
@@ -588,7 +582,7 @@ mod tests {
         assert_eq!(storage.total_blocks(), 0x20_0000 / 4096);
 
         let (_, efs_storage) = storage.into_inner();
-        let efs_alloc = &mut Allocation::new();
+        let efs_alloc = &mut Allocation::new(efs_storage);
         let storage =
             init_efs::<TestBoard<ExternalStorageFull>>(efs_storage, efs_alloc, false, &mut status)
                 .unwrap();
@@ -618,7 +612,7 @@ mod tests {
             }
         }
         let (_, efs_storage_full) = storage.into_inner();
-        let efs_alloc = &mut Allocation::new();
+        let efs_alloc = &mut Allocation::new(efs_storage_full);
 
         efs_storage_cropped
             .buf
@@ -635,7 +629,7 @@ mod tests {
         .unwrap();
         assert_eq!(status, InitStatus::EXT_FLASH_NEED_REFORMAT);
         let (_, efs_storage_cropped) = storage.into_inner();
-        let efs_alloc_cropped = &mut Allocation::new();
+        let efs_alloc_cropped = &mut Allocation::new(efs_storage_cropped);
 
         efs_storage_cropped.buf.fill(0);
         efs_storage_full.buf.fill(0);
