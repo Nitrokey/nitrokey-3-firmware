@@ -176,13 +176,9 @@ mod app {
             #[cfg(not(feature = "no-delog"))]
             boards::init::Delogger::flush();
 
-            let (usb_activity, _nfc_activity) = apps.lock(|apps| {
-                apdu_dispatch.lock(|apdu_dispatch| {
-                    ctaphid_dispatch.lock(|ctaphid_dispatch| {
-                        runtime::poll_dispatchers(apdu_dispatch, ctaphid_dispatch, apps)
-                    })
-                })
-            });
+            let (usb_activity, _nfc_activity) =
+                (&mut apps, &mut apdu_dispatch, &mut ctaphid_dispatch)
+                    .lock(|apps, apdu, ctaphid| runtime::poll_dispatchers(apdu, ctaphid, apps));
             if usb_activity {
                 /*trace!("app->usb");*/
                 rtic::pend(nrf52840_pac::Interrupt::USBD);
