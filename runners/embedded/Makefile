@@ -34,7 +34,7 @@ NO_DELOG_FEATURE=$(shell python3 -c "print('no-delog') if 'no-delog' not in '$(F
 # SHOULD_BUILD_STD=$(shell python3 -c "p = True if '$(BOARD)' == 'nk3xn' and 'test' in '$(FEATURES)'.split(',') else False; print(p)")
 # ifeq ($(SHOULD_BUILD_STD), True)
 # 	BUILD_STD=-Zbuild-std=core,alloc,panic_abort -Zbuild-std-features=panic_immediate_abort
-# 	export RUSTUP_TOOLCHAIN=nightly-2024-04-01
+# 	export RUSTUP_TOOLCHAIN=nightly-nightly-2025-05-09
 # 	LITTLEFS_INTRINSICS_FEATURE=littlefs-software-intrinsics
 # endif
 
