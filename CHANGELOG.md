@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
-
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+
+## 1.8.2-rc.1 (2025-07-31)
+
 - provisioner-app: Remove ReformatFilesystem command
 - fido-authenticator: Increase the maximum number of discoverable credentials (resident keys) to 100.
   - Note that the actual number of discoverable credentials that can be stored on a device depends on the model and the space used by other applications.
