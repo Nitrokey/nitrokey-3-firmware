@@ -1875,7 +1875,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.53.2",
+ "windows-targets 0.53.3",
 ]
 
 [[package]]
@@ -2356,7 +2356,7 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "piv-authenticator"
 version = "0.5.1"
-source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.5.1#b3ed091f12238c35174973bcb82fa99b4d9f2e63"
+source = "git+https://github.com/trussed-dev/piv-authenticator.git?rev=029fc7083c197bf0a2fac97e4a421bb1a080ae70#029fc7083c197bf0a2fac97e4a421bb1a080ae70"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -2584,9 +2584,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.5.16"
+version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7251471db004e509f4e75a62cca9435365b5ec7bcdff530d612ac7c87c44a792"
+checksum = "5407465600fb0548f1442edf71dd20683c6ed326200ace4b1ef0763521bb3b77"
 dependencies = [
  "bitflags 2.9.1",
 ]
@@ -3499,7 +3499,7 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.2.1"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0#743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=53fb6505f505366f6d13dba7d2ae9fe902d0193c#53fb6505f505366f6d13dba7d2ae9fe902d0193c"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3514,7 +3514,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=be89dc04fc6b06505d2eed484802107b4aa3fe71#be89dc04fc6b06505d2eed484802107b4aa3fe71"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=96c130785be711078dcd7c58a2fe1d5be01c4497#96c130785be711078dcd7c58a2fe1d5be01c4497"
 dependencies = [
  "bitflags 2.9.1",
  "cbor-smol",
@@ -4022,10 +4022,11 @@ dependencies = [
 
 [[package]]
 name = "windows-targets"
-version = "0.53.2"
+version = "0.53.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c66f69fcc9ce11da9966ddb31a40968cad001c5bedeb5c2b82ede4253ab48aef"
+checksum = "d5fe6031c4041849d7c496a8ded650796e7b6ecc19df1a431c1a363342e5dc91"
 dependencies = [
+ "windows-link",
  "windows_aarch64_gnullvm 0.53.0",
  "windows_aarch64_msvc 0.53.0",
  "windows_i686_gnu 0.53.0",
