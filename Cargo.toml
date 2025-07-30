@@ -28,15 +28,14 @@ trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", re
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
 fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.27" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", rev = "39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2" }
-piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.5.1" }
+piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", rev = "029fc7083c197bf0a2fac97e4a421bb1a080ae70" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "700863bdfa90a3616cbb695d6638c7aea7730c03" }
 
 # backends
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "743d9aaa3d8a17d7dbf492bd54dc18ab8fca3dc0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "be89dc04fc6b06505d2eed484802107b4aa3fe71" }
+trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", rev = "53fb6505f505366f6d13dba7d2ae9fe902d0193c" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "96c130785be711078dcd7c58a2fe1d5be01c4497" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.3" }
-cargo-license = { git = "https://github.com/Nitrokey/cargo-license.git", rev = "d38912dc4b7a10d3cf48f8cf86f49640ff3173ab" }
 littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }

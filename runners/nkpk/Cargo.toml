@@ -20,7 +20,7 @@ utils = { path = "../../components/utils", features = ["storage"] }
 cortex-m-rt = "0.6.15"
 
 [build-dependencies]
-cargo-lock = "7"
+cargo-lock = "10"
 memory-regions = "1"
 utils = { path = "../../components/utils", features = ["build"] }
 
