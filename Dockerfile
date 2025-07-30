@@ -5,7 +5,7 @@ RUN cargo install flip-link cargo-binutils
 RUN rustup target add thumbv7em-none-eabihf thumbv8m.main-none-eabi
 RUN rustup component add llvm-tools-preview clippy rustfmt
 RUN cargo install --git https://github.com/Nitrokey/nitrokey-ci --rev 1dcacd7a89621b29403bace6cd0abb254844bf0c --locked
-RUN cargo install --git https://github.com/Nitrokey/repometrics --rev 98ffa20ddded8f09c0ef252b4e93ec6a9792f9dc --locked
+RUN cargo install --git https://github.com/Nitrokey/repometrics --rev 1f0f43a119e4b0412f8eae416cff96b68d62b8bd --locked
 RUN rustup install nightly-2025-05-09
 RUN rustup component add rust-src --toolchain nightly-2025-05-09
 WORKDIR /app
