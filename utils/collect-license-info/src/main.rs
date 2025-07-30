@@ -36,8 +36,8 @@ impl Args {
 
     fn dependencies(&self) -> BTreeSet<Dependency> {
         cargo_license::get_dependencies_from_cargo_lock(
-            self.into(),
-            GetDependenciesOpt {
+            &self.into(),
+            &GetDependenciesOpt {
                 avoid_dev_deps: false,
                 avoid_build_deps: false,
                 direct_deps_only: false,
@@ -101,7 +101,7 @@ impl From<Package> for Dependency {
             .map(|e| e.req.license.id().expect("missing license ID"))
             .collect();
         Self {
-            name: p.name,
+            name: p.name.to_string(),
             authors: p.authors,
             license_expression,
             licenses,
