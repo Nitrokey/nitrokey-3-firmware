@@ -1200,7 +1200,7 @@ checksum = "34aa73646ffb006b8f5147f3dc182bd4bcb190227ce861fc4a4844bf8e3cb2c0"
 [[package]]
 name = "encrypted_container"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=700863bdfa90a3616cbb695d6638c7aea7730c03#700863bdfa90a3616cbb695d6638c7aea7730c03"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.14.0#e72e80491b79962ac0f8030581eca8ba0004a732"
 dependencies = [
  "cbor-smol",
  "delog",
@@ -2286,8 +2286,8 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "opcard"
-version = "1.5.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?rev=39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2#39ec4c37f808c0cfeb84e0a8493bbee06f02c8e2"
+version = "1.6.1"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.6.1#d6eb2d6041ef13022c6cfb2a13eed9b0037b89d5"
 dependencies = [
  "admin-app",
  "apdu-app",
@@ -2406,8 +2406,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.5.1"
-source = "git+https://github.com/trussed-dev/piv-authenticator.git?rev=029fc7083c197bf0a2fac97e4a421bb1a080ae70#029fc7083c197bf0a2fac97e4a421bb1a080ae70"
+version = "0.5.3"
+source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.5.3#5c858c2dd60fe2c3f628f50e308e2a2c39e34bd3"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -2873,8 +2873,8 @@ dependencies = [
 
 [[package]]
 name = "secrets-app"
-version = "0.13.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?rev=700863bdfa90a3616cbb695d6638c7aea7730c03#700863bdfa90a3616cbb695d6638c7aea7730c03"
+version = "0.14.0"
+source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.14.0#e72e80491b79962ac0f8030581eca8ba0004a732"
 dependencies = [
  "apdu-app",
  "bitflags 2.9.1",
@@ -3609,8 +3609,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-rsa-alloc"
-version = "0.2.1"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?rev=53fb6505f505366f6d13dba7d2ae9fe902d0193c#53fb6505f505366f6d13dba7d2ae9fe902d0193c"
+version = "0.3.0"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.3.0#053d3b55622d6956610eff80a138ab92671df4ca"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3624,8 +3624,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.3.6"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?rev=96c130785be711078dcd7c58a2fe1d5be01c4497#96c130785be711078dcd7c58a2fe1d5be01c4497"
+version = "0.5.0"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.5.0#f1405e79e46ec34bdfb5977613f084e172205ef9"
 dependencies = [
  "bitflags 2.9.1",
  "cbor-smol",
