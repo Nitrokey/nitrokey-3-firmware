@@ -4,7 +4,6 @@
 // License: Apache-2.0 or MIT
 
 use littlefs2::{
-    consts::{U512, U8},
     driver::Storage,
     io::{Error, Result},
 };
@@ -111,15 +110,32 @@ impl InternalFilesystem {
 }
 
 impl Storage for InternalFilesystem {
-    const READ_SIZE: usize = READ_SIZE;
-    const WRITE_SIZE: usize = WRITE_SIZE;
-    const BLOCK_SIZE: usize = BLOCK_SIZE;
+    fn read_size(&self) -> usize {
+        READ_SIZE
+    }
+    fn write_size(&self) -> usize {
+        WRITE_SIZE
+    }
+    fn block_size(&self) -> usize {
+        BLOCK_SIZE
+    }
+    fn cache_size(&self) -> usize {
+        512
+    }
+    fn lookahead_size(&self) -> usize {
+        8
+    }
 
-    const BLOCK_COUNT: usize = BLOCK_COUNT;
-    const BLOCK_CYCLES: isize = -1;
+    fn block_cycles(&self) -> isize {
+        -1
+    }
 
-    type CACHE_SIZE = U512;
-    type LOOKAHEAD_SIZE = U8;
+    fn block_count(&self) -> usize {
+        BLOCK_COUNT
+    }
+
+    type CACHE_BUFFER = [u8; 512];
+    type LOOKAHEAD_BUFFER = [u8; 8 * 8];
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize> {
         with_enabled(&mut self.prince, || {
