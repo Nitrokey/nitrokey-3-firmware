@@ -53,6 +53,12 @@ impl<B: Board> Resources<B> {
     }
 }
 
+impl<B: Board> Default for Resources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct UsbResources<B: Board> {
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
 }
@@ -60,6 +66,12 @@ pub struct UsbResources<B: Board> {
 impl<B: Board> UsbResources<B> {
     pub const fn new() -> Self {
         Self { usb_bus: None }
+    }
+}
+
+impl<B: Board> Default for UsbResources<B> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

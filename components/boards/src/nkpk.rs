@@ -1,6 +1,6 @@
 use littlefs2::{fs::Allocation, io::Result as LfsResult};
 use memory_regions::MemoryRegions;
-use utils::RamStorage;
+use utils::PhantomStorage;
 
 use super::nk3am::{
     self,
@@ -55,4 +55,4 @@ impl Board for NKPK {
 pub type InternalFlashStorage =
     FlashStorage<{ MEMORY_REGIONS.filesystem.start }, { MEMORY_REGIONS.filesystem.end }>;
 // TODO: Do we want to mirror the NK3AM EFS?
-pub type ExternalFlashStorage = RamStorage<nk3am::ExternalFlashStorage, 256>;
+pub type ExternalFlashStorage = PhantomStorage<nk3am::ExternalFlashStorage>;
