@@ -4,18 +4,19 @@ edition = "2021"
 version.workspace = true
 
 [dependencies]
-apdu-dispatch = "0.3"
+apdu-dispatch = "0.4"
 apps = { path = "../apps", features = ["fido-authenticator"] }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
 cortex-m-rt = "0.6.15"
-ctaphid-dispatch = "0.3"
+ctaphid-dispatch = "0.4"
 delog = "0.1"
 embedded-hal = "0.2.3"
 embedded-time = "0.12"
 generic-array = "0.14"
 interchange = "0.3"
-littlefs2 = { workspace = true, features = ["c-stubs"] }
+littlefs2 = { version = "=0.7.0", features = ["c-stubs", "unstable-littlefs-patched"] }
+littlefs2-sys = "=0.3.2"
 memory-regions = { path = "../memory-regions" }
 nb = "1"
 nfc-device = { path = "../nfc-device" }
@@ -25,8 +26,8 @@ ref-swap = "0.1.0"
 spi-memory = "0.2.0"
 trussed = { version = "0.1", default-features = false }
 usb-device = "0.2"
-usbd-ccid = "0.3"
-usbd-ctaphid = "0.3"
+usbd-ccid = "0.4"
+usbd-ctaphid = "0.4"
 utils = { path = "../utils" }
 
 # soc-lpc55
@@ -50,9 +51,9 @@ cortex-m-semihosting = { version = "0.3.5", optional = true }
 rtt-target = { version = "0.3", features = ["cortex-m"], optional = true }
 
 # se050
-se05x = { version = "0.2.1", optional = true }
+se05x = { version = "0.3.1", optional = true }
 
-trussed-manage = "0.2.0"
+trussed-manage = "0.3.0"
 
 [dev-dependencies]
 littlefs2-core = { version = "0.1", features = ["debug-error"] }

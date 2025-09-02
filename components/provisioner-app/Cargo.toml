@@ -7,14 +7,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apdu-app = "0.1"
-ctaphid-app = "0.1.0-rc.1"
+apdu-app = "0.2"
+ctaphid-app = "0.2"
 delog = "0.1"
-heapless = "0.7"
-heapless-bytes = "0.3"
-iso7816 = "0.1"
+heapless = "0.9"
+heapless-bytes = "0.5"
+iso7816 = "0.2"
 littlefs2-core = "0.1"
-salty = { version = "0.3", features = ["cose"] }
+salty = "0.3"
 trussed = { version = "0.1", default-features = false, features = ["crypto-client"] }
 p256-cortex-m4 = "0.1.0-alpha.6"
 

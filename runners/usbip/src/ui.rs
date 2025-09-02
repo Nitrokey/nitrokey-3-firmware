@@ -78,7 +78,7 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 
     fn set_status(&mut self, status: Status) {
-        info!("Set status: {:?}", status);
+        info!("Set status: {status:?}");
 
         let is_waiting = status == Status::WaitingForUserPresence;
         trussed_usbip::set_waiting(is_waiting);
@@ -100,7 +100,7 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 
     fn reboot(&mut self, to: reboot::To) -> ! {
-        info!("Restart!  ({:?})", to);
+        info!("Restart!  ({to:?})");
         process::exit(25);
     }
 }

@@ -18,7 +18,7 @@ extern crate delog;
 generate_macros!();
 
 use core::convert::TryFrom;
-use heapless::Vec;
+use heapless::{Vec, VecView};
 use littlefs2_core::{path, Path, PathBuf};
 use trussed::{
     client,
@@ -136,11 +136,11 @@ where
         }
     }
 
-    fn handle<const N: usize>(
+    fn handle(
         &mut self,
         instruction: Instruction,
         data: &[u8],
-        reply: &mut Vec<u8, N>,
+        reply: &mut VecView<u8>,
     ) -> Result<(), Error> {
         match instruction {
             Instruction::Select => self.select(data),

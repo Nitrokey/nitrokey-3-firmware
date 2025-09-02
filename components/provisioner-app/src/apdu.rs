@@ -1,7 +1,8 @@
 use crate::{Error, Provisioner};
-use apdu_app::{App, CommandView, Data, Interface, Result, Status};
+use apdu_app::{App, CommandView, Interface, Result};
 use core::convert::{TryFrom, TryInto};
-use iso7816::{Aid, Instruction};
+use heapless::VecView;
+use iso7816::{Aid, Instruction, Status};
 use trussed::{client, store::Store};
 
 const SOLO_PROVISIONER_AID: &[u8] = &[0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
@@ -40,7 +41,7 @@ where
     }
 }
 
-impl<S, T, const R: usize> App<R> for Provisioner<S, T>
+impl<S, T> App for Provisioner<S, T>
 where
     S: Store,
     T: client::CryptoClient,
@@ -49,7 +50,7 @@ where
         &mut self,
         _interface: Interface,
         _apdu: CommandView<'_>,
-        reply: &mut Data<R>,
+        reply: &mut VecView<u8>,
     ) -> Result {
         self.buffer_file_contents.clear();
         self.buffer_filename.clear();
@@ -64,7 +65,7 @@ where
         &mut self,
         _interface_type: Interface,
         apdu: CommandView<'_>,
-        reply: &mut Data<R>,
+        reply: &mut VecView<u8>,
     ) -> Result {
         apdu.instruction()
             .try_into()

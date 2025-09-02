@@ -22,16 +22,14 @@ fn check_build_triplet() -> SocType {
     if soc_is_lpc55 && !soc_is_nrf52840 {
         if target != "thumbv8m.main-none-eabi" {
             panic!(
-                "Wrong build triplet for LPC55, expecting thumbv8m.main-none-eabi, got {}",
-                target
+                "Wrong build triplet for LPC55, expecting thumbv8m.main-none-eabi, got {target}"
             );
         }
         SocType::Lpc55
     } else if soc_is_nrf52840 && !soc_is_lpc55 {
         if target != "thumbv7em-none-eabihf" {
             panic!(
-                "Wrong build triplet for NRF52840, expecting thumbv7em-none-eabihf, got {}",
-                target
+                "Wrong build triplet for NRF52840, expecting thumbv7em-none-eabihf, got {target}",
             );
         }
         SocType::Nrf52840
@@ -78,8 +76,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         SocType::Nrf52840 => ("ld/nrf52", "../ld/nrf52-memory-template.x"),
     };
 
-    println!("cargo:rerun-if-changed={}", template_file);
-    println!("cargo:rerun-if-changed={}", template_file);
+    println!("cargo:rerun-if-changed={template_file}");
+    println!("cargo:rerun-if-changed={template_file}");
 
     let memory_x_dir =
         Path::new(&env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR not set"))
