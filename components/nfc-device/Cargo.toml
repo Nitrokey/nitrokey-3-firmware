@@ -7,11 +7,11 @@ edition = "2018"
 [dependencies]
 delog = "0.1.0"
 embedded-time = "0.12"
-heapless = "0.7"
+heapless = "0.9"
 nb = "1"
 
 apdu-dispatch = "0.3"
-iso7816 = "0.1"
+iso7816 = "0.2"
 interchange = "0.3.0"
 
 [features]

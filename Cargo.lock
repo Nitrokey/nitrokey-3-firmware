@@ -5,16 +5,16 @@ version = 4
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.20#ff574d810f718c7ce0912512f6c551ca2ea7c88a"
+source = "git+https://github.com/Nitrokey/admin-app.git?branch=heapless-09#1fd44695552e93bd77c5728ebde43ab2737827e3"
 dependencies = [
  "apdu-app",
  "cbor-smol",
  "ctaphid-app",
  "delog",
- "heapless",
- "heapless-bytes",
+ "heapless 0.9.1",
+ "heapless-bytes 0.5.0",
  "hex-literal 0.4.1",
- "iso7816",
+ "iso7816 0.2.0",
  "littlefs2-core",
  "serde",
  "strum_macros",
@@ -32,7 +32,7 @@ checksum = "d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0"
 dependencies = [
  "crypto-common",
  "generic-array",
- "heapless",
+ "heapless 0.7.17",
 ]
 
 [[package]]
@@ -129,23 +129,22 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 [[package]]
 name = "apdu-app"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce391931a2cc4597eaf0d464db9d4d5e1939ccc8dd6eda0f86cda117e914c02d"
+source = "git+https://github.com/trussed-dev/apdu-dispatch.git?branch=heapless-09#fe95252d6dee898e7f2e4fa24736eb3d80aa649b"
 dependencies = [
- "iso7816",
+ "heapless 0.9.1",
+ "iso7816 0.2.0",
 ]
 
 [[package]]
 name = "apdu-dispatch"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d6e6883b2c23b9fe1a488913705c7b68f751bdb73da036ff8191da729337a5d"
+source = "git+https://github.com/trussed-dev/apdu-dispatch.git?branch=heapless-09#fe95252d6dee898e7f2e4fa24736eb3d80aa649b"
 dependencies = [
  "apdu-app",
  "delog",
- "heapless",
+ "heapless 0.9.1",
  "interchange",
- "iso7816",
+ "iso7816 0.2.0",
 ]
 
 [[package]]
@@ -160,8 +159,8 @@ dependencies = [
  "delog",
  "embedded-hal",
  "fido-authenticator",
- "heapless",
- "heapless-bytes",
+ "heapless 0.9.1",
+ "heapless-bytes 0.5.0",
  "hex",
  "if_chain",
  "interchange",
@@ -379,7 +378,7 @@ dependencies = [
  "generic-array",
  "interchange",
  "lfs-backup",
- "littlefs2",
+ "littlefs2 0.6.1",
  "littlefs2-core",
  "lpc55-hal",
  "lpc55-pac",
@@ -544,12 +543,13 @@ dependencies = [
 [[package]]
 name = "cbor-smol"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e087b31faa4ad4ba21c9bd0209204eef424dae6424195aafc7242006b69fc8d"
+source = "git+https://github.com/trussed-dev/cbor-smol.git?branch=heapless-0.9#6145f0fd910b56d0958c14e9fac00ecb859bbb00"
 dependencies = [
  "delog",
- "heapless",
- "heapless-bytes",
+ "heapless 0.7.17",
+ "heapless 0.9.1",
+ "heapless-bytes 0.3.0",
+ "heapless-bytes 0.5.0",
  "serde",
 ]
 
@@ -804,7 +804,7 @@ dependencies = [
  "bare-metal 1.0.0",
  "cortex-m",
  "cortex-m-rtic-macros",
- "heapless",
+ "heapless 0.7.17",
  "rtic-core",
  "rtic-monotonic",
  "version_check",
@@ -838,7 +838,17 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75494895fa1a9713ca725ddf2db084ee84fb0c20938fdd7c89293febe732d30a"
 dependencies = [
- "heapless-bytes",
+ "heapless-bytes 0.3.0",
+ "serde",
+ "serde_repr",
+]
+
+[[package]]
+name = "cosey"
+version = "0.4.0"
+source = "git+https://github.com/trussed-dev/cosey.git?branch=heapless-bytes-0.5#84a9c82dd9ed094ef45bbd59bbef8efde80f03f6"
+dependencies = [
+ "heapless-bytes 0.5.0",
  "serde",
  "serde_repr",
 ]
@@ -921,11 +931,11 @@ checksum = "bb8b105c5e728afd373e99874f0c1911c170b3a56848456cc16feb4506321606"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
- "cosey",
+ "cosey 0.3.2",
  "delog",
- "heapless",
- "heapless-bytes",
- "iso7816",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
+ "iso7816 0.1.4",
  "serde",
  "serde-indexed",
  "serde_bytes",
@@ -935,22 +945,20 @@ dependencies = [
 [[package]]
 name = "ctaphid-app"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fe93489fe96c998488d0843dffea35c02ed9add2585e55228e1d45988727ecc"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=4a10f787eed868a4d3b6953e7e65cdb764f34001#4a10f787eed868a4d3b6953e7e65cdb764f34001"
 dependencies = [
- "heapless-bytes",
+ "heapless-bytes 0.5.0",
  "trussed-core",
 ]
 
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38fd4316573df369820c5a9f8285fe522d8871c0b20bcf7d390f73b8e6caee28"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=4a10f787eed868a4d3b6953e7e65cdb764f34001#4a10f787eed868a4d3b6953e7e65cdb764f34001"
 dependencies = [
  "ctaphid-app",
  "delog",
- "heapless-bytes",
+ "heapless-bytes 0.5.0",
  "interchange",
  "ref-swap",
  "trussed-core",
@@ -1204,8 +1212,8 @@ source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.14.0#e72e80
 dependencies = [
  "cbor-smol",
  "delog",
- "heapless",
- "heapless-bytes",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
  "serde",
  "trussed-core",
 ]
@@ -1266,13 +1274,13 @@ source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitr
 dependencies = [
  "apdu-app",
  "cbor-smol",
- "cosey",
+ "cosey 0.3.2",
  "ctap-types",
  "ctaphid-app",
  "delog",
- "heapless",
- "heapless-bytes",
- "iso7816",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "serde",
  "serde-indexed",
@@ -1303,8 +1311,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2510a9088d9557aab93401404fc6786fad82f55705dedf4ee5884a3ace9be9b"
 dependencies = [
  "delog",
- "flexiber_derive",
- "heapless",
+ "flexiber_derive 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "heapless 0.7.17",
+]
+
+[[package]]
+name = "flexiber"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/flexiber.git?branch=heapless-090#836316d392e57bb170c60c844865bcdea7f53795"
+dependencies = [
+ "delog",
+ "flexiber_derive 0.1.3 (git+https://github.com/trussed-dev/flexiber.git?branch=heapless-090)",
+ "heapless 0.9.1",
 ]
 
 [[package]]
@@ -1312,6 +1330,17 @@ name = "flexiber_derive"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9985657bc39bae5cb7f4e686b46c67b1ea37390d82fe4bab56d7cd1933429d7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+ "synstructure",
+]
+
+[[package]]
+name = "flexiber_derive"
+version = "0.1.3"
+source = "git+https://github.com/trussed-dev/flexiber.git?branch=heapless-090#836316d392e57bb170c60c844865bcdea7f53795"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1541,6 +1570,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hash32"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47d60b12902ba28e2730cd37e95b8c9223af2808df9e902d4df49588d1470606"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1565,10 +1603,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdc6457c0eb62c71aac4bc17216026d8410337c4126773b9c5daba343f17964f"
 dependencies = [
  "atomic-polyfill",
- "hash32",
+ "hash32 0.2.1",
  "rustc_version 0.4.1",
  "serde",
  "spin",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "heapless"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1edcd5a338e64688fbdcb7531a846cfd3476a54784dcb918a0844682bc7ada5"
+dependencies = [
+ "hash32 0.3.1",
+ "serde",
  "stable_deref_trait",
 ]
 
@@ -1578,9 +1627,18 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7285eba272c6af3e9f15fb9e1c1b6e7d35aa70580ffe0d47af017e97dfb6f48b"
 dependencies = [
- "heapless",
+ "heapless 0.7.17",
  "serde",
  "typenum",
+]
+
+[[package]]
+name = "heapless-bytes"
+version = "0.5.0"
+source = "git+https://github.com/trussed-dev/heapless-bytes.git?rev=b146aa5d614eedba9c294bd4869342bbf29d0eb5#b146aa5d614eedba9c294bd4869342bbf29d0eb5"
+dependencies = [
+ "heapless 0.9.1",
+ "serde",
 ]
 
 [[package]]
@@ -1842,7 +1900,15 @@ version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd3c7e91da489667bb054f9cd2f1c60cc2ac4478a899f403d11dbc62189215b0"
 dependencies = [
- "heapless",
+ "heapless 0.7.17",
+]
+
+[[package]]
+name = "iso7816"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/iso7816.git?branch=heapless-09#9a18f46ed926bbdddef6ac36ea4e22e9668743a3"
+dependencies = [
+ "heapless 0.9.1",
 ]
 
 [[package]]
@@ -1893,9 +1959,9 @@ name = "lfs-backup"
 version = "0.1.0"
 dependencies = [
  "generic-array",
- "heapless",
- "heapless-bytes",
- "littlefs2",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
+ "littlefs2 0.6.1",
  "postcard 1.1.3",
  "rand",
  "serde",
@@ -1941,12 +2007,25 @@ checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32a43f3c0c6a7d127e3e1241665dd896d8bf1ca31cf9d826a1dc65239bd59868"
+dependencies = [
+ "delog",
+ "generic-array",
+ "heapless 0.7.17",
+ "littlefs2-core",
+ "littlefs2-sys",
+]
+
+[[package]]
+name = "littlefs2"
+version = "0.7.0"
+source = "git+https://github.com/trussed-dev/littlefs2.git?branch=update-heapless#d5fe3b43a2924dee450cb88158334f8ab10daf6a"
 dependencies = [
  "bitflags 2.9.1",
  "delog",
  "generic-array",
- "heapless",
+ "heapless 0.9.1",
  "littlefs2-core",
  "littlefs2-sys",
 ]
@@ -1954,17 +2033,17 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+source = "git+https://github.com/trussed-dev/littlefs2.git?branch=update-heapless#d5fe3b43a2924dee450cb88158334f8ab10daf6a"
 dependencies = [
  "bitflags 2.9.1",
- "heapless-bytes",
+ "heapless-bytes 0.5.0",
  "serde",
 ]
 
 [[package]]
 name = "littlefs2-sys"
 version = "0.3.1"
-source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=v0.3.1-nitrokey.1#1cfd35c9974b877761e8bb45417f7ad2a61bedad"
+source = "git+https://github.com/trussed-dev/littlefs2-sys?rev=v0.3.1-nitrokey.1#1cfd35c9974b877761e8bb45417f7ad2a61bedad"
 dependencies = [
  "bindgen",
  "cc",
@@ -2076,8 +2155,8 @@ name = "ndef-app"
 version = "0.1.0"
 dependencies = [
  "apdu-app",
- "heapless",
- "iso7816",
+ "heapless 0.9.1",
+ "iso7816 0.2.0",
 ]
 
 [[package]]
@@ -2087,9 +2166,9 @@ dependencies = [
  "apdu-dispatch",
  "delog",
  "embedded-time",
- "heapless",
+ "heapless 0.9.1",
  "interchange",
- "iso7816",
+ "iso7816 0.2.0",
  "nb 1.1.0",
 ]
 
@@ -2295,10 +2374,10 @@ dependencies = [
  "cbor-smol",
  "cfg-if",
  "delog",
- "heapless",
- "heapless-bytes",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
  "hex-literal 0.4.1",
- "iso7816",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "log",
  "serde",
@@ -2413,11 +2492,11 @@ dependencies = [
  "cbor-smol",
  "cfg-if",
  "delog",
- "flexiber",
- "heapless",
- "heapless-bytes",
+ "flexiber 0.1.3",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
  "hex-literal 0.3.4",
- "iso7816",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "log",
  "serde",
@@ -2469,7 +2548,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a25c0b0ae06fcffe600ad392aabfa535696c8973f2253d9ac83171924c58a858"
 dependencies = [
- "heapless",
+ "heapless 0.7.17",
  "postcard-cobs",
  "serde",
 ]
@@ -2481,7 +2560,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6764c3b5dd454e283a30e6dfe78e9b31096d9e32036b5d1eaac7a6119ccb9a24"
 dependencies = [
  "cobs",
- "heapless",
+ "heapless 0.7.17",
  "serde",
 ]
 
@@ -2568,9 +2647,9 @@ dependencies = [
  "apdu-app",
  "ctaphid-app",
  "delog",
- "heapless",
- "heapless-bytes",
- "iso7816",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "p256-cortex-m4",
  "salty",
@@ -2814,10 +2893,9 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 [[package]]
 name = "salty"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b947325a585e90733e0e9ec097228f40b637cc346f9bd68f84d5c6297d0fcfef"
+source = "git+https://github.com/ycrypto/salty.git?branch=heapless-updated#3ca9a68411b7964fdd8246e0a4132514a1413b10"
 dependencies = [
- "cosey",
+ "cosey 0.4.0",
  "ed25519",
  "subtle",
  "zeroize",
@@ -2847,9 +2925,9 @@ dependencies = [
  "crc16",
  "delog",
  "embedded-hal",
- "heapless",
+ "heapless 0.7.17",
  "hex-literal 0.4.1",
- "iso7816",
+ "iso7816 0.1.4",
  "lpc55-hal",
  "nrf-hal-common",
  "rand",
@@ -2883,11 +2961,11 @@ dependencies = [
  "ctaphid-app",
  "delog",
  "encrypted_container",
- "flexiber",
- "heapless",
- "heapless-bytes",
+ "flexiber 0.1.3",
+ "heapless 0.7.17",
+ "heapless-bytes 0.3.0",
  "hex-literal 0.3.4",
- "iso7816",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "serde",
  "trussed-auth",
@@ -3476,7 +3554,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=e107ed315a07dc6c992fac39d542e847cc3a1b6c#e107ed315a07dc6c992fac39d542e847cc3a1b6c"
+source = "git+https://github.com/trussed-dev/trussed.git?branch=heapless-09#e6bb61a716a3575b3e5d9869a0e1bb1740fe9969"
 dependencies = [
  "aes",
  "bitflags 2.9.1",
@@ -3485,17 +3563,17 @@ dependencies = [
  "cfg-if",
  "chacha20",
  "chacha20poly1305",
- "cosey",
+ "cosey 0.4.0",
  "delog",
  "des",
- "flexiber",
+ "flexiber 0.2.0",
  "generic-array",
- "heapless",
- "heapless-bytes",
+ "heapless 0.9.1",
+ "heapless-bytes 0.5.0",
  "hex-literal 0.4.1",
  "hmac",
  "interchange",
- "littlefs2",
+ "littlefs2 0.7.0",
  "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
@@ -3556,7 +3634,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afddad280ae8a5235e1b06408cca909ce9454cdd89f941b94b024c580732b3ce"
 dependencies = [
- "heapless-bytes",
+ "heapless-bytes 0.3.0",
  "littlefs2-core",
  "postcard 0.7.3",
  "rand_core",
@@ -3599,8 +3677,7 @@ dependencies = [
 [[package]]
 name = "trussed-manage"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd9663f2c1b5bddbb02f9edbbe9085313ae8cd03e53a2eb266f43b1dba365287"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=heapless-09#b765f02009c067a2038756991aef6fd299de3b2f"
 dependencies = [
  "littlefs2-core",
  "serde",
@@ -3613,7 +3690,7 @@ version = "0.3.0"
 source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.3.0#053d3b55622d6956610eff80a138ab92671df4ca"
 dependencies = [
  "delog",
- "heapless-bytes",
+ "heapless-bytes 0.3.0",
  "num-bigint-dig",
  "postcard 0.7.3",
  "rsa",
@@ -3636,7 +3713,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "hkdf",
  "hmac",
- "iso7816",
+ "iso7816 0.1.4",
  "littlefs2-core",
  "p256",
  "p256-cortex-m4",
@@ -3672,12 +3749,14 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.3.3"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.3.3#2e44cf8ca3e6597880a1e59757228da2d6cce3f1"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=heapless-09#b765f02009c067a2038756991aef6fd299de3b2f"
 dependencies = [
  "aead",
  "chacha20poly1305",
  "delog",
  "digest 0.10.7",
+ "heapless 0.9.1",
+ "heapless-bytes 0.5.0",
  "hex-literal 0.4.1",
  "hkdf",
  "littlefs2-core",
@@ -3827,9 +3906,9 @@ checksum = "403fefa622483869d1b36f2accd7458291202c18aa2f2e5147caf638825dde0c"
 dependencies = [
  "delog",
  "embedded-time",
- "heapless",
+ "heapless 0.7.17",
  "interchange",
- "iso7816",
+ "iso7816 0.1.4",
  "usb-device",
 ]
 
@@ -3842,7 +3921,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
- "heapless-bytes",
+ "heapless-bytes 0.3.0",
  "interchange",
  "ref-swap",
  "serde",
@@ -3872,7 +3951,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "dialoguer",
- "littlefs2",
+ "littlefs2 0.6.1",
  "littlefs2-core",
  "log",
  "pretty_env_logger",
@@ -3901,7 +3980,7 @@ version = "1.8.2"
 dependencies = [
  "chrono",
  "delog",
- "littlefs2",
+ "littlefs2 0.6.1",
  "quickcheck",
  "regex",
  "semver 1.0.26",
