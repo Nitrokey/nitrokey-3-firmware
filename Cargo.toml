@@ -13,7 +13,7 @@ resolver = "2"
 version = "1.8.2"
 
 [workspace.dependencies]
-littlefs2 = "0.6"
+littlefs2 = "0.7"
 
 [patch.crates-io]
 # components
@@ -21,7 +21,7 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-trussed = { git = "https://github.com/trussed-dev/trussed.git", branch = "heapless-09" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
 
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
@@ -35,7 +35,8 @@ piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.gi
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.14.0" }
 
 # backends
-trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth", rev = "9e07990b78c21704e372df4fd1a6334bef9b1bfa" }
+trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", rev = "9e07990b78c21704e372df4fd1a6334bef9b1bfa" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.3.0" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.5.0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
@@ -54,6 +55,7 @@ ctaphid-app = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev
 ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "4a10f787eed868a4d3b6953e7e65cdb764f34001" }
 apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", branch = "heapless-09" }
 apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", branch = "heapless-09" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", branch = "heapless-09" }
 
 
 [profile.release]

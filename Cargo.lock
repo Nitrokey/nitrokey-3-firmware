@@ -378,7 +378,7 @@ dependencies = [
  "generic-array",
  "interchange",
  "lfs-backup",
- "littlefs2 0.6.1",
+ "littlefs2",
  "littlefs2-core",
  "lpc55-hal",
  "lpc55-pac",
@@ -1959,9 +1959,9 @@ name = "lfs-backup"
 version = "0.1.0"
 dependencies = [
  "generic-array",
- "heapless 0.7.17",
- "heapless-bytes 0.3.0",
- "littlefs2 0.6.1",
+ "heapless 0.9.1",
+ "heapless-bytes 0.5.0",
+ "littlefs2",
  "postcard 1.1.3",
  "rand",
  "serde",
@@ -2003,19 +2003,6 @@ name = "litemap"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
-
-[[package]]
-name = "littlefs2"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a43f3c0c6a7d127e3e1241665dd896d8bf1ca31cf9d826a1dc65239bd59868"
-dependencies = [
- "delog",
- "generic-array",
- "heapless 0.7.17",
- "littlefs2-core",
- "littlefs2-sys",
-]
 
 [[package]]
 name = "littlefs2"
@@ -3554,7 +3541,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?branch=heapless-09#e6bb61a716a3575b3e5d9869a0e1bb1740fe9969"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=e6bb61a716a3575b3e5d9869a0e1bb1740fe9969#e6bb61a716a3575b3e5d9869a0e1bb1740fe9969"
 dependencies = [
  "aes",
  "bitflags 2.9.1",
@@ -3573,7 +3560,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "hmac",
  "interchange",
- "littlefs2 0.7.0",
+ "littlefs2",
  "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
@@ -3591,8 +3578,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3110004319491b9210f50c3653a574d354e27a3de73ae5a3dfc2e686027702e7"
+source = "git+https://github.com/trussed-dev/trussed-auth?rev=9e07990b78c21704e372df4fd1a6334bef9b1bfa#9e07990b78c21704e372df4fd1a6334bef9b1bfa"
 dependencies = [
  "serde",
  "trussed-core",
@@ -3601,7 +3587,7 @@ dependencies = [
 [[package]]
 name = "trussed-auth-backend"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?tag=v0.4.0#ab6ad8422531fb4801fee795cb44baa375320f15"
+source = "git+https://github.com/trussed-dev/trussed-auth?rev=9e07990b78c21704e372df4fd1a6334bef9b1bfa#9e07990b78c21704e372df4fd1a6334bef9b1bfa"
 dependencies = [
  "chacha20poly1305",
  "hkdf",
@@ -3915,13 +3901,12 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82f5a2aa6898726b4eeb3fa3796fb8dc49e76e2a16bd683db103f63bc8ceca97"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?branch=heapless-09#c085a54ba8d640e3c9f9913551eb3c17bfd5c163"
 dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
- "heapless-bytes 0.3.0",
+ "heapless-bytes 0.5.0",
  "interchange",
  "ref-swap",
  "serde",
@@ -3951,7 +3936,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "dialoguer",
- "littlefs2 0.6.1",
+ "littlefs2",
  "littlefs2-core",
  "log",
  "pretty_env_logger",
@@ -3980,7 +3965,7 @@ version = "1.8.2"
 dependencies = [
  "chrono",
  "delog",
- "littlefs2 0.6.1",
+ "littlefs2",
  "quickcheck",
  "regex",
  "semver 1.0.26",
