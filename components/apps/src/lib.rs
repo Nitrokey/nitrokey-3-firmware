@@ -794,9 +794,9 @@ where
     }
 
     #[cfg(feature = "trussed-usbip-ccid")]
-    fn with_ccid_apps<T, const N: usize>(
+    fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_app::App<N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_app::App]) -> T,
     ) -> T {
         self.apdu_dispatch(f)
     }
