@@ -202,7 +202,7 @@ fn exec(
     trussed_usbip::Builder::new(options)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
-            Bytes::from_slice(b"Unique hw key").unwrap(),
+            Bytes::try_from(b"Unique hw key").unwrap(),
         ))
         .build::<Apps<Runner>>()
         .exec(platform, (runner, data));
