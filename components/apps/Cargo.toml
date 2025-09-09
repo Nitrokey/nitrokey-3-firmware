@@ -14,7 +14,7 @@ heapless-bytes = "0.5"
 interchange = "0.3"
 se05x = { version = "0.2.0", optional = true}
 serde = { version = "1.0.180", default-features = false }
-trussed = { version = "0.1", default-features = false, features = ["serde-extensions"] }
+trussed = { version = "0.1", default-features = false, features = ["serde-extensions", "filesystem-client", "ui-client", "all-clients", "shared-secret"] }
 trussed-core = "0.1.0-rc.1"
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.3", optional = true }

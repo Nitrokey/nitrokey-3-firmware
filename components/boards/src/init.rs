@@ -296,7 +296,7 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     let dispatch = if let Some(hw_key) = hw_key {
         Dispatch::with_hw_key(
             AUTH_LOCATION,
-            trussed::types::Bytes::from_slice(hw_key).unwrap(),
+            trussed::types::Bytes::try_from(hw_key).unwrap(),
             #[cfg(feature = "se050")]
             se050,
         )

@@ -695,11 +695,11 @@ impl<R: Runner> Apps<R> {
         (app, data.init_status)
     }
 
-    pub fn apdu_dispatch<F, T, const N: usize>(&mut self, f: F) -> T
+    pub fn apdu_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn ApduApp<N>]) -> T,
+        F: FnOnce(&mut [&mut dyn ApduApp]) -> T,
     {
-        let mut apps: Vec<&mut dyn ApduApp<N>, 7> = Default::default();
+        let mut apps: Vec<&mut dyn ApduApp, 7> = Default::default();
 
         // App 1: ndef
         #[cfg(feature = "ndef-app")]
@@ -739,11 +739,11 @@ impl<R: Runner> Apps<R> {
         f(&mut apps)
     }
 
-    pub fn ctaphid_dispatch<F, T, const N: usize>(&mut self, f: F) -> T
+    pub fn ctaphid_dispatch<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut [&mut dyn CtaphidApp<'static, N>]) -> T,
+        F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
-        let mut apps: Vec<&mut dyn CtaphidApp<'static, N>, 4> = Default::default();
+        let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
 
         #[cfg(feature = "fido-authenticator")]
         if let Some(fido) = self.fido.as_mut() {
@@ -786,9 +786,9 @@ where
         apps
     }
 
-    fn with_ctaphid_apps<T, const N: usize>(
+    fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static, N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     ) -> T {
         self.ctaphid_dispatch(f)
     }

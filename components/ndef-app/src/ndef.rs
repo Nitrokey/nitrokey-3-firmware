@@ -1,6 +1,6 @@
 use apdu_app::{CommandView, Interface};
-use iso7816::{Instruction, Status};
 use heapless::VecView;
+use iso7816::{Instruction, Status};
 
 pub struct App<'a> {
     reader: &'a [u8],
