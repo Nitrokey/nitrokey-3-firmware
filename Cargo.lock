@@ -3715,7 +3715,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=504674453c9573a30aa2f155101df49eb2af1ba7#504674453c9573a30aa2f155101df49eb2af1ba7"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=0ff1992f15c273c87e0607384e3dd94d341b721e#0ff1992f15c273c87e0607384e3dd94d341b721e"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",

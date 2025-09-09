@@ -25,7 +25,7 @@ trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a71
 trussed-core = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
 trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
 
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "0ff1992f15c273c87e0607384e3dd94d341b721e" }
 
 # applications
 # admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
