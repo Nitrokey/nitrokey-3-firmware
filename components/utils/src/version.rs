@@ -69,6 +69,7 @@ mod tests {
 
     quickcheck::quickcheck! {
         fn test_parse_simple_u8(value: u8) -> bool {
+            use alloc::to_string::ToString;
             parse_simple_u8(&value.to_string()) == value
         }
     }
