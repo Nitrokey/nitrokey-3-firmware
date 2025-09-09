@@ -158,7 +158,7 @@ fn print_version() {
         "provisioner",
     ];
 
-    print!("{} {}", crate_name, crate_version);
+    print!("{crate_name} {crate_version}");
     if !enabled_features.is_empty() {
         print!(" ({})", enabled_features.join(", "));
     }
@@ -202,7 +202,7 @@ fn exec(
     trussed_usbip::Builder::new(options)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
-            Bytes::try_from(b"Unique hw key").unwrap(),
+            Bytes::from(b"Unique hw key"),
         ))
         .build::<Apps<Runner>>()
         .exec(platform, (runner, data));
