@@ -14,7 +14,7 @@ heapless-bytes = "0.5"
 interchange = "0.3"
 se05x = { version = "0.2.0", optional = true}
 serde = { version = "1.0.180", default-features = false }
-trussed = { version = "0.1", default-features = false, features = ["serde-extensions", "filesystem-client", "ui-client", "all-clients", "shared-secret"] }
+trussed = { version = "0.1", default-features = false, features = ["serde-extensions", "filesystem-client", "ui-client", "all-clients", "shared-secret", "crypto-client"] }
 trussed-core = "0.1.0-rc.1"
 trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.3", optional = true }
@@ -64,7 +64,7 @@ nkpk-provisioner = ["nkpk", "provisioner-app"]
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth", "trussed/chacha8-poly1305", "trussed/hmac-sha1", "trussed/hmac-sha256", "trussed/sha256"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid", "trussed/aes256-cbc", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/hmac-sha256", "trussed/p256", "trussed/sha256"]
-opcard = ["dep:opcard", "backend-rsa", "backend-auth", "trussed/aes256-cbc", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/p256", "trussed/x255"]
+opcard = ["dep:opcard", "backend-rsa", "backend-auth", "trussed/aes256-cbc", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/p256", "trussed/x255", "trussed/rsa4096"]
 piv-authenticator = ["dep:piv-authenticator", "backend-rsa", "backend-auth", "trussed/aes256-cbc", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/p256", "trussed/tdes", "trussed/x255"]
 se050 = ["dep:se05x", "trussed-se050-backend", "trussed-se050-manage", "admin-app/se050"]
 
