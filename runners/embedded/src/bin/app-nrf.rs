@@ -131,6 +131,7 @@ mod app {
             store,
             user_interface,
             &mut init_status,
+            None,
             Some(&hw_key),
             #[cfg(feature = "se050")]
             Some(se050),

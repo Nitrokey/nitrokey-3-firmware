@@ -40,6 +40,10 @@ littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev 
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 
+# tropic01 support
+tropic01 = { git = "https://github.com/Nitrokey/libtropic-rs.git", rev = "0b98df97c094aeab5f5b8dc31b68aeb9e96785e2" }
+nom-derive = { git = "https://github.com/rust-bakery/nom-derive.git", rev = "f68f464f50f7162483355e61a50ec2a7dae8044f" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

@@ -1,13 +1,14 @@
+use core::convert::Infallible;
+
 use apdu_dispatch::interchanges::{Channel as CcidChannel, Responder as CcidResponder};
 use apps::{Endpoints, InitStatus};
 use boards::{
-    flash::ExtFlashStorage,
     init::{self, UsbNfc, UsbResources},
     nk3xn::{
         button::ThreeButtons,
         led::RgbLed,
         prince,
-        spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
+        spi::{self, Spi, SpiConfig},
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
     },
     soc::{
@@ -24,8 +25,11 @@ use boards::{
 };
 use embedded_hal::{
     blocking::i2c::{Read, Write},
+    digital::v2::OutputPin as _,
     timer::{Cancel, CountDown},
 };
+use embedded_hal_1::{delay as delay_1, digital as digital_1};
+use embedded_hal_bus::spi::ExclusiveDevice;
 use hal::{
     drivers::{clocks, flash::FlashGordon, pins, Timer},
     peripherals::{
@@ -38,20 +42,35 @@ use hal::{
         wwdt::{self, Wwdt},
     },
     raw::WWDT,
-    time::{DurationExtensions as _, RateExtensions as _},
-    typestates::init_state::{Enabled, Unknown},
+    time::{DurationExtensions as _, Microseconds, RateExtensions as _},
+    typestates::{
+        init_state::{Enabled, Unknown},
+        pin::{gpio::direction::Output, state::Gpio},
+    },
+    Pin,
 };
 use interchange::Channel;
 use littlefs2_core::path;
 use lpc55_hal as hal;
 #[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;
+use tropic01::Tropic01;
 use trussed::types::Location;
 use utils::OptionalStorage;
+use x25519_dalek::{PublicKey, StaticSecret};
 #[cfg(feature = "se050")]
 use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
 
 use crate::{VERSION, VERSION_STRING};
+
+const SH0PRIV: [u8; 32] = [
+    0x28, 0x3f, 0x5a, 0x0f, 0xfc, 0x41, 0xcf, 0x50, 0x98, 0xa8, 0xe1, 0x7d, 0xb6, 0x37, 0x2c, 0x3c,
+    0xaa, 0xd1, 0xee, 0xee, 0xdf, 0x0f, 0x75, 0xbc, 0x3f, 0xbf, 0xcd, 0x9c, 0xab, 0x3d, 0xe9, 0x72,
+];
+const SH0PUB: [u8; 32] = [
+    0xf9, 0x75, 0xeb, 0x3c, 0x2f, 0xd7, 0x90, 0xc9, 0x6f, 0x29, 0x4f, 0x15, 0x57, 0xa5, 0x03, 0x17,
+    0x80, 0xc9, 0xaa, 0xfa, 0x14, 0x0d, 0xa2, 0x8f, 0x55, 0xe7, 0x51, 0x57, 0x37, 0xb2, 0x50, 0x2c,
+];
 
 type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
@@ -59,6 +78,30 @@ pub type WwdtEnabled = wwdt::Active;
 pub type WwdtResetting = wwdt::Active;
 pub type WwdtProtecting = wwdt::Inactive;
 pub type EnabledWwdt = Wwdt<WwdtEnabled, WwdtResetting, WwdtProtecting>;
+
+struct CsPin(Pin<pins::Pio1_20, Gpio<Output>>);
+
+impl digital_1::ErrorType for CsPin {
+    type Error = Infallible;
+}
+
+impl digital_1::OutputPin for CsPin {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
+        self.0.set_low()
+    }
+    fn set_high(&mut self) -> Result<(), Self::Error> {
+        self.0.set_high()
+    }
+}
+
+struct TimerDelay1<'a, T>(&'a mut T);
+
+impl<T: CountDown<Time = Microseconds>> delay_1::DelayNs for TimerDelay1<'_, T> {
+    fn delay_ns(&mut self, ns: u32) {
+        self.0.start(Microseconds::new(ns / 1000));
+        nb::block!(self.0.wait()).unwrap();
+    }
+}
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -368,7 +411,7 @@ impl Stage2 {
 
         let se050_i2c = self.get_se050_i2c(flexcomm5);
 
-        let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
+        let spi = self.setup_spi(flexcomm0, SpiConfig::Tropic01);
 
         Stage3 {
             status: self.status,
@@ -376,7 +419,7 @@ impl Stage2 {
             clocks: self.clocks,
             basic: self.basic,
             nfc_rp,
-            spi: Some(spi),
+            spi,
             se050_timer: self.se050_timer,
             se050_i2c: Some(se050_i2c),
             wwdt: self.wwdt,
@@ -390,7 +433,7 @@ pub struct Stage3 {
     clocks: Clocks,
     basic: Basic,
     nfc_rp: CcidResponder<'static>,
-    spi: Option<Spi>,
+    spi: Spi,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
@@ -441,7 +484,7 @@ pub struct Stage4 {
     clocks: Clocks,
     basic: Basic,
     nfc_rp: CcidResponder<'static>,
-    spi: Option<Spi>,
+    spi: Spi,
     flash: Flash,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
@@ -449,39 +492,12 @@ pub struct Stage4 {
 }
 
 impl Stage4 {
-    fn setup_external_flash(&mut self, spi: Spi) -> OptionalStorage<ExtFlashStorage<Spi, FlashCs>> {
-        let flash_cs = FlashCsPin::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
-        let _power = pins::Pio0_21::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
-
-        self.basic.delay_timer.start(200_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
-
-        if let Some(storage) = ExtFlashStorage::try_new(spi, flash_cs) {
-            storage.into()
-        } else {
-            self.status.insert(InitStatus::EXTERNAL_FLASH_ERROR);
-            info!("failed to initialize external flash, using fallback");
-            OptionalStorage::default()
-        }
-    }
-
     #[inline(never)]
     pub fn next(mut self, resources: &'static mut StoreResources<NK3xN>) -> Stage5 {
         info_now!("making fs");
 
-        let external = if let Some(spi) = self.spi.take() {
-            info_now!("using external flash");
-            self.setup_external_flash(spi)
-        } else {
-            info_now!("simulating external flash with RAM");
-            OptionalStorage::default()
-        };
+        info_now!("simulating external flash with RAM");
+        let external = OptionalStorage::default();
 
         #[cfg(not(feature = "no-encrypted-storage"))]
         let internal = {
@@ -516,6 +532,7 @@ impl Stage4 {
             basic: self.basic,
             rng: self.flash.rng,
             nfc_rp: self.nfc_rp,
+            spi: self.spi,
             se050_timer: self.se050_timer,
             se050_i2c: self.se050_i2c,
             store,
@@ -566,9 +583,38 @@ pub struct Stage5 {
     nfc_rp: CcidResponder<'static>,
     rng: Rng<Enabled>,
     store: RunnerStore<NK3xN>,
+    spi: Spi,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
+}
+
+fn get_seed_from_tropic01(
+    iocon: &mut hal::Iocon<Enabled>,
+    gpio: &mut hal::Gpio<Enabled>,
+    spi: Spi,
+    timer: &mut Timer<ctimer::Ctimer2<Enabled>>,
+    rng: &mut Rng<Enabled>,
+) -> [u8; 32] {
+    let cs = pins::Pio1_20::take()
+        .unwrap()
+        .into_gpio_pin(iocon, gpio)
+        .into_output_high();
+    let cs = CsPin(cs);
+    let delay = TimerDelay1(timer);
+    let spi = ExclusiveDevice::new(spi, cs, delay).expect("failed to set up SPI device");
+    let mut tropic01 = Tropic01::new(spi);
+
+    let ehpriv = StaticSecret::random_from_rng(rng);
+    let ehpub = PublicKey::from(&ehpriv);
+    tropic01
+        .session_start(SH0PUB.into(), SH0PRIV.into(), ehpub, ehpriv, 0)
+        .expect("failed to start session");
+    tropic01
+        .get_random_value(32)
+        .expect("failed to get random value")
+        .try_into()
+        .expect("failed to convert random value")
 }
 
 impl Stage5 {
@@ -587,11 +633,20 @@ impl Stage5 {
 
         let user_interface = UserInterface::new(rtc, three_buttons, rgb);
 
+        let seed = get_seed_from_tropic01(
+            &mut self.clocks.iocon,
+            &mut self.clocks.gpio,
+            self.spi,
+            &mut self.se050_timer,
+            &mut self.rng,
+        );
+
         let trussed = init::init_trussed(
             &mut self.rng,
             self.store,
             user_interface,
             &mut self.status,
+            Some(seed),
             None,
             #[cfg(feature = "se050")]
             self.se050_i2c
