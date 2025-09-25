@@ -41,7 +41,7 @@ trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth.git", rev = 
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", rev = "9e07990b78c21704e372df4fd1a6334bef9b1bfa" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git",branch = "heapless-09" }
 trussed-rsa-types = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", branch = "heapless-09" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", branch = "heapless-09" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "7db6d28df77b9706fd228ee8b384e1c2b1393f36" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
 trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
 trussed-wrap-key-to-file = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
