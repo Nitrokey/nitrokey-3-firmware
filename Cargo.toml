@@ -13,7 +13,7 @@ resolver = "2"
 version = "1.8.2"
 
 [workspace.dependencies]
-littlefs2 = "0.6"
+littlefs2 = "0.7"
 
 [patch.crates-io]
 # components
@@ -21,24 +21,48 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e107ed315a07dc6c992fac39d542e847cc3a1b6c" }
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
+trussed-core = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
+trussed-manage = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
+
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "0ff1992f15c273c87e0607384e3dd94d341b721e" }
 
 # applications
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.27" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.6.1" }
-piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.5.3" }
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.14.0" }
+# admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", rev = "7c0f00361a261256cfd2d639247030d02e92fec2" }
+fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",rev  = "71ac8fb0d54a1ac385cf0d0bd93dbb55bd16814b" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", branch = "heapless-09" }
+piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", rev = "80d78d88f801160ecd27fc902b621fbf2c94bc9f" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "459745bd9734c2c75dc35769eb834b16175ca832" }
+encrypted_container = { git = "https://github.com/Nitrokey/trussed-secrets-app", rev = "459745bd9734c2c75dc35769eb834b16175ca832" }
 
 # backends
-trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.3.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.5.0" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.3" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
+trussed-auth = { git = "https://github.com/trussed-dev/trussed-auth.git", rev = "e602a26f5b4cbb96515509f8e4ca72c8a7406c98" }
+trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", rev = "9e07990b78c21704e372df4fd1a6334bef9b1bfa" }
+trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git",branch = "heapless-09" }
+trussed-rsa-types = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", branch = "heapless-09" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "7db6d28df77b9706fd228ee8b384e1c2b1393f36" }
+trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
+trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
+trussed-wrap-key-to-file = { git = "https://github.com/trussed-dev/trussed-staging.git", branch = "heapless-09" }
+littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", branch = "update-heapless" }
+littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", branch = "update-heapless" }
+littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys", rev = "v0.3.1-nitrokey.1" }
+se05x = { git = "https://github.com/Nitrokey/se05x.git", branch = "heapless-09" }
+
+
+cbor-smol = { git = "https://github.com/trussed-dev/cbor-smol.git", branch = "heapless-0.9" }
+cosey = { git = "https://github.com/trussed-dev/cosey.git", branch = "heapless-bytes-0.5" }
+ctap-types = { git = "https://github.com/trussed-dev/ctap-types", rev = "7509af268b869bd76ab00ddd62a2340764f4551c"}
+salty = { git = "https://github.com/ycrypto/salty.git", branch = "heapless-updated" }
+flexiber = { git = "https://github.com/trussed-dev/flexiber.git", branch = "heapless-090" }
+ctaphid-app = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "4a10f787eed868a4d3b6953e7e65cdb764f34001" }
+ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "4a10f787eed868a4d3b6953e7e65cdb764f34001" }
+apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "fe95252d6dee898e7f2e4fa24736eb3d80aa649b" }
+apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "fe95252d6dee898e7f2e4fa24736eb3d80aa649b" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", branch = "heapless-09" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid.git", branch = "heapless-09" }
+
 
 [profile.release]
 codegen-units = 1

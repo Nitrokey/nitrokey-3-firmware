@@ -37,8 +37,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // @todo: move this decision into 'profile.cfg'
     let (memory_x_infix, template_file) = ("ld/nrf52", "../ld/nrf52-memory-template.x");
 
-    println!("cargo:rerun-if-changed={}", template_file);
-    println!("cargo:rerun-if-changed={}", template_file);
+    println!("cargo:rerun-if-changed={template_file}");
+    println!("cargo:rerun-if-changed={template_file}");
 
     let memory_x_dir =
         Path::new(&env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR not set"))

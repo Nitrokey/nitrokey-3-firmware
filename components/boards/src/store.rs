@@ -34,6 +34,12 @@ pub struct StoreResources<B: Board> {
     volatile: StorageResources<VolatileStorage>,
 }
 
+impl<B: Board> Default for StoreResources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<B: Board> StoreResources<B> {
     pub const fn new() -> Self {
         Self {
@@ -48,6 +54,12 @@ pub struct StorageResources<S: Storage + 'static> {
     fs: MaybeUninit<Filesystem<'static, S>>,
     alloc: MaybeUninit<Allocation<S>>,
     storage: MaybeUninit<S>,
+}
+
+impl<S: Storage + 'static> Default for StorageResources<S> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S: Storage + 'static> StorageResources<S> {

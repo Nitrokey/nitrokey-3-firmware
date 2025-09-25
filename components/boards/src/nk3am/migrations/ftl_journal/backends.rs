@@ -30,7 +30,7 @@ impl BackupBackend for EFSBackupBackend<'_> {
     fn write(&mut self, content: &[u8]) -> Result<usize> {
         let len =
             content.len() + ((Self::RW_SIZE - (content.len() % Self::RW_SIZE)) % Self::RW_SIZE);
-        let mut data: Bytes<MAX_DUMP_BLOB_LENGTH> = Bytes::from_slice(content).unwrap();
+        let mut data: Bytes<MAX_DUMP_BLOB_LENGTH> = Bytes::try_from(content).unwrap();
 
         data.resize(len, 0x00)
             .map_err(|_| FSBackupError::BackendWriteErr)?;
@@ -49,7 +49,7 @@ impl BackupBackend for EFSBackupBackend<'_> {
 
     fn read<const N: usize>(&mut self, len: usize) -> Result<Bytes<N>> {
         let mut output = Bytes::<N>::default();
-        output.resize_default(len).expect("assuming: N > len");
+        output.resize_zero(len).expect("assuming: N > len");
 
         self.extflash
             .read(self.offset, &mut output)

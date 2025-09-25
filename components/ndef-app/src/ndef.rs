@@ -1,4 +1,5 @@
-use apdu_app::{CommandView, Data, Interface};
+use apdu_app::{CommandView, Interface};
+use heapless::VecView;
 use iso7816::{Instruction, Status};
 
 pub struct App<'a> {
@@ -45,12 +46,12 @@ impl iso7816::App for App<'_> {
     }
 }
 
-impl<const R: usize> apdu_app::App<R> for App<'_> {
+impl apdu_app::App for App<'_> {
     fn select(
         &mut self,
         _interface: Interface,
         _apdu: CommandView<'_>,
-        _reply: &mut Data<R>,
+        _reply: &mut VecView<u8>,
     ) -> apdu_app::Result {
         Ok(())
     }
@@ -61,7 +62,7 @@ impl<const R: usize> apdu_app::App<R> for App<'_> {
         &mut self,
         _type: Interface,
         apdu: CommandView<'_>,
-        reply: &mut Data<R>,
+        reply: &mut VecView<u8>,
     ) -> apdu_app::Result {
         let instruction = apdu.instruction();
         let p1 = apdu.p1;

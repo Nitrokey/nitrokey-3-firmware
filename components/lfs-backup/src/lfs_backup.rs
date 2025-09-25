@@ -47,6 +47,16 @@ impl From<littlefs2::io::Error> for FSBackupError {
     }
 }
 
+pub(crate) fn postcard_serialize_bytes<T: serde::Serialize, const N: usize>(
+    object: &T,
+) -> postcard::Result<Vec<u8, N>> {
+    let mut vec = Vec::new();
+    vec.resize(N, 0u8).unwrap();
+    let serialized = postcard::to_slice(object, &mut vec)?.len();
+    vec.resize(serialized, 0).unwrap();
+    Ok(vec)
+}
+
 pub type Result<T, E = FSBackupError> = core::result::Result<T, E>;
 
 #[derive(Clone, Debug)]
@@ -95,7 +105,7 @@ pub trait BackupBackend {
         attr: Option<UserAttribute>,
     ) -> Result<usize> {
         let path_bytes =
-            Bytes::<PATH_MAX>::from_slice(entry.path().as_str_ref_with_trailing_nul().as_bytes())
+            Bytes::<PATH_MAX>::try_from(entry.path().as_str_ref_with_trailing_nul().as_bytes())
                 .map_err(|_| FSBackupError::PathAssemblyErr)?;
 
         let blob = FSEntryBlob {
@@ -106,7 +116,7 @@ pub trait BackupBackend {
         };
         // assemble to-be-written blob => <data-len: big-endian u32><data>
         let raw_blob: Vec<u8, MAX_DUMP_BLOB_LENGTH> =
-            postcard::to_vec(&blob).map_err(|_| FSBackupError::SerializeErr)?;
+            postcard_serialize_bytes(&blob).map_err(|_| FSBackupError::SerializeErr)?;
         let raw_blob_len: u32 = raw_blob.len() as u32;
         let raw_blob_len_bin = raw_blob_len.to_be_bytes();
 
@@ -145,7 +155,7 @@ pub trait BackupBackend {
             buf
         // all data for entry already `read` no further `read` calls needed
         } else {
-            Bytes::from_slice(&chunk_one.as_slice()[4..])
+            Bytes::try_from(&chunk_one.as_slice()[4..])
                 .map_err(|_| FSBackupError::BackendReadErr)?
         };
 
@@ -234,7 +244,7 @@ pub trait BackupBackend {
                     .map_err(|_| FSBackupError::PathStackFullErr)?;
 
                 let file_contents = entry.file_type().is_file().then(|| {
-                    Message::from_slice(
+                    Message::try_from(
                         fs.read::<MAX_MESSAGE_LENGTH>(entry.path())
                             .unwrap()
                             .as_slice(),

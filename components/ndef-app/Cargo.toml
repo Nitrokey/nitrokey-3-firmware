@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-heapless = "0.7"
+heapless = "0.9"
 
 apdu-app = "0.1"
-iso7816 = "0.1"
+iso7816 = "0.2"
