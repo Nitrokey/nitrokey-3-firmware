@@ -51,13 +51,11 @@ littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys", rev = "v
 se05x = { git = "https://github.com/Nitrokey/se05x.git", branch = "heapless-09" }
 
 
-iso7816 = { git = "https://github.com/trussed-dev/iso7816.git", branch = "heapless-09" }
 cbor-smol = { git = "https://github.com/trussed-dev/cbor-smol.git", branch = "heapless-0.9" }
 cosey = { git = "https://github.com/trussed-dev/cosey.git", branch = "heapless-bytes-0.5" }
 ctap-types = { git = "https://github.com/trussed-dev/ctap-types", rev = "7509af268b869bd76ab00ddd62a2340764f4551c"}
 salty = { git = "https://github.com/ycrypto/salty.git", branch = "heapless-updated" }
 flexiber = { git = "https://github.com/trussed-dev/flexiber.git", branch = "heapless-090" }
-heapless-bytes = { git = "https://github.com/trussed-dev/heapless-bytes.git", rev = "b146aa5d614eedba9c294bd4869342bbf29d0eb5" }
 ctaphid-app = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "4a10f787eed868a4d3b6953e7e65cdb764f34001" }
 ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "4a10f787eed868a4d3b6953e7e65cdb764f34001" }
 apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "fe95252d6dee898e7f2e4fa24736eb3d80aa649b" }
