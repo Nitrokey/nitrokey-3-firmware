@@ -34,12 +34,12 @@ where
             debug_now!("IRQ: {:?}", self.irq.is_high());
             timer.start(Microseconds::new(100_000));
             nb::block!(timer.wait()).unwrap();
-            self.csn.set_high().unwrap();
+            self.csn.set_low().unwrap();
             timer.start(Microseconds::new(250));
             nb::block!(timer.wait()).unwrap();
             let mut buf = [0; 2];
             let res = self.i2c.write_read(address, &[0x00, 0x00], &mut buf);
-            self.csn.set_low().unwrap();
+            self.csn.set_high().unwrap();
             debug_now!("Address: {address:02X}, {res:?}");
         }
     }
