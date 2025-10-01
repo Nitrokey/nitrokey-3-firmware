@@ -85,7 +85,7 @@ struct Peripherals {
 struct Clocks {
     is_nfc_passive: bool,
     clocks: clocks::Clocks,
-    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
+    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Output>>>,
     iocon: hal::Iocon<Enabled>,
     gpio: hal::Gpio<Enabled>,
 }
@@ -118,18 +118,19 @@ impl Stage0 {
         gpio: &mut hal::Gpio<Enabled>,
     ) -> (
         hal::Iocon<Enabled>,
-        Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
+        Pin<nfc::NfcIrqPin, Gpio<direction::Output>>,
         bool,
     ) {
         let nfc_irq = nfc::NfcIrqPin::take()
             .unwrap()
             .into_gpio_pin(&mut iocon, gpio)
-            .into_input();
+            .into_output_high();
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
-        let is_passive_mode = nfc_irq.is_low().ok().unwrap();
+        // let is_passive_mode = nfc_irq.is_low().ok().unwrap();
+        let is_passive_mode = true;
 
         (iocon, nfc_irq, is_passive_mode)
     }
@@ -378,42 +379,42 @@ impl Stage2 {
         spi::init(spi, &mut self.clocks.iocon, config)
     }
 
-    fn setup_fm11nc08(
-        &mut self,
-        spi: Spi,
-        inputmux: InputMux<Unknown>,
-        pint: Pint<Unknown>,
-        nfc_rq: CcidRequester<'static>,
-    ) -> Option<Iso14443<OldNfcChip>> {
-        // TODO save these so they can be released later
-        let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
-        let mut pint = pint.enabled(&mut self.peripherals.syscon);
-        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
-        pint.enable_interrupt(
-            &mut mux,
-            &nfc_irq,
-            lpc55_hal::peripherals::pint::Slot::Slot0,
-            lpc55_hal::peripherals::pint::Mode::ActiveLow,
-        );
-        mux.disabled(&mut self.peripherals.syscon);
+    // fn setup_fm11nc08(
+    //     &mut self,
+    //     spi: Spi,
+    //     inputmux: InputMux<Unknown>,
+    //     pint: Pint<Unknown>,
+    //     nfc_rq: CcidRequester<'static>,
+    // ) -> Option<Iso14443<OldNfcChip>> {
+    //     // TODO save these so they can be released later
+    //     let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
+    //     let mut pint = pint.enabled(&mut self.peripherals.syscon);
+    //     let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+    //     pint.enable_interrupt(
+    //         &mut mux,
+    //         &nfc_irq,
+    //         lpc55_hal::peripherals::pint::Slot::Slot0,
+    //         lpc55_hal::peripherals::pint::Mode::ActiveLow,
+    //     );
+    //     mux.disabled(&mut self.peripherals.syscon);
 
-        let nfc = nfc::try_setup(
-            spi,
-            &mut self.clocks.gpio,
-            &mut self.clocks.iocon,
-            nfc_irq,
-            &mut self.basic.delay_timer,
-            &mut self.status,
-        )?;
+    //     let nfc = nfc::try_setup(
+    //         spi,
+    //         &mut self.clocks.gpio,
+    //         &mut self.clocks.iocon,
+    //         nfc_irq,
+    //         &mut self.basic.delay_timer,
+    //         &mut self.status,
+    //     )?;
 
-        let mut iso14443 = Iso14443::new(nfc, nfc_rq);
-        iso14443.poll();
-        // Give a small delay to charge up capacitors
-        // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
-        Some(iso14443)
-    }
+    //     let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+    //     iso14443.poll();
+    //     // Give a small delay to charge up capacitors
+    //     // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+    //     Some(iso14443)
+    // }
 
-    fn get_nfc_chip(&mut self, flexcomm4: Flexcomm4<Unknown>) -> NfcChip {
+    fn get_nfc_chip(&mut self, i2c: I2C) -> NfcChip {
         // Blue
         pins::Pio1_4::take()
             .unwrap()
@@ -429,28 +430,33 @@ impl Stage2 {
             .unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_output_low();
-        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
-        let i2c = flexcomm4.enabled_as_i2c(&mut self.peripherals.syscon, &token);
-        let scl = pins::Pio1_20::take()
-            .unwrap()
-            .into_i2c4_scl_pin(&mut self.clocks.iocon);
-        let sda = pins::Pio1_21::take()
-            .unwrap()
-            .into_i2c4_sda_pin(&mut self.clocks.iocon);
-        let i2c = hal::I2cMaster::new(
-            i2c,
-            (scl, sda),
-            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
-        );
-        let ed = pins::Pio1_9::take()
+        // let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        // let i2c = flexcomm4.enabled_as_i2c(&mut self.peripherals.syscon, &token);
+        // let scl = pins::Pio1_20::take()
+        //     .unwrap()
+        //     .into_i2c4_scl_pin(&mut self.clocks.iocon);
+        // let sda = pins::Pio1_21::take()
+        //     .unwrap()
+        //     .into_i2c4_sda_pin(&mut self.clocks.iocon);
+        // let i2c = hal::I2cMaster::new(
+        //     i2c,
+        //     (scl, sda),
+        //     hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+        // );
+        // let ed = pins::Pio1_9::take()
+        //     .unwrap()
+        //     .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+        //     .into_input();
+
+        let cs_pin = nfc::NfcCsPin::take()
             .unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_input();
 
-        let mut nfc = NfcChip::new(i2c, ed);
+        let mut nfc = NfcChip::new(i2c, self.clocks.nfc_irq.take().unwrap(), cs_pin);
 
-        debug_now!("nfc init: {:?}", nfc.init());
-        nfc.test(&mut self.basic.delay_timer);
+        debug_now!("nfc init: {:?}", nfc.init(&mut self.basic.delay_timer));
+        // nfc.test(&mut self.basic.delay_timer);
 
         nfc
     }
@@ -476,7 +482,7 @@ impl Stage2 {
         let mut i2c = hal::I2cMaster::new(
             i2c,
             (scl, sda),
-            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+            hal::time::Hertz::try_from(400_u32.kHz()).unwrap(),
         );
 
         // self.basic.delay_timer.start(100_000.microseconds());
@@ -516,9 +522,10 @@ impl Stage2 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
 
-        let nfc = self.get_nfc_chip(flexcomm4);
+        let nfc_i2c = self.get_se050_i2c(flexcomm5);
+        let nfc = self.get_nfc_chip(nfc_i2c);
 
-        let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
+        let se050_i2c = None;
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc, spi) = if use_nfc {

@@ -21,20 +21,26 @@ pub type OldNfcChip = FM11NC08<
     Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
 >;
 
-pub type Nt3h2111I2C = lpc55_hal::I2cMaster<
-    pins::Pio1_20,
-    pins::Pio1_21,
-    flexcomm::I2c4,
-    (
-        Pin<pins::Pio1_20, pin::state::Special<pin::function::FC4_TXD_SCL_MISO_WS>>,
-        Pin<pins::Pio1_21, pin::state::Special<pin::function::FC4_RXD_SDA_MOSI_DATA>>,
-    ),
+pub type NfcChip = fm11nt08c::Fm11nt082c<
+    super::I2C,
+    Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Output>>,
+    Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Input>>,
 >;
 
-pub type Nt3h2111FdPin = Pin<pins::Pio1_9, pin::state::Gpio<pins::direction::Input>>;
+// pub type Nt3h2111I2C = lpc55_hal::I2cMaster<
+//     pins::Pio1_20,
+//     pins::Pio1_21,
+//     flexcomm::I2c4,
+//     (
+//         Pin<pins::Pio1_20, pin::state::Special<pin::function::FC4_TXD_SCL_MISO_WS>>,
+//         Pin<pins::Pio1_21, pin::state::Special<pin::function::FC4_RXD_SDA_MOSI_DATA>>,
+//     ),
+// >;
 
-pub type Nt3h2111 = nt3h2111::Nt3h2111<Nt3h2111I2C, Nt3h2111FdPin>;
-pub type NfcChip = Nt3h2111;
+// pub type Nt3h2111FdPin = Pin<pins::Pio1_9, pin::state::Gpio<pins::direction::Input>>;
+
+// pub type Nt3h2111 = nt3h2111::Nt3h2111<Nt3h2111I2C, Nt3h2111FdPin>;
+// pub type NfcChip = Nt3h2111;
 
 pub fn try_setup(
     spi: Spi,

@@ -65,7 +65,7 @@ impl Board for NK3xN {
 
     type Resources = ();
 
-    type NfcDevice = nfc::Nt3h2111;
+    type NfcDevice = nfc::NfcChip;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;
 
