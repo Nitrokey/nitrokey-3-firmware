@@ -23,8 +23,8 @@ pub type OldNfcChip = FM11NC08<
 
 pub type NfcChip = fm11nt08c::Fm11nt082c<
     super::I2C,
-    Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Output>>,
-    Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Input>>,
+    Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
+    Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
 >;
 
 // pub type Nt3h2111I2C = lpc55_hal::I2cMaster<

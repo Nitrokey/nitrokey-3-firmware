@@ -85,7 +85,7 @@ struct Peripherals {
 struct Clocks {
     is_nfc_passive: bool,
     clocks: clocks::Clocks,
-    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Output>>>,
+    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
     iocon: hal::Iocon<Enabled>,
     gpio: hal::Gpio<Enabled>,
 }
@@ -118,13 +118,13 @@ impl Stage0 {
         gpio: &mut hal::Gpio<Enabled>,
     ) -> (
         hal::Iocon<Enabled>,
-        Pin<nfc::NfcIrqPin, Gpio<direction::Output>>,
+        Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
         bool,
     ) {
         let nfc_irq = nfc::NfcIrqPin::take()
             .unwrap()
             .into_gpio_pin(&mut iocon, gpio)
-            .into_output_high();
+            .into_input();
         // Need to enable pullup for NFC IRQ input.
         let iocon = iocon.release();
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
@@ -451,9 +451,9 @@ impl Stage2 {
         let cs_pin = nfc::NfcCsPin::take()
             .unwrap()
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_input();
+            .into_output_high();
 
-        let mut nfc = NfcChip::new(i2c, self.clocks.nfc_irq.take().unwrap(), cs_pin);
+        let mut nfc = NfcChip::new(i2c, cs_pin, self.clocks.nfc_irq.take().unwrap());
 
         debug_now!("nfc init: {:?}", nfc.init(&mut self.basic.delay_timer));
         // nfc.test(&mut self.basic.delay_timer);
