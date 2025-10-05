@@ -9,7 +9,7 @@ use boards::{
         led::RgbLed,
         prince,
         spi::{self, Spi, SpiConfig},
-        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer,
+        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
     },
     soc::{
         lpc55::{clock_controller::DynamicClockController, Lpc55},
@@ -24,6 +24,7 @@ use boards::{
     Apps, Trussed,
 };
 use embedded_hal::{
+    blocking::i2c::{Read, Write},
     digital::v2::OutputPin as _,
     timer::{Cancel, CountDown},
 };
@@ -33,7 +34,7 @@ use hal::{
     drivers::{clocks, flash::FlashGordon, pins, Timer},
     peripherals::{
         ctimer::{self, Ctimer},
-        flexcomm::Flexcomm0,
+        flexcomm::{Flexcomm0, Flexcomm5},
         pfr::Pfr,
         prince::Prince,
         rng::Rng,
@@ -57,6 +58,8 @@ use tropic01::Tropic01;
 use trussed::types::Location;
 use utils::OptionalStorage;
 use x25519_dalek::{PublicKey, StaticSecret};
+#[cfg(feature = "se050")]
+use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
 
 use crate::{VERSION, VERSION_STRING};
 
@@ -289,7 +292,7 @@ impl Stage1 {
         let mut delay_timer = Timer::new(
             delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
-        let spi_timer = Timer::new(
+        let se050_timer = Timer::new(
             ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
         let mut perf_timer = Timer::new(
@@ -330,7 +333,7 @@ impl Stage1 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
-            spi_timer,
+            se050_timer,
             basic,
             wwdt: self.wwdt,
         }
@@ -342,7 +345,7 @@ pub struct Stage2 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
-    spi_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     wwdt: EnabledWwdt,
 }
 
@@ -353,10 +356,60 @@ impl Stage2 {
         spi::init(spi, &mut self.clocks.iocon, config)
     }
 
+    fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
+        // SE050 check
+        let _enabled = pins::Pio1_26::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+
+        self.basic.delay_timer.start(100_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
+
+        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
+        let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
+        let scl = pins::Pio0_9::take()
+            .unwrap()
+            .into_i2c5_scl_pin(&mut self.clocks.iocon);
+        let sda = pins::Pio1_14::take()
+            .unwrap()
+            .into_i2c5_sda_pin(&mut self.clocks.iocon);
+        let mut i2c = hal::I2cMaster::new(
+            i2c,
+            (scl, sda),
+            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+        );
+
+        self.basic.delay_timer.start(100_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
+
+        // RESYNC command
+        let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+        i2c.write(0x48, &command)
+            .expect("failed to send RESYNC command");
+
+        self.basic.delay_timer.start(100_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
+
+        // RESYNC response
+        let mut response = [0; 5];
+        i2c.read(0x48, &mut response)
+            .expect("failed to read RESYNC response");
+
+        if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
+            panic!("Unexpected RESYNC response: {:?}", response);
+        }
+
+        info_now!("hardware checks successful");
+        i2c
+    }
+
     #[inline(never)]
-    pub fn next(mut self, flexcomm0: Flexcomm0<Unknown>) -> Stage3 {
+    pub fn next(mut self, flexcomm0: Flexcomm0<Unknown>, flexcomm5: Flexcomm5<Unknown>) -> Stage3 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_, nfc_rp) = NFC_CHANNEL.split().unwrap();
+
+        let se050_i2c = self.get_se050_i2c(flexcomm5);
 
         let spi = self.setup_spi(flexcomm0, SpiConfig::Tropic01);
 
@@ -367,7 +420,8 @@ impl Stage2 {
             basic: self.basic,
             nfc_rp,
             spi,
-            spi_timer: self.spi_timer,
+            se050_timer: self.se050_timer,
+            se050_i2c: Some(se050_i2c),
             wwdt: self.wwdt,
         }
     }
@@ -380,7 +434,8 @@ pub struct Stage3 {
     basic: Basic,
     nfc_rp: CcidResponder<'static>,
     spi: Spi,
-    spi_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
 
@@ -415,7 +470,8 @@ impl Stage3 {
             basic: self.basic,
             nfc_rp: self.nfc_rp,
             spi: self.spi,
-            spi_timer: self.spi_timer,
+            se050_timer: self.se050_timer,
+            se050_i2c: self.se050_i2c,
             flash,
             wwdt: self.wwdt,
         }
@@ -430,7 +486,8 @@ pub struct Stage4 {
     nfc_rp: CcidResponder<'static>,
     spi: Spi,
     flash: Flash,
-    spi_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
 
@@ -476,7 +533,8 @@ impl Stage4 {
             rng: self.flash.rng,
             nfc_rp: self.nfc_rp,
             spi: self.spi,
-            spi_timer: self.spi_timer,
+            se050_timer: self.se050_timer,
+            se050_i2c: self.se050_i2c,
             store,
             wwdt: self.wwdt,
         }
@@ -526,11 +584,11 @@ pub struct Stage5 {
     rng: Rng<Enabled>,
     store: RunnerStore<NK3xN>,
     spi: Spi,
-    spi_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
 
-#[inline(never)]
 fn get_seed_from_tropic01(
     iocon: &mut hal::Iocon<Enabled>,
     gpio: &mut hal::Gpio<Enabled>,
@@ -579,7 +637,7 @@ impl Stage5 {
             &mut self.clocks.iocon,
             &mut self.clocks.gpio,
             self.spi,
-            &mut self.spi_timer,
+            &mut self.se050_timer,
             &mut self.rng,
         );
 
@@ -591,8 +649,15 @@ impl Stage5 {
             Some(seed),
             None,
             #[cfg(feature = "se050")]
-            None,
+            self.se050_i2c
+                .map(|i2c| (Hal027(i2c), Hal027(TimerDelay(self.se050_timer)))),
         );
+
+        #[cfg(not(feature = "se050"))]
+        {
+            let _ = self.se050_timer;
+            let _ = self.se050_i2c;
+        }
 
         Stage6 {
             status: self.status,

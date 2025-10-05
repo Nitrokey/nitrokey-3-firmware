@@ -32,7 +32,7 @@ pub fn init(
             require_prince,
             boot_to_bootrom,
         )
-        .next(hal.flexcomm.0)
+        .next(hal.flexcomm.0, hal.flexcomm.5)
         .next(hal.rng, hal.prince, hal.flash)
         .next(&mut resources.store)
         .next(hal.rtc)
