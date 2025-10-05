@@ -1,4 +1,7 @@
-use embedded_hal::{blocking::spi, spi::{FullDuplex, MODE_0}};
+use embedded_hal::{
+    blocking::spi,
+    spi::{FullDuplex, MODE_0},
+};
 use embedded_hal_1::spi as spi_1;
 use lpc55_hal::{
     drivers::{
