@@ -1,0 +1,14 @@
+# Copyright (C) 2023 Nitrokey GmbH
+# SPDX-License-Identifier: CC0-1.0
+
+[package]
+name = "array-tuple-concat"
+edition = "2021"
+authors = ["Nitrokey GmbH <info@nitrokey.com>"]
+repository = "https://github.com/Nitrokey/array-tuple-concat"
+license = "LGPL-3.0-only"
+description = "Concatenate arrays"
+
+version = "0.1.0"
+
+[dependencies]

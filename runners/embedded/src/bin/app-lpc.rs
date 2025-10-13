@@ -66,7 +66,7 @@ mod app {
         /// and to make sure logs are not flushed in the middle of NFC transactions.
         ///
         /// It could and should be behind some kind of `debug-nfc-timer` feature flag.
-        perf_timer: lpc55::PerformanceTimer,
+        perf_timer: Option<lpc55::PerformanceTimer>,
 
         /// When using passive power (i.e. NFC), we switch between 12MHz
         /// and 48Mhz, trying to optimize speed while keeping power high enough.
@@ -165,12 +165,12 @@ mod app {
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
             let mut time = 0;
-            perf_timer.lock(|perf_timer| {
-                time = perf_timer.elapsed().0;
-                if time == 60_000_000 {
-                    perf_timer.start(60_000_000.microseconds());
-                }
-            });
+            // perf_timer.lock(|perf_timer| {
+            //     time = perf_timer.elapsed().0;
+            //     if time == 60_000_000 {
+            //         perf_timer.start(60_000_000.microseconds());
+            //     }
+            // });
             wwdt.feed();
 
             #[cfg(not(feature = "no-delog"))]
@@ -304,7 +304,7 @@ mod app {
                     // clear the interrupt
                     wait_extender.cancel().ok();
 
-                    info!("<{}", _perf_timer.elapsed().0 / 100);
+                    // info!("<{}", _perf_timer.elapsed().0 / 100);
                     let status = contactless.poll_wait_extensions();
                     match status {
                         nfc_device::Iso14443Status::Idle => {}
@@ -312,7 +312,7 @@ mod app {
                             wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                         }
                     }
-                    info!(" {}>", _perf_timer.elapsed().0 / 100);
+                    // info!(" {}>", _perf_timer.elapsed().0 / 100);
                 });
             }
         });
@@ -327,7 +327,7 @@ mod app {
         )
             .lock(|contactless, perf_timer, wait_extender| {
                 let contactless = contactless.as_mut().unwrap();
-                let _starttime = perf_timer.elapsed().0 / 100;
+                // let _starttime = perf_timer.elapsed().0 / 100;
 
                 info!("[");
                 let status = contactless.poll();
@@ -338,10 +338,10 @@ mod app {
                         wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                     }
                 }
-                info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
+                // info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
 
-                perf_timer.cancel().ok();
-                perf_timer.start(60_000_000.microseconds());
+                // perf_timer.cancel().ok();
+                // perf_timer.start(60_000_000.microseconds());
             });
     }
 

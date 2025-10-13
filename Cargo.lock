@@ -154,7 +154,7 @@ version = "1.8.2"
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cbor-smol",
  "ctaphid-app",
  "delog",
@@ -191,6 +191,10 @@ dependencies = [
  "usbd-ctaphid",
  "utils",
 ]
+
+[[package]]
+name = "array-tuple-concat"
+version = "0.1.0"
 
 [[package]]
 name = "askama"
@@ -299,11 +303,31 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
+version = "0.69.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
+dependencies = [
+ "bitflags 2.10.0",
+ "cexpr",
+ "clang-sys",
+ "itertools 0.12.1",
+ "lazy_static",
+ "lazycell",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash 1.1.0",
+ "shlex",
+ "syn 2.0.104",
+]
+
+[[package]]
+name = "bindgen"
 version = "0.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f49d8fed880d473ea71efb9bf597651e77201bdd4893efe54c9e5d65ae04ce6f"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
@@ -322,6 +346,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46afbd2983a5d5a7bd740ccb198caf5b82f45c40c09c0eed36052d91cb92e719"
 
 [[package]]
+name = "bitfield"
+version = "0.19.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bf79f42d21f18b5926a959280215903e659760da994835d27c3a0c5ff4f898f"
+dependencies = [
+ "bitfield-macros",
+]
+
+[[package]]
+name = "bitfield-macros"
+version = "0.19.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6115af052c7914c0cbb97195e5c72cb61c511527250074f5c041d1048b0d8b16"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,9 +373,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.9.1"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
+checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
 name = "block-buffer"
@@ -376,12 +420,13 @@ dependencies = [
  "embedded-storage",
  "embedded-time",
  "fm11nc08",
+ "fm11nt08c",
  "generic-array",
  "interchange",
  "lfs-backup",
- "littlefs2",
+ "littlefs2 0.6.1",
  "littlefs2-core",
- "lpc55-hal",
+ "lpc55-hal 0.4.1",
  "lpc55-pac",
  "memory-regions",
  "nb 1.1.0",
@@ -768,7 +813,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
 dependencies = [
  "bare-metal 0.2.5",
- "bitfield",
+ "bitfield 0.13.2",
  "critical-section",
  "embedded-hal",
  "volatile-register",
@@ -1158,10 +1203,11 @@ dependencies = [
  "delog",
  "embedded-alloc",
  "embedded-hal",
+ "fm11nt08c",
  "interchange",
  "littlefs2-core",
- "littlefs2-sys",
- "lpc55-hal",
+ "littlefs2-sys 0.3.1",
+ "lpc55-hal 0.4.1",
  "lpc55-pac",
  "memory-regions",
  "nb 1.1.0",
@@ -1326,6 +1372,21 @@ dependencies = [
  "delog",
  "embedded-hal",
  "embedded-time",
+ "nb 1.1.0",
+ "nfc-device",
+]
+
+[[package]]
+name = "fm11nt08c"
+version = "0.1.0"
+dependencies = [
+ "bitfield 0.19.3",
+ "bitflags 2.10.0",
+ "delog",
+ "embedded-hal",
+ "embedded-time",
+ "lpc55-hal 0.3.1",
+ "lpc55-hal 0.4.1",
  "nb 1.1.0",
  "nfc-device",
 ]
@@ -1847,6 +1908,15 @@ dependencies = [
 
 [[package]]
 name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
@@ -1889,13 +1959,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazycell"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
+
+[[package]]
 name = "lfs-backup"
 version = "0.1.0"
 dependencies = [
  "generic-array",
  "heapless",
  "heapless-bytes",
- "littlefs2",
+ "littlefs2 0.6.1",
  "postcard 1.1.3",
  "rand",
  "serde",
@@ -1940,15 +2016,28 @@ checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
 name = "littlefs2"
-version = "0.6.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6857dedc8aba748ea287177abe2bdfb3bb43464c3003f93cdc0a72e1e542b60f"
 dependencies = [
- "bitflags 2.9.1",
  "delog",
  "generic-array",
  "heapless",
  "littlefs2-core",
- "littlefs2-sys",
+ "littlefs2-sys 0.2.0",
+]
+
+[[package]]
+name = "littlefs2"
+version = "0.6.1"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+dependencies = [
+ "bitflags 2.10.0",
+ "delog",
+ "generic-array",
+ "heapless",
+ "littlefs2-core",
+ "littlefs2-sys 0.3.1",
 ]
 
 [[package]]
@@ -1956,9 +2045,19 @@ name = "littlefs2-core"
 version = "0.1.1"
 source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "heapless-bytes",
  "serde",
+]
+
+[[package]]
+name = "littlefs2-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e9a93267fadc37e91758279342f2055b6c03b1187ec7a6b1419c3710172466e"
+dependencies = [
+ "bindgen 0.69.5",
+ "cc",
 ]
 
 [[package]]
@@ -1966,7 +2065,7 @@ name = "littlefs2-sys"
 version = "0.3.1"
 source = "git+https://github.com/trussed-dev/littlefs2-sys.git?rev=v0.3.1-nitrokey.1#1cfd35c9974b877761e8bb45417f7ad2a61bedad"
 dependencies = [
- "bindgen",
+ "bindgen 0.70.1",
  "cc",
 ]
 
@@ -2001,6 +2100,27 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67e9bba980b3a2de5813c8db696806c59bdb5f57956c8137ebe1e10b2e988a53"
+dependencies = [
+ "block-buffer 0.9.0",
+ "cipher 0.3.0",
+ "cortex-m",
+ "digest 0.9.0",
+ "embedded-hal",
+ "embedded-time",
+ "generic-array",
+ "lpc55-pac",
+ "nb 1.1.0",
+ "rand_core",
+ "usb-device",
+ "vcell",
+ "void",
+]
+
+[[package]]
+name = "lpc55-hal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09ca5d2ad4d3068ed67b8d5b2f59eb64d4194e5d59c096657901c7b09e30069f"
@@ -2012,6 +2132,7 @@ dependencies = [
  "embedded-hal",
  "embedded-time",
  "generic-array",
+ "littlefs2 0.5.0",
  "lpc55-pac",
  "nb 1.1.0",
  "rand_core",
@@ -2076,6 +2197,7 @@ name = "ndef-app"
 version = "0.1.0"
 dependencies = [
  "apdu-app",
+ "delog",
  "heapless",
  "iso7816",
 ]
@@ -2291,7 +2413,7 @@ source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.6.1#d6eb2d6041ef13022
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cbor-smol",
  "cfg-if",
  "delog",
@@ -2639,7 +2761,7 @@ version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5407465600fb0548f1442edf71dd20683c6ed326200ace4b1ef0763521bb3b77"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
 ]
 
 [[package]]
@@ -2842,7 +2964,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49ada869105531d741c32f9b444ebf5546c8bf0320b1f51aff83d3b65d58d761"
 dependencies = [
  "aes",
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cmac",
  "crc16",
  "delog",
@@ -2850,7 +2972,7 @@ dependencies = [
  "heapless",
  "hex-literal 0.4.1",
  "iso7816",
- "lpc55-hal",
+ "lpc55-hal 0.4.1",
  "nrf-hal-common",
  "rand",
  "serde",
@@ -2877,7 +2999,7 @@ version = "0.14.0"
 source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.14.0#e72e80491b79962ac0f8030581eca8ba0004a732"
 dependencies = [
  "apdu-app",
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "block-padding",
  "cbor-smol",
  "ctaphid-app",
@@ -3479,7 +3601,7 @@ version = "0.1.0"
 source = "git+https://github.com/trussed-dev/trussed.git?rev=e107ed315a07dc6c992fac39d542e847cc3a1b6c#e107ed315a07dc6c992fac39d542e847cc3a1b6c"
 dependencies = [
  "aes",
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cbc",
  "cbor-smol",
  "cfg-if",
@@ -3495,7 +3617,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "hmac",
  "interchange",
- "littlefs2",
+ "littlefs2 0.6.1",
  "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
@@ -3627,7 +3749,7 @@ name = "trussed-se050-backend"
 version = "0.5.0"
 source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.5.0#f1405e79e46ec34bdfb5977613f084e172205ef9"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cbor-smol",
  "chacha20poly1305",
  "crypto-bigint",
@@ -3872,7 +3994,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "dialoguer",
- "littlefs2",
+ "littlefs2 0.6.1",
  "littlefs2-core",
  "log",
  "pretty_env_logger",
@@ -3901,7 +4023,7 @@ version = "1.8.2"
 dependencies = [
  "chrono",
  "delog",
- "littlefs2",
+ "littlefs2 0.6.1",
  "quickcheck",
  "regex",
  "semver 1.0.26",
