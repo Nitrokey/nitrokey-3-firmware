@@ -2002,8 +2002,6 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09ca5d2ad4d3068ed67b8d5b2f59eb64d4194e5d59c096657901c7b09e30069f"
 dependencies = [
  "block-buffer 0.9.0",
  "cipher 0.3.0",
@@ -2012,6 +2010,7 @@ dependencies = [
  "embedded-hal",
  "embedded-time",
  "generic-array",
+ "littlefs2",
  "lpc55-pac",
  "nb 1.1.0",
  "rand_core",

@@ -453,10 +453,24 @@ impl Stage2 {
         i2c.read(0x48, &mut response)
             .expect("failed to read RESYNC response");
 
+
         if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
             panic!("Unexpected RESYNC response: {:?}", response);
         }
 
+        debug_now!("Communication with SE050 worked");
+
+        let command = [0x00, 0x00];
+        i2c.write(0x57, &command)
+            .expect("failed to send RESYNC command");
+
+        // RESYNC response
+        let mut response = [0; 4];
+        i2c.read(0x48, &mut response)
+            .expect("failed to read RESYNC response");
+
+
+        panic!("I2C communication works: {response:02x?}");
         info_now!("hardware checks successful");
         i2c
     }
