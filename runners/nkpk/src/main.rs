@@ -118,7 +118,7 @@ mod app {
         let mut dev_rng = Rng::new(ctx.device.RNG);
         // let hw_key = nkpk::hw_key(&ctx.device.FICR);
         let mut trussed =
-            boards::init::init_trussed(&mut dev_rng, store, user_interface, &mut init_status);
+            boards::init::init_trussed(&mut dev_rng, store, user_interface, &mut init_status, None);
 
         let (apps, endpoints) = boards::init::init_apps(
             &soc,

@@ -268,22 +268,26 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     store: RunnerStore<B>,
     user_interface: UserInterface<<B::Soc as Soc>::Clock, B::Buttons, B::Led>,
     init_status: &mut InitStatus,
+    external_seed: Option<[u8; 32]>,
     #[cfg(feature = "trussed-auth")] hw_key: Option<&[u8]>,
     #[cfg(feature = "se050")] se050: Option<(B::Twi, B::Se050Timer)>,
 ) -> Trussed<B> {
     #[cfg(feature = "se050")]
-    let (se050, seed) = if let Some((twi, timer)) = se050 {
+    let (se050, se050_seed) = if let Some((twi, timer)) = se050 {
         let (se050, seed) = init_se050(twi, timer, dev_rng, init_status);
         (Some(se050), Some(seed))
     } else {
         (None, None)
     };
     #[cfg(not(feature = "se050"))]
-    let seed = None;
+    let se050_seed = None;
 
     // False positive due to cfg
     #[allow(clippy::unnecessary_literal_unwrap)]
-    let rng = ChaCha8Rng::from_seed(seed.unwrap_or_else(|| dev_rng.gen()));
+    let seed = external_seed
+        .or(se050_seed)
+        .unwrap_or_else(|| dev_rng.gen());
+    let rng = ChaCha8Rng::from_seed(seed);
     let _ = init_status;
 
     let platform = RunnerPlatform {
