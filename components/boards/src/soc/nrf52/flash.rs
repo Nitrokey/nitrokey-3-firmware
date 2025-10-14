@@ -200,14 +200,32 @@ impl<const START: usize, const END: usize> FlashStorage<START, END> {
 }
 
 impl<const START: usize, const END: usize> littlefs2::driver::Storage for FlashStorage<START, END> {
-    const BLOCK_SIZE: usize = FTL_BLOCK_SIZE;
-    const READ_SIZE: usize = 4;
-    const WRITE_SIZE: usize = FTL_BLOCK_SIZE;
-    const BLOCK_COUNT: usize =
-        ((END - START) / Self::BLOCK_SIZE) - (FTL_BLOCKS_IN_REAL * FTL_JOURNAL_BLOCKS);
+    fn read_size(&self) -> usize {
+        4
+    }
 
-    type CACHE_SIZE = generic_array::typenum::U256;
-    type LOOKAHEAD_SIZE = generic_array::typenum::U1;
+    fn write_size(&self) -> usize {
+        FTL_BLOCK_SIZE
+    }
+
+    fn block_size(&self) -> usize {
+        FTL_BLOCK_SIZE
+    }
+
+    fn cache_size(&self) -> usize {
+        256
+    }
+
+    fn lookahead_size(&self) -> usize {
+        1
+    }
+
+    fn block_count(&self) -> usize {
+        ((END - START) / self.block_size()) - (FTL_BLOCKS_IN_REAL * FTL_JOURNAL_BLOCKS)
+    }
+
+    type CACHE_BUFFER = [u8; 256];
+    type LOOKAHEAD_BUFFER = [u8; 8];
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, littlefs2::io::Error> {
         // skip journal blocks

@@ -12,5 +12,5 @@ mod version;
 #[cfg(feature = "build")]
 pub use build::version_string;
 #[cfg(feature = "storage")]
-pub use storage::{OptionalStorage, RamStorage};
+pub use storage::{EmptyFilesystem, MaybeStorage, OptionalStorage, PhantomStorage};
 pub use version::Version;
