@@ -2,6 +2,10 @@
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 
+## 1.8.3 (2025-10-13)
+
+- OpenPGP: fix factory reset and retry counter display
+
 ## 1.8.2 (2025-08-12)
 
 - provisioner-app: Remove ReformatFilesystem command
