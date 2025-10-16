@@ -26,7 +26,6 @@ trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", re
 
 # applications
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.27" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.6.1" }
 piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.5.3" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.14.0" }

@@ -40,7 +40,7 @@ trussed-hpke = "0.2.0"
 
 # apps
 admin-app = "0.1.0"
-fido-authenticator = { version = "0.1.1", features = ["chunked", "dispatch"], optional = true }
+fido-authenticator = { version = "0.2", features = ["chunked", "dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 secrets-app = { version = "0.14.0", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.6.1", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }

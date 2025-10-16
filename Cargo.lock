@@ -1261,8 +1261,9 @@ dependencies = [
 
 [[package]]
 name = "fido-authenticator"
-version = "0.1.1"
-source = "git+https://github.com/Nitrokey/fido-authenticator.git?tag=v0.1.1-nitrokey.27#5ebb4a48302e4c80a2abe1c2d86201a3df2a1d2d"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f7367d82579f74638875b1a277d55a4c23a3b4865b53d26cd315e99aa528b42"
 dependencies = [
  "apdu-app",
  "cbor-smol",
