@@ -48,6 +48,8 @@ embedded-alloc = { version = "0.6.0", optional = true }
 # littlefs2-sys for intrinsics feature
 littlefs2-sys = { version = "0.3", optional = true }
 
+fm11nt08c = { version = "0.1.0", optional = true }
+
 [build-dependencies]
 cargo-lock = "10"
 memory-regions = "1"
@@ -82,7 +84,7 @@ format-filesystem = ["boards/format-filesystem"]
 alloc = ["embedded-alloc"]
 
 board-nk3am = ["boards/board-nk3am", "soc-nrf52", "se050"]
-board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050"]
+board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050", "dep:fm11nt08c"]
 
 soc-nrf52 = ["nrf52840-hal", "nrf52840-pac"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "nb", "systick-monotonic"]

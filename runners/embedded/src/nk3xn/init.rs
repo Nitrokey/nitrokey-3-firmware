@@ -92,7 +92,7 @@ struct Clocks {
 
 pub struct Basic {
     pub delay_timer: Timer<ctimer::Ctimer0<Enabled>>,
-    pub perf_timer: Timer<ctimer::Ctimer4<Enabled>>,
+    pub perf_timer: Option<Timer<ctimer::Ctimer4<Enabled>>>,
     adc: Option<hal::Adc<Enabled>>,
     three_buttons: Option<ThreeButtons>,
     rgb: Option<RgbLed>,
@@ -315,7 +315,7 @@ impl Stage1 {
         let mut perf_timer = Timer::new(
             perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
-        perf_timer.start(60_000_000.microseconds());
+        // perf_timer.start(60_000_000.microseconds());
 
         let mut rgb = self.init_rgb(ctimer3);
 
@@ -330,7 +330,7 @@ impl Stage1 {
             Self::validate_cfpa(&mut pfr, secure_firmware_version, require_prince);
 
         if boot_to_bootrom && three_buttons.is_some() {
-            info!("bootrom request start {}", perf_timer.elapsed().0 / 1000);
+            // info!("bootrom request start {}", perf_timer.elapsed().0 / 1000);
             if self.is_bootrom_requested(three_buttons.as_mut().unwrap(), &mut delay_timer) {
                 // Give a small red blink show success
                 rgb.red(200);
@@ -345,7 +345,7 @@ impl Stage1 {
 
         let basic = Basic {
             delay_timer,
-            perf_timer,
+            perf_timer: Some(perf_timer),
             adc,
             three_buttons,
             rgb: Some(rgb),
@@ -385,6 +385,42 @@ impl Stage2 {
         pint: Pint<Unknown>,
         nfc_rq: CcidRequester<'static>,
     ) -> Option<Iso14443<NfcChip>> {
+        None
+        // // TODO save these so they can be released later
+        // let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
+        // let mut pint = pint.enabled(&mut self.peripherals.syscon);
+        // let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        // pint.enable_interrupt(
+        //     &mut mux,
+        //     &nfc_irq,
+        //     lpc55_hal::peripherals::pint::Slot::Slot0,
+        //     lpc55_hal::peripherals::pint::Mode::ActiveLow,
+        // );
+        // mux.disabled(&mut self.peripherals.syscon);
+
+        // let nfc = nfc::try_setup(
+        //     spi,
+        //     &mut self.clocks.gpio,
+        //     &mut self.clocks.iocon,
+        //     nfc_irq,
+        //     &mut self.basic.delay_timer,
+        //     &mut self.status,
+        // )?;
+
+        // let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        // iso14443.poll();
+        // // Give a small delay to charge up capacitors
+        // // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+        // Some(iso14443)
+    }
+
+    fn setup_fm11nt08c(
+        &mut self,
+        i2c: I2C,
+        inputmux: InputMux<Unknown>,
+        pint: Pint<Unknown>,
+        nfc_rq: CcidRequester<'static>,
+    ) -> Option<Iso14443<NfcChip>> {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
@@ -397,14 +433,24 @@ impl Stage2 {
         );
         mux.disabled(&mut self.peripherals.syscon);
 
-        let nfc = nfc::try_setup(
-            spi,
+        // let nfc = nfc::try_setup(
+        //     spi,
+        //     &mut self.clocks.gpio,
+        //     &mut self.clocks.iocon,
+        //     nfc_irq,
+        //     &mut self.basic.delay_timer,
+        //     &mut self.status,
+        // )?;
+
+        let mut nfc = nfc::try_setup_new(
+            i2c,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
             nfc_irq,
-            &mut self.basic.delay_timer,
-            &mut self.status,
-        )?;
+            self.basic.perf_timer.take().unwrap(),
+        );
+
+        nfc.init();
 
         let mut iso14443 = Iso14443::new(nfc, nfc_rq);
         iso14443.poll();
@@ -441,22 +487,21 @@ impl Stage2 {
         nb::block!(self.basic.delay_timer.wait()).ok();
 
         // RESYNC command
-        let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
-        i2c.write(0x48, &command)
-            .expect("failed to send RESYNC command");
+        // let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+        // i2c.write(0x48, &command)
+        //     .expect("failed to send RESYNC command");
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+        // self.basic.delay_timer.start(100_000.microseconds());
+        // nb::block!(self.basic.delay_timer.wait()).ok();
 
-        // RESYNC response
-        let mut response = [0; 5];
-        i2c.read(0x48, &mut response)
-            .expect("failed to read RESYNC response");
+        // // RESYNC response
+        // let mut response = [0; 5];
+        // i2c.read(0x48, &mut response)
+        //     .expect("failed to read RESYNC response");
 
-
-        if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
-            panic!("Unexpected RESYNC response: {:?}", response);
-        }
+        // if response != [0xa5, 0xe0, 0x00, 0x3F, 0x19] {
+        //     panic!("Unexpected RESYNC response: {:?}", response);
+        // }
 
         debug_now!("Communication with SE050 worked");
 
@@ -466,11 +511,9 @@ impl Stage2 {
 
         // RESYNC response
         let mut response = [0; 4];
-        i2c.read(0x48, &mut response)
+        i2c.read(0x57, &mut response)
             .expect("failed to read RESYNC response");
 
-
-        panic!("I2C communication works: {response:02x?}");
         info_now!("hardware checks successful");
         i2c
     }
@@ -487,16 +530,16 @@ impl Stage2 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
 
-        let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
+        let se050_i2c = self.get_se050_i2c(flexcomm5);
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
-        let (nfc, spi) = if use_nfc {
-            let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-            let nfc = self.setup_fm11nc08(spi, mux, pint, nfc_rq);
-            (nfc, None)
+        let use_nfc = true;
+        let (se050_i2c, nfc, spi) = if use_nfc {
+            let nfc = self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq);
+            (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
-            (None, Some(spi))
+            (Some(se050_i2c), None, Some(spi))
         };
 
         Stage3 {
@@ -640,10 +683,10 @@ impl Stage4 {
             };
         }
 
-        info_now!(
-            "mount start {} ms",
-            self.basic.perf_timer.elapsed().0 / 1000
-        );
+        // info_now!(
+        //     "mount start {} ms",
+        //     self.basic.perf_timer.elapsed().0 / 1000
+        // );
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
         let store = store::init_store(
@@ -653,7 +696,7 @@ impl Stage4 {
             simulated_efs,
             &mut self.status,
         );
-        info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
+        // info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
         if self.clocks.is_nfc_passive {
@@ -882,7 +925,7 @@ impl Stage6 {
             None
         };
 
-        info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
+        // info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
         debug_now!("Wwdt tv again: {:?}", self.wwdt.timer());
 
         All {

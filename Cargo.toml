@@ -42,6 +42,8 @@ littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "
 
 lpc55-hal = { path = "../lpc55-hal" }
 
+fm11nt08c = { path = "components/fm11nt08c" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

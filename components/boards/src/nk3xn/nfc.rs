@@ -5,6 +5,7 @@ use lpc55_hal::{
         pins::{self, Pin},
         Timer,
     },
+    peripherals::flexcomm,
     typestates::pin,
     Enabled,
 };
@@ -14,11 +15,33 @@ use fm11nc08::{Configuration, Register, FM11NC08};
 pub type NfcCsPin = pins::Pio1_20;
 pub type NfcIrqPin = pins::Pio0_19;
 
-pub type NfcChip = FM11NC08<
+pub type OldNfcChip = FM11NC08<
     Spi,
     Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
     Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
 >;
+
+pub type NfcChip = fm11nt08c::Fm11nt082c<
+    super::I2C,
+    Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
+    Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
+    Timer<lpc55_hal::peripherals::ctimer::Ctimer4<Enabled>>,
+>;
+
+// pub type Nt3h2111I2C = lpc55_hal::I2cMaster<
+//     pins::Pio1_20,
+//     pins::Pio1_21,
+//     flexcomm::I2c4,
+//     (
+//         Pin<pins::Pio1_20, pin::state::Special<pin::function::FC4_TXD_SCL_MISO_WS>>,
+//         Pin<pins::Pio1_21, pin::state::Special<pin::function::FC4_RXD_SDA_MOSI_DATA>>,
+//     ),
+// >;
+
+// pub type Nt3h2111FdPin = Pin<pins::Pio1_9, pin::state::Gpio<pins::direction::Input>>;
+
+// pub type Nt3h2111 = nt3h2111::Nt3h2111<Nt3h2111I2C, Nt3h2111FdPin>;
+// pub type NfcChip = Nt3h2111;
 
 pub fn try_setup(
     spi: Spi,
@@ -28,7 +51,7 @@ pub fn try_setup(
     // fm: &mut NfcChip,
     timer: &mut Timer<impl lpc55_hal::peripherals::ctimer::Ctimer<Enabled>>,
     status: &mut InitStatus,
-) -> Option<NfcChip> {
+) -> Option<OldNfcChip> {
     // Start unselected.
     let nfc_cs = NfcCsPin::take()
         .unwrap()
@@ -118,4 +141,20 @@ pub fn try_setup(
     // fm.write_reg(Register::ReguCfg, regu_powered);
 
     Some(fm)
+}
+
+pub fn try_setup_new(
+    i2c: super::I2C,
+    gpio: &mut lpc55_hal::Gpio<Enabled>,
+    iocon: &mut lpc55_hal::Iocon<Enabled>,
+    nfc_irq: Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
+    timer: Timer<lpc55_hal::peripherals::ctimer::Ctimer4<Enabled>>,
+) -> NfcChip {
+    // Start unselected.
+    let nfc_cs = NfcCsPin::take()
+        .unwrap()
+        .into_gpio_pin(iocon, gpio)
+        .into_output_high();
+
+    NfcChip::new(i2c, nfc_cs, nfc_irq, timer)
 }

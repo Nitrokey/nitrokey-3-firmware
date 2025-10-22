@@ -491,18 +491,18 @@ const fn validate_mechanisms() {
         #[cfg(feature = "trussed-usbip")]
         if contains(
             &[
-                Mechanism::BrainpoolP256R1,
-                Mechanism::BrainpoolP256R1Prehashed,
-                Mechanism::BrainpoolP384R1,
-                Mechanism::BrainpoolP384R1Prehashed,
-                Mechanism::BrainpoolP512R1,
-                Mechanism::BrainpoolP512R1Prehashed,
-                Mechanism::P384,
-                Mechanism::P384Prehashed,
-                Mechanism::P521,
-                Mechanism::P521Prehashed,
-                Mechanism::Secp256k1,
-                Mechanism::Secp256k1Prehashed,
+                // Mechanism::BrainpoolP256R1,
+                // Mechanism::BrainpoolP256R1Prehashed,
+                // Mechanism::BrainpoolP384R1,
+                // Mechanism::BrainpoolP384R1Prehashed,
+                // Mechanism::BrainpoolP512R1,
+                // Mechanism::BrainpoolP512R1Prehashed,
+                // Mechanism::P384,
+                // Mechanism::P384Prehashed,
+                // Mechanism::P521,
+                // Mechanism::P521Prehashed,
+                // Mechanism::Secp256k1,
+                // Mechanism::Secp256k1Prehashed,
             ],
             mechanism,
         ) {
@@ -1103,6 +1103,7 @@ impl<R: Runner> App<R> for OpcardApp<R> {
                     Alg::BRAINPOOL_P256R1,
                     Alg::BRAINPOOL_P384R1,
                     Alg::BRAINPOOL_P512R1,
+                    #[cfg(feature = "nk3-test")]
                     Alg::SECP256K1,
                     Alg::RSA_2048,
                     Alg::RSA_3072,

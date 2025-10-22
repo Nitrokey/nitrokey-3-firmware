@@ -21,7 +21,6 @@ p256-cortex-m4 = "0.1.0-alpha.6"
 
 [features]
 log-all = []
-log-trace = []
 log-none = []
 log-info = []
 log-debug = []

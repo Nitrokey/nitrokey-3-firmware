@@ -66,7 +66,7 @@ mod app {
         /// and to make sure logs are not flushed in the middle of NFC transactions.
         ///
         /// It could and should be behind some kind of `debug-nfc-timer` feature flag.
-        perf_timer: lpc55::PerformanceTimer,
+        // perf_timer: lpc55::PerformanceTimer,
 
         /// When using passive power (i.e. NFC), we switch between 12MHz
         /// and 48Mhz, trying to optimize speed while keeping power high enough.
@@ -119,7 +119,7 @@ mod app {
             clock_controller,
             wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources);
-        let perf_timer = basic.perf_timer;
+        // let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
 
         // don't toggle LED in passive mode
@@ -143,7 +143,7 @@ mod app {
             apps,
             usb_classes: usb_nfc.usb_classes,
             contactless: usb_nfc.iso14443,
-            perf_timer,
+            // perf_timer,
             clock_ctrl: clock_controller,
             wait_extender,
         };
@@ -151,13 +151,13 @@ mod app {
         (shared, local, init::Monotonics(systick.into()))
     }
 
-    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes], local = [wwdt])]
+    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, /* perf_timer, */ usb_classes], local = [wwdt])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources {
             mut apdu_dispatch,
             mut ctaphid_dispatch,
             mut apps,
-            mut perf_timer,
+            // mut perf_timer,
             mut usb_classes,
         } = c.shared;
         let idle::LocalResources { wwdt } = c.local;
@@ -165,12 +165,12 @@ mod app {
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
             let mut time = 0;
-            perf_timer.lock(|perf_timer| {
-                time = perf_timer.elapsed().0;
-                if time == 60_000_000 {
-                    perf_timer.start(60_000_000.microseconds());
-                }
-            });
+            // perf_timer.lock(|perf_timer| {
+            //     time = perf_timer.elapsed().0;
+            //     if time == 60_000_000 {
+            //         perf_timer.start(60_000_000.microseconds());
+            //     }
+            // });
             wwdt.feed();
 
             #[cfg(not(feature = "no-delog"))]
@@ -296,38 +296,40 @@ mod app {
         update_ui::spawn_after(REFRESH_MILLISECS).ok();
     }
 
-    #[task(binds = CTIMER0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
+    #[task(binds = CTIMER0, shared = [contactless, /*perf_timer,*/ wait_extender], priority = 7)]
     fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
         c.shared.contactless.lock(|contactless| {
             if let Some(contactless) = contactless.as_mut() {
-                (c.shared.wait_extender, c.shared.perf_timer).lock(|wait_extender, _perf_timer| {
-                    // clear the interrupt
-                    wait_extender.cancel().ok();
+                (c.shared.wait_extender/*,c.shared.perf_timer*/).lock(
+                    |wait_extender /*, _perf_timer*/| {
+                        // clear the interrupt
+                        wait_extender.cancel().ok();
 
-                    info!("<{}", _perf_timer.elapsed().0 / 100);
-                    let status = contactless.poll_wait_extensions();
-                    match status {
-                        nfc_device::Iso14443Status::Idle => {}
-                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
+                        // info!("<{}", _perf_timer.elapsed().0 / 100);
+                        let status = contactless.poll_wait_extensions();
+                        match status {
+                            nfc_device::Iso14443Status::Idle => {}
+                            nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                                wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
+                            }
                         }
-                    }
-                    info!(" {}>", _perf_timer.elapsed().0 / 100);
-                });
+                        // info!(" {}>", _perf_timer.elapsed().0 / 100);
+                    },
+                );
             }
         });
     }
 
-    #[task(binds = PIN_INT0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
+    #[task(binds = PIN_INT0, shared = [contactless, /*perf_timer,*/ wait_extender], priority = 7)]
     fn nfc_irq(c: nfc_irq::Context) {
         (
             c.shared.contactless,
-            c.shared.perf_timer,
+            // c.shared.perf_timer,
             c.shared.wait_extender,
         )
-            .lock(|contactless, perf_timer, wait_extender| {
+            .lock(|contactless, /*perf_timer,*/ wait_extender| {
                 let contactless = contactless.as_mut().unwrap();
-                let _starttime = perf_timer.elapsed().0 / 100;
+                // let _starttime = perf_timer.elapsed().0 / 100;
 
                 info!("[");
                 let status = contactless.poll();
@@ -338,10 +340,10 @@ mod app {
                         wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                     }
                 }
-                info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
+                // info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
 
-                perf_timer.cancel().ok();
-                perf_timer.start(60_000_000.microseconds());
+                // perf_timer.cancel().ok();
+                // perf_timer.start(60_000_000.microseconds());
             });
     }
 

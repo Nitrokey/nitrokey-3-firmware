@@ -73,7 +73,7 @@ backend-auth = ["trussed-auth", "trussed-auth-backend"]
 backend-rsa = ["trussed-rsa-alloc"]
 backend-software-hpke = ["trussed-staging/hpke"]
 
-log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "opcard?/log-all", "provisioner-app?/log-all", "piv-authenticator?/log-all", "trussed-se050-backend?/log-all"]
+log-all = ["admin-app/log-all", "fido-authenticator?/log-all", "secrets-app?/log-all", "opcard?/log-all", "provisioner-app?/log-all"]
 log-error = []
 log-warn = []
 log-info = []
