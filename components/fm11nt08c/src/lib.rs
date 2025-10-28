@@ -16,14 +16,50 @@ use embedded_hal::{
 use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
-    AuxIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcCfg, NfcRats, NfcStatus, NfcTxen,
-    Register, UserCfg0, UserCfg1, UserCfg2, VoutMode,
+    AuxIrq, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcCfg, NfcRats,
+    NfcStatus, NfcTxen, NfcTxenValue, Register, UserCfg0, UserCfg1, UserCfg2, VoutMode,
 };
+
+fn fsdi_to_frame_size(fsdi: u8) -> usize {
+    match fsdi {
+        0 => 16,
+        1 => 24,
+        2 => 32,
+        3 => 40,
+        4 => 48,
+        5 => 64,
+        6 => 96,
+        7 => 128,
+        _ => 256,
+    }
+}
+
+pub trait I2CError: Debug {
+    fn is_address_nack(&self) -> bool;
+    fn is_data_nack(&self) -> bool;
+}
+
+pub trait I2CBus:
+    Read<Error = <Self as I2CBus>::BusError>
+    + Write<Error = <Self as I2CBus>::BusError>
+    + WriteRead<Error = <Self as I2CBus>::BusError>
+{
+    type BusError: I2CError;
+}
+
+impl<T, E> I2CBus for T
+where
+    E: I2CError,
+    T: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
+{
+    type BusError = E;
+}
+
+mod i2cimpl;
 
 const ADDRESS: u8 = 0x57;
 
 pub struct Configuration {
-    pub regu: u8,
     pub atqa: u16,
     pub sak1: u8,
     pub sak2: u8,
@@ -32,7 +68,7 @@ pub struct Configuration {
     pub ta: u8,
     pub tb: u8,
     pub tc: u8,
-    pub nfc: u8,
+    pub vout_reg_cfg: u8,
 }
 
 pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
@@ -40,6 +76,9 @@ pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     csn: CSN,
     timer: Timer,
     irq: IRQ,
+    current_frame_size: usize,
+    offset: usize,
+    packet: [u8; 256],
 }
 
 pub struct Txn<'a, I2C, CSN, IRQ, Timer>
@@ -56,14 +95,14 @@ fn addr_to_bytes(addr: u16) -> [u8; 2] {
     [b1, b2]
 }
 
-impl<I2CError, I2C, CSN: OutputPin, IRQ: InputPin, Timer> Txn<'_, I2C, CSN, IRQ, Timer>
+impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Txn<'_, I2C, CSN, IRQ, Timer>
 where
-    I2C: WriteRead<Error = I2CError> + Write<Error = I2CError> + Read<Error = I2CError>,
-    I2CError: Debug,
+    I2C: I2CBus,
     CSN::Error: Debug,
     IRQ::Error: Debug,
+    Timer: CountDown<Time = Microseconds>,
 {
-    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2CError> {
+    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
         let buf = &mut [0u8];
         self.device
             .i2c
@@ -71,27 +110,85 @@ where
         Ok(buf[0])
     }
 
-    // pub fn configure(&mut self, conf: Configuration) -> Result<(), I2CError> {
-    //     //         let [addrb1, addrb2] =
-    //     //         let [atqab1, atqab2] = conf.atqa.to_be_bytes();
-    //     //         let buf = [
-    //     //             atqab1,atqab2,
-    //     //         ];
+    /// Data must contain the address of the eeprom encoded in big endian followed by the data
+    ///
+    /// This function waits for the eeprom write to succeed.
+    pub fn write_eeprom(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
+        debug_now!("Writing eeprom");
+        self.device.i2c.write(ADDRESS, data)?;
+        self.device.timer.start(Microseconds(10_000));
+        nb::block!(self.device.timer.wait()).unwrap();
+        loop {
+            let res = self.device.i2c.write_read(ADDRESS, &[0x00, 0x00], &mut [0]);
+            debug_now!("Waiting for finished write: {res:?}");
+            let Err(err) = res else {
+                break;
+            };
+            if err.is_address_nack() {
+                continue;
+            }
+            return Err(err);
+        }
+        Ok(())
+    }
 
-    //     // self.device.i2c.write(ADDRESS, )
-    // }
+    pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
+        const ATQA_ADDR: u16 = 0x03BC;
+        debug_now!("Entering configuration");
 
-    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2CError> {
+        let buf = &mut [0; 4];
+        self.device
+            .i2c
+            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
+        debug_now!("ATQA config: {buf:02x?}");
+
+        let [atqa_addr1, atqa_addr2] = ATQA_ADDR.to_be_bytes();
+        let [atqa1, atqa2] = conf.atqa.to_be_bytes();
+        let buf = &[atqa_addr1, atqa_addr2, atqa1, atqa2, conf.sak1, conf.sak2];
+
+        self.write_eeprom(buf)?;
+        debug_now!("Wrote ATQA");
+        let buf = &mut [0; 4];
+        self.device
+            .i2c
+            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
+        debug_now!("ATQA config: {buf:02x?}");
+
+        const NFC_CONFIGURATION_ADDRESS: u16 = 0x03B0;
+        let [nfc_conf_address1, nfc_conf_address2] = NFC_CONFIGURATION_ADDRESS.to_be_bytes();
+        let buf = &[
+            nfc_conf_address1,
+            nfc_conf_address2,
+            conf.tl,
+            conf.t0,
+            conf.vout_reg_cfg,
+            ADDRESS,
+            conf.ta,
+            conf.tb,
+            conf.tc,
+        ];
+        debug_now!("Expected nfc config: {buf:02x?}");
+        self.write_eeprom(buf)?;
+        let buf = &mut [0; 7];
+        self.device
+            .i2c
+            .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
+        debug_now!("NFC config: {buf:02x?}");
+
+        Ok(())
+    }
+
+    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2C::BusError> {
         let [b1, b2] = addr_to_bytes(address);
         let buf = [b1, b2, value];
         self.device.i2c.write(ADDRESS, &buf)
     }
 
-    pub fn read_register<R: Register>(&mut self) -> Result<R, I2CError> {
+    pub fn read_register<R: Register>(&mut self) -> Result<R, I2C::BusError> {
         self.read_register_raw(R::ADDRESS).map(R::from)
     }
 
-    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2CError> {
+    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
         self.write_register_raw(value.into(), R::ADDRESS)
     }
 }
@@ -106,10 +203,9 @@ where
     }
 }
 
-impl<I2CError, I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
+impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
-    I2C: WriteRead<Error = I2CError> + Write<Error = I2CError> + Read<Error = I2CError>,
-    I2CError: Debug,
+    I2C: I2CBus,
     CSN::Error: Debug,
     IRQ::Error: Debug,
     Timer: CountDown<Time = Microseconds>,
@@ -120,10 +216,13 @@ where
             csn,
             irq,
             timer,
+            current_frame_size: 128,
+            offset: 0,
+            packet: [0; 256],
         }
     }
 
-    pub fn init(&mut self) -> Result<(), I2CError> {
+    pub fn init(&mut self) -> Result<(), I2C::BusError> {
         let mut txn = self.txn();
         txn.write_register(NfcTxen(0x88))?;
         let mut user_cfg0 = txn.read_register::<UserCfg0>()?;
@@ -138,12 +237,6 @@ where
         debug_now!("{:?}", txn.read_register::<NfcRats>());
         debug_now!("{:?}", txn.read_register::<FifoWordCnt>());
         debug_now!("{:?}", txn.read_register::<NfcTxen>());
-
-        let buf = &mut [0; 4];
-        txn.device
-            .i2c
-            .write_read(ADDRESS, &addr_to_bytes(0x3BC), buf)?;
-        debug_now!("{buf:02x?}");
 
         txn.write_register(AuxIrq(0))?;
         let mut fifo_irq_mask = FifoIrqMask(0);
@@ -165,58 +258,214 @@ where
         txn.write_register(user_cfg_1)?;
 
         debug_now!("{:?}", txn.read_register::<UserCfg1>());
+
+        txn.configure(Configuration {
+            atqa: 0x4400,
+            sak1: 0x04,
+            sak2: 0x20,
+            tl: 0x05,
+            // (x[7:4], FSDI[3:0]) . FSDI[2] == 32 byte frame, FSDI[8] == 256 byte frame, 7==128byte
+            t0: 0x78,
+            // Support different data rates for both directions
+            // Support divisor 2 / 212kbps for tx and rx
+            ta: 0b10010001,
+            // (FWI[b4], SFGI[b4]), (256 * 16 / fc) * 2 ^ value
+            tb: 0x78,
+            tc: 0x00,
+
+            // configaration of current limiting resistance impedance when power output
+            vout_reg_cfg: 0,
+        })?;
         Ok(())
     }
 
+    /// Get a transaction
+    ///
+    /// While the transaction is open, the `csn` stays low
     fn txn<'a>(&'a mut self) -> Txn<'a, I2C, CSN, IRQ, Timer> {
         self.csn.set_low().unwrap();
         self.timer.start(Microseconds::new(250));
         nb::block!(self.timer.wait()).unwrap();
         Txn { device: self }
     }
-    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2CError> {
+    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
         self.txn().read_register_raw(address)
     }
 
-    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2CError> {
+    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2C::BusError> {
         self.txn().write_register_raw(value, address)
     }
 
-    pub fn read_register<R: Register>(&mut self) -> Result<R, I2CError> {
+    pub fn read_register<R: Register>(&mut self) -> Result<R, I2C::BusError> {
         self.txn().read_register()
     }
 
-    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2CError> {
+    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
         self.txn().write_register_raw(value.into(), R::ADDRESS)
     }
 
-    pub fn read_packet(&mut self, buf: &mut [u8]) -> Result<NfcState, I2CError> {
-        let main_irq = self.read_register::<MainIrq>();
-        debug_now!("{main_irq:?}");
-        let aux_irq = self.read_register::<AuxIrq>();
-        debug_now!("{aux_irq:?}");
-        todo!()
+    pub fn read_fifo(&mut self, count: u8) -> Result<(), I2C::BusError> {
+        let txn = self.txn();
+        let buf: &mut [u8] = &mut txn.device.packet[txn.device.offset..][..count as usize];
+        txn.device
+            .i2c
+            .write_read(ADDRESS, &FifoAccess::ADDRESS.to_be_bytes(), buf)?;
+        Ok(())
+    }
+
+    pub fn read_packet(
+        &mut self,
+        buf: &mut [u8],
+    ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
+        let main_irq = self.read_register::<MainIrq>()?;
+        let fifo_irq = self.read_register::<FifoIrq>()?;
+
+        let mut new_session = false;
+
+        if main_irq.active_flag() {
+            new_session = true;
+        }
+
+        if main_irq.rx_start() {
+            self.offset = 0;
+            self.current_frame_size = fsdi_to_frame_size(self.read_register::<NfcRats>()?.fsdi());
+            debug_now!("Rx start: {}", self.current_frame_size);
+        }
+
+        // Case where the full packet is available
+        if main_irq.rx_done() {
+            let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            if count > 0 {
+                self.read_fifo(count)?;
+                self.offset += count as usize;
+            }
+
+            if self.offset <= 2 {
+                // too few bytes, ignore..
+                info!("RxDone read too few ({})", hex_str!(&buf[..self.offset]));
+                self.offset = 0;
+            } else {
+                info!("RxDone");
+                let l = self.offset - 2;
+                buf[..l].copy_from_slice(&self.packet[..l]);
+                self.offset = 0;
+                if new_session {
+                    return Ok(Ok(NfcState::NewSession(l as u8)));
+                } else {
+                    return Ok(Ok(NfcState::Continue(l as u8)));
+                }
+            }
+        }
+
+        let rf_status = self.read_register::<NfcStatus>()?;
+        if fifo_irq.water_level() && !rf_status.nfc_tx() {
+            let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            self.read_fifo(count)?;
+            self.offset += count as usize;
+        }
+
+        if new_session {
+            Ok(Err(NfcError::NewSession))
+        } else {
+            Ok(Err(NfcError::NoActivity))
+        }
+    }
+
+    fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
+        let txn = self.txn();
+        let len = data.len() + 2;
+        // Max length of FIFO (32 bytes + address)
+        let mut buf = [0; 32 + 2];
+        buf[..2].copy_from_slice(&FifoAccess::ADDRESS.to_be_bytes());
+        buf[2..][..data.len()].copy_from_slice(data);
+        txn.device.i2c.write(ADDRESS, &buf[..len])?;
+        Ok(())
+    }
+
+    /// Returns true for sucess
+    fn wait_for_transmission(&mut self) -> Result<bool, I2C::BusError> {
+        self.write_register(NfcTxen(NfcTxenValue::SendBackData.into()))?;
+
+        let mut nfc_status = self.read_register::<NfcStatus>()?;
+        for _ in 0..100 {
+            if nfc_status.nfc_tx() {
+                debug!("Chip is transmitting");
+                break;
+            } else {
+                // chip is not transmitting yet
+                nfc_status = self.read_register::<NfcStatus>()?;
+            }
+        }
+
+        if !nfc_status.nfc_tx() {
+            debug_now!("Chip never started transmitting");
+            return Ok(false);
+        }
+
+        let mut current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+        let mut fifo_irq = self.read_register::<FifoIrq>()?;
+        if current_count < 8 {
+            return Ok(true);
+        }
+        for _ in 0..300 {
+            if fifo_irq.water_level() {
+                break;
+            }
+            current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            if current_count < 8 {
+                return Ok(true);
+            }
+            fifo_irq = self.read_register::<FifoIrq>()?;
+        }
+        return Ok(false);
+    }
+
+    fn send_packet(&mut self, buf: &[u8]) -> Result<Result<(), NfcError>, I2C::BusError> {
+        // FIFO size is 32 bytes, but wait_for_transmissions waits for the waterlevel to trigger, which is at 8 bytes
+        // So we only send 24 bytes at a time after the first transmission
+        let (first_chunk, rem) = buf.split_at_checked(32).unwrap_or((&buf, &[]));
+        self.write_fifo(first_chunk)?;
+        if !self.wait_for_transmission()? {
+            panic!();
+            return Ok(Err(NfcError::NoActivity));
+        }
+        let (chunks, rem) = rem.as_chunks::<24>();
+        for chunk in chunks {
+            self.write_fifo(chunk)?;
+            if !self.wait_for_transmission()? {
+                panic!();
+                return Ok(Err(NfcError::NoActivity));
+            }
+        }
+
+        if !rem.is_empty() {
+            self.write_fifo(rem)?;
+            if !self.wait_for_transmission()? {
+                panic!();
+                return Ok(Err(NfcError::NoActivity));
+            }
+        }
+        Ok(Ok(()))
     }
 }
 
-impl<I2CError, I2C, CSN: OutputPin, IRQ: InputPin, Timer> nfc_device::traits::nfc::Device
+impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> nfc_device::traits::nfc::Device
     for Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
-    I2C: WriteRead<Error = I2CError> + Write<Error = I2CError> + Read<Error = I2CError>,
-    I2CError: Debug,
+    I2C: I2CBus,
     CSN::Error: Debug,
     IRQ::Error: Debug,
     Timer: CountDown<Time = Microseconds>,
 {
     fn read(&mut self, buf: &mut [u8]) -> Result<NfcState, NfcError> {
-        self.read_packet(buf).map_err(|_| NfcError::NoActivity)
+        self.read_packet(buf).unwrap()
     }
 
-    fn send(&mut self, _buf: &[u8]) -> Result<(), NfcError> {
-        todo!()
+    fn send(&mut self, buf: &[u8]) -> Result<(), NfcError> {
+        self.send_packet(buf).unwrap()
     }
 
     fn frame_size(&self) -> usize {
-        128
+        self.current_frame_size
     }
 }

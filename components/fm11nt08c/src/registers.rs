@@ -99,6 +99,12 @@ macro_rules! register_bitfield {
 }
 
 // For bitfield compatibility
+// Some struct implement From<U8Wrapper> even though they
+// should implement TryFrom, but since we know that the bytes obtained from the register
+// are only ever obtained from the correct bits, we know the conversion will never fail,
+// but we still don't want to implement a panicking From<u8>
+//
+// U8Wrapper should not be used outside of the bitfield implementations for registers
 struct U8Wrapper(u8);
 
 impl bitfield::BitRange<U8Wrapper> for u8 {
@@ -284,10 +290,20 @@ register_bitfield! {
     pub nfc_tx, set_nfc_tx: 0;
 }
 
+enum_u8! {
+    #[derive(Debug, Clone, Copy)]
+    pub enum NfcTxenValue {
+        SendBackData = 0x55,
+        StartPostbackData = 0xAA,
+        SwitchToReceiveState = 0x88,
+        SwitchToReceiveStateAndIdle = 0x77
+    }
+}
+
 register_bitfield! {
     struct NfcTxen(u8): 0xFFF4;
     impl Debug;
-    pub nfc_txen, set_nfc_txn: 7,0;
+    pub from NfcTxenValue, _, set_nfc_txn: 7,0;
 }
 
 // Also known as HALT_CTRL

@@ -455,7 +455,8 @@ impl Stage2 {
         let mut iso14443 = Iso14443::new(nfc, nfc_rq);
         iso14443.poll();
         // Give a small delay to charge up capacitors
-        // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+        self.basic.delay_timer.start(5_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
         Some(iso14443)
     }
 

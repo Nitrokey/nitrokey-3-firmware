@@ -406,7 +406,7 @@ dependencies = [
  "lfs-backup",
  "littlefs2",
  "littlefs2-core",
- "lpc55-hal",
+ "lpc55-hal 0.4.1",
  "lpc55-pac",
  "memory-regions",
  "nb 1.1.0",
@@ -1187,7 +1187,7 @@ dependencies = [
  "interchange",
  "littlefs2-core",
  "littlefs2-sys",
- "lpc55-hal",
+ "lpc55-hal 0.4.1",
  "lpc55-pac",
  "memory-regions",
  "nb 1.1.0",
@@ -1364,6 +1364,8 @@ dependencies = [
  "delog",
  "embedded-hal",
  "embedded-time",
+ "lpc55-hal 0.3.1",
+ "lpc55-hal 0.4.1",
  "nb 1.1.0",
  "nfc-device",
 ]
@@ -2035,6 +2037,27 @@ dependencies = [
  "scoped-tls",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "lpc55-hal"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67e9bba980b3a2de5813c8db696806c59bdb5f57956c8137ebe1e10b2e988a53"
+dependencies = [
+ "block-buffer 0.9.0",
+ "cipher 0.3.0",
+ "cortex-m",
+ "digest 0.9.0",
+ "embedded-hal",
+ "embedded-time",
+ "generic-array",
+ "lpc55-pac",
+ "nb 1.1.0",
+ "rand_core",
+ "usb-device",
+ "vcell",
+ "void",
 ]
 
 [[package]]
@@ -2887,7 +2910,7 @@ dependencies = [
  "heapless",
  "hex-literal 0.4.1",
  "iso7816",
- "lpc55-hal",
+ "lpc55-hal 0.4.1",
  "nrf-hal-common",
  "rand",
  "serde",
