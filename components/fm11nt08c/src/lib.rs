@@ -20,6 +20,42 @@ use registers::{
     NfcStatus, NfcTxen, NfcTxenValue, Register, UserCfg0, UserCfg1, UserCfg2, VoutMode,
 };
 
+bitfield::bitfield! {
+    struct T0(u8);
+    impl Debug;
+    pub tc_transmitted, set_tc_transmitted: 6;
+    pub tb_transmitted, set_tb_transmitted: 5;
+    pub ta_transmitted, set_ta_transmitted: 4;
+    pub fsci, set_fsci: 3,0;
+}
+
+bitfield::bitfield! {
+    struct Ta(u8);
+    impl Debug;
+    pub same_bitrate_both_direction, set_same_bitrate_both_direction: 7;
+    pub same_bitrate_poll_8, set_same_bitrate_poll_8: 6;
+    pub same_bitrate_poll_4, set_same_bitrate_poll_4: 5;
+    pub same_bitrate_poll_2, set_same_bitrate_poll_2: 4;
+    pub rfu, _: 3;
+    pub same_bitrate_listen_8, set_same_bitrate_listen_8: 2;
+    pub same_bitrate_listen_4, set_same_bitrate_listen_4: 1;
+    pub same_bitrate_listen_2, set_same_bitrate_listen_2: 0;
+}
+
+bitfield::bitfield! {
+    struct Tb(u8);
+    impl Debug;
+    pub fwi, set_fwi: 7,4;
+    pub sfgi, set_sfgi: 3,0;
+}
+
+bitfield::bitfield! {
+    struct Tc(u8);
+    impl Debug;
+    pub fwi, set_fwi: 7,4;
+    pub sfgi, set_sfgi: 3,0;
+}
+
 fn fsdi_to_frame_size(fsdi: u8) -> usize {
     match fsdi {
         0 => 16,
@@ -228,9 +264,11 @@ where
         let mut user_cfg0 = txn.read_register::<UserCfg0>()?;
         debug_now!("{user_cfg0:?}");
         user_cfg0.set_vout_mode(VoutMode::EnabledAfterPowerOn);
-        txn.write_register(user_cfg0)?;
+        user_cfg0.set_op_mode_select(false);
+        txn.write_register(user_cfg0.clone())?;
         debug_now!("{:?}", txn.read_register::<UserCfg0>());
-        let mut user_cfg_1 = txn.read_register::<UserCfg1>()?;
+        let mut user_cfg1 = txn.read_register::<UserCfg1>()?;
+        debug_now!("{:?}", txn.read_register::<UserCfg1>());
         debug_now!("{:?}", txn.read_register::<UserCfg2>());
         debug_now!("{:?}", txn.read_register::<NfcCfg>());
         debug_now!("{:?}", txn.read_register::<NfcStatus>());
@@ -238,10 +276,13 @@ where
         debug_now!("{:?}", txn.read_register::<FifoWordCnt>());
         debug_now!("{:?}", txn.read_register::<NfcTxen>());
 
+        debug_now!("Writing UserCFG to eeprom");
+        txn.write_eeprom(&[0x03, 0x90, user_cfg0.0, user_cfg1.0])?;
+
         txn.write_register(AuxIrq(0))?;
-        let mut fifo_irq_mask = FifoIrqMask(0);
-        fifo_irq_mask.set_water_level_mask(true);
-        fifo_irq_mask.set_full_mask(true);
+        let mut fifo_irq_mask = FifoIrqMask(0xFF);
+        fifo_irq_mask.set_water_level_mask(false);
+        fifo_irq_mask.set_full_mask(false);
         debug_now!("{fifo_irq_mask:?}");
         txn.write_register(fifo_irq_mask)?;
 
@@ -252,25 +293,50 @@ where
         main_irq_mask.set_fifo_flag_mask(false);
         debug_now!("{main_irq_mask:?}");
         txn.write_register(main_irq_mask)?;
+
         debug_now!("{:02x?}", txn.read_register::<MainIrqMask>());
 
-        user_cfg_1.set_nfc_mode(registers::NfcMode::Iso14443_4);
-        txn.write_register(user_cfg_1)?;
+        user_cfg1.set_nfc_mode(registers::NfcMode::Iso14443_4);
+        user_cfg1.set_fdt_comp_en(true);
+        txn.write_register(user_cfg1)?;
 
         debug_now!("{:?}", txn.read_register::<UserCfg1>());
+
+        let mut t0 = T0(0);
+        t0.set_tc_transmitted(true);
+        t0.set_tb_transmitted(true);
+        t0.set_ta_transmitted(true);
+        // Means 256 bytes FSCI
+        t0.set_fsci(0x8);
+
+        let mut ta = Ta(0);
+        ta.set_same_bitrate_both_direction(true);
+        ta.set_same_bitrate_poll_2(true);
+        ta.set_same_bitrate_listen_2(true);
+
+        let mut tb = Tb(0);
+        // FWT = 256 * 16/fc * 2^FWI
+        tb.set_fwi(7);
+        // SFGT = 256 * 16/fc * 2^SFGI
+        tb.set_sfgi(8);
+
+        // Same values as old chip
+        assert_eq!(0x78, t0.0);
+        assert_eq!(0b10010001, ta.0);
+        assert_eq!(0x78, tb.0);
 
         txn.configure(Configuration {
             atqa: 0x4400,
             sak1: 0x04,
             sak2: 0x20,
+            // Length (5 = TL + T0 + TA + TB + TC)
             tl: 0x05,
-            // (x[7:4], FSDI[3:0]) . FSDI[2] == 32 byte frame, FSDI[8] == 256 byte frame, 7==128byte
-            t0: 0x78,
-            // Support different data rates for both directions
-            // Support divisor 2 / 212kbps for tx and rx
-            ta: 0b10010001,
-            // (FWI[b4], SFGI[b4]), (256 * 16 / fc) * 2 ^ value
-            tb: 0x78,
+            t0: t0.0,
+            ta: ta.0,
+            tb: tb.0,
+            // No advanced protocol features supported
+            // DID not supported
+            // NAD not supported
             tc: 0x00,
 
             // configaration of current limiting resistance impedance when power output
@@ -335,6 +401,7 @@ where
         // Case where the full packet is available
         if main_irq.rx_done() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            debug_now!("Count: {count}");
             if count > 0 {
                 self.read_fifo(count)?;
                 self.offset += count as usize;
@@ -350,23 +417,35 @@ where
                 buf[..l].copy_from_slice(&self.packet[..l]);
                 self.offset = 0;
                 if new_session {
+                    panic!("new session");
+                    debug_now!("New session read suscessfull");
                     return Ok(Ok(NfcState::NewSession(l as u8)));
                 } else {
+                    debug_now!("Continue read successfull");
                     return Ok(Ok(NfcState::Continue(l as u8)));
                 }
             }
         }
 
         let rf_status = self.read_register::<NfcStatus>()?;
+        debug_now!("bare Count: {:?}", self.read_register::<FifoWordCnt>());
+        assert_eq!(
+            self.read_register::<FifoWordCnt>().unwrap().fifo_wordcnt(),
+            0
+        );
         if fifo_irq.water_level() && !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            debug_now!("Second Count: {count}");
             self.read_fifo(count)?;
             self.offset += count as usize;
         }
 
         if new_session {
+            debug_now!("NewSession read incomplete");
+            panic!("new session");
             Ok(Err(NfcError::NewSession))
         } else {
+            debug_now!("No activity read incomplete");
             Ok(Err(NfcError::NoActivity))
         }
     }
@@ -458,10 +537,12 @@ where
     Timer: CountDown<Time = Microseconds>,
 {
     fn read(&mut self, buf: &mut [u8]) -> Result<NfcState, NfcError> {
+        debug_now!("Polling read");
         self.read_packet(buf).unwrap()
     }
 
     fn send(&mut self, buf: &[u8]) -> Result<(), NfcError> {
+        debug_now!("Sending");
         self.send_packet(buf).unwrap()
     }
 

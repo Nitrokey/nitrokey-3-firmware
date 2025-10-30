@@ -87,11 +87,14 @@ macro_rules! register {
 
 macro_rules! register_bitfield {
     (
+        $(#[$attribute:meta])*
         struct $name:ident(u8): $addr:expr;
         $($rest:tt)*
     ) => {
         register!($name, $addr);
+
         bitfield! {
+            $(#[$attribute])*
             pub struct $name(u8);
             $($rest)*
         }
@@ -153,6 +156,7 @@ enum_u8! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct UserCfg0(u8): 0xFFE0;
     impl Debug;
     pub U8Wrapper, from into VoutMode, vout_mode, set_vout_mode: 7,6;
@@ -165,6 +169,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct UserCfg1(u8): 0xFFE1;
     impl Debug;
     pub fast_inventory_en, set_fast_inventory_en: 7;
@@ -211,6 +216,7 @@ enum_u8! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct UserCfg2(u8): 0xFFE2;
     impl Debug;
     rfu1, _: 7;
@@ -221,6 +227,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct ResetSilence(u8): 0xFFE6;
     impl Debug;
     pub soft_reset, set_soft_reset: 1;
@@ -228,36 +235,42 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct Status(u8): 0xFFE7;
     impl Debug;
     pub user_cfg_chk_flag, _: 0;
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct VoutEnCfg(u8): 0xFFE9;
     impl Debug;
     pub vout_en, set_vout_en: 7;
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct VoutResCfg(u8): 0xFFEA;
     impl Debug;
     pub vout_res_cfg, set_vout_res_cfg: 7,4;
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct FifoAccess(u8): 0xFFF0;
     impl Debug;
     pub fifo_data, set_fifo_data: 7,0;
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct FifoClear(u8): 0xFFF1;
     impl Debug;
     pub fifo_clear, set_fifo_clear: 7,0;
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct FifoWordCnt(u8): 0xFFF2;
     impl Debug;
     pub fifo_wordcnt, _: 5,0;
@@ -282,6 +295,7 @@ enum_u8! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct NfcStatus(u8): 0xFFF3;
     impl Debug;
     pub U8Wrapper, from into NfcStatusValue, nfc_status, set_nfc_status: 7,4;
@@ -301,6 +315,7 @@ enum_u8! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct NfcTxen(u8): 0xFFF4;
     impl Debug;
     pub from NfcTxenValue, _, set_nfc_txn: 7,0;
@@ -308,6 +323,7 @@ register_bitfield! {
 
 // Also known as HALT_CTRL
 register_bitfield! {
+    #[derive(Clone)]
     struct NfcCfg(u8): 0xFFF5;
     impl Debug;
     pub halt_control, set_halt_control: 1;
@@ -315,6 +331,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct NfcRats(u8): 0xFFF6;
     impl Debug;
     pub fsdi, set_fsdi: 7,4;
@@ -322,6 +339,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct MainIrq(u8): 0xFFF7;
     impl Debug;
     pub power_on_flag, set_power_on_flag: 7;
@@ -335,6 +353,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct FifoIrq(u8): 0xFFF8;
     impl Debug;
     pub water_level, set_water_level: 3;
@@ -344,6 +363,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct AuxIrq(u8): 0xFFF9;
     impl Debug;
     pub write_done, set_write_done: 7;
@@ -355,6 +375,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct MainIrqMask(u8): 0xFFFA;
     impl Debug;
     pub rx_start_mask, set_rx_start_mask: 5;
@@ -366,6 +387,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct FifoIrqMask(u8): 0xFFFB;
     impl Debug;
     pub water_level_mask, set_water_level_mask: 3;
@@ -375,6 +397,7 @@ register_bitfield! {
 }
 
 register_bitfield! {
+    #[derive(Clone)]
     struct AuxIrqMask(u8): 0xFFFC;
     impl Debug;
     pub halt_flag_mask, set_halt_flag_mask: 5;
@@ -383,4 +406,22 @@ register_bitfield! {
     pub parity_error_mask, set_parity_error_mask: 2;
     pub crc_error_mask, set_crc_error_mask: 1;
     pub framing_error_mask, set_framing_error_mask: 0;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn range() {
+        let mut fifo_data = FifoAccess(0);
+        fifo_data.set_fifo_data(0xFF);
+        assert_eq!(fifo_data.0, 0xFF);
+        let mut rats = NfcRats(0);
+        rats.set_fsdi(0xF);
+        assert_eq!(rats.0, 0xF0);
+        let mut rats = NfcRats(0);
+        rats.set_cid(0xF);
+        assert_eq!(rats.0, 0x0F);
+    }
 }

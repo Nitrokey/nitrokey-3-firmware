@@ -40,7 +40,7 @@ pub fn poll_usb<S, FA, FB, TA, TB, E>(
     usb_classes.ctaphid.check_timeout(t_now.0);
     usb_classes.poll();
 
-    maybe_spawn_ccid(usb_classes.ccid.did_start_processing(), ccid_spawner);
+    // maybe_spawn_ccid(usb_classes.ccid.did_start_processing(), ccid_spawner);
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
@@ -64,7 +64,7 @@ where
     let Some(usb_classes) = usb_classes.as_mut() else {
         return;
     };
-    maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
+    // maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
 }
 
 pub fn ctaphid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ctaphid_spawner: F)

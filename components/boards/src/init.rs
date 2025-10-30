@@ -95,15 +95,18 @@ pub fn init_logger<B: Board>(_version: &str) {
 
 pub struct UsbClasses<S: Soc> {
     pub usbd: UsbDevice<'static, S::UsbBus>,
-    pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
+    // pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
     pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus, CTAPHID_MESSAGE_SIZE>,
 }
 
 impl<S: Soc> UsbClasses<S> {
     pub fn poll(&mut self) {
         self.ctaphid.check_for_app_response();
-        self.ccid.check_for_app_response();
-        self.usbd.poll(&mut [&mut self.ccid, &mut self.ctaphid]);
+        // self.ccid.check_for_app_response();
+        self.usbd.poll(&mut [
+            // &mut self.ccid,
+            &mut self.ctaphid,
+        ]);
     }
 }
 
@@ -128,15 +131,18 @@ pub fn init_usb_nfc<B: Board>(
     version: Version,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
+    static DUMMY_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
-    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
+    let (ccid_rq, _ccid_rp) = CCID_CHANNEL.split().unwrap();
+    // We don't want the contact interface to interfere with contactless
+    let (_, dummy_ccid_rp) = DUMMY_CHANNEL.split().unwrap();
     let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
     /* initialize dispatchers */
-    let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);
+    let apdu_dispatch = ApduDispatch::new(dummy_ccid_rp, nfc_rp);
     let ctaphid_dispatch = CtaphidDispatch::with_interrupt(ctaphid_rp, Some(&CTAP_INTERRUPT));
 
     /* populate requesters (if bus options are provided) */
@@ -163,7 +169,7 @@ pub fn init_usb_nfc<B: Board>(
 
         UsbClasses {
             usbd,
-            ccid,
+            // ccid,
             ctaphid,
         }
     });
