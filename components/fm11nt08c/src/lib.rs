@@ -169,6 +169,28 @@ where
     }
 
     pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
+        // // NOT documented in the datasheet
+        // // FIXME: use bitlfags to document what is being configured
+        // const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
+        // // In the example code, FM11_E2_REGU_CFG_ADDR, not documented in the datasheet
+        // const REGU_ADDR: u16 = 0x0391;
+        // let buf = &mut [0; 1];
+
+        // self.device
+        //     .i2c
+        //     .write_read(ADDRESS, &REGU_CONFIG.to_be_bytes(), buf)?;
+        // debug_now!("REGU config: {buf:02x?}");
+
+        // let [regu_addr1, regu_addr2] = REGU_ADDR.to_be_bytes();
+        // let buf = &[regu_addr1, regu_addr2, REGU_CONFIG];
+
+        // self.write_eeprom(buf)?;
+        // let buf = &mut [0; 1];
+        // self.device
+        //     .i2c
+        //     .write_read(ADDRESS, &REGU_CONFIG.to_be_bytes(), buf)?;
+        // debug_now!("REGU config: {buf:02x?}");
+
         const ATQA_ADDR: u16 = 0x03BC;
         debug_now!("Entering configuration");
 
@@ -262,22 +284,30 @@ where
         let mut txn = self.txn();
         txn.write_register(NfcTxen(0x88))?;
         let mut user_cfg0 = txn.read_register::<UserCfg0>()?;
-        debug_now!("{user_cfg0:?}");
+        debug_now!("{user_cfg0:02x?}");
         user_cfg0.set_vout_mode(VoutMode::EnabledAfterPowerOn);
-        user_cfg0.set_op_mode_select(false);
+        user_cfg0.set_op_mode_select(true);
         txn.write_register(user_cfg0.clone())?;
-        debug_now!("{:?}", txn.read_register::<UserCfg0>());
+        debug_now!("{:02x?}", txn.read_register::<UserCfg0>());
         let mut user_cfg1 = txn.read_register::<UserCfg1>()?;
-        debug_now!("{:?}", txn.read_register::<UserCfg1>());
-        debug_now!("{:?}", txn.read_register::<UserCfg2>());
-        debug_now!("{:?}", txn.read_register::<NfcCfg>());
-        debug_now!("{:?}", txn.read_register::<NfcStatus>());
-        debug_now!("{:?}", txn.read_register::<NfcRats>());
-        debug_now!("{:?}", txn.read_register::<FifoWordCnt>());
-        debug_now!("{:?}", txn.read_register::<NfcTxen>());
+        debug_now!("{:02x?}", txn.read_register::<UserCfg1>());
+        debug_now!("{:02x?}", txn.read_register::<UserCfg2>());
+        debug_now!("{:02x?}", txn.read_register::<NfcCfg>());
+        debug_now!("{:02x?}", txn.read_register::<NfcStatus>());
+        debug_now!("{:02x?}", txn.read_register::<NfcRats>());
+        debug_now!("{:02x?}", txn.read_register::<FifoWordCnt>());
+        debug_now!("{:02x?}", txn.read_register::<NfcTxen>());
+
+        user_cfg1.set_nfc_mode(registers::NfcMode::Iso14443_4);
+        user_cfg1.set_fdt_comp_en(true);
+        user_cfg1.set_rfu2(true);
+        txn.write_register(user_cfg1.clone())?;
+        // txn.write_register(UserCfg1(0x81))?;
+
+        debug_now!("After write: {:02x?}", txn.read_register::<UserCfg1>());
 
         debug_now!("Writing UserCFG to eeprom");
-        txn.write_eeprom(&[0x03, 0x90, user_cfg0.0, user_cfg1.0])?;
+        txn.write_eeprom(&[0x03, 0x90, 0x90, 0x81])?;
 
         txn.write_register(AuxIrq(0))?;
         let mut fifo_irq_mask = FifoIrqMask(0xFF);
@@ -287,7 +317,7 @@ where
         txn.write_register(fifo_irq_mask)?;
 
         let mut main_irq_mask = MainIrqMask(0xFF);
-        main_irq_mask.set_rx_start_mask(false);
+        // main_irq_mask.set_rx_start_mask(false);
         main_irq_mask.set_rx_done_mask(false);
         main_irq_mask.set_tx_done_mask(false);
         main_irq_mask.set_fifo_flag_mask(false);
@@ -295,12 +325,6 @@ where
         txn.write_register(main_irq_mask)?;
 
         debug_now!("{:02x?}", txn.read_register::<MainIrqMask>());
-
-        user_cfg1.set_nfc_mode(registers::NfcMode::Iso14443_4);
-        user_cfg1.set_fdt_comp_en(true);
-        txn.write_register(user_cfg1)?;
-
-        debug_now!("{:?}", txn.read_register::<UserCfg1>());
 
         let mut t0 = T0(0);
         t0.set_tc_transmitted(true);
@@ -392,6 +416,7 @@ where
             new_session = true;
         }
 
+        assert!(!main_irq.rx_start());
         if main_irq.rx_start() {
             self.offset = 0;
             self.current_frame_size = fsdi_to_frame_size(self.read_register::<NfcRats>()?.fsdi());
@@ -401,7 +426,6 @@ where
         // Case where the full packet is available
         if main_irq.rx_done() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
-            debug_now!("Count: {count}");
             if count > 0 {
                 self.read_fifo(count)?;
                 self.offset += count as usize;
@@ -417,7 +441,6 @@ where
                 buf[..l].copy_from_slice(&self.packet[..l]);
                 self.offset = 0;
                 if new_session {
-                    panic!("new session");
                     debug_now!("New session read suscessfull");
                     return Ok(Ok(NfcState::NewSession(l as u8)));
                 } else {
@@ -429,10 +452,6 @@ where
 
         let rf_status = self.read_register::<NfcStatus>()?;
         debug_now!("bare Count: {:?}", self.read_register::<FifoWordCnt>());
-        assert_eq!(
-            self.read_register::<FifoWordCnt>().unwrap().fifo_wordcnt(),
-            0
-        );
         if fifo_irq.water_level() && !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             debug_now!("Second Count: {count}");
@@ -442,7 +461,6 @@ where
 
         if new_session {
             debug_now!("NewSession read incomplete");
-            panic!("new session");
             Ok(Err(NfcError::NewSession))
         } else {
             debug_now!("No activity read incomplete");

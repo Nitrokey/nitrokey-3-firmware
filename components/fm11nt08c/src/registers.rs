@@ -177,7 +177,7 @@ register_bitfield! {
     pub U8Wrapper, from into Fdel, fdel, set_fdel: 5,4;
     pub U8Wrapper, from into NfcMode, nfc_mode, set_nfc_mode: 3,2;
     rfu1, _: 1;
-    rfu2, _: 0;
+    pub rfu2, set_rfu2: 0;
 
 }
 
