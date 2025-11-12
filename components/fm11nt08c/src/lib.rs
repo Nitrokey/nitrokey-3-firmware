@@ -6,8 +6,10 @@ use core::fmt::Debug;
 extern crate delog;
 generate_macros!();
 
+mod crc8;
 pub mod registers;
 
+use crc8::crc8;
 use embedded_hal::{
     blocking::i2c::{Read, Write, WriteRead},
     digital::v2::{InputPin, OutputPin},
@@ -17,7 +19,8 @@ use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
     AuxIrq, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcCfg, NfcRats,
-    NfcStatus, NfcTxen, NfcTxenValue, Register, UserCfg0, UserCfg1, UserCfg2, VoutMode,
+    NfcStatus, NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2,
+    VoutMode,
 };
 
 bitfield::bitfield! {
@@ -227,12 +230,30 @@ where
         ];
         debug_now!("Expected nfc config: {buf:02x?}");
         self.write_eeprom(buf)?;
-        let buf = &mut [0; 7];
+        let buf = &mut [0; 12];
         self.device
             .i2c
             .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
         debug_now!("NFC config: {buf:02x?}");
 
+        const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
+
+        let buf = &mut [0; 13];
+        self.device
+            .i2c
+            .write_read(ADDRESS, &SERIAL_NUMBER_ADDRESS.to_be_bytes(), &mut buf[..9])?;
+        debug_now!("serial number: {buf:02x?}");
+
+        self.device
+            .i2c
+            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), &mut buf[9..])?;
+        debug_now!("serial number: {buf:02x?}");
+
+        let crc8_value = crc8(buf);
+        debug_now!("Calculated crc8 value: {crc8_value:02x?}");
+        const CRC8_ADDRESS: u16 = 0x03BB;
+        let [crc8_address1, crc8_address2] = CRC8_ADDRESS.to_be_bytes();
+        self.write_eeprom(&[crc8_address1, crc8_address2, crc8_value])?;
         Ok(())
     }
 
@@ -248,6 +269,16 @@ where
 
     pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
         self.write_register_raw(value.into(), R::ADDRESS)
+    }
+
+    fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
+        let len = data.len() + 2;
+        // Max length of FIFO (32 bytes + address)
+        let mut buf = [0; 32 + 2];
+        buf[..2].copy_from_slice(&FifoAccess::ADDRESS.to_be_bytes());
+        buf[2..][..data.len()].copy_from_slice(data);
+        self.device.i2c.write(ADDRESS, &buf[..len])?;
+        Ok(())
     }
 }
 
@@ -282,6 +313,7 @@ where
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
         let mut txn = self.txn();
+        txn.write_register(ResetSilence(0xCC))?;
         txn.write_register(NfcTxen(0x88))?;
         let mut user_cfg0 = txn.read_register::<UserCfg0>()?;
         debug_now!("{user_cfg0:02x?}");
@@ -289,25 +321,51 @@ where
         user_cfg0.set_op_mode_select(true);
         txn.write_register(user_cfg0.clone())?;
         debug_now!("{:02x?}", txn.read_register::<UserCfg0>());
+        txn.write_register(UserCfg1(0x80))?;
         let mut user_cfg1 = txn.read_register::<UserCfg1>()?;
+        let user_cfg2 = txn.read_register::<UserCfg2>()?;
         debug_now!("{:02x?}", txn.read_register::<UserCfg1>());
-        debug_now!("{:02x?}", txn.read_register::<UserCfg2>());
+        debug_now!("{:02x?}", user_cfg2);
         debug_now!("{:02x?}", txn.read_register::<NfcCfg>());
         debug_now!("{:02x?}", txn.read_register::<NfcStatus>());
         debug_now!("{:02x?}", txn.read_register::<NfcRats>());
         debug_now!("{:02x?}", txn.read_register::<FifoWordCnt>());
         debug_now!("{:02x?}", txn.read_register::<NfcTxen>());
+        debug_now!("{:02x?}", txn.read_register::<ResetSilence>());
+        debug_now!("{:02x?}", txn.read_register::<registers::Status>());
 
         user_cfg1.set_nfc_mode(registers::NfcMode::Iso14443_4);
-        user_cfg1.set_fdt_comp_en(true);
-        user_cfg1.set_rfu2(true);
+        // user_cfg1.set_fdt_comp_en(true);
+        // user_cfg1.set_rfu2(true);
         txn.write_register(user_cfg1.clone())?;
+        debug_now!("{user_cfg1:02x?}");
         // txn.write_register(UserCfg1(0x81))?;
 
         debug_now!("After write: {:02x?}", txn.read_register::<UserCfg1>());
 
         debug_now!("Writing UserCFG to eeprom");
-        txn.write_eeprom(&[0x03, 0x90, 0x90, 0x81])?;
+        // Undocumeted check
+        let user_cfg0 = UserCfg0(0x91);
+        let user_cfg1 = UserCfg1(0x82);
+        let user_cfg2 = UserCfg2(0x21);
+        debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?}");
+        let usercfg_chk_word = user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0;
+        debug_now!("{usercfg_chk_word:02x}");
+        txn.write_eeprom(&[
+            0x03,
+            0x90,
+            user_cfg0.0,
+            user_cfg1.0,
+            user_cfg2.0,
+            usercfg_chk_word,
+        ])?;
+        txn.write_eeprom(&[0x03, 0xB8, user_cfg0.0, user_cfg1.0, user_cfg2.0])?;
+        debug_now!("Reading eeprom");
+        let mut buf = [0; 2];
+        txn.device
+            .i2c
+            .write_read(ADDRESS, &[0x03, 0x90], &mut buf)?;
+        debug_now!("EEprom read: {buf:02x?}");
 
         txn.write_register(AuxIrq(0))?;
         let mut fifo_irq_mask = FifoIrqMask(0xFF);
@@ -366,6 +424,14 @@ where
             // configaration of current limiting resistance impedance when power output
             vout_reg_cfg: 0,
         })?;
+
+        txn.device.write_fifo(&[0x00, 0x00, 0x00])?;
+        debug_now!(
+            "AFTER writing: {:02x?}",
+            txn.read_register::<FifoWordCnt>()?.fifo_wordcnt(),
+        );
+        txn.write_register(NfcTxen(0x55))?;
+
         Ok(())
     }
 
@@ -469,14 +535,7 @@ where
     }
 
     fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
-        let txn = self.txn();
-        let len = data.len() + 2;
-        // Max length of FIFO (32 bytes + address)
-        let mut buf = [0; 32 + 2];
-        buf[..2].copy_from_slice(&FifoAccess::ADDRESS.to_be_bytes());
-        buf[2..][..data.len()].copy_from_slice(data);
-        txn.device.i2c.write(ADDRESS, &buf[..len])?;
-        Ok(())
+        self.txn().write_fifo(data)
     }
 
     /// Returns true for sucess
