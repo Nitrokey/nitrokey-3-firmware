@@ -56,6 +56,7 @@ mod migrations;
 pub struct Config {
     #[serde(default, rename = "f", skip_serializing_if = "is_default")]
     fido: FidoConfig,
+    #[cfg(feature = "opcard")]
     #[serde(default, rename = "o", skip_serializing_if = "is_default")]
     opcard: OpcardConfig,
     #[cfg(feature = "piv-authenticator")]
@@ -73,6 +74,7 @@ impl admin_app::Config for Config {
         let (app, key) = key.split_once('.')?;
         match app {
             "fido" => self.fido.field(key),
+            #[cfg(feature = "opcard")]
             "opcard" => self.opcard.field(key),
             #[cfg(feature = "piv-authenticator")]
             "piv" => self.piv.field(key),
@@ -126,7 +128,9 @@ impl admin_app::Config for Config {
             (Some(("fido", key)), _) => self.fido.reset_client_id(key),
             (None, "fido") => self.fido.reset_client_id(""),
 
+            #[cfg(feature = "opcard")]
             (Some(("opcard", key)), _) => self.opcard.reset_client_id(key),
+            #[cfg(feature = "opcard")]
             (None, "opcard") => self.opcard.reset_client_id(""),
 
             #[cfg(feature = "piv-authenticator")]
@@ -148,6 +152,7 @@ impl admin_app::Config for Config {
     fn reset_client_config(&mut self, key: &str) -> ResetConfigResult {
         match key {
             "fido" => self.fido.reset_config(),
+            #[cfg(feature = "opcard")]
             "opcard" => self.opcard.reset_config(),
             _ => ResetConfigResult::WrongKey,
         }
@@ -199,6 +204,7 @@ impl FidoConfig {
     }
 }
 
+#[cfg(feature = "opcard")]
 #[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct OpcardConfig {
     #[cfg(feature = "se050")]
@@ -233,6 +239,7 @@ impl OpcardConfig {
     }
 }
 
+#[cfg(feature = "opcard")]
 impl OpcardConfig {
     /// The config value used for initialization and after a factory-reset
     ///
@@ -1063,7 +1070,7 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     }
 }
 
-#[cfg(any(feature = "factory-reset", feature = "se050"))]
+#[cfg(all(any(feature = "factory-reset", feature = "se050"), feature = "opcard"))]
 static OPCARD_RESET_SIGNAL: ResetSignalAllocation = ResetSignalAllocation::new();
 
 #[cfg(feature = "opcard")]
@@ -1206,9 +1213,11 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "opcard")]
+    use super::OpcardConfig;
     #[cfg(feature = "piv-authenticator")]
     use super::PivConfig;
-    use super::{Config, FidoConfig, OpcardConfig};
+    use super::{Config, FidoConfig};
     use cbor_smol::cbor_serialize;
 
     #[test]
@@ -1217,6 +1226,7 @@ mod tests {
             fido: FidoConfig {
                 disable_skip_up_timeout: true,
             },
+            #[cfg(feature = "opcard")]
             opcard: OpcardConfig {
                 #[cfg(feature = "se050")]
                 use_se050_backend: true,
@@ -1225,6 +1235,8 @@ mod tests {
             #[cfg(feature = "piv-authenticator")]
             piv: PivConfig { disabled: true },
             fs_version: 1,
+            #[cfg(feature = "se050")]
+            se050_backend_configured_version: 1,
         };
         let mut buffer = [0; 1024];
         let data = cbor_serialize(&config, &mut buffer).unwrap();
