@@ -163,8 +163,10 @@ mod app {
         let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
+        let mut time = 0;
         loop {
-            let mut time = 0;
+            time += 1;
+            // #[cfg(not(feature = "no-delog"))]
             // perf_timer.lock(|perf_timer| {
             //     time = perf_timer.elapsed().0;
             //     if time == 60_000_000 {
@@ -174,7 +176,8 @@ mod app {
             wwdt.feed();
 
             #[cfg(not(feature = "no-delog"))]
-            if time > 1_200_000 {
+            if time > 10 {
+                time = 0;
                 boards::init::Delogger::flush();
             }
 
@@ -333,7 +336,6 @@ mod app {
                 let contactless = contactless.as_mut().unwrap();
                 // let _starttime = perf_timer.elapsed().0 / 100;
 
-                info!("[");
                 let status = contactless.poll();
                 match status {
                     nfc_device::Iso14443Status::Idle => {}

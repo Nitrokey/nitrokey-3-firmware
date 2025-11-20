@@ -18,9 +18,9 @@ use embedded_hal::{
 use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
-    AuxIrq, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcCfg, NfcRats,
-    NfcStatus, NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2,
-    VoutMode,
+    AuxIrq, AuxIrqMask, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask,
+    NfcCfg, NfcRats, NfcStatus, NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1,
+    UserCfg2, VoutEnCfg, VoutResCfg,
 };
 
 bitfield::bitfield! {
@@ -213,7 +213,7 @@ where
         self.device
             .i2c
             .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
-        debug_now!("ATQA config: {buf:02x?}");
+        debug_now!("ATQA config: {}", hexstr!(buf));
 
         const NFC_CONFIGURATION_ADDRESS: u16 = 0x03B0;
         let [nfc_conf_address1, nfc_conf_address2] = NFC_CONFIGURATION_ADDRESS.to_be_bytes();
@@ -228,13 +228,13 @@ where
             conf.tb,
             conf.tc,
         ];
-        debug_now!("Expected nfc config: {buf:02x?}");
+        debug_now!("Expected nfc config: {}", hexstr!(buf));
         self.write_eeprom(buf)?;
         let buf = &mut [0; 12];
         self.device
             .i2c
             .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
-        debug_now!("NFC config: {buf:02x?}");
+        debug_now!("NFC config: {}", hexstr!(buf));
 
         const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
 
@@ -242,12 +242,20 @@ where
         self.device
             .i2c
             .write_read(ADDRESS, &SERIAL_NUMBER_ADDRESS.to_be_bytes(), &mut buf[..9])?;
-        debug_now!("serial number: {buf:02x?}");
+        debug_now!("serial number: {}", hexstr!(buf));
 
         self.device
             .i2c
             .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), &mut buf[9..])?;
-        debug_now!("serial number: {buf:02x?}");
+        debug_now!("serial number: {}", hexstr!(buf));
+
+        const CT_ADDRESS: u16 = 0x03C0;
+
+        let buf_ct = &mut [0; 8];
+        self.device
+            .i2c
+            .write_read(ADDRESS, &CT_ADDRESS.to_be_bytes(), buf_ct)?;
+        debug_now!("serial number: {}", hexstr!(buf_ct));
 
         let crc8_value = crc8(buf);
         debug_now!("Calculated crc8 value: {crc8_value:02x?}");
@@ -279,6 +287,30 @@ where
         buf[2..][..data.len()].copy_from_slice(data);
         self.device.i2c.write(ADDRESS, &buf[..len])?;
         Ok(())
+    }
+
+    fn dump_registers(&mut self) {
+        debug!("Frame size: {}", self.device.current_frame_size);
+        debug!("{:02x?}", self.read_register::<AuxIrq>());
+        debug!("{:02x?}", self.read_register::<AuxIrqMask>());
+        // debug!("{:02x?}", self.read_register::<FifoAccess>());
+        // debug!("{:02x?}", self.read_register::<FifoClear>());
+        debug!("{:02x?}", self.read_register::<FifoIrq>());
+        debug!("{:02x?}", self.read_register::<FifoIrqMask>());
+        debug!("WORDCOUNT: {:02x?}", self.read_register::<FifoWordCnt>());
+        debug!("{:02x?}", self.read_register::<MainIrq>());
+        debug!("{:02x?}", self.read_register::<MainIrqMask>());
+        debug!("{:02x?}", self.read_register::<NfcCfg>());
+        debug!("{:02x?}", self.read_register::<NfcRats>());
+        // debug!("{:02x?}", self.read_register::<NfcTxen>());
+        // debug!("{:02x?}", self.read_register::<ResetSilence>());
+        debug!("{:02x?}", self.read_register::<registers::Status>());
+        debug!("{:02x?}", self.read_register::<UserCfg0>());
+        debug!("{:02x?}", self.read_register::<UserCfg1>());
+        debug!("{:02x?}", self.read_register::<UserCfg2>());
+        debug!("{:02x?}", self.read_register::<VoutEnCfg>());
+        debug!("{:02x?}", self.read_register::<VoutResCfg>());
+        debug!("{:02x?}", self.read_register::<NfcStatus>());
     }
 }
 
@@ -315,42 +347,14 @@ where
         let mut txn = self.txn();
         txn.write_register(ResetSilence(0xCC))?;
         txn.write_register(NfcTxen(0x88))?;
-        let mut user_cfg0 = txn.read_register::<UserCfg0>()?;
-        debug_now!("{user_cfg0:02x?}");
-        user_cfg0.set_vout_mode(VoutMode::EnabledAfterPowerOn);
-        user_cfg0.set_op_mode_select(true);
-        txn.write_register(user_cfg0.clone())?;
-        debug_now!("{:02x?}", txn.read_register::<UserCfg0>());
-        txn.write_register(UserCfg1(0x80))?;
-        let mut user_cfg1 = txn.read_register::<UserCfg1>()?;
-        let user_cfg2 = txn.read_register::<UserCfg2>()?;
-        debug_now!("{:02x?}", txn.read_register::<UserCfg1>());
-        debug_now!("{:02x?}", user_cfg2);
-        debug_now!("{:02x?}", txn.read_register::<NfcCfg>());
-        debug_now!("{:02x?}", txn.read_register::<NfcStatus>());
-        debug_now!("{:02x?}", txn.read_register::<NfcRats>());
-        debug_now!("{:02x?}", txn.read_register::<FifoWordCnt>());
-        debug_now!("{:02x?}", txn.read_register::<NfcTxen>());
-        debug_now!("{:02x?}", txn.read_register::<ResetSilence>());
-        debug_now!("{:02x?}", txn.read_register::<registers::Status>());
-
-        user_cfg1.set_nfc_mode(registers::NfcMode::Iso14443_4);
-        // user_cfg1.set_fdt_comp_en(true);
-        // user_cfg1.set_rfu2(true);
-        txn.write_register(user_cfg1.clone())?;
-        debug_now!("{user_cfg1:02x?}");
-        // txn.write_register(UserCfg1(0x81))?;
-
-        debug_now!("After write: {:02x?}", txn.read_register::<UserCfg1>());
-
-        debug_now!("Writing UserCFG to eeprom");
+        txn.dump_registers();
         // Undocumeted check
         let user_cfg0 = UserCfg0(0x91);
         let user_cfg1 = UserCfg1(0x82);
         let user_cfg2 = UserCfg2(0x21);
         debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?}");
-        let usercfg_chk_word = user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0;
-        debug_now!("{usercfg_chk_word:02x}");
+        let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
+        debug_now!("CHK word: {usercfg_chk_word:02x}");
         txn.write_eeprom(&[
             0x03,
             0x90,
@@ -365,22 +369,30 @@ where
         txn.device
             .i2c
             .write_read(ADDRESS, &[0x03, 0x90], &mut buf)?;
-        debug_now!("EEprom read: {buf:02x?}");
+        debug_now!("EEprom read: {}", hexstr!(&buf));
+        txn.write_register(user_cfg0)?;
+        txn.write_register(user_cfg1)?;
+        txn.write_register(user_cfg2)?;
 
         txn.write_register(AuxIrq(0))?;
-        let mut fifo_irq_mask = FifoIrqMask(0xFF);
-        fifo_irq_mask.set_water_level_mask(false);
-        fifo_irq_mask.set_full_mask(false);
+        let mut fifo_irq_mask = FifoIrqMask(0xF3);
+        // fifo_irq_mask.set_water_level_mask(false);
+        // fifo_irq_mask.set_full_mask(false);
+        // fifo_irq_mask.set_empty_mask(false);
         debug_now!("{fifo_irq_mask:?}");
         txn.write_register(fifo_irq_mask)?;
 
-        let mut main_irq_mask = MainIrqMask(0xFF);
+        let mut main_irq_mask = MainIrqMask(0x44);
         // main_irq_mask.set_rx_start_mask(false);
-        main_irq_mask.set_rx_done_mask(false);
-        main_irq_mask.set_tx_done_mask(false);
-        main_irq_mask.set_fifo_flag_mask(false);
-        debug_now!("{main_irq_mask:?}");
+        // main_irq_mask.set_rx_done_mask(false);
+        // main_irq_mask.set_tx_done_mask(false);
+        // main_irq_mask.set_fifo_flag_mask(false);
+        debug_now!("{main_irq_mask:02x?}");
         txn.write_register(main_irq_mask)?;
+
+        let aux_irq_mask = AuxIrqMask(0);
+        debug_now!("{aux_irq_mask:02x?}");
+        txn.write_register(aux_irq_mask)?;
 
         debug_now!("{:02x?}", txn.read_register::<MainIrqMask>());
 
@@ -427,7 +439,7 @@ where
 
         txn.device.write_fifo(&[0x00, 0x00, 0x00])?;
         debug_now!(
-            "AFTER writing: {:02x?}",
+            "AFTER WRITING: {:02x?}",
             txn.read_register::<FifoWordCnt>()?.fifo_wordcnt(),
         );
         txn.write_register(NfcTxen(0x55))?;
@@ -461,11 +473,12 @@ where
     }
 
     pub fn read_fifo(&mut self, count: u8) -> Result<(), I2C::BusError> {
-        let txn = self.txn();
+        let mut txn = self.txn();
         let buf: &mut [u8] = &mut txn.device.packet[txn.device.offset..][..count as usize];
         txn.device
             .i2c
             .write_read(ADDRESS, &FifoAccess::ADDRESS.to_be_bytes(), buf)?;
+        // txn.write_register(FifoClear(0))?;
         Ok(())
     }
 
@@ -473,25 +486,32 @@ where
         &mut self,
         buf: &mut [u8],
     ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
+        self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
         let fifo_irq = self.read_register::<FifoIrq>()?;
 
         let mut new_session = false;
 
         if main_irq.active_flag() {
+            self.offset = 0;
             new_session = true;
         }
 
-        assert!(!main_irq.rx_start());
         if main_irq.rx_start() {
             self.offset = 0;
             self.current_frame_size = fsdi_to_frame_size(self.read_register::<NfcRats>()?.fsdi());
-            debug_now!("Rx start: {}", self.current_frame_size);
+            debug!(
+                "Rx start  ============================================================================: {}",
+                self.current_frame_size
+            );
         }
 
         // Case where the full packet is available
         if main_irq.rx_done() {
+            debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+            debug!("WORD_COUNT: {count:02x?}");
+            let count = count.min(24);
             if count > 0 {
                 self.read_fifo(count)?;
                 self.offset += count as usize;
@@ -506,30 +526,36 @@ where
                 let l = self.offset - 2;
                 buf[..l].copy_from_slice(&self.packet[..l]);
                 self.offset = 0;
+                panic!("RX DONE");
                 if new_session {
-                    debug_now!("New session read suscessfull");
+                    debug!("New session read suscessfull");
                     return Ok(Ok(NfcState::NewSession(l as u8)));
                 } else {
-                    debug_now!("Continue read successfull");
+                    debug!("Continue read successfull");
                     return Ok(Ok(NfcState::Continue(l as u8)));
                 }
             }
         }
 
         let rf_status = self.read_register::<NfcStatus>()?;
-        debug_now!("bare Count: {:?}", self.read_register::<FifoWordCnt>());
-        if fifo_irq.water_level() && !rf_status.nfc_tx() {
+        debug!("bare Count: {:02x?}", self.read_register::<FifoWordCnt>());
+        debug!("water_level: {fifo_irq:?}");
+        if !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
-            debug_now!("Second Count: {count}");
+            let count = count.min(24);
+            debug!("Second Count: {count:02x}");
             self.read_fifo(count)?;
             self.offset += count as usize;
         }
 
+        debug!("Packet {}", self.offset);
+        debug!("{}", hexstr!(&self.packet[..self.offset]));
+
         if new_session {
-            debug_now!("NewSession read incomplete");
+            debug!("NewSession read incomplete");
             Ok(Err(NfcError::NewSession))
         } else {
-            debug_now!("No activity read incomplete");
+            debug!("No activity read incomplete");
             Ok(Err(NfcError::NoActivity))
         }
     }
@@ -603,6 +629,10 @@ where
         }
         Ok(Ok(()))
     }
+
+    fn dump_registers(&mut self) {
+        self.txn().dump_registers();
+    }
 }
 
 impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> nfc_device::traits::nfc::Device
@@ -614,7 +644,7 @@ where
     Timer: CountDown<Time = Microseconds>,
 {
     fn read(&mut self, buf: &mut [u8]) -> Result<NfcState, NfcError> {
-        debug_now!("Polling read");
+        // debug_now!("Polling read");
         self.read_packet(buf).unwrap()
     }
 

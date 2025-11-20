@@ -453,6 +453,7 @@ impl Stage2 {
         nfc.init();
 
         let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        boards::init::Delogger::flush();
         iso14443.poll();
         // Give a small delay to charge up capacitors
         self.basic.delay_timer.start(5_000.microseconds());

@@ -38,10 +38,17 @@ mod tests {
                 &[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09],
                 0xD0,
             ),
+            (
+                &[
+                    0x1d, 0xc5, 0x23, 0x73, 0xf2, 0x13, 0x00, 0x10, 0xf1, 0x44, 0x00, 0x04, 0x20,
+                ],
+                0xBB,
+            ),
         ];
 
         for (data, res) in test_vectors {
-            assert_eq!(*res, crc8(data));
+            let crc8 = crc8(data);
+            assert_eq!(*res, crc8, "Expected {res:02x}, got {crc8:02x}");
         }
     }
 }
