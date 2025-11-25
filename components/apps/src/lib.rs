@@ -99,6 +99,7 @@ impl admin_app::Config for Config {
                 destructive: true,
                 ty: FieldType::Bool,
             },
+            #[cfg(feature = "opcard")]
             ConfigField {
                 name: "opcard.disabled",
                 requires_touch_confirmation: false,
