@@ -38,7 +38,7 @@ type Nad = Option<u8>;
 type Cid = Option<u8>;
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum Block {
     IBlock(BlockNum, Nad, Cid, Chaining, Offset),
     RBlock(BlockNum, Cid, Ack, Offset),
@@ -61,7 +61,10 @@ impl Block {
             None
         };
 
+        // 0b11000010
         if (header & 0xc2) == 0x02 {
+            // Case where bits 8 and 7 are 00, I Block
+
             // NAD included
             let nad = if (header & 0x4) != 0 {
                 offset += 1;
@@ -75,6 +78,8 @@ impl Block {
             };
             Block::IBlock(block_num, nad, cid, flag, offset)
         } else if (header & 0xe2) == 0xa2 {
+            // Case of the bits 8 and 8 are 1, 7 is 0, and 2 is 1 => RBlock
+
             // Ack or Nack
             Block::RBlock(block_num, cid, !flag, offset)
         } else {
@@ -86,7 +91,7 @@ impl Block {
 /// Iso14443 device follows related rules for PICC in iso14443-4.
 /// Rules C - E and rules 9 - 13.
 pub struct Iso14443<DEV: nfc::Device> {
-    device: DEV,
+    pub device: DEV,
 
     state: Iso14443State,
 
@@ -446,5 +451,78 @@ where
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Calculate an ISO 14443a CRC. Code translated from the code in
+    // iso14443a_crc().
+    fn iso14443a_crc(data: &[u8]) -> [u8; 2] {
+        let mut crc: u16 = 0xFFFF;
+
+        for b in data {
+            let mut b = b ^ ((crc & 0xFF) as u8);
+            b ^= b << 4;
+            crc = (crc >> 8) ^ ((b as u16) << 8) ^ ((b as u16) << 3) ^ ((b as u16) >> 4);
+        }
+
+        return (!crc).to_le_bytes();
+        //  for _, bt := range data
+        //  {
+        //      bt ^= uint8(crc & 0xff)
+        //      bt ^= bt << 4
+        //      bt32 := uint32(bt)
+        //      crc = (crc >> 8) ^ (bt32 << 8) ^ (bt32 << 3) ^ (bt32 >> 4)
+        //   }
+
+        // return [2]byte{byte(crc & 0xff), byte((crc >> 8) & 0xff)}
+    }
+
+    //     unsigned short UpdateCrc(unsigned char ch, unsigned short *lpwCrc)
+    // {
+    // ch = (ch^(unsigned char)((*lpwCrc) & 0x00FF));
+    // ch = (ch^(ch<<4));
+    // *lpwCrc = (*lpwCrc >> 8)^((unsigned short)ch << 8)^((unsigned short)ch<<3)^((unsigned short)ch>>4);
+    // return(*lpwCrc);
+    // }
+    // void ComputeCrc(int CRCType, char *Data, int Length,
+    // BYTE *TransmitFirst, BYTE *TransmitSecond)
+    // {
+    // unsigned char chBlock;
+    // unsigned short wCrc;
+    // switch(CRCType) {
+    // case CRC_A:
+    // wCrc = 0x6363; /* ITU-V.41 */
+    // break;
+    // case CRC_B:
+    // wCrc = 0xFFFF; /* ISO/IEC 13239 (formerly ISO/IEC 3309) */
+    // break;
+    // default:
+    // return;
+    // }
+    // do {
+    // chBlock = *Data++;
+    // UpdateCrc(chBlock, &wCrc);
+    // } while (--Length);
+    // if (CRCType == CRC_B)
+    // wCrc = ~wCrc; /* ISO/IEC 13239 (formerly ISO/IEC 3309) */
+    // *TransmitFirst = (BYTE) (wCrc & 0xFF);
+    // *TransmitSecond = (BYTE) ((wCrc >> 8) & 0xFF);
+    // return;
+
+    #[test]
+    fn testing() {
+        let data =
+            hex_literal::hex!("004B28F3C890E4555E0AD4246B322F59013CCC5A2B7F2CAFA51468557423CF97");
+        // 004B20D1CCB0A8D50C0AE4286B322F59237EEC5AEBF7BE2F2796E65D792B8B37
+        let block = Block::new(&data);
+        println!("{:02x?}", iso14443a_crc(&data[1..]));
+        println!("{:02x?}", iso14443a_crc(&data[1..30]));
+        println!("{:02x?}", iso14443a_crc(&data[..30]));
+        println!("{:02x?}", iso14443a_crc(&data));
+        panic!("{:?}", block);
     }
 }
