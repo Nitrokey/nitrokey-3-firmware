@@ -56,6 +56,9 @@ use hal::{
     },
     Pin,
 };
+
+use core::mem::MaybeUninit;
+
 use interchange::Channel;
 use littlefs2_core::path;
 use lpc55_hal as hal;
@@ -442,17 +445,25 @@ impl Stage2 {
         //     &mut self.status,
         // )?;
 
+        static mut RGB_LED: MaybeUninit<RgbLed> = MaybeUninit::uninit();
+
         let mut nfc = nfc::try_setup_new(
             i2c,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
             nfc_irq,
             self.basic.perf_timer.take().unwrap(),
+            unsafe {
+                let rgb = self.basic.rgb.take().unwrap();
+                RGB_LED = MaybeUninit::new(rgb);
+                RGB_LED.assume_init_mut()
+            },
         );
 
         nfc.init();
 
         let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        #[cfg(not(feature = "no-delog"))]
         boards::init::Delogger::flush();
         iso14443.poll();
         // Give a small delay to charge up capacitors

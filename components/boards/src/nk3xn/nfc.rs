@@ -149,6 +149,7 @@ pub fn try_setup_new(
     iocon: &mut lpc55_hal::Iocon<Enabled>,
     nfc_irq: Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
     timer: Timer<lpc55_hal::peripherals::ctimer::Ctimer4<Enabled>>,
+    led: &'static mut dyn fm11nt08c::Led,
 ) -> NfcChip {
     // Start unselected.
     let nfc_cs = NfcCsPin::take()
@@ -156,5 +157,5 @@ pub fn try_setup_new(
         .into_gpio_pin(iocon, gpio)
         .into_output_high();
 
-    NfcChip::new(i2c, nfc_cs, nfc_irq, timer)
+    NfcChip::new(i2c, nfc_cs, nfc_irq, timer, led)
 }
