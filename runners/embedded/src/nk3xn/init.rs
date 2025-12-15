@@ -725,6 +725,12 @@ impl Stage4 {
         }
 
         if let Some(iso14443) = &mut self.nfc {
+            use core::mem::transmute;
+            use littlefs2_core::DynFilesystem;
+            use trussed::platform::Store;
+            iso14443.device.set_fs(Some(unsafe {
+                transmute::<&dyn DynFilesystem, &'static dyn DynFilesystem>(store.ifs())
+            }));
             iso14443.poll();
         }
 

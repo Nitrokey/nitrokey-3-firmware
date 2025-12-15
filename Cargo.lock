@@ -1365,6 +1365,8 @@ dependencies = [
  "delog",
  "embedded-hal",
  "embedded-time",
+ "heapless",
+ "littlefs2-core",
  "lpc55-hal 0.3.1",
  "lpc55-hal 0.4.1",
  "nb 1.1.0",
@@ -1998,6 +2000,7 @@ version = "0.1.1"
 source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
 dependencies = [
  "bitflags 2.10.0",
+ "heapless",
  "heapless-bytes",
  "serde",
 ]

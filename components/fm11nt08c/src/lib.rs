@@ -32,6 +32,8 @@ bitfield::bitfield! {
     pub fsci, set_fsci: 3,0;
 }
 
+use littlefs2_core::{DynFilesystem, path};
+
 bitfield::bitfield! {
     struct Ta(u8);
     impl Debug;
@@ -124,11 +126,47 @@ pub trait Led: Send + Sync {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 struct DebugState {
     was_fifo_full_once: bool,
     rx_done_reached: bool,
     framing_error_reached: bool,
+}
+
+impl DebugState {
+    pub fn serialize(&self) -> [u8; 3] {
+        let Self {
+            was_fifo_full_once,
+            rx_done_reached,
+            framing_error_reached,
+        } = self;
+        [
+            *was_fifo_full_once as u8,
+            *rx_done_reached as u8,
+            *framing_error_reached as u8,
+        ]
+    }
+
+    pub fn show_debug(data: &[u8]) {
+        let count = data.len() / 3;
+        let mut boot_count = 0;
+        debug_now!("STATE DATA_LEN: {}, {count}", data.len());
+        for chunk @ [was_fifo_full_once, rx_done_reached, framing_error_reached] in
+            data.as_chunks().0
+        {
+            if *chunk == [u8::MAX; 3] {
+                boot_count += 1;
+                debug_now!("=============== BOOT ({boot_count}) ===============");
+                continue;
+            }
+            let this = Self {
+                was_fifo_full_once: *was_fifo_full_once == 1,
+                rx_done_reached: *rx_done_reached == 1,
+                framing_error_reached: *framing_error_reached == 1,
+            };
+            debug_now!("=========== DEBUG STATE FROM FS =============\n{this:?}");
+        }
+    }
 }
 
 pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
@@ -141,7 +179,16 @@ pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     packet: [u8; 256],
     debug_state: DebugState,
     led: &'static mut dyn Led,
+    filesystem: Option<DynFilesystemWrapper>,
 }
+
+#[derive(Copy, Clone)]
+pub struct DynFilesystemWrapper {
+    inner: &'static dyn DynFilesystem,
+}
+
+unsafe impl Sync for DynFilesystemWrapper {}
+unsafe impl Send for DynFilesystemWrapper {}
 
 pub struct Txn<'a, I2C, CSN, IRQ, Timer>
 where
@@ -193,7 +240,6 @@ where
         }
         Ok(())
     }
-
     pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
         // // NOT documented in the datasheet
         // // FIXME: use bitlfags to document what is being configured
@@ -317,7 +363,8 @@ where
         let aux_irq = self.read_register::<AuxIrq>();
         debug!("{:02x?}", aux_irq);
         if aux_irq.unwrap().framing_error() {
-            self.device.debug_state.framing_error_reached = true;
+            self.device
+                .update_debug_state(|d| d.framing_error_reached = true);
         }
         debug!("{:02x?}", self.read_register::<AuxIrqMask>());
         // debug!("{:02x?}", self.read_register::<FifoAccess>());
@@ -351,6 +398,8 @@ where
     }
 }
 
+const DEBUG_STATE_PATH: &littlefs2_core::Path = path!("/debug_state");
+
 impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
     I2C: I2CBus,
@@ -358,7 +407,14 @@ where
     IRQ::Error: Debug,
     Timer: CountDown<Time = Microseconds>,
 {
-    pub fn new(i2c: I2C, csn: CSN, irq: IRQ, timer: Timer, led: &'static mut dyn Led) -> Self {
+    pub fn new(
+        i2c: I2C,
+        csn: CSN,
+        irq: IRQ,
+        timer: Timer,
+        led: &'static mut dyn Led,
+        filesystem: Option<&'static dyn DynFilesystem>,
+    ) -> Self {
         led.set_red(0);
         led.set_blue(0);
         led.set_green(255);
@@ -372,6 +428,7 @@ where
             packet: [0; 256],
             led,
             debug_state: Default::default(),
+            filesystem: filesystem.map(|filesystem| DynFilesystemWrapper { inner: filesystem }),
         }
     }
 
@@ -401,8 +458,51 @@ where
         }
     }
 
+    fn write_debug_state_update(&mut self, value: [u8; 3]) {
+        if let Some(fs) = self.filesystem {
+            let mut v = match fs.inner.read::<heapless::Vec<u8, 1024>>(DEBUG_STATE_PATH) {
+                Ok(v) => v,
+                Err(_) => Default::default(),
+            };
+
+            if v.extend_from_slice(&value).is_err() {
+                v[..3].copy_from_slice(&value);
+                v.truncate(3);
+            }
+
+            fs.inner.write(DEBUG_STATE_PATH, &v).ok();
+        }
+    }
+
+    pub fn update_debug_state(&mut self, f: impl FnOnce(&mut DebugState)) {
+        let old_debug_state = self.debug_state.clone();
+        f(&mut self.debug_state);
+        if self.debug_state != old_debug_state {
+            self.write_debug_state_update(self.debug_state.serialize());
+        }
+    }
+
+    pub fn boot_debug_fs(&mut self) {
+        debug_now!("Boot Debug FS");
+        self.write_debug_state_update([u8::MAX; 3]);
+        if let Some(fs) = self.filesystem {
+            let mut v = match fs.inner.read::<heapless::Vec<u8, 1024>>(DEBUG_STATE_PATH) {
+                Ok(v) => v,
+                Err(_) => Default::default(),
+            };
+            DebugState::show_debug(&v);
+        } else {
+            debug_now!("No filesystem set");
+        }
+    }
+
     pub fn set_led(&mut self, led: &'static mut dyn Led) {
         self.led = led;
+    }
+
+    pub fn set_fs(&mut self, filesystem: Option<&'static dyn DynFilesystem>) {
+        self.filesystem = filesystem.map(|filesystem| DynFilesystemWrapper { inner: filesystem });
+        self.boot_debug_fs();
     }
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
@@ -499,13 +599,6 @@ where
             vout_reg_cfg: 0,
         })?;
 
-        // txn.device.write_fifo(&[0x00, 0x00, 0x00])?;
-        // debug_now!(
-        //     "AFTER WRITING: {:02x?}",
-        //     txn.read_register::<FifoWordCnt>()?.fifo_wordcnt(),
-        // );
-        // txn.write_register(NfcTxen(0x55))?;
-
         Ok(())
     }
 
@@ -571,11 +664,11 @@ where
 
         // Case where the full packet is available
         if main_irq.rx_done() {
-            self.debug_state.rx_done_reached = true;
+            self.update_debug_state(|d| d.rx_done_reached = true);
             debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
-                self.debug_state.was_fifo_full_once = true;
+                self.update_debug_state(|d| d.was_fifo_full_once = true);
             }
             debug!("WORD_COUNT: {count:02x?}");
             let count = count.min(24);
@@ -609,7 +702,7 @@ where
         if !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
-                self.debug_state.was_fifo_full_once = true;
+                self.update_debug_state(|d| d.was_fifo_full_once = true);
             }
             let count = count.min(24);
             debug!("Second Count: {count:02x}");
@@ -655,7 +748,7 @@ where
 
         let mut current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
         if current_count == 32 {
-            self.debug_state.was_fifo_full_once = true;
+            self.update_debug_state(|d| d.was_fifo_full_once = true);
         }
 
         let mut fifo_irq = self.read_register::<FifoIrq>()?;
@@ -668,7 +761,7 @@ where
             }
             current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if current_count == 32 {
-                self.debug_state.was_fifo_full_once = true;
+                self.update_debug_state(|d| d.was_fifo_full_once = true);
             }
             if current_count < 8 {
                 return Ok(true);
