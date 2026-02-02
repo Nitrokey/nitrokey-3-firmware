@@ -313,10 +313,12 @@ where
     }
 
     fn dump_registers(&mut self) {
+        // return;
         debug!("Frame size: {}", self.device.current_frame_size);
         let aux_irq = self.read_register::<AuxIrq>();
         debug!("{:02x?}", aux_irq);
         if aux_irq.unwrap().framing_error() {
+            error!("Framing error reached");
             self.device.debug_state.framing_error_reached = true;
         }
         debug!("{:02x?}", self.read_register::<AuxIrqMask>());
@@ -407,7 +409,6 @@ where
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
         let mut txn = self.txn();
-        txn.write_register(ResetSilence(0xCC))?;
         txn.write_register(NfcTxen(0x88))?;
         txn.dump_registers();
         // Undocumeted check
@@ -505,6 +506,7 @@ where
         //     txn.read_register::<FifoWordCnt>()?.fifo_wordcnt(),
         // );
         // txn.write_register(NfcTxen(0x55))?;
+        txn.write_register(ResetSilence(0xCC))?;
 
         Ok(())
     }
@@ -548,7 +550,8 @@ where
         &mut self,
         buf: &mut [u8],
     ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
-        self.set_led_state();
+        debug_now!("Reading packet");
+        // self.set_led_state();
         self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
         let fifo_irq = self.read_register::<FifoIrq>()?;
@@ -561,6 +564,7 @@ where
         }
 
         if main_irq.rx_start() {
+            error!("1");
             self.offset = 0;
             self.current_frame_size = fsdi_to_frame_size(self.read_register::<NfcRats>()?.fsdi());
             debug!(
@@ -571,10 +575,12 @@ where
 
         // Case where the full packet is available
         if main_irq.rx_done() {
+            error!("RxDone reached");
             self.debug_state.rx_done_reached = true;
             debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
+                error!("Fifo FULL");
                 self.debug_state.was_fifo_full_once = true;
             }
             debug!("WORD_COUNT: {count:02x?}");
@@ -704,7 +710,7 @@ where
     }
 
     fn dump_registers(&mut self) {
-        self.txn().dump_registers();
+        // self.txn().dump_registers();
     }
 }
 

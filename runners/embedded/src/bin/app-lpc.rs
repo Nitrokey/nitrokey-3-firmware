@@ -148,6 +148,7 @@ mod app {
             wait_extender,
         };
         let local = LocalResources { wwdt, endpoints };
+        error_now!("INIT FINISHED");
         (shared, local, init::Monotonics(systick.into()))
     }
 
@@ -187,7 +188,7 @@ mod app {
             if usb_activity {
                 rtic::pend(USB_INTERRUPT);
             }
-            if nfc_activity {
+            if nfc_activity || true {
                 rtic::pend(NFC_INTERRUPT);
             }
 
@@ -301,7 +302,7 @@ mod app {
 
     #[task(binds = CTIMER0, shared = [contactless, /*perf_timer,*/ wait_extender], priority = 7)]
     fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
-        debug_now!("Wait extension");
+        error!("Wait extension");
         c.shared.contactless.lock(|contactless| {
             if let Some(contactless) = contactless.as_mut() {
                 (c.shared.wait_extender/*,c.shared.perf_timer*/).lock(
@@ -332,7 +333,7 @@ mod app {
             c.shared.wait_extender,
         )
             .lock(|contactless, /*perf_timer,*/ wait_extender| {
-                debug!("Polling");
+                // debug!("Polling");
                 let contactless = contactless.as_mut().unwrap();
                 // let _starttime = perf_timer.elapsed().0 / 100;
 
