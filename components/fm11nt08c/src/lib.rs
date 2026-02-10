@@ -141,6 +141,7 @@ pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     packet: [u8; 256],
     debug_state: DebugState,
     led: &'static mut dyn Led,
+    pending_new_session: bool,
 }
 
 pub struct Txn<'a, I2C, CSN, IRQ, Timer>
@@ -313,8 +314,9 @@ where
     }
 
     fn dump_registers(&mut self) {
-        // return;
         debug!("Frame size: {}", self.device.current_frame_size);
+        //debug!("bare Count: {:02x?}"a, self.read_register::<FifoWordCnt>());
+        //debug!("water_level: {fifo_irq:?}");
         let aux_irq = self.read_register::<AuxIrq>();
         debug!("{:02x?}", aux_irq);
         if aux_irq.unwrap().framing_error() {
@@ -343,16 +345,6 @@ where
     }
 }
 
-impl<'a, I2C, CSN, IRQ, Timer> Drop for Txn<'a, I2C, CSN, IRQ, Timer>
-where
-    CSN: OutputPin,
-    CSN::Error: Debug,
-{
-    fn drop(&mut self) {
-        self.device.csn.set_high().unwrap();
-    }
-}
-
 impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
     I2C: I2CBus,
@@ -374,6 +366,7 @@ where
             packet: [0; 256],
             led,
             debug_state: Default::default(),
+            pending_new_session: false,
         }
     }
 
@@ -408,10 +401,15 @@ where
     }
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
+        // CSN low once and forever
+        self.csn.set_low().unwrap();
+        self.timer.start(Microseconds::new(250));
+        nb::block!(self.timer.wait()).unwrap();
+
         let mut txn = self.txn();
-        txn.write_register(NfcTxen(0x88))?;
         txn.dump_registers();
-        // Undocumeted check
+
+        // those aren't in the bare-metal version too
         let user_cfg0 = UserCfg0(0x91);
         let user_cfg1 = UserCfg1(0x82);
         let user_cfg2 = UserCfg2(0x21);
@@ -437,27 +435,10 @@ where
         txn.write_register(user_cfg1)?;
         txn.write_register(user_cfg2)?;
 
-        txn.write_register(AuxIrq(0))?;
-        let mut fifo_irq_mask = FifoIrqMask(0xF3);
-        // fifo_irq_mask.set_water_level_mask(false);
-        // fifo_irq_mask.set_full_mask(false);
-        // fifo_irq_mask.set_empty_mask(false);
-        debug_now!("{fifo_irq_mask:?}");
-        txn.write_register(fifo_irq_mask)?;
-
-        let mut main_irq_mask = MainIrqMask(0x44);
-        // main_irq_mask.set_rx_start_mask(false);
-        // main_irq_mask.set_rx_done_mask(false);
-        // main_irq_mask.set_tx_done_mask(false);
-        // main_irq_mask.set_fifo_flag_mask(false);
-        debug_now!("{main_irq_mask:02x?}");
-        txn.write_register(main_irq_mask)?;
-
-        let aux_irq_mask = AuxIrqMask(0);
-        debug_now!("{aux_irq_mask:02x?}");
-        txn.write_register(aux_irq_mask)?;
-
-        debug_now!("{:02x?}", txn.read_register::<MainIrqMask>());
+        // txn.write_register(AuxIrq(0))?;
+        txn.write_register(MainIrqMask(0x04))?;
+        txn.write_register(FifoIrqMask(0))?;
+        txn.write_register(AuxIrqMask(0))?;
 
         let mut t0 = T0(0);
         t0.set_tc_transmitted(true);
@@ -507,17 +488,13 @@ where
         // );
         // txn.write_register(NfcTxen(0x55))?;
         txn.write_register(ResetSilence(0xCC))?;
+        txn.write_register(NfcTxen(0x77))?;
 
         Ok(())
     }
 
     /// Get a transaction
-    ///
-    /// While the transaction is open, the `csn` stays low
     fn txn<'a>(&'a mut self) -> Txn<'a, I2C, CSN, IRQ, Timer> {
-        self.csn.set_low().unwrap();
-        self.timer.start(Microseconds::new(250));
-        nb::block!(self.timer.wait()).unwrap();
         Txn { device: self }
     }
     pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
@@ -550,21 +527,26 @@ where
         &mut self,
         buf: &mut [u8],
     ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
-        debug_now!("Reading packet");
-        // self.set_led_state();
+        // only do i2c reads on irq low (don't flood i2c)
+        if self.irq.is_high().unwrap_or(true) {
+            return Ok(Err(NfcError::NoActivity));
+        }
         self.dump_registers();
+
         let main_irq = self.read_register::<MainIrq>()?;
         let fifo_irq = self.read_register::<FifoIrq>()?;
 
-        let mut new_session = false;
+        if main_irq.0 > 0x01 {
+            //debug_now!("MainIrq: {:02x}", main_irq.0);
+        }
 
         if main_irq.active_flag() {
             self.offset = 0;
-            new_session = true;
+            self.pending_new_session = true;
         }
 
         if main_irq.rx_start() {
-            error!("1");
+            //error!("1");
             self.offset = 0;
             self.current_frame_size = fsdi_to_frame_size(self.read_register::<NfcRats>()?.fsdi());
             debug!(
@@ -575,12 +557,12 @@ where
 
         // Case where the full packet is available
         if main_irq.rx_done() {
-            error!("RxDone reached");
+            //error!("RxDone reached");
             self.debug_state.rx_done_reached = true;
             debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
-                error!("Fifo FULL");
+                //error!("Fifo FULL");
                 self.debug_state.was_fifo_full_once = true;
             }
             debug!("WORD_COUNT: {count:02x?}");
@@ -595,10 +577,24 @@ where
                 info!("RxDone read too few ({})", hex_str!(&buf[..self.offset]));
                 self.offset = 0;
             } else {
-                info!("RxDone");
                 let l = self.offset - 2;
+                // raw packet bytes
+                debug_now!(
+                    "RxDone raw[{}]: {:02x?}",
+                    self.offset,
+                    &self.packet[..self.offset.min(16)]
+                );
+
+                // is this right ?
+                if (l >= 3 && self.packet[2] == 0xA4) {
+                    debug_now!("SELECT");
+                }
+
+                info!("RxDone");
                 buf[..l].copy_from_slice(&self.packet[..l]);
                 self.offset = 0;
+                let new_session = self.pending_new_session;
+                self.pending_new_session = false;
                 if new_session {
                     debug!("New session read suscessfull");
                     return Ok(Ok(NfcState::NewSession(l as u8)));
@@ -610,29 +606,29 @@ where
         }
 
         let rf_status = self.read_register::<NfcStatus>()?;
-        debug!("bare Count: {:02x?}", self.read_register::<FifoWordCnt>());
-        debug!("water_level: {fifo_irq:?}");
         if !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
                 self.debug_state.was_fifo_full_once = true;
             }
             let count = count.min(24);
-            debug!("Second Count: {count:02x}");
+            if count > 0 {
+                debug_now!(
+                    "FIFO: {} bytes (no rx_done), nfc_status={:02x}",
+                    count,
+                    rf_status.0
+                );
+            }
             self.read_fifo(count)?;
             self.offset += count as usize;
         }
 
-        debug!("Packet {}", self.offset);
-        debug!("{}", hexstr!(&self.packet[..self.offset]));
-
-        if new_session {
-            debug!("NewSession read incomplete");
-            Ok(Err(NfcError::NewSession))
-        } else {
-            debug!("No activity read incomplete");
-            Ok(Err(NfcError::NoActivity))
+        if self.offset > 0 {
+            debug_now!("data offset: {} bytes", self.offset);
         }
+
+        // active_flag without rx_done -> no new session yet
+        Ok(Err(NfcError::NoActivity))
     }
 
     fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
@@ -710,7 +706,7 @@ where
     }
 
     fn dump_registers(&mut self) {
-        // self.txn().dump_registers();
+        //self.txn().dump_registers();
     }
 }
 
