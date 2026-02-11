@@ -1,7 +1,7 @@
 [package]
 name = "nkpk"
 edition = "2021"
-version = "1.1.0-rc.1"
+version = "1.1.0"
 license = "Apache-2.0 OR MIT"
 authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 
