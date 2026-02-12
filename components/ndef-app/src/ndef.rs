@@ -52,6 +52,7 @@ impl<const R: usize> apdu_app::App<R> for App<'_> {
         _apdu: CommandView<'_>,
         _reply: &mut Data<R>,
     ) -> apdu_app::Result {
+        debug_now!("Got Select");
         Ok(())
     }
 
@@ -63,6 +64,7 @@ impl<const R: usize> apdu_app::App<R> for App<'_> {
         apdu: CommandView<'_>,
         reply: &mut Data<R>,
     ) -> apdu_app::Result {
+        debug_now!("Got call: {apdu:02x?}");
         let instruction = apdu.instruction();
         let p1 = apdu.p1;
         let p2 = apdu.p2;
