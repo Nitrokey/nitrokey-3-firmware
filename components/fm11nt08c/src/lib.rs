@@ -124,6 +124,14 @@ pub trait Led: Send + Sync {
     }
 }
 
+impl Led for () {
+    fn set_red(&mut self, _intensity: u8) {}
+
+    fn set_green(&mut self, _intensity: u8) {}
+
+    fn set_blue(&mut self, _intensity: u8) {}
+}
+
 #[derive(Debug, Default)]
 struct DebugState {
     was_fifo_full_once: bool,
@@ -232,11 +240,11 @@ where
             .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
         // debug_now!("ATQA config: {buf:02x?}");
 
-        let [atqa_addr1, atqa_addr2] = ATQA_ADDR.to_be_bytes();
-        let [atqa1, atqa2] = conf.atqa.to_be_bytes();
-        let buf = &[atqa_addr1, atqa_addr2, atqa1, atqa2, conf.sak1, conf.sak2];
+        // let [atqa_addr1, atqa_addr2] = ATQA_ADDR.to_be_bytes();
+        // let [atqa1, atqa2] = conf.atqa.to_be_bytes();
+        // let buf = &[atqa_addr1, atqa_addr2, atqa1, atqa2, conf.sak1, conf.sak2];
 
-        self.write_eeprom(buf)?;
+        // self.write_eeprom(buf)?;
         // debug_now!("Wrote ATQA");
         let buf = &mut [0; 4];
         self.device
@@ -244,25 +252,25 @@ where
             .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
         // debug_now!("ATQA config: {}", hexstr!(buf));
 
-        const NFC_CONFIGURATION_ADDRESS: u16 = 0x03B0;
-        let [nfc_conf_address1, nfc_conf_address2] = NFC_CONFIGURATION_ADDRESS.to_be_bytes();
-        let buf = &[
-            nfc_conf_address1,
-            nfc_conf_address2,
-            conf.tl,
-            conf.t0,
-            conf.vout_reg_cfg,
-            ADDRESS,
-            conf.ta,
-            conf.tb,
-            conf.tc,
-        ];
-        // debug_now!("Expected nfc config: {}", hexstr!(buf));
-        self.write_eeprom(buf)?;
-        let buf = &mut [0; 12];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
+        // const NFC_CONFIGURATION_ADDRESS: u16 = 0x03B0;
+        // let [nfc_conf_address1, nfc_conf_address2] = NFC_CONFIGURATION_ADDRESS.to_be_bytes();
+        // let buf = &[
+        //     nfc_conf_address1,
+        //     nfc_conf_address2,
+        //     conf.tl,
+        //     conf.t0,
+        //     conf.vout_reg_cfg,
+        //     ADDRESS,
+        //     conf.ta,
+        //     conf.tb,
+        //     conf.tc,
+        // ];
+        // // debug_now!("Expected nfc config: {}", hexstr!(buf));
+        // self.write_eeprom(buf)?;
+        // let buf = &mut [0; 12];
+        // self.device
+        //     .i2c
+        //     .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
         // debug_now!("NFC config: {}", hexstr!(buf));
 
         const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
@@ -280,17 +288,11 @@ where
 
         const CT_ADDRESS: u16 = 0x03C0;
 
-        let buf_ct = &mut [0; 8];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &CT_ADDRESS.to_be_bytes(), buf_ct)?;
-        // debug_now!("serial number: {}", hexstr!(buf_ct));
-
-        let crc8_value = crc8(buf);
-        // debug_now!("Calculated crc8 value: {crc8_value:02x?}");
-        const CRC8_ADDRESS: u16 = 0x03BB;
-        let [crc8_address1, crc8_address2] = CRC8_ADDRESS.to_be_bytes();
-        self.write_eeprom(&[crc8_address1, crc8_address2, crc8_value])?;
+        // let crc8_value = crc8(buf);
+        // // debug_now!("Calculated crc8 value: {crc8_value:02x?}");
+        // const CRC8_ADDRESS: u16 = 0x03BB;
+        // let [crc8_address1, crc8_address2] = CRC8_ADDRESS.to_be_bytes();
+        // self.write_eeprom(&[crc8_address1, crc8_address2, crc8_value])?;
         Ok(())
     }
 
@@ -419,27 +421,24 @@ where
         nb::block!(self.timer.wait()).unwrap();
         let mut txn = self.txn();
 
-        let serial_number = &mut [0; 9];
-        txn.read_eeprom(0, serial_number)?;
-
         // txn.dump_registers();
         // Undocumeted check
         let user_cfg0 = UserCfg0(0x91);
         let user_cfg1 = UserCfg1(0x82);
         let user_cfg2 = UserCfg2(0x21);
 
-        txn.write_eeprom(&[0x03, 0xBF, 0x20])?;
+        // txn.write_eeprom(&[0x03, 0xBF, 0x20])?;
         // debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?}");
         let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
         // debug_now!("CHK word: {usercfg_chk_word:02x}");
-        txn.write_eeprom(&[
-            0x03,
-            0x90,
-            user_cfg0.0,
-            user_cfg1.0,
-            user_cfg2.0,
-            usercfg_chk_word,
-        ])?;
+        // txn.write_eeprom(&[
+        //     0x03,
+        //     0x90,
+        //     user_cfg0.0,
+        //     user_cfg1.0,
+        //     user_cfg2.0,
+        //     usercfg_chk_word,
+        // ])?;
 
         let mut t0 = T0(0);
         t0.set_tc_transmitted(true);
@@ -489,6 +488,8 @@ where
         // );
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
+        txn.device.timer.start(Microseconds::new(1000));
+        nb::block!(txn.device.timer.wait()).unwrap();
 
         Ok(())
     }
@@ -557,7 +558,7 @@ where
 
         // Case where the full packet is available
         if main_irq.rx_done() {
-            error!("RxDone reached");
+            // error!("RxDone reached");
             self.debug_state.rx_done_reached = true;
             //     debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
@@ -688,7 +689,7 @@ where
                 return Ok(Err(NfcError::NoActivity));
             }
         }
-        debug_now!("Sent Packet");
+        // debug_now!("Sent Packet");
         Ok(Ok(()))
     }
 

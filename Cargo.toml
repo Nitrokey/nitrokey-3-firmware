@@ -40,8 +40,6 @@ littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev 
 littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
 
-lpc55-hal = { path = "../lpc55-hal" }
-
 fm11nt08c = { path = "components/fm11nt08c" }
 
 [profile.release]

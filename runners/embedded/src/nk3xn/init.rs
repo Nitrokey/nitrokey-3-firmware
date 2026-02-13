@@ -133,6 +133,7 @@ impl Stage0 {
         iocon.pio0_19.modify(|_, w| w.mode().pull_up());
         let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
         let is_passive_mode = nfc_irq.is_low().ok().unwrap();
+        debug!("IS PASSIVE MODE: {is_passive_mode}");
 
         (iocon, nfc_irq, is_passive_mode)
     }
@@ -167,8 +168,9 @@ impl Stage0 {
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
-        let (new_iocon, nfc_irq, is_nfc_passive) =
+        let (new_iocon, nfc_irq, mut is_nfc_passive) =
             self.enable_low_speed_for_passive_nfc(iocon, &mut gpio);
+        // is_nfc_passive = true;
         iocon = new_iocon;
         let nfc_irq = Some(nfc_irq);
 
@@ -446,6 +448,7 @@ impl Stage2 {
         // )?;
 
         static mut RGB_LED: MaybeUninit<RgbLed> = MaybeUninit::uninit();
+        static mut RGB_LED_NONE: () = ();
 
         let mut nfc = nfc::try_setup_new(
             i2c,
@@ -453,11 +456,12 @@ impl Stage2 {
             &mut self.clocks.iocon,
             nfc_irq,
             self.basic.perf_timer.take().unwrap(),
-            unsafe {
-                let rgb = self.basic.rgb.take().unwrap();
-                RGB_LED = MaybeUninit::new(rgb);
-                RGB_LED.assume_init_mut()
-            },
+            // unsafe {
+            //     let rgb = self.basic.rgb.take().unwrap();
+            //     RGB_LED = MaybeUninit::new(rgb);
+            //     RGB_LED.assume_init_mut()
+            // },
+            unsafe { &mut RGB_LED_NONE },
         );
 
         nfc.init();
