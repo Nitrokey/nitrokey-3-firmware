@@ -78,7 +78,7 @@ log-semihosting = ["cortex-m-semihosting"]
 
 no-buttons = []
 no-delog = []
-no-encrypted-storage = []
+no-encrypted-storage = ["lpc55-hal?/littlefs"]
 format-filesystem = []
 provisioner = ["apps/provisioner-app"]
 se050 = ["se05x", "apps/se050"]
