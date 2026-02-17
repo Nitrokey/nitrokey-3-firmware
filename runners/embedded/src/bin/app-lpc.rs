@@ -20,7 +20,7 @@ mod app {
     use apps::Endpoints;
     use boards::{
         init::{CtaphidDispatch, Resources, UsbClasses},
-        nk3xn::{nfc::NfcChip, NK3xN},
+        nk3xn::NK3xN,
         runtime,
         soc::lpc55::{self, monotonic::SystickMonotonic},
         Apps, Trussed,
@@ -29,10 +29,9 @@ mod app {
     use lpc55_hal::{
         drivers::timer::Elapsed,
         raw::Interrupt,
-        time::{DurationExtensions, Microseconds, Milliseconds},
-        traits::wg::timer::{Cancel, CountDown},
+        time::{DurationExtensions, Milliseconds},
+        traits::wg::timer::CountDown,
     };
-    use nfc_device::Iso14443;
     use systick_monotonic::Systick;
 
     type Board = NK3xN;
@@ -59,8 +58,6 @@ mod app {
 
         /// The USB driver classes
         usb_classes: Option<UsbClasses<Soc>>,
-        /// The NFC driver
-        contactless: Option<Iso14443<NfcChip>>,
 
         /// This timer is used while developing NFC, to time how long things took,
         /// and to make sure logs are not flushed in the middle of NFC transactions.
@@ -74,22 +71,6 @@ mod app {
         /// In principle, we could just run at 12MHz constantly, and then
         /// there would be no need for a system-speed independent wait extender.
         clock_ctrl: Option<lpc55::DynamicClockController>,
-
-        /// Applications must respond to NFC requests within a certain time frame (~40ms)
-        /// or send a "wait extension" to the NFC reader. This timer is responsible
-        /// for scheduling these.
-        ///
-        /// In the current version of RTIC, the built-in scheduling cannot be used, as it
-        /// is expressed in terms of cycles, and our dynamic clock control potentially changes
-        /// timing. It seems like RTIC v6 will allow using such a timer directly.
-        ///
-        /// Alternatively, we could send wait extensions as if always running at 12MHz,
-        /// which would cause more context switching and NFC exchangs though.
-        ///
-        /// NB: CCID + CTAPHID also have a sort of "wait extension" implemented, however
-        /// since the system runs at constant speed when powered over USB, there is no
-        /// need for such an independent timer.
-        wait_extender: lpc55::NfcWaitExtender,
     }
 
     #[local]
@@ -120,7 +101,6 @@ mod app {
             wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
-        let wait_extender = basic.delay_timer;
 
         // don't toggle LED in passive mode
         if usb_nfc.usb_classes.is_some() {
@@ -142,10 +122,8 @@ mod app {
             trussed,
             apps,
             usb_classes: usb_nfc.usb_classes,
-            contactless: usb_nfc.iso14443,
             perf_timer,
             clock_ctrl: clock_controller,
-            wait_extender,
         };
         let local = LocalResources { wwdt, endpoints };
         (shared, local, init::Monotonics(systick.into()))
@@ -294,55 +272,6 @@ mod app {
 
         c.shared.trussed.lock(|trussed| trussed.update_ui());
         update_ui::spawn_after(REFRESH_MILLISECS).ok();
-    }
-
-    #[task(binds = CTIMER0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
-    fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
-        c.shared.contactless.lock(|contactless| {
-            if let Some(contactless) = contactless.as_mut() {
-                (c.shared.wait_extender, c.shared.perf_timer).lock(|wait_extender, _perf_timer| {
-                    // clear the interrupt
-                    wait_extender.cancel().ok();
-
-                    info!("<{}", _perf_timer.elapsed().0 / 100);
-                    let status = contactless.poll_wait_extensions();
-                    match status {
-                        nfc_device::Iso14443Status::Idle => {}
-                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
-                        }
-                    }
-                    info!(" {}>", _perf_timer.elapsed().0 / 100);
-                });
-            }
-        });
-    }
-
-    #[task(binds = PIN_INT0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
-    fn nfc_irq(c: nfc_irq::Context) {
-        (
-            c.shared.contactless,
-            c.shared.perf_timer,
-            c.shared.wait_extender,
-        )
-            .lock(|contactless, perf_timer, wait_extender| {
-                let contactless = contactless.as_mut().unwrap();
-                let _starttime = perf_timer.elapsed().0 / 100;
-
-                info!("[");
-                let status = contactless.poll();
-                match status {
-                    nfc_device::Iso14443Status::Idle => {}
-                    nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                        wait_extender.cancel().ok();
-                        wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
-                    }
-                }
-                info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
-
-                perf_timer.cancel().ok();
-                perf_timer.start(60_000_000.microseconds());
-            });
     }
 
     #[task(binds = ADC0, shared = [clock_ctrl], priority = 8)]
