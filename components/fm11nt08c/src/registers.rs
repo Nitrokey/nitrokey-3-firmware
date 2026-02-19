@@ -321,6 +321,14 @@ register_bitfield! {
     pub from NfcTxenValue, _, set_nfc_txn: 7,0;
 }
 
+impl NfcTxen {
+    pub fn new(value: NfcTxenValue) -> Self {
+        let mut this = NfcTxen(0);
+        this.set_nfc_txn(value);
+        this
+    }
+}
+
 // Also known as HALT_CTRL
 register_bitfield! {
     #[derive(Clone)]

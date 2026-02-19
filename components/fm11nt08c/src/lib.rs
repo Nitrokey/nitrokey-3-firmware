@@ -627,7 +627,7 @@ where
         self.write_register(NfcTxen(NfcTxenValue::SendBackData.into()))?;
 
         let mut nfc_status = self.read_register::<NfcStatus>()?;
-        for _ in 0..100 {
+        loop {
             if nfc_status.nfc_tx() {
                 //         debug!("Chip is transmitting");
                 break;
@@ -672,23 +672,18 @@ where
         // So we only send 24 bytes at a time after the first transmission
         let (first_chunk, rem) = buf.split_at_checked(32).unwrap_or((&buf, &[]));
         self.write_fifo(first_chunk)?;
-        if !self.wait_for_transmission()? {
-            return Ok(Err(NfcError::NoActivity));
-        }
-        let (chunks, rem) = rem.as_chunks::<24>();
+        self.write_register(NfcTxen::new(NfcTxenValue::SendBackData))
+            .unwrap();
+        let chunks = rem.chunks(24);
         for chunk in chunks {
-            self.write_fifo(chunk)?;
-            if !self.wait_for_transmission()? {
-                return Ok(Err(NfcError::NoActivity));
+            'this_chunk: loop {
+                if self.read_register::<FifoWordCnt>()?.fifo_wordcnt() <= 8 {
+                    self.write_fifo(chunk)?;
+                    break 'this_chunk;
+                }
             }
         }
 
-        if !rem.is_empty() {
-            self.write_fifo(rem)?;
-            if !self.wait_for_transmission()? {
-                return Ok(Err(NfcError::NoActivity));
-            }
-        }
         // debug_now!("Sent Packet");
         Ok(Ok(()))
     }
