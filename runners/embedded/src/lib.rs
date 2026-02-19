@@ -19,7 +19,7 @@ pub mod nk3xn;
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
 compile_error!("No SoC chosen!");
 
-pub const VERSION: Version = Version::from_env();
+pub const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
 pub const VERSION_STRING: &str = env!("NK3_FIRMWARE_VERSION");
 
 #[cfg(feature = "alloc")]

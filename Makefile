@@ -79,3 +79,4 @@ manifest.json:
 software-tests:
 	cd components/apps && cargo test --all-features
 	cd components/boards && cargo test
+	cd components/utils && cargo test

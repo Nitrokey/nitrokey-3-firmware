@@ -14,7 +14,7 @@ use utils::Version;
 
 use ui::{Signals, UserInterface, UserPresence};
 
-const VERSION: Version = Version::from_env();
+const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
 const VERSION_STRING: &str = env!("USBIP_FIRMWARE_VERSION");
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
