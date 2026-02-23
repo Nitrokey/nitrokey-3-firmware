@@ -1,12 +1,14 @@
 # Changelog
 
+## Unreleased
+
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 
-## 1.8.3 (2025-10-13)
+## v1.8.3 (2025-10-13)
 
 - OpenPGP: fix factory reset and retry counter display
 
-## 1.8.2 (2025-08-12)
+## v1.8.2 (2025-08-12)
 
 - provisioner-app: Remove ReformatFilesystem command
 - fido-authenticator: Increase the maximum number of discoverable credentials (resident keys) to 100.
@@ -17,6 +19,8 @@
   - Forbid up = false when using the hmac-secret extension ([fido-authenticator#19](https://github.com/Nitrokey/fido-authenticator/issues/19))
   - Allow creating credentials without PIN (`makeCredUvNotRqd`, [fido-authenticator#34](https://github.com/Nitrokey/fido-authenticator/issues/34))
   - Support clientPin getRetries without PIN protocol ([fido-authenticator#118](https://github.com/Nitrokey/fido-authenticator/issues/118))
+- OpenPGP: Update to [opcard v1.6.1](https://github.com/Nitrokey/opcard-rs/releases/tag/v1.6.1)
+  - Add support for secp256k1
 
 ## v1.8.1 (2025-02-11)
 
