@@ -7,7 +7,6 @@ use std::{
 
 use littlefs2::{
     const_ram_storage,
-    consts::{U1, U512, U8},
     driver::Storage,
     fs::{Allocation, Filesystem},
 };
@@ -15,6 +14,7 @@ use littlefs2_core::{DynFilesystem, Error, Result};
 use trussed_usbip::Store;
 
 const IFS_STORAGE_SIZE: usize = 512 * 128;
+const FILESYSTEM_BLOCK_SIZE: usize = 512;
 
 const_ram_storage!(InternalRamStorage, IFS_STORAGE_SIZE);
 // Modelled after the actual external RAM, see src/flash.rs in the embedded runner
@@ -23,12 +23,10 @@ const_ram_storage!(
     erase_value = 0xff,
     read_size = 4,
     write_size = 256,
-    cache_size_ty = U512,
+    cache_size = 512,
     block_size = 4096,
     block_count = 0x2_0000 / 4096,
-    lookahead_size_ty = U1,
-    filename_max_plus_one_ty = U256,
-    path_max_plus_one_ty = U256,
+    lookahead_size = 1,
 );
 const_ram_storage!(VolatileStorage, IFS_STORAGE_SIZE);
 
@@ -52,7 +50,7 @@ pub fn init(ifs: Option<PathBuf>, efs: Option<PathBuf>) -> Store {
 }
 
 fn mount_fs<S: Storage + 'static>(path: PathBuf) -> Result<&'static dyn DynFilesystem> {
-    let len = u64::try_from(S::BLOCK_SIZE * S::BLOCK_COUNT).unwrap();
+    let len = u64::try_from(IFS_STORAGE_SIZE).unwrap();
     let format = if let Ok(file) = File::open(&path) {
         assert_eq!(file.metadata().unwrap().len(), len);
         false
@@ -66,7 +64,7 @@ fn mount_fs<S: Storage + 'static>(path: PathBuf) -> Result<&'static dyn DynFiles
 }
 
 fn mount<S: Storage + 'static>(storage: S, format: bool) -> Result<&'static dyn DynFilesystem> {
-    let alloc = Box::leak(Box::new(Allocation::new()));
+    let alloc = Box::leak(Box::new(Allocation::new(&storage)));
     let storage = Box::leak(Box::new(storage));
     if format {
         Filesystem::format(storage)?;
@@ -90,15 +88,32 @@ impl<S: Storage> FilesystemStorage<S> {
 }
 
 impl<S: Storage> Storage for FilesystemStorage<S> {
-    const READ_SIZE: usize = S::READ_SIZE;
-    const WRITE_SIZE: usize = S::WRITE_SIZE;
-    const BLOCK_SIZE: usize = S::BLOCK_SIZE;
+    fn read_size(&self) -> usize {
+        256
+    }
 
-    const BLOCK_COUNT: usize = S::BLOCK_COUNT;
-    const BLOCK_CYCLES: isize = S::BLOCK_CYCLES;
+    fn write_size(&self) -> usize {
+        256
+    }
 
-    type CACHE_SIZE = U512;
-    type LOOKAHEAD_SIZE = U8;
+    fn block_size(&self) -> usize {
+        FILESYSTEM_BLOCK_SIZE
+    }
+
+    fn cache_size(&self) -> usize {
+        256
+    }
+
+    fn lookahead_size(&self) -> usize {
+        1
+    }
+
+    fn block_count(&self) -> usize {
+        self.block_size() / IFS_STORAGE_SIZE
+    }
+
+    type CACHE_BUFFER = S::CACHE_BUFFER;
+    type LOOKAHEAD_BUFFER = S::LOOKAHEAD_BUFFER;
 
     fn read(&mut self, offset: usize, buffer: &mut [u8]) -> Result<usize> {
         let mut file = File::open(&self.path).unwrap();
@@ -109,7 +124,7 @@ impl<S: Storage> Storage for FilesystemStorage<S> {
     }
 
     fn write(&mut self, offset: usize, data: &[u8]) -> Result<usize> {
-        if offset + data.len() > Self::BLOCK_COUNT * Self::BLOCK_SIZE {
+        if offset + data.len() > self.block_count() * FILESYSTEM_BLOCK_SIZE {
             return Err(Error::NO_SPACE);
         }
         let mut file = OpenOptions::new().write(true).open(&self.path).unwrap();
@@ -121,15 +136,15 @@ impl<S: Storage> Storage for FilesystemStorage<S> {
     }
 
     fn erase(&mut self, offset: usize, len: usize) -> Result<usize> {
-        if offset + len > Self::BLOCK_COUNT * Self::BLOCK_SIZE {
+        if offset + len > self.block_count() * FILESYSTEM_BLOCK_SIZE {
             return Err(Error::NO_SPACE);
         }
         let mut file = OpenOptions::new().write(true).open(&self.path).unwrap();
         file.seek(SeekFrom::Start(offset as _)).unwrap();
-        let zero_block = vec![0xFFu8; S::BLOCK_SIZE];
-        for _ in 0..(len / Self::BLOCK_SIZE) {
+        let zero_block = vec![0xFFu8; FILESYSTEM_BLOCK_SIZE];
+        for _ in 0..(len / FILESYSTEM_BLOCK_SIZE) {
             let bytes_written = file.write(&zero_block).unwrap();
-            assert_eq!(bytes_written, Self::BLOCK_SIZE);
+            assert_eq!(bytes_written, FILESYSTEM_BLOCK_SIZE);
         }
         file.flush().unwrap();
         Ok(len)
