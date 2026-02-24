@@ -16,6 +16,7 @@ use lpc55_hal::{
     },
     I2cMaster, Pin,
 };
+use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as NfcState};
 #[cfg(feature = "se050")]
 use se05x::embedded_hal::Hal027;
 
@@ -26,7 +27,6 @@ use crate::{flash::ExtFlashStorage, soc::lpc55::Lpc55, Board};
 
 pub mod button;
 pub mod led;
-pub mod nfc;
 pub mod prince;
 pub mod spi;
 
@@ -38,7 +38,6 @@ lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 
-use nfc::NfcChip;
 use spi::{FlashCs, Spi};
 
 pub const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
@@ -63,7 +62,7 @@ impl Board for NK3xN {
 
     type Resources = ();
 
-    type NfcDevice = NfcChip;
+    type NfcDevice = DummyNfc;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;
 
@@ -80,7 +79,21 @@ impl Board for NK3xN {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "nk3xn";
-    const HAS_NFC: bool = true;
+    const HAS_NFC: bool = false;
+}
+
+pub struct DummyNfc;
+
+impl NfcDevice for DummyNfc {
+    fn read(&mut self, _buf: &mut [u8]) -> Result<NfcState, NfcError> {
+        Err(NfcError::NoActivity)
+    }
+    fn send(&mut self, _buf: &[u8]) -> Result<(), NfcError> {
+        Err(NfcError::NoActivity)
+    }
+    fn frame_size(&self) -> usize {
+        0
+    }
 }
 
 pub type InternalFlashStorage = InternalFilesystem;
