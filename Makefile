@@ -1,6 +1,7 @@
 .PHONY: check
 check:
 	$(MAKE) -C runners/embedded check-all
+	$(MAKE) -C runners/embedded check-nk3xn FEATURES=develop
 	$(MAKE) -C runners/nkpk check
 	$(MAKE) -C runners/usbip check
 
