@@ -12,6 +12,7 @@ cortex-m-rt = "0.6.15"
 ctaphid-dispatch = "0.3"
 delog = "0.1"
 embedded-hal = "0.2.3"
+embedded-hal-1 = { package = "embedded-hal", version = "1" }
 embedded-time = "0.12"
 generic-array = "0.14"
 interchange = "0.3"

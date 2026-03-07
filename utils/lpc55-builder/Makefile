@@ -61,6 +61,31 @@ provision-release:
 	lpc55 reboot
 	./scripts/usbwait.sh 20a0:42b2
 
+.PHONY: provision-tropic01
+provision-tropic01:
+	bash ./scripts/boot-to-bootrom.sh
+	bash ./scripts/usbwait.sh 1fc9:0021 20a0:42dd
+	$(MAKE) bl-config-cmpa-empty
+	$(MAKE) bl-erase-firmware
+	lpc55 reboot
+	bash ./scripts/usbwait.sh 1fc9:0021
+	$(MAKE) bl-provision-keystore
+	lpc55 reboot
+	bash ./scripts/usbwait.sh 1fc9:0021
+	$(MAKE) bl-config-cmpa-develop
+	lpc55 reboot
+	bash ./scripts/usbwait.sh 20a0:42dd
+	lpc55 write-flash provisioner-nk3xn.bin
+	lpc55 reboot
+	bash ./scripts/usbwait.sh 20a0:42b2
+	$(MAKE) fw-provision-certs
+	bash ./scripts/boot-to-bootrom.sh
+	bash ./scripts/usbwait.sh 20a0:42dd
+	$(MAKE) bl-erase-firmware
+	lpc55 write-flash firmware-nk3xn.bin
+	lpc55 reboot
+	bash ./scripts/usbwait.sh 20a0:42b2
+
 .PHONY: flash
 flash: build
 	./scripts/boot-to-bootrom.sh
