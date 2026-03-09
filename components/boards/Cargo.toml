@@ -27,7 +27,7 @@ trussed = { version = "0.1", default-features = false }
 usb-device = "0.2"
 usbd-ccid = "0.3"
 usbd-ctaphid = "0.3"
-utils = { path = "../utils" }
+utils = { path = "../utils", features = ["storage"]}
 
 # soc-lpc55
 lpc55-hal = { version = "0.4", optional = true }

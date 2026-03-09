@@ -1990,11 +1990,10 @@ dependencies = [
 [[package]]
 name = "littlefs2"
 version = "0.6.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=d0ebffac28f264990e8eedea98074005f318f0f4#d0ebffac28f264990e8eedea98074005f318f0f4"
 dependencies = [
  "bitflags 2.9.1",
  "delog",
- "generic-array",
  "heapless",
  "littlefs2-core",
  "littlefs2-sys 0.3.1",
@@ -2003,7 +2002,7 @@ dependencies = [
 [[package]]
 name = "littlefs2-core"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/littlefs2.git?rev=v0.6.1-nitrokey.1#b3a7371d849695fa05ab75910c4b14057db7ceb2"
+source = "git+https://github.com/trussed-dev/littlefs2.git?rev=d0ebffac28f264990e8eedea98074005f318f0f4#d0ebffac28f264990e8eedea98074005f318f0f4"
 dependencies = [
  "bitflags 2.9.1",
  "heapless-bytes",
@@ -3536,7 +3535,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=e107ed315a07dc6c992fac39d542e847cc3a1b6c#e107ed315a07dc6c992fac39d542e847cc3a1b6c"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=7c19c00a8959a88a498032fb096d4574d1a85007#7c19c00a8959a88a498032fb096d4574d1a85007"
 dependencies = [
  "aes",
  "bitflags 2.9.1",

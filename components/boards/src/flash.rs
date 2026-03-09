@@ -32,13 +32,32 @@ where
     SPI: Transfer<u8>,
     CS: OutputPin,
 {
-    const BLOCK_SIZE: usize = 4096;
-    const READ_SIZE: usize = 4;
-    const WRITE_SIZE: usize = 256;
-    const BLOCK_COUNT: usize =
-        (FLASH_PROPERTIES.size / Self::BLOCK_SIZE) - (SPARE_LEN / Self::BLOCK_SIZE);
-    type CACHE_SIZE = generic_array::typenum::U256;
-    type LOOKAHEAD_SIZE = generic_array::typenum::U1;
+    fn read_size(&self) -> usize {
+        4
+    }
+
+    fn write_size(&self) -> usize {
+        256
+    }
+
+    fn block_size(&self) -> usize {
+        4096
+    }
+
+    fn cache_size(&self) -> usize {
+        256
+    }
+
+    fn lookahead_size(&self) -> usize {
+        1
+    }
+
+    fn block_count(&self) -> usize {
+        (FLASH_PROPERTIES.size / self.block_size()) - (SPARE_LEN / self.block_size())
+    }
+
+    type CACHE_BUFFER = [u8; 256];
+    type LOOKAHEAD_BUFFER = [u8; 8];
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         /*trace!("EFr {:x} {:x}", off, buf.len());
