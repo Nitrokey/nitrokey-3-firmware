@@ -1,0 +1,13 @@
+[package]
+name = "nkso3"
+edition = "2021"
+version = "0.1.0"
+license = "Apache-2.0 OR MIT"
+authors = ["Nitrokey GmbH <info@nitrokey.com>"]
+
+[dependencies]
+cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
+cortex-m-rt = "0.6"
+cortex-m-semihosting = "0.3"
+embedded-hal = "0.2"
+stm32n6 = { version = "0.16", default-features = false, features = ["critical-section", "stm32n657"] }
