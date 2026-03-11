@@ -3,6 +3,7 @@ members = [
     "components/*",
     "runners/embedded",
     "runners/nkpk",
+    "runners/nkso3",
     "runners/usbip",
     "utils/collect-license-info",
     "utils/gen-commands-bd",
