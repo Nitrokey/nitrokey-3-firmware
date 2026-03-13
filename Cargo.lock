@@ -2181,6 +2181,7 @@ dependencies = [
  "cortex-m-rt",
  "cortex-m-semihosting",
  "embedded-hal",
+ "nb 0.1.3",
  "stm32n6",
 ]
 
