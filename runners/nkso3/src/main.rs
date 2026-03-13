@@ -2,6 +2,7 @@
 #![no_main]
 
 mod gpio;
+mod otp;
 mod timer;
 
 use core::panic::PanicInfo;
@@ -66,9 +67,11 @@ impl<'a> Leds<'a> {
 
 #[entry]
 fn main() -> ! {
-    hprintln!("nkso3 firmware is running").ok();
-
     let p = Peripherals::take().unwrap();
+    let uid = otp::uid(&p.BSEC);
+
+    hprintln!("nkso3 firmware is running on {:x?}", uid).ok();
+
     let gpiog = GpioG::new(p.GPIOG_S, &p.RCC);
     let mut leds = Leds::new(&gpiog);
 
