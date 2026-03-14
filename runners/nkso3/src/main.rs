@@ -8,8 +8,8 @@ use cortex_m_semihosting::hprintln;
 use embedded_hal::digital::v2::{OutputPin as _, PinState};
 use stm32n6::stm32n657::Peripherals;
 use stm32n657_hal::{
+    bsec::Bsec,
     gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8},
-    otp,
     timer::{Tim6, Timer},
 };
 
@@ -64,7 +64,9 @@ impl<'a> Leds<'a> {
 #[entry]
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
-    let uid = otp::uid(&p.BSEC);
+
+    let bsec = Bsec::new(p.BSEC);
+    let uid = bsec.uid();
 
     hprintln!("nkso3 firmware is running on {:x?}", uid).ok();
 

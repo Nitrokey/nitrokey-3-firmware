@@ -6,6 +6,6 @@
 //!
 //! [rm0486]: https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
 
+pub mod bsec;
 pub mod gpio;
-pub mod otp;
 pub mod timer;
