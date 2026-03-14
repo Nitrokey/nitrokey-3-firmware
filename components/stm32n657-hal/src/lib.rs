@@ -8,4 +8,7 @@
 
 pub mod bsec;
 pub mod gpio;
+pub mod rcc;
 pub mod timer;
+
+pub type Rate = fugit::HertzU32;

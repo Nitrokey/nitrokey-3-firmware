@@ -3,13 +3,15 @@
 use core::convert::Infallible;
 
 use embedded_hal::digital::v2::OutputPin;
-use stm32n6::stm32n657::{GPIOG_S, RCC};
+use stm32n6::stm32n657::GPIOG_S;
+
+use crate::rcc::{Peripheral, Rcc};
 
 pub struct GpioG(GPIOG_S);
 
 impl GpioG {
-    pub fn new(gpiog: GPIOG_S, rcc: &RCC) -> Self {
-        rcc.ahb4ensr().write(|w| w.gpiogens().set_bit());
+    pub fn new(gpiog: GPIOG_S, rcc: &Rcc) -> Self {
+        rcc.enable(Peripheral::GpioG);
         Self(gpiog)
     }
 }

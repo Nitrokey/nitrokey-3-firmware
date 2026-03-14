@@ -10,7 +10,9 @@ use stm32n6::stm32n657::Peripherals;
 use stm32n657_hal::{
     bsec::Bsec,
     gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8},
+    rcc::{ClockConfig, Rcc},
     timer::{Tim6, Timer},
+    Rate,
 };
 
 #[derive(Clone, Copy)]
@@ -70,15 +72,16 @@ fn main() -> ! {
 
     hprintln!("nkso3 firmware is running on {:x?}", uid).ok();
 
-    let gpiog = GpioG::new(p.GPIOG_S, &p.RCC);
+    let rcc = Rcc::new(p.RCC);
+    let clock_config = rcc.clock_config();
+    assert_eq!(clock_config, ClockConfig::DEFAULT);
+
+    let gpiog = GpioG::new(p.GPIOG_S, &rcc);
     let mut leds = Leds::new(&gpiog);
 
-    let tim6 = Tim6::new(p.TIM6_S, &p.RCC);
-    let mut timer = Timer::new(tim6);
-    // values are based on an input clock of 4 MHz, so the timer clock would be
-    // 4 MHz / (9999 + 1) = 4 KHz, so update occurs with frequency 4 KHz / (3999 + 1) = 1Hz.
-    // but from observation I think the actual frequency is slightly higher
-    timer.start(9999, 3999);
+    let tim6 = Tim6::new(p.TIM6_S, &rcc);
+    let mut timer = Timer::new(tim6, clock_config);
+    timer.start(Rate::Hz(1));
 
     let mut led = Led::Ld5;
     leds.set(led, true);
