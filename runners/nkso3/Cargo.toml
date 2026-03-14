@@ -12,3 +12,4 @@ cortex-m-semihosting = "0.3"
 embedded-hal = "0.2"
 nb = "0.1"
 stm32n6 = { version = "0.16", default-features = false, features = ["critical-section", "stm32n657"] }
+stm32n657-hal.path = "../../components/stm32n657-hal"

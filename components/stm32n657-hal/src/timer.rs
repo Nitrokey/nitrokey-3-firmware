@@ -1,3 +1,5 @@
+//! Timers, see Section 55 of RM0486.
+
 use core::convert::Infallible;
 
 use stm32n6::stm32n657::{RCC, TIM6_S};

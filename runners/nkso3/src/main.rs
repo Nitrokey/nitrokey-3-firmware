@@ -1,19 +1,15 @@
 #![no_std]
 #![no_main]
 
-mod gpio;
-mod otp;
-mod timer;
-
 use core::panic::PanicInfo;
 
 use cortex_m_rt::{entry, exception, ExceptionFrame};
 use cortex_m_semihosting::hprintln;
 use embedded_hal::digital::v2::{OutputPin as _, PinState};
 use stm32n6::stm32n657::Peripherals;
-
-use self::{
+use stm32n657_hal::{
     gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8},
+    otp,
     timer::{Tim6, Timer},
 };
 

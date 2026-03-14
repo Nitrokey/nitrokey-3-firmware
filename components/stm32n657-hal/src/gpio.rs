@@ -1,3 +1,5 @@
+//! General-purpose I/Os (GPIO), see Section 15 of RM0486.
+
 use core::convert::Infallible;
 
 use embedded_hal::digital::v2::OutputPin;
