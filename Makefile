@@ -12,6 +12,7 @@ check-components:
 	cargo check --manifest-path components/memory-regions/Cargo.toml
 	cargo check --manifest-path components/ndef-app/Cargo.toml
 	cargo check --manifest-path components/nfc-device/Cargo.toml
+	cargo check --manifest-path components/stm32n657-hal/Cargo.toml
 	cargo check --manifest-path components/provisioner-app/Cargo.toml
 
 	cargo check --manifest-path components/apps/Cargo.toml
@@ -80,4 +81,5 @@ manifest.json:
 software-tests:
 	cd components/apps && cargo test --all-features
 	cd components/boards && cargo test
+	cd components/stm32n657-hal && cargo test
 	cd components/utils && cargo test

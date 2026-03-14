@@ -2183,6 +2183,7 @@ dependencies = [
  "embedded-hal",
  "nb 0.1.3",
  "stm32n6",
+ "stm32n657-hal",
 ]
 
 [[package]]
@@ -3263,6 +3264,15 @@ dependencies = [
  "cortex-m",
  "critical-section",
  "vcell",
+]
+
+[[package]]
+name = "stm32n657-hal"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal",
+ "nb 0.1.3",
+ "stm32n6",
 ]
 
 [[package]]
