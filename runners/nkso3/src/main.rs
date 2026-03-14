@@ -6,12 +6,12 @@ use core::panic::PanicInfo;
 use cortex_m_rt::{entry, exception, ExceptionFrame};
 use cortex_m_semihosting::hprintln;
 use embedded_hal::digital::v2::{OutputPin as _, PinState};
-use stm32n6::stm32n657::Peripherals;
+use stm32n6::stm32n657::{Peripherals, interrupt};
 use stm32n657_hal::{
     bsec::Bsec,
     gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8},
     rcc::{ClockConfig, Rcc},
-    timer::{Tim6, Timer},
+    timer::{MillisecondsCounter, Tim6, Tim7, Timer},
     Rate,
 };
 
@@ -79,6 +79,9 @@ fn main() -> ! {
     let gpiog = GpioG::new(p.GPIOG_S, &rcc);
     let mut leds = Leds::new(&gpiog);
 
+    let tim7 = Tim7::new(p.TIM7_S, &rcc);
+    let mut counter = MillisecondsCounter::new(tim7, clock_config);
+
     let tim6 = Tim6::new(p.TIM6_S, &rcc);
     let mut timer = Timer::new(tim6, clock_config);
     timer.start(Rate::Hz(1));
@@ -90,6 +93,9 @@ fn main() -> ! {
         leds.set(led, false);
         led = led.next();
         leds.set(led, true);
+
+        let now = counter.now();
+        hprintln!("{}", now.duration_since_epoch()).ok();
     }
 }
 

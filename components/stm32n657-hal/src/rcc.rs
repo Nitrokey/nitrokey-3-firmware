@@ -30,6 +30,7 @@ impl Rcc {
             Peripheral::GpioG => self.0.ahb4ensr().write(|w| w.gpiogens().set_bit()),
             Peripheral::Rtc => self.0.apb4lensr().write(|w| w.rtcens().set_bit()),
             Peripheral::Tim6 => self.0.apb1lensr().write(|w| w.tim6ens().set_bit()),
+            Peripheral::Tim7 => self.0.apb1lensr().write(|w| w.tim7ens().set_bit()),
         };
     }
 }
@@ -38,6 +39,7 @@ pub enum Peripheral {
     GpioG,
     Rtc,
     Tim6,
+    Tim7,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
