@@ -8,7 +8,7 @@ apdu-dispatch = "0.3"
 apps = { path = "../apps", features = ["fido-authenticator"] }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
-cortex-m-rt = "0.6.15"
+cortex-m-rt = "0.7"
 ctaphid-dispatch = "0.3"
 delog = "0.1"
 embedded-hal = "0.2.3"
@@ -31,7 +31,7 @@ utils = { path = "../utils" }
 
 # soc-lpc55
 lpc55-hal = { version = "0.4", optional = true }
-lpc55-pac = { version = "0.4", optional = true }
+lpc55-pac = { version = "0.5", optional = true }
 systick-monotonic = { version = "1.0.0", optional = true }
 
 # soc-nrf52

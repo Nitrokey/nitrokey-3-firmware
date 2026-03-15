@@ -21,6 +21,7 @@ littlefs2 = "0.6"
 memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
+lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal.git", rev = "8b5e9428cc2b9589b8b3725bbb7348dcd4635e48" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e107ed315a07dc6c992fac39d542e847cc3a1b6c" }
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
