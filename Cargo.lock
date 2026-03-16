@@ -2184,6 +2184,7 @@ dependencies = [
  "stm32n6",
  "stm32n657-hal",
  "systick-monotonic",
+ "trussed",
 ]
 
 [[package]]
