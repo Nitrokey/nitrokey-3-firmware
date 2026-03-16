@@ -2174,6 +2174,7 @@ dependencies = [
 name = "nkso3"
 version = "0.1.0"
 dependencies = [
+ "boards",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
