@@ -8,8 +8,10 @@ authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 [dependencies]
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rt = "0.7"
+cortex-m-rtic = "1"
 cortex-m-semihosting = "0.3"
 embedded-hal = "0.2"
 nb = "0.1"
-stm32n6 = { version = "0.16", default-features = false, features = ["critical-section", "stm32n657"] }
+stm32n6 = { version = "0.16", features = ["stm32n657"] }
 stm32n657-hal.path = "../../components/stm32n657-hal"
+systick-monotonic = "1"

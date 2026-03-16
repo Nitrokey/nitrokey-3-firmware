@@ -2160,11 +2160,13 @@ version = "0.1.0"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
+ "cortex-m-rtic",
  "cortex-m-semihosting",
  "embedded-hal",
  "nb 0.1.3",
  "stm32n6",
  "stm32n657-hal",
+ "systick-monotonic",
 ]
 
 [[package]]
@@ -3237,6 +3239,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97c9af0011067ef9d68f977472331658f9d67f99619babaabdaab57f13fffd7"
 dependencies = [
  "cortex-m",
+ "cortex-m-rt",
  "critical-section",
  "vcell",
 ]
