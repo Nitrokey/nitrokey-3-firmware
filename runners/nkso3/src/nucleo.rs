@@ -1,28 +1,43 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use boards::ui::rgb_led::RgbLed;
-use embedded_hal::digital::v2::{OutputPin as _, PinState};
+use boards::ui::{
+    buttons::UserPresence,
+    rgb_led::{Intensities, RgbLed},
+};
+use embedded_hal::digital::v2::{InputPin as _, OutputPin as _, PinState};
 use stm32n6::stm32n657::GPIOG_S;
-use stm32n657_hal::gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8};
+use stm32n657_hal::gpio::{Input, Output, PinC13, PinG0, PinG10, PinG8, PullDown, PushPull};
+use trussed::platform::consent;
 
 static PANIC_LED_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
+pub type RedLedPin<M = Output<PushPull>> = PinG10<M>;
+pub type GreenLedPin<M = Output<PushPull>> = PinG0<M>;
+pub type BlueLedPin<M = Output<PushPull>> = PinG8<M>;
+
 pub struct Led {
-    red: PinG10<'static, OutputMode>,
-    green: PinG0<'static, OutputMode>,
-    blue: PinG8<'static, OutputMode>,
+    red: RedLedPin,
+    green: GreenLedPin,
+    blue: BlueLedPin,
 }
 
 impl Led {
-    pub fn new(gpiog: &'static GpioG) -> Self {
-        let mut red = PinG10::new(gpiog).into_push_pull_output();
-        let mut green = PinG0::new(gpiog).into_push_pull_output();
-        let mut blue = PinG8::new(gpiog).into_push_pull_output();
-        red.set_high().ok();
-        green.set_high().ok();
-        blue.set_high().ok();
+    pub fn new(red: RedLedPin, green: GreenLedPin, blue: BlueLedPin) -> Self {
         PANIC_LED_INITIALIZED.store(true, Ordering::Relaxed);
-        Self { red, green, blue }
+        let mut led = Self { red, green, blue };
+        led.set(Intensities::from(0));
+        led
+    }
+
+    pub fn init<MR, MG, MB>(
+        red: RedLedPin<MR>,
+        green: GreenLedPin<MG>,
+        blue: BlueLedPin<MB>,
+    ) -> Self {
+        let red = red.into_push_pull_output();
+        let green = green.into_push_pull_output();
+        let blue = blue.into_push_pull_output();
+        Self::new(red, green, blue)
     }
 }
 
@@ -50,4 +65,28 @@ impl RgbLed for Led {
 
 fn led_pin_state(intensity: u8) -> PinState {
     PinState::from(intensity == 0)
+}
+
+pub type ButtonPin<M = Input<PullDown>> = PinC13<M>;
+
+pub struct Button(ButtonPin);
+
+impl Button {
+    pub fn new(pin: ButtonPin) -> Self {
+        Self(pin)
+    }
+
+    pub fn init<M>(pin: ButtonPin<M>) -> Self {
+        Self::new(pin.into_pull_down_input())
+    }
+}
+
+impl UserPresence for Button {
+    fn check_user_presence(&mut self) -> consent::Level {
+        if self.0.is_high().unwrap_or(false) {
+            consent::Level::Normal
+        } else {
+            consent::Level::None
+        }
+    }
 }
