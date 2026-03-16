@@ -3,17 +3,10 @@
 
 use core::panic::PanicInfo;
 
-use cortex_m_rt::{entry, exception, ExceptionFrame};
+use cortex_m_rt::{exception, ExceptionFrame};
 use cortex_m_semihosting::hprintln;
 use embedded_hal::digital::v2::{OutputPin as _, PinState};
-use stm32n6::stm32n657::{Peripherals, interrupt};
-use stm32n657_hal::{
-    bsec::Bsec,
-    gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8},
-    rcc::{ClockConfig, Rcc},
-    timer::{MillisecondsCounter, Tim6, Tim7, Timer},
-    Rate,
-};
+use stm32n657_hal::gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8};
 
 #[derive(Clone, Copy)]
 enum Led {
@@ -63,39 +56,87 @@ impl<'a> Leds<'a> {
     }
 }
 
-#[entry]
-fn main() -> ! {
-    let p = Peripherals::take().unwrap();
+#[rtic::app(device = stm32n6::stm32n657)]
+mod app {
+    use cortex_m_semihosting::hprintln;
+    use stm32n657_hal::{
+        bsec::Bsec,
+        gpio::GpioG,
+        rcc::{ClockConfig, Rcc},
+        timer::{MillisecondsCounter, Tim6, Tim7, Timer},
+        Rate,
+    };
+    use systick_monotonic::Systick;
 
-    let bsec = Bsec::new(p.BSEC);
-    let uid = bsec.uid();
+    use super::{Led, Leds};
 
-    hprintln!("nkso3 firmware is running on {:x?}", uid).ok();
+    #[monotonic(binds = SysTick, default = true)]
+    type Monotonic = Systick<100>;
 
-    let rcc = Rcc::new(p.RCC);
-    let clock_config = rcc.clock_config();
-    assert_eq!(clock_config, ClockConfig::DEFAULT);
+    #[shared]
+    struct Shared {}
 
-    let gpiog = GpioG::new(p.GPIOG_S, &rcc);
-    let mut leds = Leds::new(&gpiog);
+    #[local]
+    struct Local {
+        leds: Leds<'static>,
+        timer: Timer<Tim6>,
+        counter: MillisecondsCounter<Tim7>,
+    }
 
-    let tim7 = Tim7::new(p.TIM7_S, &rcc);
-    let mut counter = MillisecondsCounter::new(tim7, clock_config);
+    #[init(local = [gpiog: Option<GpioG> = None])]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let bsec = Bsec::new(cx.device.BSEC);
+        let uid = bsec.uid();
 
-    let tim6 = Tim6::new(p.TIM6_S, &rcc);
-    let mut timer = Timer::new(tim6, clock_config);
-    timer.start(Rate::Hz(1));
+        hprintln!("nkso3 firmware is running on {:x?}", uid).ok();
 
-    let mut led = Led::Ld5;
-    leds.set(led, true);
-    loop {
-        nb::block!(timer.wait()).ok();
-        leds.set(led, false);
-        led = led.next();
+        let rcc = Rcc::new(cx.device.RCC);
+        let clock_config = rcc.clock_config();
+        assert_eq!(clock_config, ClockConfig::DEFAULT);
+
+        let monotonic = Systick::new(cx.core.SYST, clock_config.sys_bus_ck().to_Hz());
+
+        let gpiog = GpioG::new(cx.device.GPIOG_S, &rcc);
+        let gpiog = cx.local.gpiog.insert(gpiog);
+        let leds = Leds::new(gpiog);
+
+        let tim7 = Tim7::new(cx.device.TIM7_S, &rcc);
+        let counter = MillisecondsCounter::new(tim7, clock_config);
+
+        let tim6 = Tim6::new(cx.device.TIM6_S, &rcc);
+        let mut timer = Timer::new(tim6, clock_config);
+        timer.start(Rate::Hz(1));
+
+        (
+            Shared {},
+            Local {
+                counter,
+                leds,
+                timer,
+            },
+            init::Monotonics(monotonic),
+        )
+    }
+
+    #[idle(local = [leds, timer, counter])]
+    fn idle(cx: idle::Context) -> ! {
+        let idle::LocalResources {
+            leds,
+            timer,
+            counter,
+        } = cx.local;
+
+        let mut led = Led::Ld5;
         leds.set(led, true);
+        loop {
+            nb::block!(timer.wait()).ok();
+            leds.set(led, false);
+            led = led.next();
+            leds.set(led, true);
 
-        let now = counter.now();
-        hprintln!("{}", now.duration_since_epoch()).ok();
+            let now = counter.now();
+            hprintln!("{}", now.duration_since_epoch()).ok();
+        }
     }
 }
 
@@ -103,12 +144,15 @@ fn main() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     hprintln!("{}", info).ok();
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }
 
-#[inline(never)]
 #[exception]
 unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
     hprintln!("HardFault: {:?}", ef).ok();
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }
