@@ -6,6 +6,7 @@ license = "Apache-2.0 OR MIT"
 authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 
 [dependencies]
+boards.path = "../../components/boards"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rt = "0.7"
 cortex-m-rtic = "1"

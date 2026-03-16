@@ -1,63 +1,19 @@
 #![no_std]
 #![no_main]
 
+mod nucleo;
+
 use core::panic::PanicInfo;
 
+use boards::ui::rgb_led::RgbLed as _;
 use cortex_m_rt::{exception, ExceptionFrame};
 use cortex_m_semihosting::hprintln;
-use embedded_hal::digital::v2::{OutputPin as _, PinState};
-use stm32n657_hal::gpio::{GpioG, OutputMode, PinG0, PinG10, PinG8};
 
-#[derive(Clone, Copy)]
-enum Led {
-    // user red LED (LD5): PG10
-    Ld5,
-    // user green LED (LD6): PG0
-    Ld6,
-    // user blue LED (LD7): PG8
-    Ld7,
-}
-
-impl Led {
-    fn next(self) -> Self {
-        match self {
-            Self::Ld5 => Self::Ld6,
-            Self::Ld6 => Self::Ld7,
-            Self::Ld7 => Self::Ld5,
-        }
-    }
-}
-
-struct Leds<'a> {
-    ld5: PinG10<'a, OutputMode>,
-    ld6: PinG0<'a, OutputMode>,
-    ld7: PinG8<'a, OutputMode>,
-}
-
-impl<'a> Leds<'a> {
-    fn new(gpiog: &'a GpioG) -> Self {
-        let ld5 = PinG10::new(gpiog).into_push_pull_output();
-        let ld6 = PinG0::new(gpiog).into_push_pull_output();
-        let ld7 = PinG8::new(gpiog).into_push_pull_output();
-        let mut leds = Self { ld5, ld6, ld7 };
-        for led in [Led::Ld5, Led::Ld6, Led::Ld7] {
-            leds.set(led, false);
-        }
-        leds
-    }
-
-    fn set(&mut self, led: Led, on: bool) {
-        let state = PinState::from(!on);
-        match led {
-            Led::Ld5 => self.ld5.set_state(state).ok(),
-            Led::Ld6 => self.ld6.set_state(state).ok(),
-            Led::Ld7 => self.ld7.set_state(state).ok(),
-        };
-    }
-}
+use self::nucleo::Led;
 
 #[rtic::app(device = stm32n6::stm32n657)]
 mod app {
+    use boards::ui::rgb_led::{Intensities, RgbLed as _};
     use cortex_m_semihosting::hprintln;
     use stm32n657_hal::{
         bsec::Bsec,
@@ -68,7 +24,7 @@ mod app {
     };
     use systick_monotonic::Systick;
 
-    use super::{Led, Leds};
+    use crate::nucleo::Led;
 
     #[monotonic(binds = SysTick, default = true)]
     type Monotonic = Systick<100>;
@@ -78,7 +34,7 @@ mod app {
 
     #[local]
     struct Local {
-        leds: Leds<'static>,
+        led: Led,
         timer: Timer<Tim6>,
         counter: MillisecondsCounter<Tim7>,
     }
@@ -98,7 +54,7 @@ mod app {
 
         let gpiog = GpioG::new(cx.device.GPIOG_S, &rcc);
         let gpiog = cx.local.gpiog.insert(gpiog);
-        let leds = Leds::new(gpiog);
+        let led = Led::new(gpiog);
 
         let tim7 = Tim7::new(cx.device.TIM7_S, &rcc);
         let counter = MillisecondsCounter::new(tim7, clock_config);
@@ -111,28 +67,33 @@ mod app {
             Shared {},
             Local {
                 counter,
-                leds,
+                led,
                 timer,
             },
             init::Monotonics(monotonic),
         )
     }
 
-    #[idle(local = [leds, timer, counter])]
+    #[idle(local = [led, timer, counter])]
     fn idle(cx: idle::Context) -> ! {
         let idle::LocalResources {
-            leds,
+            led,
             timer,
             counter,
         } = cx.local;
 
-        let mut led = Led::Ld5;
-        leds.set(led, true);
+        let mut led_cycle = true;
         loop {
+            let mut intensities = Intensities::from(0);
+            if led_cycle {
+                intensities.blue = u8::MAX;
+            } else {
+                intensities.green = u8::MAX;
+            }
+            led.set(intensities);
+            led_cycle = !led_cycle;
+
             nb::block!(timer.wait()).ok();
-            leds.set(led, false);
-            led = led.next();
-            leds.set(led, true);
 
             let now = counter.now();
             hprintln!("{}", now.duration_since_epoch()).ok();
@@ -143,6 +104,7 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    Led::set_panic_led();
     hprintln!("{}", info).ok();
     loop {
         cortex_m::asm::wfi();
