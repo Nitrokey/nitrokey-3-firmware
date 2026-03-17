@@ -17,3 +17,4 @@ stm32n6 = { version = "0.16", features = ["stm32n657"] }
 stm32n657-hal.path = "../../components/stm32n657-hal"
 systick-monotonic = "1"
 trussed = { version = "0.1", default-features = false }
+usb-device = "0.2"
