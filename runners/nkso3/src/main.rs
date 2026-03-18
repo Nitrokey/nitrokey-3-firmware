@@ -21,18 +21,19 @@ mod app {
     use stm32n657_hal::{
         bsec::Bsec,
         gpio::{GpioC, GpioG},
-        otg_fs::{Otg1Fs, UsbBus1Fs},
+        otg::{Otg1, UsbBus1},
         rcc::{ClockConfig, Rcc},
         timer::{MillisecondsCounter, Tim6, Tim7, Timer},
         Rate,
     };
     use systick_monotonic::Systick;
     use trussed::platform::consent;
-    use usb_device::{bus::UsbBusAllocator, device::{UsbDevice, UsbDeviceBuilder, UsbVidPid}};
+    use usb_device::{
+        bus::UsbBusAllocator,
+        device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
+    };
 
     use crate::nucleo::{Button, Led};
-
-    type UsbBus = UsbBusAllocator<UsbBus1Fs>;
 
     #[monotonic(binds = SysTick, default = true)]
     type Monotonic = Systick<100>;
@@ -46,11 +47,11 @@ mod app {
         button: Button,
         timer: Timer<Tim6>,
         counter: MillisecondsCounter<Tim7>,
-        usb_device: UsbDevice<'static, UsbBus1Fs>,
+        usb_device: UsbDevice<'static, UsbBus1>,
     }
 
     #[init(local = [
-        usb_bus: Option<UsbBus> = None,
+        usb_bus: Option<UsbBusAllocator<UsbBus1>> = None,
         ep_memory: [u32; 1024] = [0; 1024],
     ])]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -79,8 +80,8 @@ mod app {
         timer.start(Rate::Hz(100));
 
         let vidpid = UsbVidPid(0x20A0, 0x42B2);
-        let otg1 = Otg1Fs::new(cx.device.OTG1_S, clock_config);
-        let usb_bus = UsbBus1Fs::new(otg1, cx.local.ep_memory);
+        let otg1 = Otg1::new(cx.device.OTG1_S, clock_config);
+        let usb_bus = UsbBus1::new(otg1, cx.local.ep_memory);
         let usb_bus = cx.local.usb_bus.insert(usb_bus);
         let usb_device = UsbDeviceBuilder::new(usb_bus, vidpid)
             .product("Nitrokey Storage 3")

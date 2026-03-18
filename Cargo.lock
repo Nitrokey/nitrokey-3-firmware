@@ -3251,6 +3251,7 @@ dependencies = [
 name = "stm32n657-hal"
 version = "0.1.0"
 dependencies = [
+ "cortex-m",
  "embedded-hal",
  "fugit",
  "nb 0.1.3",
