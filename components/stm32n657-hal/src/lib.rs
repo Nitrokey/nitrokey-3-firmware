@@ -8,8 +8,8 @@
 
 pub mod bsec;
 pub mod gpio;
-#[cfg(feature = "otg-fs")]
-pub mod otg_fs;
+#[cfg(feature = "otg")]
+pub mod otg;
 pub mod rcc;
 pub mod timer;
 

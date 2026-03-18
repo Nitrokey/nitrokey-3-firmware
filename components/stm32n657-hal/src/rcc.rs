@@ -11,6 +11,13 @@ impl Rcc {
         Self(rcc)
     }
 
+    /// # Safety
+    ///
+    /// See [`RCC::steal`][].
+    pub unsafe fn steal() -> Self {
+        unsafe { Self::new(RCC::steal()) }
+    }
+
     pub fn clock_config(&self) -> ClockConfig {
         let cfgr1 = self.0.cfgr1().read();
         let cfgr2 = self.0.cfgr2().read();
@@ -28,25 +35,58 @@ impl Rcc {
     }
 
     pub fn enable(&self, peripheral: Peripheral) {
-        match peripheral {
-            Peripheral::GpioC => self.0.ahb4ensr().write(|w| w.gpiocens().set_bit()),
-            Peripheral::GpioG => self.0.ahb4ensr().write(|w| w.gpiogens().set_bit()),
-            Peripheral::Otg1 => self.0.ahb5ensr().write(|w| w.otg1ens().set_bit()),
-            Peripheral::Rtc => self.0.apb4lensr().write(|w| w.rtcens().set_bit()),
-            Peripheral::Tim6 => self.0.apb1lensr().write(|w| w.tim6ens().set_bit()),
-            Peripheral::Tim7 => self.0.apb1lensr().write(|w| w.tim7ens().set_bit()),
-        };
+        peripheral.enable(&self.0);
+    }
+
+    pub fn reset(&self, peripheral: Peripheral) {
+        peripheral.reset(&self.0);
     }
 }
 
-pub enum Peripheral {
-    GpioC,
-    GpioG,
-    Otg1,
-    Rtc,
-    Tim6,
-    Tim7,
+macro_rules! impl_peripheral {
+    ($(($ensr:ident, $rstsr:ident, $rstcr:ident) => [
+        $(($peripheral:ident, $ens:ident, $rsts:ident, $rstc:ident),)*
+    ],)*) => {
+        pub enum Peripheral {
+            $($($peripheral,)*)*
+        }
+
+        impl Peripheral {
+            fn enable(&self, rcc: &RCC) {
+                match self {
+                    $($(
+                        Self::$peripheral => rcc.$ensr().write(|w| w.$ens().set_bit()),
+                    )*)*
+                };
+            }
+
+            fn reset(&self, rcc: &RCC) {
+                match self {
+                    $($(
+                        Self::$peripheral => {
+                            rcc.$rstsr().write(|w| w.$rsts().set_bit());
+                            rcc.$rstcr().write(|w| w.$rstc().set_bit());
+                        }
+                    )*)*
+                }
+            }
+        }
+    };
 }
+
+impl_peripheral!(
+    (ahb4ensr, ahb4rstsr, ahb4rstcr) => [
+        (GpioC, gpiocens, gpiocrsts, gpiocrstc),
+        (GpioG, gpiogens, gpiogrsts, gpiogrstc),
+    ],
+    (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
+        (Otg1, otg1ens, otg1rsts, otg1rstc),
+    ],
+    (apb1lensr, apb1lrstsr, apb1lrstcr) => [
+        (Tim6, tim6ens, tim6rsts, tim6rstc),
+        (Tim7, tim7ens, tim7rsts, tim7rstc),
+    ],
+);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ClockConfig {
