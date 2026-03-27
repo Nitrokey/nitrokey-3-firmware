@@ -468,18 +468,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-lock"
-version = "10.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06acb4f71407ba205a07cb453211e0e6a67b21904e47f6ba1f9589e38f2e454"
-dependencies = [
- "semver 1.0.27",
- "serde",
- "toml 0.8.23",
- "url",
-]
-
-[[package]]
 name = "cargo-platform"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1167,7 +1155,6 @@ dependencies = [
  "apdu-dispatch",
  "apps",
  "boards",
- "cargo-lock",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
@@ -2185,7 +2172,6 @@ dependencies = [
  "apdu-dispatch",
  "apps",
  "boards",
- "cargo-lock",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
@@ -3993,6 +3979,7 @@ dependencies = [
  "chrono",
  "delog",
  "littlefs2 0.7.0",
+ "memory-regions",
  "quickcheck",
  "regex",
  "semver 1.0.27",
