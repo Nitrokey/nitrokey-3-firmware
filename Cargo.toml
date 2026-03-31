@@ -33,7 +33,7 @@ secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "
 # backends
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "backend-v0.1.0" }
 trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.4.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.6.0" }
+trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.7.0" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.4.0" }
 
 [profile.release]

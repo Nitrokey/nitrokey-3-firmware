@@ -12,7 +12,7 @@ embedded-hal = "0.2.7"
 heapless = "0.9"
 heapless-bytes = "0.5"
 interchange = "0.3"
-se05x = { version = "0.3.1", optional = true}
+se05x = { version = "0.4", optional = true}
 serde = { version = "1.0.180", default-features = false }
 trussed = { version = "0.1", default-features = false, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
 trussed-core = "0.2"
@@ -25,7 +25,7 @@ littlefs2-core = "0.1"
 # Backends
 trussed-auth-backend = { version = "0.1.0", optional = true }
 trussed-rsa-alloc = { version = "0.4.0", optional = true }
-trussed-se050-backend = { version = "0.6", optional = true }
+trussed-se050-backend = { version = "0.7", optional = true }
 trussed-staging = { version = "0.4", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
 
 # Extensions

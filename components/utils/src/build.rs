@@ -133,7 +133,8 @@ pub fn setup_linker_script(soc: Soc, regions: &MemoryRegions) {
     };
 
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
-    let template = root.join("../ld").join(format!("{soc}-memory-template.x"));
+    let linker_script_dir = root.join("../ld");
+    let template = linker_script_dir.join(format!("{soc}-memory-template.x"));
 
     let memory_x_dir = root.join("ld").join(soc);
     std::fs::create_dir_all(&memory_x_dir).ok();
@@ -150,6 +151,10 @@ pub fn setup_linker_script(soc: Soc, regions: &MemoryRegions) {
     let linker_script = format!("cortex-m-rt_{}_link.x", cortex_m_rt.version);
 
     println!("cargo:rerun-if-changed={}", template.display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        linker_script_dir.join(&linker_script).display()
+    );
     println!("cargo:rustc-link-search={}", memory_x_dir.display());
     println!("cargo:rustc-link-search={}", root.join("../ld").display());
     println!("cargo:rustc-link-arg=-T{linker_script}");
