@@ -1167,7 +1167,6 @@ dependencies = [
  "apdu-dispatch",
  "apps",
  "boards",
- "cargo-lock",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
@@ -2185,7 +2184,6 @@ dependencies = [
  "apdu-dispatch",
  "apps",
  "boards",
- "cargo-lock",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
@@ -3990,9 +3988,11 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "utils"
 version = "1.8.3"
 dependencies = [
+ "cargo-lock",
  "chrono",
  "delog",
  "littlefs2 0.7.0",
+ "memory-regions",
  "quickcheck",
  "regex",
  "semver 1.0.27",
