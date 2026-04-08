@@ -1,0 +1,7 @@
+MEMORY
+{
+  # FLASH : ORIGIN = 0x24064000, LENGTH = 624K /* AXISRAM1 (non-secure) */
+  # RAM : ORIGIN = 0x24100000, LENGTH = 1024K /* AXISRAM2 (non-secure) */
+  FLASH : ORIGIN = 0x34064000, LENGTH = 624K /* AXISRAM1 (secure) */
+  RAM : ORIGIN = 0x34100000, LENGTH = 1024K /* AXISRAM2 (secure) */
+}
