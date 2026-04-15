@@ -192,38 +192,62 @@ where
             .write_read(ADDRESS, &addr_to_bytes(address), buf)
     }
 
-    fn write_page(&mut self, address: u16, data: &[u8]) -> Result<(), I2C::BusError> {
+    /// Returns whether there should be a wait before the next transactio
+    fn write_page(
+        &mut self,
+        address: u16,
+        data: &[u8],
+        checked: bool,
+    ) -> Result<bool, I2C::BusError> {
+        if checked {
+            let buf = &mut [0; BLOCK_SIZE][..data.len()];
+            self.read_eeprom(address, buf)?;
+            if buf == data {
+                debug!("Not writing data thanks to check");
+                return Ok(false);
+            }
+        }
         let mut buf = [0; BLOCK_SIZE + 2];
         buf[0] = address.to_be_bytes()[0];
         buf[1] = address.to_be_bytes()[1];
         buf[2..][..data.len()].copy_from_slice(data);
         self.device.i2c.write(ADDRESS, &buf[..data.len() + 2])?;
-        Ok(())
+        Ok(true)
     }
 
-    pub fn write_eeprom(&mut self, mut address: u16, mut data: &[u8]) -> Result<(), I2C::BusError> {
+    /// If checked is true, only write when the data is not the same
+    pub fn write_eeprom(
+        &mut self,
+        mut address: u16,
+        mut data: &[u8],
+        checked: bool,
+    ) -> Result<(), I2C::BusError> {
+        let mut should_wait = false;
         if !address.is_multiple_of(BLOCK_SIZE as _) {
             let offset = BLOCK_SIZE - (address as usize % BLOCK_SIZE);
             if data.len() > offset {
                 let tmp = data.split_at(offset);
                 data = tmp.1;
-                self.write_page(address, tmp.0)?;
+                should_wait |= self.write_page(address, tmp.0, checked)?;
                 address += offset as u16;
             } else {
-                self.write_page(address, data)?;
+                should_wait |= self.write_page(address, data, checked)?;
                 data = &[];
             }
         }
         for (idx, chunk) in data.chunks(BLOCK_SIZE).enumerate() {
             let adr = address + (idx * BLOCK_SIZE) as u16;
-            self.write_page(adr, chunk)?;
+            should_wait |= self.write_page(adr, chunk, checked)?;
         }
-        self.device.timer.start(Microseconds::new(10_000));
-        nb::block!(self.device.timer.wait()).unwrap();
+        if should_wait {
+            self.device.timer.start(Microseconds::new(10_000));
+            nb::block!(self.device.timer.wait()).unwrap();
+        }
         Ok(())
     }
 
     pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
+        debug!("Configure");
         // // NOT documented in the datasheet
         // // FIXME: use bitlfags to document what is being configured
         // const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
@@ -259,7 +283,7 @@ where
             conf.sak1,
             conf.sak2,
         ];
-        self.write_eeprom(0x3B0, &config_buf)?;
+        self.write_eeprom(0x3B0, &config_buf, true)?;
 
         Ok(())
     }
@@ -384,6 +408,7 @@ where
     }
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
+        debug!("Init");
         self.csn.set_low().unwrap();
         self.timer.start(Microseconds::new(250));
         nb::block!(self.timer.wait()).unwrap();
@@ -400,6 +425,7 @@ where
         txn.write_eeprom(
             0x0390,
             &[user_cfg0.0, user_cfg1.0, user_cfg2.0, usercfg_chk_word],
+            true,
         )?;
 
         let mut t0 = T0(0);
@@ -454,6 +480,8 @@ where
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
+        self.timer.start(Microseconds::new(100_000));
+        nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
 
@@ -496,10 +524,9 @@ where
         &mut self,
         buf: &mut [u8],
     ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
-        // // debug_now!("Reading packet");
         // self.set_led_state();
         // self.dump_registers();
-        let main_irq = self.read_register::<MainIrq>()?;
+        let main_irq = self.read_register::<MainIrq>().unwrap();
         // let fifo_irq = self.read_register::<FifoIrq>()?;
 
         let mut new_session = false;
@@ -652,7 +679,7 @@ where
     }
 
     fn dump_registers(&mut self) {
-        // self.txn().dump_registers();
+        self.txn().dump_registers();
     }
 }
 
@@ -664,13 +691,16 @@ where
     IRQ::Error: Debug,
     Timer: CountDown<Time = Microseconds>,
 {
+    #[inline(never)]
     fn read(&mut self, buf: &mut [u8]) -> Result<NfcState, NfcError> {
-        // // debug_now!("Polling read");
-        self.read_packet(buf).unwrap()
+        let res = self.read_packet(buf).unwrap();
+        // debug!("Got packet: {res:?}, {}", hexstr!(buf));
+        res
     }
 
+    #[inline(never)]
     fn send(&mut self, buf: &[u8]) -> Result<(), NfcError> {
-        // debug_now!("Sending");
+        // debug!("Sending: {}", hexstr!(buf));
         self.send_packet(buf).unwrap()
     }
 
