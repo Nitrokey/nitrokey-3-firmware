@@ -16,12 +16,15 @@ use embedded_hal::{
     timer::CountDown,
 };
 use embedded_time::duration::Microseconds;
+use hex_literal::hex;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
     AuxIrq, AuxIrqMask, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask,
     NfcCfg, NfcRats, NfcStatus, NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1,
     UserCfg2, VoutEnCfg, VoutResCfg,
 };
+
+const BLOCK_SIZE: usize = 16;
 
 bitfield::bitfield! {
     struct T0(u8);
@@ -99,6 +102,9 @@ mod i2cimpl;
 const ADDRESS: u8 = 0x57;
 
 pub struct Configuration {
+    pub user_cfg0: UserCfg0,
+    pub user_cfg1: UserCfg1,
+    pub user_cfg2: UserCfg2,
     pub atqa: u16,
     pub sak1: u8,
     pub sak2: u8,
@@ -107,7 +113,7 @@ pub struct Configuration {
     pub ta: u8,
     pub tb: u8,
     pub tc: u8,
-    pub vout_reg_cfg: u8,
+    pub vout_reg_cfg: VoutResCfg,
 }
 
 pub trait Led: Send + Sync {
@@ -186,25 +192,34 @@ where
             .write_read(ADDRESS, &addr_to_bytes(address), buf)
     }
 
-    /// Data must contain the address of the eeprom encoded in big endian followed by the data
-    ///
-    /// This function waits for the eeprom write to succeed.
-    pub fn write_eeprom(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
-        // debug_now!("Writing eeprom");
-        // self.device.i2c.write(ADDRESS, data)?;
-        // self.device.timer.start(Microseconds(10_000));
-        nb::block!(self.device.timer.wait()).unwrap();
-        loop {
-            let res = self.device.i2c.write_read(ADDRESS, &[0x00, 0x00], &mut [0]);
-            //     debug_now!("Waiting for finished write: {res:?}");
-            let Err(err) = res else {
-                break;
-            };
-            if err.is_address_nack() {
-                continue;
+    fn write_page(&mut self, address: u16, data: &[u8]) -> Result<(), I2C::BusError> {
+        let mut buf = [0; BLOCK_SIZE + 2];
+        buf[0] = address.to_be_bytes()[0];
+        buf[1] = address.to_be_bytes()[1];
+        buf[2..][..data.len()].copy_from_slice(data);
+        self.device.i2c.write(ADDRESS, &buf[..data.len() + 2])?;
+        Ok(())
+    }
+
+    pub fn write_eeprom(&mut self, mut address: u16, mut data: &[u8]) -> Result<(), I2C::BusError> {
+        if !address.is_multiple_of(BLOCK_SIZE as _) {
+            let offset = BLOCK_SIZE - (address as usize % BLOCK_SIZE);
+            if data.len() > offset {
+                let tmp = data.split_at(offset);
+                data = tmp.1;
+                self.write_page(address, tmp.0)?;
+                address += offset as u16;
+            } else {
+                self.write_page(address, data)?;
+                data = &[];
             }
-            return Err(err);
         }
+        for (idx, chunk) in data.chunks(BLOCK_SIZE).enumerate() {
+            let adr = address + (idx * BLOCK_SIZE) as u16;
+            self.write_page(adr, chunk)?;
+        }
+        self.device.timer.start(Microseconds::new(10_000));
+        nb::block!(self.device.timer.wait()).unwrap();
         Ok(())
     }
 
@@ -216,83 +231,36 @@ where
         // const REGU_ADDR: u16 = 0x0391;
         // let buf = &mut [0; 1];
 
-        // self.device
-        //     .i2c
-        //     .write_read(ADDRESS, &REGU_CONFIG.to_be_bytes(), buf)?;
-        // // debug_now!("REGU config: {buf:02x?}");
-
-        // let [regu_addr1, regu_addr2] = REGU_ADDR.to_be_bytes();
-        // let buf = &[regu_addr1, regu_addr2, REGU_CONFIG];
-
-        // self.write_eeprom(buf)?;
-        // let buf = &mut [0; 1];
-        // self.device
-        //     .i2c
-        //     .write_read(ADDRESS, &REGU_CONFIG.to_be_bytes(), buf)?;
-        // // debug_now!("REGU config: {buf:02x?}");
-
-        const ATQA_ADDR: u16 = 0x03BC;
-        // debug_now!("Entering configuration");
-
-        let buf = &mut [0; 4];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
-        // debug_now!("ATQA config: {buf:02x?}");
-
-        // let [atqa_addr1, atqa_addr2] = ATQA_ADDR.to_be_bytes();
-        // let [atqa1, atqa2] = conf.atqa.to_be_bytes();
-        // let buf = &[atqa_addr1, atqa_addr2, atqa1, atqa2, conf.sak1, conf.sak2];
-
-        // self.write_eeprom(buf)?;
-        // debug_now!("Wrote ATQA");
-        let buf = &mut [0; 4];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), buf)?;
-        // debug_now!("ATQA config: {}", hexstr!(buf));
-
-        // const NFC_CONFIGURATION_ADDRESS: u16 = 0x03B0;
-        // let [nfc_conf_address1, nfc_conf_address2] = NFC_CONFIGURATION_ADDRESS.to_be_bytes();
-        // let buf = &[
-        //     nfc_conf_address1,
-        //     nfc_conf_address2,
-        //     conf.tl,
-        //     conf.t0,
-        //     conf.vout_reg_cfg,
-        //     ADDRESS,
-        //     conf.ta,
-        //     conf.tb,
-        //     conf.tc,
-        // ];
-        // // debug_now!("Expected nfc config: {}", hexstr!(buf));
-        // self.write_eeprom(buf)?;
-        // let buf = &mut [0; 12];
-        // self.device
-        //     .i2c
-        //     .write_read(ADDRESS, &NFC_CONFIGURATION_ADDRESS.to_be_bytes(), buf)?;
-        // debug_now!("NFC config: {}", hexstr!(buf));
-
+        let mut crc8_buf = [0; 13];
         const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
+        self.read_eeprom(SERIAL_NUMBER_ADDRESS, &mut crc8_buf[..9])?;
+        crc8_buf[9..].copy_from_slice(&[
+            conf.atqa.to_be_bytes()[0],
+            conf.atqa.to_be_bytes()[1],
+            conf.sak1,
+            conf.sak2,
+        ]);
+        let crc8 = crc8(&crc8_buf);
+        let config_buf = [
+            conf.tl,
+            conf.t0,
+            conf.vout_reg_cfg.0,
+            ADDRESS,
+            conf.ta,
+            conf.tb,
+            conf.tc,
+            0x1E, // default value
+            conf.user_cfg0.0,
+            conf.user_cfg1.0,
+            conf.user_cfg2.0,
+            crc8,
+            conf.atqa.to_be_bytes()[0],
+            conf.atqa.to_be_bytes()[1],
+            conf.sak1,
+            conf.sak2,
+        ];
+        self.write_eeprom(0x3B0, &config_buf)?;
 
-        let buf = &mut [0; 13];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &SERIAL_NUMBER_ADDRESS.to_be_bytes(), &mut buf[..9])?;
-        // debug_now!("serial number: {}", hexstr!(buf));
-
-        self.device
-            .i2c
-            .write_read(ADDRESS, &ATQA_ADDR.to_be_bytes(), &mut buf[9..])?;
-        // debug_now!("serial number: {}", hexstr!(buf));
-
-        const CT_ADDRESS: u16 = 0x03C0;
-
-        // let crc8_value = crc8(buf);
-        // // debug_now!("Calculated crc8 value: {crc8_value:02x?}");
-        // const CRC8_ADDRESS: u16 = 0x03BB;
-        // let [crc8_address1, crc8_address2] = CRC8_ADDRESS.to_be_bytes();
-        // self.write_eeprom(&[crc8_address1, crc8_address2, crc8_value])?;
         Ok(())
     }
 
@@ -351,15 +319,15 @@ where
     }
 }
 
-impl<'a, I2C, CSN, IRQ, Timer> Drop for Txn<'a, I2C, CSN, IRQ, Timer>
-where
-    CSN: OutputPin,
-    CSN::Error: Debug,
-{
-    fn drop(&mut self) {
-        // self.device.csn.set_high().unwrap();
-    }
-}
+// impl<'a, I2C, CSN, IRQ, Timer> Drop for Txn<'a, I2C, CSN, IRQ, Timer>
+// where
+//     CSN: OutputPin,
+//     CSN::Error: Debug,
+// {
+//     fn drop(&mut self) {
+//         // self.device.csn.set_high().unwrap();
+//     }
+// }
 
 impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
@@ -427,18 +395,12 @@ where
         let user_cfg1 = UserCfg1(0x82);
         let user_cfg2 = UserCfg2(0x21);
 
-        // txn.write_eeprom(&[0x03, 0xBF, 0x20])?;
-        // debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?}");
         let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
-        // debug_now!("CHK word: {usercfg_chk_word:02x}");
-        // txn.write_eeprom(&[
-        //     0x03,
-        //     0x90,
-        //     user_cfg0.0,
-        //     user_cfg1.0,
-        //     user_cfg2.0,
-        //     usercfg_chk_word,
-        // ])?;
+        // debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?} chk_word: {usercfg_chk_word:02x}");
+        txn.write_eeprom(
+            0x0390,
+            &[user_cfg0.0, user_cfg1.0, user_cfg2.0, usercfg_chk_word],
+        )?;
 
         let mut t0 = T0(0);
         t0.set_tc_transmitted(true);
@@ -464,6 +426,9 @@ where
         assert_eq!(0x78, tb.0);
 
         txn.configure(Configuration {
+            user_cfg0,
+            user_cfg1,
+            user_cfg2,
             atqa: 0x4400,
             sak1: 0x04,
             sak2: 0x20,
@@ -478,7 +443,7 @@ where
             tc: 0x00,
 
             // configaration of current limiting resistance impedance when power output
-            vout_reg_cfg: 0,
+            vout_reg_cfg: VoutResCfg(0xF0),
         })?;
 
         // txn.device.write_fifo(&[0x00, 0x00, 0x00])?;
@@ -488,8 +453,6 @@ where
         // );
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
-        txn.device.timer.start(Microseconds::new(1000));
-        nb::block!(txn.device.timer.wait()).unwrap();
 
         Ok(())
     }
@@ -537,7 +500,7 @@ where
         // self.set_led_state();
         // self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
-        let fifo_irq = self.read_register::<FifoIrq>()?;
+        // let fifo_irq = self.read_register::<FifoIrq>()?;
 
         let mut new_session = false;
 

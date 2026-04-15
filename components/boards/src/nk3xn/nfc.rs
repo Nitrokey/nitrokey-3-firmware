@@ -157,5 +157,7 @@ pub fn try_setup_new(
         .into_gpio_pin(iocon, gpio)
         .into_output_high();
 
-    NfcChip::new(i2c, nfc_cs, nfc_irq, timer, led)
+    let mut nfc_chip = NfcChip::new(i2c, nfc_cs, nfc_irq, timer, led);
+    nfc_chip.init().unwrap();
+    nfc_chip
 }
