@@ -27,9 +27,8 @@ mod app {
     };
     use embedded_runner_lib::nk3xn;
     use lpc55_hal::{
-        drivers::timer::Elapsed,
         raw::Interrupt,
-        time::{DurationExtensions, Microseconds, Milliseconds},
+        time::{Microseconds, Milliseconds},
         traits::wg::timer::{Cancel, CountDown},
     };
     use nfc_device::Iso14443;
@@ -157,13 +156,14 @@ mod app {
             mut apdu_dispatch,
             mut ctaphid_dispatch,
             mut apps,
-            mut perf_timer,
+            perf_timer: _,
             mut usb_classes,
         } = c.shared;
         let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
+            #[cfg(not(feature = "no-delog"))]
             let mut time = 0;
             // perf_timer.lock(|perf_timer| {
             //     time = perf_timer.elapsed().0;
@@ -325,7 +325,7 @@ mod app {
             c.shared.perf_timer,
             c.shared.wait_extender,
         )
-            .lock(|contactless, perf_timer, wait_extender| {
+            .lock(|contactless, _perf_timer, wait_extender| {
                 let contactless = contactless.as_mut().unwrap();
                 // let _starttime = perf_timer.elapsed().0 / 100;
 

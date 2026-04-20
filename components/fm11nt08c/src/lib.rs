@@ -16,12 +16,10 @@ use embedded_hal::{
     timer::CountDown,
 };
 use embedded_time::duration::Microseconds;
-use hex_literal::hex;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
-    AuxIrq, AuxIrqMask, FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask,
-    NfcCfg, NfcRats, NfcStatus, NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1,
-    UserCfg2, VoutEnCfg, VoutResCfg,
+    FifoAccess, FifoIrq, FifoWordCnt, MainIrq, NfcRats, NfcStatus, NfcTxen, NfcTxenValue, Register,
+    ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
 };
 
 const BLOCK_SIZE: usize = 16;
@@ -116,45 +114,15 @@ pub struct Configuration {
     pub vout_reg_cfg: VoutResCfg,
 }
 
-pub trait Led: Send + Sync {
-    fn set_red(&mut self, intensity: u8);
-
-    fn set_green(&mut self, intensity: u8);
-
-    fn set_blue(&mut self, intensity: u8);
-
-    fn set_color(&mut self, red: u8, green: u8, blue: u8) {
-        self.set_red(red);
-        self.set_green(green);
-        self.set_blue(blue);
-    }
-}
-
-impl Led for () {
-    fn set_red(&mut self, _intensity: u8) {}
-
-    fn set_green(&mut self, _intensity: u8) {}
-
-    fn set_blue(&mut self, _intensity: u8) {}
-}
-
-#[derive(Debug, Default)]
-struct DebugState {
-    was_fifo_full_once: bool,
-    rx_done_reached: bool,
-    framing_error_reached: bool,
-}
-
 pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     i2c: I2C,
     csn: CSN,
     timer: Timer,
+    #[allow(unused)]
     irq: IRQ,
     current_frame_size: usize,
     offset: usize,
     packet: [u8; 256],
-    debug_state: DebugState,
-    led: &'static mut dyn Led,
 }
 
 pub struct Txn<'a, I2C, CSN, IRQ, Timer>
@@ -315,12 +283,8 @@ where
     fn dump_registers(&mut self) {
         // return;
         // debug!("Frame size: {}", self.device.current_frame_size);
-        let aux_irq = self.read_register::<AuxIrq>();
+        // let aux_irq = self.read_register::<AuxIrq>();
         // debug!("{:02x?}", aux_irq);
-        if aux_irq.unwrap().framing_error() {
-            //     error!("Framing error reached");
-            self.device.debug_state.framing_error_reached = true;
-        }
         // debug!("{:02x?}", self.read_register::<AuxIrqMask>());
         // // debug!("{:02x?}", self.read_register::<FifoAccess>());
         // // debug!("{:02x?}", self.read_register::<FifoClear>());
@@ -360,10 +324,7 @@ where
     IRQ::Error: Debug,
     Timer: CountDown<Time = Microseconds>,
 {
-    pub fn new(i2c: I2C, csn: CSN, irq: IRQ, timer: Timer, led: &'static mut dyn Led) -> Self {
-        led.set_red(0);
-        led.set_blue(0);
-        led.set_green(255);
+    pub fn new(i2c: I2C, csn: CSN, irq: IRQ, timer: Timer) -> Self {
         Self {
             i2c,
             csn,
@@ -372,39 +333,7 @@ where
             current_frame_size: 128,
             offset: 0,
             packet: [0; 256],
-            led,
-            debug_state: Default::default(),
         }
-    }
-
-    pub fn set_led_state(&mut self) {
-        // debug!("{:?}", self.debug_state);
-        match self.debug_state {
-            DebugState {
-                rx_done_reached: false,
-                framing_error_reached: false,
-                ..
-            } => self.led.set_color(0, 0, 0),
-            DebugState {
-                rx_done_reached: true,
-                framing_error_reached: false,
-                ..
-            } => self.led.set_color(0, 255, 0),
-            DebugState {
-                rx_done_reached: false,
-                framing_error_reached: true,
-                ..
-            } => self.led.set_color(0, 0, 255),
-            DebugState {
-                rx_done_reached: true,
-                framing_error_reached: true,
-                ..
-            } => self.led.set_color(0, 255, 255),
-        }
-    }
-
-    pub fn set_led(&mut self, led: &'static mut dyn Led) {
-        self.led = led;
     }
 
     pub fn init(&mut self) -> Result<(), I2C::BusError> {
@@ -549,12 +478,10 @@ where
         // Case where the full packet is available
         if main_irq.rx_done() {
             // error!("RxDone reached");
-            self.debug_state.rx_done_reached = true;
             //     debug!("RX Done");
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
                 //         error!("Fifo FULL");
-                self.debug_state.was_fifo_full_once = true;
             }
             //     debug!("WORD_COUNT: {count:02x?}");
             let count = count.min(24);
@@ -587,9 +514,6 @@ where
         // debug!("water_level: {fifo_irq:?}");
         if !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
-            if count == 32 {
-                self.debug_state.was_fifo_full_once = true;
-            }
             let count = count.min(24);
             //     debug!("Second Count: {count:02x}");
             self.read_fifo(count)?;
@@ -612,6 +536,7 @@ where
         self.txn().write_fifo(data)
     }
 
+    #[allow(unused)]
     /// Returns true for sucess
     fn wait_for_transmission(&mut self) -> Result<bool, I2C::BusError> {
         self.write_register(NfcTxen(NfcTxenValue::SendBackData.into()))?;
@@ -633,9 +558,6 @@ where
         }
 
         let mut current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
-        if current_count == 32 {
-            self.debug_state.was_fifo_full_once = true;
-        }
 
         let mut fifo_irq = self.read_register::<FifoIrq>()?;
         if current_count < 8 {
@@ -646,9 +568,6 @@ where
                 break;
             }
             current_count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
-            if current_count == 32 {
-                self.debug_state.was_fifo_full_once = true;
-            }
             if current_count < 8 {
                 return Ok(true);
             }
@@ -678,6 +597,7 @@ where
         Ok(Ok(()))
     }
 
+    #[allow(unused)]
     fn dump_registers(&mut self) {
         self.txn().dump_registers();
     }

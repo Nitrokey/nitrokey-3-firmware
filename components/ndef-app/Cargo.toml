@@ -15,5 +15,10 @@ delog = "0.1"
 
 [features]
 default = ["log-all"]
-log-all = []
+log-none = []
+log-trace = []
 log-debug = []
+log-info = []
+log-warn = []
+log-error = []
+log-all = []

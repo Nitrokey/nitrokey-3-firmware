@@ -95,7 +95,7 @@ pub fn init_logger<B: Board>(_version: &str) {
 
 pub struct UsbClasses<S: Soc> {
     pub usbd: UsbDevice<'static, S::UsbBus>,
-    // pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
+    pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
     pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus, CTAPHID_MESSAGE_SIZE>,
 }
 
@@ -169,7 +169,7 @@ pub fn init_usb_nfc<B: Board>(
 
         UsbClasses {
             usbd,
-            // ccid,
+            ccid,
             ctaphid,
         }
     });

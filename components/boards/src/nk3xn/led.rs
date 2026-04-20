@@ -97,19 +97,3 @@ impl rgb_led::RgbLed for RgbLed {
 }
 
 unsafe impl Sync for RgbLed {}
-
-use rgb_led::RgbLed as _;
-
-impl fm11nt08c::Led for RgbLed {
-    fn set_red(&mut self, intensity: u8) {
-        self.red(intensity);
-    }
-
-    fn set_green(&mut self, intensity: u8) {
-        self.green(intensity);
-    }
-
-    fn set_blue(&mut self, intensity: u8) {
-        self.blue(intensity);
-    }
-}

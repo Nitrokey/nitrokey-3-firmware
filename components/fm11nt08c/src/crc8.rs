@@ -3,7 +3,7 @@ pub fn crc8(data: &[u8]) -> u8 {
     let mut crc8_res: u32 = 0xFF;
     for item in data {
         crc8_res ^= *item as u32;
-        for j in 0..8 {
+        for _ in 0..8 {
             if (crc8_res & 0x01) == 0x01 {
                 crc8_res = (crc8_res >> 1) ^ 0xb8;
             } else {

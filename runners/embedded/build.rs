@@ -3,7 +3,7 @@ use std::{env, error, path::Path};
 
 use memory_regions::MemoryRegions;
 
-#[cfg(feature = "board-nk3xn")]
+#[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
 #[cfg(feature = "board-nk3am")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;

@@ -13,7 +13,7 @@ use utils::Version;
 
 delog::generate_macros!();
 
-#[cfg(feature = "board-nk3xn")]
+#[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
 pub mod nk3xn;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]

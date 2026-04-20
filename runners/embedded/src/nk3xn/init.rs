@@ -57,8 +57,6 @@ use hal::{
     Pin,
 };
 
-use core::mem::MaybeUninit;
-
 use interchange::Channel;
 use littlefs2_core::path;
 use lpc55_hal as hal;
@@ -168,7 +166,7 @@ impl Stage0 {
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
-        let (new_iocon, nfc_irq, mut is_nfc_passive) =
+        let (new_iocon, nfc_irq, is_nfc_passive) =
             self.enable_low_speed_for_passive_nfc(iocon, &mut gpio);
         // is_nfc_passive = true;
         iocon = new_iocon;
@@ -257,7 +255,7 @@ impl Stage1 {
     }
 
     fn init_rgb(&mut self, ctimer: PwmTimer) -> RgbLed {
-        #[cfg(feature = "board-nk3xn")]
+        #[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
         {
             RgbLed::new(
                 hal::drivers::Pwm::new(ctimer.enabled(
@@ -270,7 +268,7 @@ impl Stage1 {
     }
 
     fn init_buttons(&mut self, ctimer: ButtonsTimer) -> ThreeButtons {
-        #[cfg(feature = "board-nk3xn")]
+        #[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
         {
             ThreeButtons::new(
                 Timer::new(ctimer.enabled(
@@ -317,7 +315,7 @@ impl Stage1 {
         let se050_timer = Timer::new(
             ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
-        let mut perf_timer = Timer::new(
+        let perf_timer = Timer::new(
             perf_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
         // perf_timer.start(60_000_000.microseconds());
@@ -383,6 +381,7 @@ impl Stage2 {
         spi::init(spi, &mut self.clocks.iocon, config)
     }
 
+    #[cfg(feature = "board-nk3xn-old-nfc")]
     fn setup_fm11nc08(
         &mut self,
         spi: Spi,
@@ -390,35 +389,35 @@ impl Stage2 {
         pint: Pint<Unknown>,
         nfc_rq: CcidRequester<'static>,
     ) -> Option<Iso14443<NfcChip>> {
-        None
-        // // TODO save these so they can be released later
-        // let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
-        // let mut pint = pint.enabled(&mut self.peripherals.syscon);
-        // let nfc_irq = self.clocks.nfc_irq.take().unwrap();
-        // pint.enable_interrupt(
-        //     &mut mux,
-        //     &nfc_irq,
-        //     lpc55_hal::peripherals::pint::Slot::Slot0,
-        //     lpc55_hal::peripherals::pint::Mode::ActiveLow,
-        // );
-        // mux.disabled(&mut self.peripherals.syscon);
+        // TODO save these so they can be released later
+        let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
+        let mut pint = pint.enabled(&mut self.peripherals.syscon);
+        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        pint.enable_interrupt(
+            &mut mux,
+            &nfc_irq,
+            lpc55_hal::peripherals::pint::Slot::Slot0,
+            lpc55_hal::peripherals::pint::Mode::ActiveLow,
+        );
+        mux.disabled(&mut self.peripherals.syscon);
 
-        // let nfc = nfc::try_setup(
-        //     spi,
-        //     &mut self.clocks.gpio,
-        //     &mut self.clocks.iocon,
-        //     nfc_irq,
-        //     &mut self.basic.delay_timer,
-        //     &mut self.status,
-        // )?;
+        let nfc = nfc::try_setup_old_chip(
+            spi,
+            &mut self.clocks.gpio,
+            &mut self.clocks.iocon,
+            nfc_irq,
+            &mut self.basic.delay_timer,
+            &mut self.status,
+        )?;
 
-        // let mut iso14443 = Iso14443::new(nfc, nfc_rq);
-        // iso14443.poll();
-        // // Give a small delay to charge up capacitors
-        // // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
-        // Some(iso14443)
+        let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        iso14443.poll();
+        // Give a small delay to charge up capacitors
+        // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
+        Some(iso14443)
     }
 
+    #[cfg(feature = "board-nk3xn")]
     fn setup_fm11nt08c(
         &mut self,
         i2c: I2C,
@@ -447,24 +446,15 @@ impl Stage2 {
         //     &mut self.status,
         // )?;
 
-        static mut RGB_LED: MaybeUninit<RgbLed> = MaybeUninit::uninit();
-        static mut RGB_LED_NONE: () = ();
-
         let mut nfc = nfc::try_setup_new(
             i2c,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
             nfc_irq,
             self.basic.perf_timer.take().unwrap(),
-            // unsafe {
-            //     let rgb = self.basic.rgb.take().unwrap();
-            //     RGB_LED = MaybeUninit::new(rgb);
-            //     RGB_LED.assume_init_mut()
-            // },
-            unsafe { &mut RGB_LED_NONE },
         );
 
-        nfc.init();
+        nfc.init().ok();
 
         let mut iso14443 = Iso14443::new(nfc, nfc_rq);
         #[cfg(not(feature = "no-delog"))]
@@ -549,10 +539,16 @@ impl Stage2 {
 
         let se050_i2c = self.get_se050_i2c(flexcomm5);
 
-        let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
-        let use_nfc = true;
+        let use_nfc =
+            (nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive)) || true;
         let (se050_i2c, nfc, spi) = if use_nfc {
+            #[cfg(feature = "board-nk3xn")]
             let nfc = self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq);
+            #[cfg(feature = "board-nk3xn-old-nfc")]
+            let nfc = {
+                let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
+                self.setup_fm11nc08(spi, mux, pint, nfc_rq)
+            };
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
