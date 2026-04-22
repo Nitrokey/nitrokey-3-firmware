@@ -255,7 +255,7 @@ impl Stage1 {
     }
 
     fn init_rgb(&mut self, ctimer: PwmTimer) -> RgbLed {
-        #[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
+        #[cfg(feature = "board-nk3xn")]
         {
             RgbLed::new(
                 hal::drivers::Pwm::new(ctimer.enabled(
@@ -268,7 +268,7 @@ impl Stage1 {
     }
 
     fn init_buttons(&mut self, ctimer: ButtonsTimer) -> ThreeButtons {
-        #[cfg(any(feature = "board-nk3xn", feature = "board-nk3xn-old-nfc"))]
+        #[cfg(feature = "board-nk3xn")]
         {
             ThreeButtons::new(
                 Timer::new(ctimer.enabled(
@@ -381,7 +381,6 @@ impl Stage2 {
         spi::init(spi, &mut self.clocks.iocon, config)
     }
 
-    #[cfg(feature = "board-nk3xn-old-nfc")]
     fn setup_fm11nc08(
         &mut self,
         spi: Spi,
@@ -410,14 +409,13 @@ impl Stage2 {
             &mut self.status,
         )?;
 
-        let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        let mut iso14443 = Iso14443::new(nfc_device::either::Either::A(nfc), nfc_rq);
         iso14443.poll();
         // Give a small delay to charge up capacitors
         // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
         Some(iso14443)
     }
 
-    #[cfg(feature = "board-nk3xn")]
     fn setup_fm11nt08c(
         &mut self,
         i2c: I2C,
@@ -456,7 +454,7 @@ impl Stage2 {
 
         nfc.init().ok();
 
-        let mut iso14443 = Iso14443::new(nfc, nfc_rq);
+        let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         #[cfg(not(feature = "no-delog"))]
         boards::init::Delogger::flush();
         iso14443.poll();
@@ -542,12 +540,13 @@ impl Stage2 {
         let use_nfc =
             (nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive)) || true;
         let (se050_i2c, nfc, spi) = if use_nfc {
-            #[cfg(feature = "board-nk3xn")]
-            let nfc = self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq);
-            #[cfg(feature = "board-nk3xn-old-nfc")]
-            let nfc = {
+            // TODO: Add hardware based approach to detect which chip is there
+            let using_old_nfc = false;
+            let nfc = if using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
+            } else {
+                self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
             (None, nfc, None)
         } else {

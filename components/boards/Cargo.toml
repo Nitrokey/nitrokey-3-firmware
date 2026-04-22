@@ -66,7 +66,7 @@ board-nkpk = ["board-nk3am", "utils/storage"]
 fm11nt08c = ["dep:fm11nt08c"]
 fm11nc08 = ["dep:fm11nc08"]
 
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.4", "systick-monotonic", "fm11nt08c", "fm11nc08"]
 soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
 log-all = []
