@@ -364,10 +364,8 @@ where
         // Means 256 bytes FSCI
         t0.set_fsci(0x8);
 
-        let mut ta = Ta(0);
-        ta.set_same_bitrate_both_direction(true);
-        ta.set_same_bitrate_poll_2(true);
-        ta.set_same_bitrate_listen_2(true);
+        let ta = Ta(0x80);
+        debug_now!("{ta:?}");
 
         let mut tb = Tb(0);
         // FWT = 256 * 16/fc * 2^FWI
@@ -377,7 +375,8 @@ where
 
         // Same values as old chip
         assert_eq!(0x78, t0.0);
-        assert_eq!(0b10010001, ta.0);
+        // assert_eq!(0b10010001, ta.0);
+        assert_eq!(0x80, ta.0);
         assert_eq!(0x78, tb.0);
 
         txn.configure(Configuration {

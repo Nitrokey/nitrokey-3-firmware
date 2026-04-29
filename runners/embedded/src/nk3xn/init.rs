@@ -75,7 +75,7 @@ type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 pub type WwdtEnabled = wwdt::Active;
 pub type WwdtResetting = wwdt::Active;
 pub type WwdtProtecting = wwdt::Inactive;
-pub type EnabledWwdt = Wwdt<WwdtEnabled, WwdtResetting, WwdtProtecting>;
+pub type MaybeEnabledWwdt = Option<Wwdt<WwdtEnabled, WwdtResetting, WwdtProtecting>>;
 
 struct Peripherals {
     syscon: hal::Syscon,
@@ -156,21 +156,26 @@ impl Stage0 {
         gpio: hal::Gpio<Unknown>,
         wwdt: WWDT,
     ) -> Stage1 {
-        let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
-        // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
-        const TIMER_COUNT: u32 = (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
-        wwdt.set_timer(TIMER_COUNT).unwrap();
-        wwdt.set_warning(0b1_1111_1111).unwrap();
-        let wwdt = wwdt.set_resetting().set_enabled();
-        debug_now!("Wwdt tv: {:?}", wwdt.timer());
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
         let (new_iocon, nfc_irq, is_nfc_passive) =
             self.enable_low_speed_for_passive_nfc(iocon, &mut gpio);
-        // is_nfc_passive = true;
+        let is_nfc_passive = true;
         iocon = new_iocon;
         let nfc_irq = Some(nfc_irq);
+
+        let wwdt = (!is_nfc_passive).then(|| {
+            let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
+            // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
+            const TIMER_COUNT: u32 =
+                (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
+            wwdt.set_timer(TIMER_COUNT).unwrap();
+            wwdt.set_warning(0b1_1111_1111).unwrap();
+            let wwdt = wwdt.set_resetting().set_enabled();
+            debug_now!("Wwdt tv: {:?}", wwdt.timer());
+            wwdt
+        });
 
         let clocks = self.enable_clocks(is_nfc_passive);
         let clocks = Clocks {
@@ -180,7 +185,6 @@ impl Stage0 {
             iocon,
             gpio,
         };
-        debug_now!("Wwdt tv again: {:?}", wwdt.timer());
         Stage1 {
             status: self.status,
             peripherals: self.peripherals,
@@ -194,7 +198,7 @@ pub struct Stage1 {
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage1 {
@@ -371,7 +375,7 @@ pub struct Stage2 {
     clocks: Clocks,
     basic: Basic,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage2 {
@@ -523,6 +527,208 @@ impl Stage2 {
         i2c
     }
 
+    /// Reduce power draw by disabling everything not used over NFC
+    fn reduce_power_draw(mut self) -> Self {
+        let iocon = self.clocks.iocon.release();
+        // Put all unused pins in pulldown so that they're not drawing power by floating
+        iocon.pio0_0.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_1.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_2.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_3.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_4.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_6.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_7.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_8.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_10.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_11.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_12.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_13.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_14.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_15.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_16.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_17.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_18.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_19.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_20.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_21.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_22.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_23.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_24.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_25.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_26.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_27.modify(|_, w| w.mode().pull_down());
+        // iocon.pio0_28.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_29.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_30.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_31.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_0.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_1.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_2.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_3.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_4.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_5.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_6.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_7.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_8.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_9.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_10.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_11.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_12.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_13.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_14.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_15.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_16.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_17.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_18.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_19.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_20.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_21.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_22.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_23.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_24.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_25.modify(|_, w| w.mode().pull_down());
+        // iocon.pio1_26.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_27.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_28.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_29.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_30.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_31.modify(|_, w| w.mode().pull_down());
+        self.clocks.iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
+
+        // Gate off unused peripheral clocks
+        let syscon = self.peripherals.syscon.release();
+        syscon.ahbclkctrl0.modify(|_, w| {
+            w.wwdt()
+                .disable() // watchdog not used in NFC
+                .rtc()
+                .disable() // RTC not used
+                .crcgen()
+                .disable() // CRC engine not used
+                .dma0()
+                .disable() // DMA not used
+                // .pint()
+                // .disable() // pin interrupts not used (RTIC uses SW-triggered vectors)
+                .gint()
+                .disable() // group interrupt not used
+                .mailbox()
+                .disable() // dual-core mailbox not used
+                .adc()
+                .disable() // ADC is used by the dynamic clock controller
+                .gpio2()
+                .disable() // GPIO2/3 ports not used
+                .gpio3()
+                .disable()
+            // .iocon()
+            // .disable() // iocon is disabled after everything pin mux is fixed after init; no further IOCON access
+        });
+        syscon.ahbclkctrl1.modify(|_, w| {
+            w.mrt()
+                .disable() // multi-rate timer not used
+                .ostimer()
+                .disable() // OS event timer not used
+                .sct()
+                .disable() // SCTimer not used
+                .utick()
+                .disable() // micro-tick timer not used
+                .usb0_dev()
+                .disable() // USB not used
+                .fc0()
+                .disable() // FLEXCOMM0..4, 6..7 not used (only FC5/I2C5 is)
+                .fc1()
+                .disable()
+                .fc2()
+                .disable()
+                .fc3()
+                .disable()
+                .fc4()
+                .disable()
+                .fc6()
+                .disable()
+                .fc7()
+                .disable()
+        });
+        syscon.ahbclkctrl2.modify(|_, w| {
+            w.dma1()
+                .disable()
+                .comp()
+                .disable()
+                .sdio()
+                .disable()
+                .usb1_host()
+                .disable()
+                .usb1_dev()
+                .disable()
+                .usb1_ram()
+                .disable()
+                .usb1_phy()
+                .disable()
+                .usb0_hostm()
+                .disable()
+                .usb0_hosts()
+                .disable()
+                .hash_aes()
+                .disable() // AES/SHA not used
+                .pq()
+                .disable() // math coprocessor not used
+                .plulut()
+                .disable() // PLU not used
+                .casper()
+                .disable() // crypto accelerator not used
+                .puf()
+                .disable() // PUF not used
+                // .rng()
+                // .disable() // RNG is used
+                .sysctl()
+                .disable() // secure sysctl not used
+                .hs_lspi()
+                .disable() // HS-SPI not used
+                .gpio_sec()
+                .disable() // secure GPIO not used
+                .gpio_sec_int()
+                .disable()
+                .freqme()
+                .disable() // frequency measure not used
+        });
+
+        // enable autoclockgating
+        syscon.autoclkgateoverride.write(|w| {
+            w.enableupdate()
+                .enable()
+                .rom()
+                .disable()
+                .ramx_ctrl()
+                .disable()
+                .ram0_ctrl()
+                .disable()
+                .ram1_ctrl()
+                .disable()
+                .ram2_ctrl()
+                .disable()
+                .ram3_ctrl()
+                .disable()
+                .ram4_ctrl()
+                .disable()
+                .sdma0()
+                .disable()
+                .sdma1()
+                .disable()
+                .sync0_apb()
+                .disable()
+                .sync1_apb()
+                .disable()
+                .syscon()
+                .disable()
+                .usb0()
+                .disable()
+                .crcgen()
+                .disable()
+        });
+
+        self.peripherals.syscon = hal::Syscon::from(syscon);
+
+        self
+    }
+
     #[inline(never)]
     pub fn next(
         mut self,
@@ -548,6 +754,7 @@ impl Stage2 {
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
+            self = self.reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
@@ -579,7 +786,7 @@ pub struct Stage3 {
     spi: Option<Spi>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage3 {
@@ -633,7 +840,7 @@ pub struct Stage4 {
     flash: Flash,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage4 {
@@ -788,7 +995,7 @@ pub struct Stage5 {
     store: RunnerStore<NK3xN>,
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     se050_i2c: Option<I2C>,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage5 {
@@ -851,7 +1058,7 @@ pub struct Stage6 {
     nfc_rp: CcidResponder<'static>,
     store: RunnerStore<NK3xN>,
     trussed: Trussed<NK3xN>,
-    wwdt: EnabledWwdt,
+    wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage6 {
@@ -926,10 +1133,15 @@ impl Stage6 {
             let syscon = self.peripherals.syscon;
 
             let gpio = &mut self.clocks.gpio;
-            let iocon = &mut self.clocks.iocon;
 
-            let mut new_clock_controller =
-                DynamicClockController::new(adc.unwrap(), clocks, pmc, syscon, gpio, iocon);
+            let mut new_clock_controller = DynamicClockController::new(
+                adc.unwrap(),
+                clocks,
+                pmc,
+                syscon,
+                gpio,
+                self.clocks.iocon,
+            );
             new_clock_controller.start_high_voltage_compare();
 
             Some(new_clock_controller)
@@ -938,7 +1150,9 @@ impl Stage6 {
         };
 
         // info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
-        debug_now!("Wwdt tv again: {:?}", self.wwdt.timer());
+        if let Some(wwdt) = self.wwdt.as_mut() {
+            debug_now!("Wwdt tv again: {:?}", wwdt.timer());
+        }
 
         All {
             basic: self.basic,
@@ -959,7 +1173,7 @@ pub struct All {
     pub apps: Apps<NK3xN>,
     pub endpoints: Endpoints,
     pub clock_controller: Option<DynamicClockController>,
-    pub wwdt: EnabledWwdt,
+    pub wwdt: MaybeEnabledWwdt,
 }
 
 #[inline(never)]

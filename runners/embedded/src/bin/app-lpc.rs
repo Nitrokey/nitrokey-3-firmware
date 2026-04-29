@@ -93,7 +93,7 @@ mod app {
 
     #[local]
     struct LocalResources {
-        wwdt: nk3xn::init::EnabledWwdt,
+        wwdt: nk3xn::init::MaybeEnabledWwdt,
         /// The endpoints that are polled by the Trussed service.
         endpoints: Endpoints,
     }
@@ -171,7 +171,9 @@ mod app {
             //         perf_timer.start(60_000_000.microseconds());
             //     }
             // });
-            wwdt.feed();
+            if let Some(wwdt) = wwdt {
+                wwdt.feed();
+            }
 
             #[cfg(not(feature = "no-delog"))]
             if time > 1_200_000 {

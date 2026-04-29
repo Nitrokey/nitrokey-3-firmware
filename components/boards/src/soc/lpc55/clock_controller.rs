@@ -40,17 +40,18 @@ impl DynamicClockController {
             conversion_delay: 96,
         }
     }
+
     pub fn new(
         adc: Adc<Enabled>,
         clocks: Clocks,
         pmc: Pmc,
         syscon: Syscon,
         gpio: &mut Gpio<Enabled>,
-        iocon: &mut Iocon<Enabled>,
+        mut iocon: Iocon<Enabled>,
     ) -> DynamicClockController {
         let signal_button = SignalPin::take()
             .unwrap()
-            .into_gpio_pin(iocon, gpio)
+            .into_gpio_pin(&mut iocon, gpio)
             .into_output_high();
 
         let adc = adc.release();
@@ -94,6 +95,12 @@ impl DynamicClockController {
                 .sts()
                 .bits(2)
         });
+        let syscon = syscon.release();
+
+        syscon.ahbclkctrl0.modify(|_, w| {
+            w.iocon().disable() // pin mux is fixed after init; no further IOCON access
+        });
+        let syscon = Syscon::from(syscon);
 
         DynamicClockController {
             adc,
