@@ -378,7 +378,6 @@ mod app {
                 // perf_timer.start(60_000_000.microseconds());
             });
     }
-
 }
 
 #[inline(never)]

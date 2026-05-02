@@ -745,7 +745,7 @@ impl Stage2 {
             (Some(se050_i2c), None, Some(spi))
         };
 
-        cortex_m::asm::delay(4_000_000 * 30);
+        //cortex_m::asm::delay(4_000_000 * 30);
 
         Stage3 {
             status: self.status,
