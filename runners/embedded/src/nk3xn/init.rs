@@ -587,7 +587,7 @@ impl Stage2 {
         iocon.pio1_23.modify(|_, w| w.mode().pull_down());
         iocon.pio1_24.modify(|_, w| w.mode().pull_down());
         iocon.pio1_25.modify(|_, w| w.mode().pull_down());
-        // iocon.pio1_26.modify(|_, w| w.mode().pull_down());
+        iocon.pio1_26.modify(|_, w| w.mode().pull_down()); //  se050 enable
         iocon.pio1_27.modify(|_, w| w.mode().pull_down());
         iocon.pio1_28.modify(|_, w| w.mode().pull_down());
         iocon.pio1_29.modify(|_, w| w.mode().pull_down());
@@ -1126,6 +1126,18 @@ impl Stage6 {
         self.basic.delay_timer.cancel().ok();
 
         let clock_controller = if self.clocks.is_nfc_passive {
+            // Drop CPU frequency to 4 MHz before handing the clocks over to the
+            // dynamic clock controller, similar to how it's bumped/lowered around FS mount.
+            // self.clocks.clocks = unsafe {
+            //     hal::ClockRequirements::default()
+            //         .system_frequency(4.MHz())
+            //         .reconfigure(
+            //             self.clocks.clocks,
+            //             &mut self.peripherals.pmc,
+            //             &mut self.peripherals.syscon,
+            //         )
+            // };
+
             let adc = self.basic.adc.take();
             let clocks = self.clocks.clocks;
 

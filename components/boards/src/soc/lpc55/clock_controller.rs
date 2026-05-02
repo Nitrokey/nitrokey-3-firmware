@@ -135,7 +135,7 @@ impl DynamicClockController {
     }
 
     fn decrease_clock(&mut self) {
-        let requirements = lpc55_hal::ClockRequirements::default().system_frequency(12.MHz());
+        let requirements = lpc55_hal::ClockRequirements::default().system_frequency(8.MHz());
 
         self.clocks =
             unsafe { requirements.reconfigure(self.clocks, &mut self.pmc, &mut self.syscon) };
@@ -145,9 +145,9 @@ impl DynamicClockController {
     fn increase_clock(&mut self) {
         let requirements = if self.decrease_count > 2 {
             // opt for slower freq if there's too many dips in power
-            lpc55_hal::ClockRequirements::default().system_frequency(48.MHz())
+            lpc55_hal::ClockRequirements::default().system_frequency(12.MHz())
         } else {
-            lpc55_hal::ClockRequirements::default().system_frequency(96.MHz())
+            lpc55_hal::ClockRequirements::default().system_frequency(12.MHz())
         };
 
         self.clocks =

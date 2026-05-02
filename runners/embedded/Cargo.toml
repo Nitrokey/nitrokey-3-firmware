@@ -62,6 +62,7 @@ default = ["alloc"]
 test = ["apps/nk3-test", "utils/test"]
 develop = ["no-encrypted-storage", "apps/no-reset-time-window", "log-traceP"]
 develop-no-press = ["develop", "no-buttons"]
+fast-develop = ["no-delog", "no-encrypted-storage", "apps/no-reset-time-window"]
 provisioner = ["apps/nk3-provisioner", "boards/provisioner", "write-undefined-flash", "no-buttons", "apps/no-reset-time-window", "lpc55-hardware-checks"]
 
 no-delog = ["boards/no-delog", "delog/knock-it-off"]
