@@ -439,15 +439,14 @@ impl Stage2 {
             self.basic.perf_timer.take().unwrap(),
         );
 
-        nfc.init().ok();
+        // Only run EEPROM configuration on USB power; energy-harvested boots
+        // must never write the chip's NV memory.
+        nfc.init(!self.clocks.is_nfc_passive).ok();
 
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         #[cfg(not(feature = "no-delog"))]
         boards::init::Delogger::flush();
         iso14443.poll();
-        // Give a small delay to charge up capacitors
-        self.basic.delay_timer.start(5_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
         Some(iso14443)
     }
 

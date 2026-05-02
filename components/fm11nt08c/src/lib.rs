@@ -336,79 +336,69 @@ where
         }
     }
 
-    pub fn init(&mut self) -> Result<(), I2C::BusError> {
+    /// Initialize the chip.
+    pub fn init(&mut self, configure: bool) -> Result<(), I2C::BusError> {
         debug!("Init");
         self.csn.set_low().unwrap();
-        self.timer.start(Microseconds::new(250));
-        nb::block!(self.timer.wait()).unwrap();
         let mut txn = self.txn();
 
-        // txn.dump_registers();
-        // Undocumeted check
-        let user_cfg0 = UserCfg0(0x91);
-        let user_cfg1 = UserCfg1(0x82);
-        let user_cfg2 = UserCfg2(0x21);
+        if configure {
+            let user_cfg0 = UserCfg0(0x91);
+            let user_cfg1 = UserCfg1(0x82);
+            let user_cfg2 = UserCfg2(0x21);
 
-        let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
-        // debug_now!("{user_cfg0:02x?}\n{user_cfg1:02x?}\n{user_cfg2:02x?} chk_word: {usercfg_chk_word:02x}");
-        txn.write_eeprom(
-            0x0390,
-            &[user_cfg0.0, user_cfg1.0, user_cfg2.0, usercfg_chk_word],
-            true,
-        )?;
+            let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
+            txn.write_eeprom(
+                0x0390,
+                &[user_cfg0.0, user_cfg1.0, user_cfg2.0, usercfg_chk_word],
+                true,
+            )?;
 
-        let mut t0 = T0(0);
-        t0.set_tc_transmitted(true);
-        t0.set_tb_transmitted(true);
-        t0.set_ta_transmitted(true);
-        // Means 256 bytes FSCI
-        t0.set_fsci(0x8);
+            let mut t0 = T0(0);
+            t0.set_tc_transmitted(true);
+            t0.set_tb_transmitted(true);
+            t0.set_ta_transmitted(true);
+            // Means 256 bytes FSCI
+            t0.set_fsci(0x8);
 
-        let ta = Ta(0x80);
-        debug_now!("{ta:?}");
+            let ta = Ta(0x80);
 
-        let mut tb = Tb(0);
-        // FWT = 256 * 16/fc * 2^FWI
-        tb.set_fwi(7);
-        // SFGT = 256 * 16/fc * 2^SFGI
-        tb.set_sfgi(8);
+            let mut tb = Tb(0);
+            // FWT = 256 * 16/fc * 2^FWI
+            tb.set_fwi(7);
+            // SFGT = 256 * 16/fc * 2^SFGI
+            tb.set_sfgi(8);
 
-        // Same values as old chip
-        assert_eq!(0x78, t0.0);
-        // assert_eq!(0b10010001, ta.0);
-        assert_eq!(0x80, ta.0);
-        assert_eq!(0x78, tb.0);
+            // Same values as old chip
+            assert_eq!(0x78, t0.0);
+            assert_eq!(0x80, ta.0);
+            assert_eq!(0x78, tb.0);
 
-        txn.configure(Configuration {
-            user_cfg0,
-            user_cfg1,
-            user_cfg2,
-            atqa: 0x4400,
-            sak1: 0x04,
-            sak2: 0x20,
-            // Length (5 = TL + T0 + TA + TB + TC)
-            tl: 0x05,
-            t0: t0.0,
-            ta: ta.0,
-            tb: tb.0,
-            // No advanced protocol features supported
-            // DID not supported
-            // NAD not supported
-            tc: 0x00,
+            txn.configure(Configuration {
+                user_cfg0,
+                user_cfg1,
+                user_cfg2,
+                atqa: 0x4400,
+                sak1: 0x04,
+                sak2: 0x20,
+                // Length (5 = TL + T0 + TA + TB + TC)
+                tl: 0x05,
+                t0: t0.0,
+                ta: ta.0,
+                tb: tb.0,
+                // No advanced protocol features supported
+                // DID not supported
+                // NAD not supported
+                tc: 0x00,
+                // current limiting resistance impedance when power output
+                vout_reg_cfg: VoutResCfg(0xF0),
+            })?;
+        }
 
-            // configaration of current limiting resistance impedance when power output
-            vout_reg_cfg: VoutResCfg(0xF0),
-        })?;
-
-        // txn.device.write_fifo(&[0x00, 0x00, 0x00])?;
-        // // debug_now!(
-        //     "AFTER WRITING: {:02x?}",
-        //     txn.read_register::<FifoWordCnt>()?.fifo_wordcnt(),
-        // );
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
-        self.timer.start(Microseconds::new(100_000));
+        self.timer.start(Microseconds::new(5_000));
         nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
