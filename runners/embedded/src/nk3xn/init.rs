@@ -134,7 +134,7 @@ impl Stage0 {
 
     fn enable_clocks(&mut self, is_nfc_passive: bool) -> clocks::Clocks {
         // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 4.MHz() } else { 96.MHz() };
+        let frequency = if is_nfc_passive { 24.MHz() } else { 96.MHz() };
         hal::ClockRequirements::default()
             .system_frequency(frequency)
             .configure(
@@ -907,7 +907,7 @@ impl Stage4 {
         if self.clocks.is_nfc_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(12.MHz())
+                    .system_frequency(24.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
