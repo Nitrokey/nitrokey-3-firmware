@@ -181,6 +181,7 @@ impl Stage0 {
             iocon,
             gpio,
         };
+
         Stage1 {
             status: self.status,
             peripherals: self.peripherals,
@@ -452,13 +453,13 @@ impl Stage2 {
 
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
-        let _enabled = pins::Pio1_26::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
+        // let _enabled = pins::Pio1_26::take()
+        //     .unwrap()
+        //     .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+        //     .into_output_high();
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+        // self.basic.delay_timer.start(100_000.microseconds());
+        // nb::block!(self.basic.delay_timer.wait()).ok();
 
         let token = self.clocks.clocks.support_flexcomm_token().unwrap();
         let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
@@ -471,11 +472,11 @@ impl Stage2 {
         let mut i2c = hal::I2cMaster::new(
             i2c,
             (scl, sda),
-            hal::time::Hertz::try_from(100_u32.kHz()).unwrap(),
+            hal::time::Hertz::try_from(1000_u32.kHz()).unwrap(),
         );
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+        // self.basic.delay_timer.start(100_000.microseconds());
+        // nb::block!(self.basic.delay_timer.wait()).ok();
 
         // RESYNC command
         // let command = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
@@ -737,12 +738,14 @@ impl Stage2 {
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
-            self = self.reduce_power_draw();
+            //self = self.reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
             (Some(se050_i2c), None, Some(spi))
         };
+
+        cortex_m::asm::delay(4_000_000 * 30);
 
         Stage3 {
             status: self.status,
