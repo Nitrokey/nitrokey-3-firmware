@@ -110,13 +110,6 @@ mod app {
         /// It could and should be behind some kind of `debug-nfc-timer` feature flag.
         perf_timer: Option<lpc55::PerformanceTimer>,
 
-        /// When using passive power (i.e. NFC), we switch between 12MHz
-        /// and 48Mhz, trying to optimize speed while keeping power high enough.
-        ///
-        /// In principle, we could just run at 12MHz constantly, and then
-        /// there would be no need for a system-speed independent wait extender.
-        clock_ctrl: Option<lpc55::DynamicClockController>,
-
         /// Applications must respond to NFC requests within a certain time frame (~40ms)
         /// or send a "wait extension" to the NFC reader. This timer is responsible
         /// for scheduling these.
@@ -158,7 +151,6 @@ mod app {
             trussed,
             apps,
             endpoints,
-            clock_controller,
             wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
@@ -186,7 +178,6 @@ mod app {
             usb_classes: usb_nfc.usb_classes,
             contactless: usb_nfc.iso14443,
             perf_timer,
-            clock_ctrl: clock_controller,
             wait_extender,
         };
         let local = LocalResources { wwdt, endpoints };
@@ -390,12 +381,6 @@ mod app {
             });
     }
 
-    #[task(binds = ADC0, shared = [clock_ctrl], priority = 8)]
-    fn adc_int(mut c: adc_int::Context) {
-        c.shared
-            .clock_ctrl
-            .lock(|clock_ctrl| clock_ctrl.as_mut().unwrap().handle());
-    }
 }
 
 #[inline(never)]

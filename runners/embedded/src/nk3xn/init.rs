@@ -13,10 +13,7 @@ use boards::{
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
         ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
     },
-    soc::{
-        lpc55::{clock_controller::DynamicClockController, Lpc55},
-        Soc,
-    },
+    soc::{lpc55::Lpc55, Soc},
     store::{self, RunnerStore, StoreResources},
     ui::{
         buttons::{self, Press},
@@ -94,7 +91,6 @@ struct Clocks {
 pub struct Basic {
     pub delay_timer: Timer<ctimer::Ctimer0<Enabled>>,
     pub perf_timer: Option<Timer<ctimer::Ctimer4<Enabled>>>,
-    adc: Option<hal::Adc<Enabled>>,
     three_buttons: Option<ThreeButtons>,
     rgb: Option<RgbLed>,
     old_firmware_version: u32,
@@ -289,7 +285,6 @@ impl Stage1 {
     #[inline(never)]
     pub fn next(
         mut self,
-        adc: hal::Adc<Unknown>,
         delay_timer: ctimer::Ctimer0,
         ctimer1: ctimer::Ctimer1,
         ctimer2: ctimer::Ctimer2,
@@ -300,18 +295,7 @@ impl Stage1 {
         require_prince: bool,
         boot_to_bootrom: bool,
     ) -> Stage2 {
-        let pmc = &mut self.peripherals.pmc;
         let syscon = &mut self.peripherals.syscon;
-
-        // Start out with slow clock if in passive mode;
-        #[allow(unused_mut)]
-        let mut adc = Some(if self.clocks.is_nfc_passive {
-            // important to start Adc early in passive mode
-            adc.configure(DynamicClockController::adc_configuration())
-                .enabled(pmc, syscon)
-        } else {
-            adc.enabled(pmc, syscon)
-        });
 
         let mut delay_timer = Timer::new(
             delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
@@ -353,7 +337,6 @@ impl Stage1 {
         let basic = Basic {
             delay_timer,
             perf_timer: Some(perf_timer),
-            adc,
             three_buttons,
             rgb: Some(rgb),
             old_firmware_version,
@@ -553,7 +536,7 @@ impl Stage2 {
         iocon.pio0_21.modify(|_, w| w.mode().pull_down()); // ext. flash power
 
         // iocon.pio0_22.modify(|_, w| w.mode().pull_down());
-        // iocon.pio0_23.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_23.modify(|_, w| w.mode().pull_down());
         // iocon.pio0_24.modify(|_, w| w.mode().pull_down());
         // iocon.pio0_25.modify(|_, w| w.mode().pull_down());
         iocon.pio0_26.modify(|_, w| w.mode().pull_down());
@@ -614,7 +597,7 @@ impl Stage2 {
                 .mailbox()
                 .disable() // dual-core mailbox not used
                 .adc()
-                .disable() // ADC is used by the dynamic clock controller
+                .disable() // ADC not used (dynamic clock controller removed)
                 .gpio2()
                 .disable() // GPIO2/3 ports not used
                 .gpio3()
@@ -1126,42 +1109,6 @@ impl Stage6 {
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();
 
-        let clock_controller = if self.clocks.is_nfc_passive {
-            // Drop CPU frequency to 4 MHz before handing the clocks over to the
-            // dynamic clock controller, similar to how it's bumped/lowered around FS mount.
-            // self.clocks.clocks = unsafe {
-            //     hal::ClockRequirements::default()
-            //         .system_frequency(4.MHz())
-            //         .reconfigure(
-            //             self.clocks.clocks,
-            //             &mut self.peripherals.pmc,
-            //             &mut self.peripherals.syscon,
-            //         )
-            // };
-
-            let adc = self.basic.adc.take();
-            let clocks = self.clocks.clocks;
-
-            let pmc = self.peripherals.pmc;
-            let syscon = self.peripherals.syscon;
-
-            let gpio = &mut self.clocks.gpio;
-
-            let mut new_clock_controller = DynamicClockController::new(
-                adc.unwrap(),
-                clocks,
-                pmc,
-                syscon,
-                gpio,
-                self.clocks.iocon,
-            );
-            new_clock_controller.start_high_voltage_compare();
-
-            Some(new_clock_controller)
-        } else {
-            None
-        };
-
         // info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
         if let Some(wwdt) = self.wwdt.as_mut() {
             debug_now!("Wwdt tv again: {:?}", wwdt.timer());
@@ -1172,7 +1119,6 @@ impl Stage6 {
             trussed: self.trussed,
             apps,
             endpoints,
-            clock_controller,
             usb_nfc,
             wwdt: self.wwdt,
         }
@@ -1185,7 +1131,6 @@ pub struct All {
     pub trussed: Trussed<NK3xN>,
     pub apps: Apps<NK3xN>,
     pub endpoints: Endpoints,
-    pub clock_controller: Option<DynamicClockController>,
     pub wwdt: MaybeEnabledWwdt,
 }
 
