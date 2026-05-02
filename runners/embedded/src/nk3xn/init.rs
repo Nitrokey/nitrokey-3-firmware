@@ -550,7 +550,8 @@ impl Stage2 {
         iocon.pio0_18.modify(|_, w| w.mode().pull_down());
         // iocon.pio0_19.modify(|_, w| w.mode().pull_down());
         iocon.pio0_20.modify(|_, w| w.mode().pull_down());
-        // iocon.pio0_21.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_21.modify(|_, w| w.mode().pull_down()); // ext. flash power
+
         // iocon.pio0_22.modify(|_, w| w.mode().pull_down());
         // iocon.pio0_23.modify(|_, w| w.mode().pull_down());
         // iocon.pio0_24.modify(|_, w| w.mode().pull_down());
