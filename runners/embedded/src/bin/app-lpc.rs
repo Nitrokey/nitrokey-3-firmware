@@ -233,12 +233,10 @@ mod app {
                 );
             });
 
-            // TODO: re-enable?
-            /*
-            contactless.lock(|contactless| {
-                runtime::poll_nfc(contactless, nfc_keepalive::spawn_after);
-            });
-            */
+            // Sleep until the next interrupt wakes us. Any task pend (USB1,
+            // PIN_INT0, OS_EVENT, CTIMER0, …) brings us back here to drain the
+            // dispatchers; nothing else needs to run between events.
+            cortex_m::asm::wfi();
         }
     }
 
