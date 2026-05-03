@@ -900,6 +900,7 @@ impl Stage4 {
         //     self.basic.perf_timer.elapsed().0 / 1000
         // );
         // TODO: poll iso14443
+        self.nfc.iso14443.poll();
         let simulated_efs = external.is_ram();
         let store = store::init_store(
             resources,
