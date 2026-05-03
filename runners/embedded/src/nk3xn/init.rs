@@ -899,8 +899,9 @@ impl Stage4 {
         //     "mount start {} ms",
         //     self.basic.perf_timer.elapsed().0 / 1000
         // );
-        // TODO: poll iso14443
-        self.nfc.iso14443.poll();
+        if let Some(iso14443) = &mut self.nfc {
+            iso14443.poll();
+        }
         let simulated_efs = external.is_ram();
         let store = store::init_store(
             resources,
@@ -1027,6 +1028,10 @@ impl Stage5 {
         {
             let _ = self.se050_timer;
             let _ = self.se050_i2c;
+        }
+
+        if let Some(iso14443) = &mut self.nfc {
+            iso14443.poll();
         }
 
         Stage6 {
