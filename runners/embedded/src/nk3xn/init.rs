@@ -151,6 +151,7 @@ impl Stage0 {
         iocon: hal::Iocon<Unknown>,
         gpio: hal::Gpio<Unknown>,
         wwdt: WWDT,
+        ctimer1: ctimer::Ctimer1,
     ) -> Stage1 {
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
@@ -173,10 +174,19 @@ impl Stage0 {
             wwdt
         });
 
-        let clocks = self.enable_clocks(is_nfc_passive);
+        let clocks_inner = self.enable_clocks(is_nfc_passive);
+
+        // measurement stuff
+        let token = clocks_inner.support_1mhz_fro_token().unwrap();
+        let mut boot_timer = Timer::new(ctimer1.enabled(&mut self.peripherals.syscon, token));
+        boot_timer.start(u32::MAX.microseconds());
+        boards::soc::lpc55::boot_timer::install(boot_timer);
+        nfc_device::iso14443::install_pre_response_send_hook(boards::measurement::freeze_us);
+        ndef_app::install_url_value_reader(boards::measurement::measured_us);
+
         let clocks = Clocks {
             is_nfc_passive,
-            clocks,
+            clocks: clocks_inner,
             nfc_irq,
             iocon,
             gpio,
@@ -287,7 +297,6 @@ impl Stage1 {
     pub fn next(
         mut self,
         delay_timer: ctimer::Ctimer0,
-        ctimer1: ctimer::Ctimer1,
         ctimer2: ctimer::Ctimer2,
         ctimer3: ctimer::Ctimer3,
         perf_timer: ctimer::Ctimer4,
@@ -311,11 +320,9 @@ impl Stage1 {
 
         let mut rgb = self.init_rgb(ctimer3);
 
-        let mut three_buttons = if !self.clocks.is_nfc_passive {
-            Some(self.init_buttons(ctimer1))
-        } else {
-            None
-        };
+        // CTimer1 is now owned by the boot/measurement timer (set up in
+        // stage 0); buttons would need a different ctimer to come back.
+        let mut three_buttons: Option<ThreeButtons> = None;
 
         let mut pfr = pfr.enabled(&self.clocks.clocks).unwrap();
         let old_firmware_version =
@@ -879,7 +886,7 @@ impl Stage4 {
         if self.clocks.is_nfc_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(48.MHz())
+                    .system_frequency(24.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
@@ -1111,10 +1118,12 @@ impl Stage6 {
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();
 
-        // info!("init took {} ms", self.basic.perf_timer.elapsed().0 / 1000);
         if let Some(wwdt) = self.wwdt.as_mut() {
             debug_now!("Wwdt tv again: {:?}", wwdt.timer());
         }
+
+        // reset timer here!
+        boards::measurement::reset();
 
         All {
             basic: self.basic,

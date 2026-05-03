@@ -196,6 +196,10 @@ mod app {
         let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
+
+        // freez measurement here, right before we are able to receive nfc-stuff
+        boards::measurement::freeze_us();
+
         loop {
             #[cfg(not(feature = "no-delog"))]
             let mut time = 0;

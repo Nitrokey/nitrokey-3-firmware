@@ -7,6 +7,7 @@ use cortex_m_rt::ExceptionFrame;
 
 pub mod flash;
 pub mod init;
+pub mod measurement;
 pub mod runtime;
 pub mod soc;
 pub mod store;

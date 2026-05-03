@@ -12,6 +12,7 @@ use lpc55_hal::{
     typestates::init_state::Enabled,
 };
 
+pub mod boot_timer;
 pub mod monotonic;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;

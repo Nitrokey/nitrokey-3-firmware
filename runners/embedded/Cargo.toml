@@ -19,6 +19,7 @@ cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
 littlefs2-core = "0.1"
 nfc-device = { path = "../../components/nfc-device" }
+ndef-app = { path = "../../components/ndef-app" }
 utils = { path = "../../components/utils", features = ["storage"] }
 se05x = { version = "0.2.0", optional = true }
 

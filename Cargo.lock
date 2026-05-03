@@ -1211,6 +1211,7 @@ dependencies = [
  "lpc55-pac",
  "memory-regions",
  "nb 1.1.0",
+ "ndef-app",
  "nfc-device",
  "nrf52840-hal",
  "nrf52840-pac",

@@ -1,10 +1,31 @@
 use core::mem::MaybeUninit;
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 use apdu_dispatch::interchanges::{self, Requester};
 use embedded_time::duration::Milliseconds;
 use heapless::Vec;
 
 use crate::traits::nfc;
+
+/// Optional callback fired immediately before the I-block carrying an
+/// application response is handed to the underlying NFC device. Intended
+/// for freezing a measurement timer at the instant the response goes out
+/// on the wire (e.g. `boards::measurement::freeze_us`).
+static PRE_RESPONSE_SEND_HOOK: AtomicUsize = AtomicUsize::new(0);
+
+pub fn install_pre_response_send_hook(f: fn()) {
+    PRE_RESPONSE_SEND_HOOK.store(f as usize, Ordering::Release);
+}
+
+fn run_pre_response_send_hook() {
+    let raw = PRE_RESPONSE_SEND_HOOK.load(Ordering::Acquire);
+    if raw != 0 {
+        // SAFETY: only `install_pre_response_send_hook` writes this slot,
+        // and only with valid `fn()` pointers.
+        let f: fn() = unsafe { core::mem::transmute(raw) };
+        f();
+    }
+}
 
 pub enum SourceError {
     NoActivity,
@@ -392,6 +413,7 @@ where
                 // if let Some(last_iblock_recv) = self.last_iblock_recv {
                 info!("send!");
                 let (frame, data_used) = self.construct_iblock(&msg);
+                run_pre_response_send_hook();
                 self.send_frame(&frame).ok();
                 if data_used != msg.len() {
                     info!("chaining response!");
