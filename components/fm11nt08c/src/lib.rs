@@ -395,12 +395,12 @@ where
             })?;
         }
 
-        txn.write_register(MainIrqMask(0x07))?;
+        txn.write_register(MainIrqMask(0x2F))?;
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
-        self.timer.start(Microseconds::new(5_000));
-        nb::block!(self.timer.wait()).unwrap();
+        //self.timer.start(Microseconds::new(500));
+        //nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
 
@@ -446,6 +446,9 @@ where
         // self.set_led_state();
         // self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
+
+        self.write_register(MainIrqMask(0x2F))?;
+
         // let fifo_irq = self.read_register::<FifoIrq>()?;
 
         let mut new_session = false;

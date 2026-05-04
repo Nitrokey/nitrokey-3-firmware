@@ -21,6 +21,10 @@ static TX_COUNT: AtomicU32 = AtomicU32::new(0);
 // Compare against `RX_COUNT` to tell apart "chip is firing once per APDU"
 // from "chip fires many times for the same APDU (or for nothing at all)".
 static IRQ_COUNT: AtomicU32 = AtomicU32::new(0);
+// Timestamp (µs since epoch) of the first NFC IRQ. First-write-wins, like
+// the rx/tx timestamps, so we can distinguish "chip silent until APDU
+// arrives" from "chip fires lots of IRQs across the wait but no APDU".
+static IRQ_FIRST_US: AtomicU32 = AtomicU32::new(0);
 
 /// Register the function used by [`now_us`] to read the live timer.
 pub fn install_now_us(f: fn() -> u32) {
@@ -66,6 +70,7 @@ pub fn reset() {
     RX_COUNT.store(0, Ordering::Release);
     TX_COUNT.store(0, Ordering::Release);
     IRQ_COUNT.store(0, Ordering::Release);
+    IRQ_FIRST_US.store(0, Ordering::Release);
 }
 
 /// Record a receive event: bump the counter, and on the first call after
@@ -110,11 +115,21 @@ pub fn tx_count() -> u32 {
 }
 
 /// Bump the PIN_INT0-invocation counter. Call from the NFC IRQ task.
+/// Also latches the timestamp of the very first IRQ since [`reset`].
 pub fn record_irq() {
     IRQ_COUNT.fetch_add(1, Ordering::Relaxed);
+    let v = now_us()
+        .saturating_sub(EPOCH_US.load(Ordering::Acquire))
+        .max(1);
+    let _ = IRQ_FIRST_US.compare_exchange(0, v, Ordering::AcqRel, Ordering::Acquire);
 }
 
 /// Total number of NFC IRQ invocations since [`reset`].
 pub fn irq_count() -> u32 {
     IRQ_COUNT.load(Ordering::Relaxed)
+}
+
+/// Timestamp of the first NFC IRQ since [`reset`], or 0 if none yet.
+pub fn irq_first_us() -> u32 {
+    IRQ_FIRST_US.load(Ordering::Acquire)
 }

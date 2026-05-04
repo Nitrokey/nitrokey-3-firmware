@@ -193,6 +193,7 @@ impl Stage0 {
         ndef_app::install_url_rx_count_reader(boards::measurement::rx_count);
         ndef_app::install_url_tx_count_reader(boards::measurement::tx_count);
         ndef_app::install_url_irq_count_reader(boards::measurement::irq_count);
+        ndef_app::install_url_irq_first_reader(boards::measurement::irq_first_us);
 
         let clocks = Clocks {
             is_nfc_passive,

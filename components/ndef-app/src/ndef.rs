@@ -8,6 +8,7 @@ static URL_TX_FN: AtomicUsize = AtomicUsize::new(0);
 static URL_RX_COUNT_FN: AtomicUsize = AtomicUsize::new(0);
 static URL_TX_COUNT_FN: AtomicUsize = AtomicUsize::new(0);
 static URL_IRQ_COUNT_FN: AtomicUsize = AtomicUsize::new(0);
+static URL_IRQ_FIRST_FN: AtomicUsize = AtomicUsize::new(0);
 
 pub fn install_url_rx_reader(f: fn() -> u32) {
     URL_RX_FN.store(f as usize, Ordering::Release);
@@ -27,6 +28,10 @@ pub fn install_url_tx_count_reader(f: fn() -> u32) {
 
 pub fn install_url_irq_count_reader(f: fn() -> u32) {
     URL_IRQ_COUNT_FN.store(f as usize, Ordering::Release);
+}
+
+pub fn install_url_irq_first_reader(f: fn() -> u32) {
+    URL_IRQ_FIRST_FN.store(f as usize, Ordering::Release);
 }
 
 fn read_via(slot: &AtomicUsize) -> Option<u32> {
@@ -110,6 +115,7 @@ impl App {
         let rx = read_via(&URL_RX_FN);
         let rxc = read_via(&URL_RX_COUNT_FN);
         let irqc = read_via(&URL_IRQ_COUNT_FN);
+        let irqf = read_via(&URL_IRQ_FIRST_FN);
         let tx = read_via(&URL_TX_FN);
         let txc = read_via(&URL_TX_COUNT_FN);
         let mut first = true;
@@ -131,6 +137,9 @@ impl App {
         }
         if let Some(v) = irqc {
             append_kv(b"i", v, &mut url, &mut url_len);
+        }
+        if let Some(v) = irqf {
+            append_kv(b"f", v, &mut url, &mut url_len);
         }
         if let Some(v) = tx {
             append_kv(b"t", v, &mut url, &mut url_len);

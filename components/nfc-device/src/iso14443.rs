@@ -38,7 +38,7 @@ fn run_post_request_receive_hook() {
     }
 }
 
-const WTX_CYCLE_MS: u32 = 6;
+const WTX_CYCLE_MS: u32 = 32;
 
 pub enum SourceError {
     NoActivity,
