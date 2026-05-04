@@ -163,7 +163,14 @@ mod app {
         }
 
         let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
-        let systick = Systick::new(systick, 96_000_000); // TODO: read out sysclk
+        // Match the actual system clock so `spawn_after` durations come out
+        // as real milliseconds: passive mode runs at 24 MHz, USB mode at 96 MHz.
+        let sysclk_hz = if usb_nfc.usb_classes.is_some() {
+            96_000_000
+        } else {
+            48_000_000
+        };
+        let systick = Systick::new(systick, sysclk_hz);
 
         debug_now!("Reset from watchdog: {}", was_reset_from_wwdt);
         if was_reset_from_wwdt {
@@ -196,9 +203,6 @@ mod app {
         let idle::LocalResources { wwdt } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
-
-        // freez measurement here, right before we are able to receive nfc-stuff
-        boards::measurement::freeze_us();
 
         loop {
             #[cfg(not(feature = "no-delog"))]

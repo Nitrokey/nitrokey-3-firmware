@@ -7,10 +7,6 @@ use heapless::Vec;
 
 use crate::traits::nfc;
 
-/// Optional callback fired immediately before the I-block carrying an
-/// application response is handed to the underlying NFC device. Intended
-/// for freezing a measurement timer at the instant the response goes out
-/// on the wire (e.g. `boards::measurement::freeze_us`).
 static PRE_RESPONSE_SEND_HOOK: AtomicUsize = AtomicUsize::new(0);
 
 pub fn install_pre_response_send_hook(f: fn()) {
@@ -27,14 +23,27 @@ fn run_pre_response_send_hook() {
     }
 }
 
+static POST_REQUEST_RECEIVE_HOOK: AtomicUsize = AtomicUsize::new(0);
+
+pub fn install_post_request_receive_hook(f: fn()) {
+    POST_REQUEST_RECEIVE_HOOK.store(f as usize, Ordering::Release);
+}
+
+fn run_post_request_receive_hook() {
+    let raw = POST_REQUEST_RECEIVE_HOOK.load(Ordering::Acquire);
+    if raw != 0 {
+        // SAFETY: only `install_post_request_receive_hook` writes this slot.
+        let f: fn() = unsafe { core::mem::transmute(raw) };
+        f();
+    }
+}
+
+const WTX_CYCLE_MS: u32 = 6;
+
 pub enum SourceError {
     NoActivity,
 }
 
-/// Returned by `.poll()`.  This returns a potential duration that
-/// should be used to call `.poll_wait_extensions()` once elapsed.
-/// E.g. if Duration == 40ms, then poll_wait_extensions should be called approximately 40 ms later.
-/// It is up to the application how this is scheduled.
 pub enum Iso14443Status {
     Idle,
     ReceivedData(Milliseconds),
@@ -367,6 +376,7 @@ where
         self.buffer.clear();
         if let Ok(command) = command {
             if self.interchange.request(command).is_ok() {
+                run_post_request_receive_hook();
                 Ok(())
             } else {
                 // Would be better to try canceling and taking on this apdu.
@@ -429,7 +439,7 @@ where
         } else {
             let did_recv_apdu = self.check_for_apdu();
             if did_recv_apdu.is_ok() {
-                Iso14443Status::ReceivedData(Milliseconds(30))
+                Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS))
             } else {
                 Iso14443Status::Idle
             }
@@ -439,18 +449,18 @@ where
     pub fn poll_wait_extensions(&mut self) -> Iso14443Status {
         if self.wtx_requested {
             info!("warning: still awaiting wtx response.");
-            return Iso14443Status::ReceivedData(Milliseconds(32));
+            return Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS));
         }
 
         match self.interchange.state() {
             interchange::State::Responded => {
-                info!("could-send-from-wtx!");
-                Iso14443Status::ReceivedData(Milliseconds(32))
+                info!("could-send-from-wtx -> sending now!");
+                self.poll()
             }
             interchange::State::Requested | interchange::State::BuildingResponse => {
                 self.send_wtx();
                 self.wtx_requested = true;
-                Iso14443Status::ReceivedData(Milliseconds(32))
+                Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS))
             }
             _ => {
                 info!("wtx done");

@@ -134,7 +134,7 @@ impl Stage0 {
 
     fn enable_clocks(&mut self, is_nfc_passive: bool) -> clocks::Clocks {
         // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 24.MHz() } else { 96.MHz() };
+        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
         hal::ClockRequirements::default()
             .system_frequency(frequency)
             .configure(
@@ -181,8 +181,17 @@ impl Stage0 {
         let mut boot_timer = Timer::new(ctimer1.enabled(&mut self.peripherals.syscon, token));
         boot_timer.start(u32::MAX.microseconds());
         boards::soc::lpc55::boot_timer::install(boot_timer);
-        nfc_device::iso14443::install_pre_response_send_hook(boards::measurement::freeze_us);
-        ndef_app::install_url_value_reader(boards::measurement::measured_us);
+        // Capture two independent timestamps per transaction: when the first
+        // APDU arrives from the chip, and when the first response goes out
+        // on the wire. The NDEF URL exposes both as `?r=<rx>&t=<tx>` so the
+        // delta (firmware processing) and the absolute rx (external chip +
+        // reader handshake) can be observed in a single read.
+        nfc_device::iso14443::install_post_request_receive_hook(boards::measurement::record_rx_us);
+        nfc_device::iso14443::install_pre_response_send_hook(boards::measurement::record_tx_us);
+        ndef_app::install_url_rx_reader(boards::measurement::rx_first_us);
+        ndef_app::install_url_tx_reader(boards::measurement::tx_first_us);
+        ndef_app::install_url_rx_count_reader(boards::measurement::rx_count);
+        ndef_app::install_url_tx_count_reader(boards::measurement::tx_count);
 
         let clocks = Clocks {
             is_nfc_passive,
@@ -405,7 +414,7 @@ impl Stage2 {
         )?;
 
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::A(nfc), nfc_rq);
-        iso14443.poll();
+        //iso14443.poll();
         // Give a small delay to charge up capacitors
         // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
         Some(iso14443)
@@ -454,7 +463,7 @@ impl Stage2 {
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         #[cfg(not(feature = "no-delog"))]
         boards::init::Delogger::flush();
-        iso14443.poll();
+        //iso14443.poll();
         Some(iso14443)
     }
 
@@ -886,7 +895,7 @@ impl Stage4 {
         if self.clocks.is_nfc_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(24.MHz())
+                    .system_frequency(48.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
@@ -899,9 +908,9 @@ impl Stage4 {
         //     "mount start {} ms",
         //     self.basic.perf_timer.elapsed().0 / 1000
         // );
-        if let Some(iso14443) = &mut self.nfc {
-            iso14443.poll();
-        }
+        //if let Some(iso14443) = &mut self.nfc {
+        //    iso14443.poll();
+        //}
         let simulated_efs = external.is_ram();
         let store = store::init_store(
             resources,
@@ -916,7 +925,7 @@ impl Stage4 {
         if self.clocks.is_nfc_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(24.MHz())
+                    .system_frequency(48.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
@@ -925,9 +934,9 @@ impl Stage4 {
             };
         }
 
-        if let Some(iso14443) = &mut self.nfc {
-            iso14443.poll();
-        }
+        //if let Some(iso14443) = &mut self.nfc {
+        //    iso14443.poll();
+        //}
 
         Stage5 {
             status: self.status,
@@ -1030,9 +1039,9 @@ impl Stage5 {
             let _ = self.se050_i2c;
         }
 
-        if let Some(iso14443) = &mut self.nfc {
-            iso14443.poll();
-        }
+        //if let Some(iso14443) = &mut self.nfc {
+        //    iso14443.poll();
+        //}
 
         Stage6 {
             status: self.status,
@@ -1127,9 +1136,6 @@ impl Stage6 {
         if let Some(wwdt) = self.wwdt.as_mut() {
             debug_now!("Wwdt tv again: {:?}", wwdt.timer());
         }
-
-        // reset timer here!
-        boards::measurement::reset();
 
         All {
             basic: self.basic,

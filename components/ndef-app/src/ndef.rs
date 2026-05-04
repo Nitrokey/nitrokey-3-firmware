@@ -3,23 +3,40 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use apdu_app::{CommandView, Data, Interface};
 use iso7816::{Instruction, Status};
 
-/// Optional reader for the µs value that gets embedded into the NDEF URL as
-/// `?t=<value>`. Install with [`install_url_value_reader`]; if no reader is
-/// installed, the URL is served without a query string.
-static URL_VALUE_FN: AtomicUsize = AtomicUsize::new(0);
+static URL_RX_FN: AtomicUsize = AtomicUsize::new(0);
+static URL_TX_FN: AtomicUsize = AtomicUsize::new(0);
+static URL_RX_COUNT_FN: AtomicUsize = AtomicUsize::new(0);
+static URL_TX_COUNT_FN: AtomicUsize = AtomicUsize::new(0);
 
-pub fn install_url_value_reader(f: fn() -> u32) {
-    URL_VALUE_FN.store(f as usize, Ordering::Release);
+pub fn install_url_rx_reader(f: fn() -> u32) {
+    URL_RX_FN.store(f as usize, Ordering::Release);
 }
 
-fn read_url_value() -> Option<u32> {
-    let raw = URL_VALUE_FN.load(Ordering::Acquire);
+pub fn install_url_tx_reader(f: fn() -> u32) {
+    URL_TX_FN.store(f as usize, Ordering::Release);
+}
+
+pub fn install_url_rx_count_reader(f: fn() -> u32) {
+    URL_RX_COUNT_FN.store(f as usize, Ordering::Release);
+}
+
+pub fn install_url_tx_count_reader(f: fn() -> u32) {
+    URL_TX_COUNT_FN.store(f as usize, Ordering::Release);
+}
+
+fn read_via(slot: &AtomicUsize) -> Option<u32> {
+    let raw = slot.load(Ordering::Acquire);
     if raw == 0 {
         return None;
     }
-    // SAFETY: only `install_url_value_reader` writes this slot.
+    // SAFETY: only the matching `install_*` writes this slot.
     let f: fn() -> u32 = unsafe { core::mem::transmute(raw) };
-    Some(f())
+    let v = f();
+    if v == 0 {
+        None
+    } else {
+        Some(v)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -29,7 +46,6 @@ enum ReaderKind {
 }
 
 const URL_BASE: &[u8] = b"nitrokey.com/";
-const QUERY_PREFIX: &[u8] = b"?t=";
 
 // Bound for the dynamic NDEF buffer:
 //   2  (file length)
@@ -39,7 +55,7 @@ const QUERY_PREFIX: &[u8] = b"?t=";
 // + QUERY_PREFIX.len() (3)
 // + 10 (max u32 decimal digits)
 // = 33; round up.
-const NDEF_BUF_LEN: usize = 64;
+const NDEF_BUF_LEN: usize = 96;
 
 pub struct App {
     reader_kind: ReaderKind,
@@ -75,17 +91,42 @@ impl App {
     }
 
     /// Render the NDEF URI record into `self.ndef_buf`, picking up the
-    /// current measured-µs value if a reader is installed.
+    /// current measured-µs values if readers are installed.
     fn rebuild_ndef(&mut self) {
         // Build the URL bytes after the prefix code (0x02 = "https://www.").
         let mut url = [0u8; NDEF_BUF_LEN];
         let mut url_len = 0;
         url[..URL_BASE.len()].copy_from_slice(URL_BASE);
         url_len += URL_BASE.len();
-        if let Some(v) = read_url_value() {
-            url[url_len..url_len + QUERY_PREFIX.len()].copy_from_slice(QUERY_PREFIX);
-            url_len += QUERY_PREFIX.len();
-            url_len += format_u32(v, &mut url[url_len..]);
+
+        // Compose query string of the form "?r=<rx>&n=<rxc>&t=<tx>&s=<txc>",
+        // skipping any value whose reader is missing or returns 0.
+        let rx = read_via(&URL_RX_FN);
+        let rxc = read_via(&URL_RX_COUNT_FN);
+        let tx = read_via(&URL_TX_FN);
+        let txc = read_via(&URL_TX_COUNT_FN);
+        let mut first = true;
+        let mut append_kv = |key: &[u8], v: u32, url: &mut [u8], url_len: &mut usize| {
+            url[*url_len] = if first { b'?' } else { b'&' };
+            *url_len += 1;
+            first = false;
+            url[*url_len..*url_len + key.len()].copy_from_slice(key);
+            *url_len += key.len();
+            url[*url_len] = b'=';
+            *url_len += 1;
+            *url_len += format_u32(v, &mut url[*url_len..]);
+        };
+        if let Some(v) = rx {
+            append_kv(b"r", v, &mut url, &mut url_len);
+        }
+        if let Some(v) = rxc {
+            append_kv(b"n", v, &mut url, &mut url_len);
+        }
+        if let Some(v) = tx {
+            append_kv(b"t", v, &mut url, &mut url_len);
+        }
+        if let Some(v) = txc {
+            append_kv(b"s", v, &mut url, &mut url_len);
         }
 
         let payload_len = 1 + url_len; // prefix code byte + url chars
