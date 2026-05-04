@@ -192,6 +192,7 @@ impl Stage0 {
         ndef_app::install_url_tx_reader(boards::measurement::tx_first_us);
         ndef_app::install_url_rx_count_reader(boards::measurement::rx_count);
         ndef_app::install_url_tx_count_reader(boards::measurement::tx_count);
+        ndef_app::install_url_irq_count_reader(boards::measurement::irq_count);
 
         let clocks = Clocks {
             is_nfc_passive,
@@ -511,16 +512,16 @@ impl Stage2 {
         //     panic!("Unexpected RESYNC response: {:?}", response);
         // }
 
-        debug_now!("Communication with SE050 worked");
+        // debug_now!("Communication with SE050 worked");
 
-        let command = [0x00, 0x00];
-        i2c.write(0x57, &command)
-            .expect("failed to send RESYNC command");
+        // let command = [0x00, 0x00];
+        // i2c.write(0x57, &command)
+        //     .expect("failed to send RESYNC command");
 
-        // RESYNC response
-        let mut response = [0; 4];
-        i2c.read(0x57, &mut response)
-            .expect("failed to read RESYNC response");
+        // // RESYNC response
+        // let mut response = [0; 4];
+        // i2c.read(0x57, &mut response)
+        //     .expect("failed to read RESYNC response");
 
         info_now!("hardware checks successful");
         i2c

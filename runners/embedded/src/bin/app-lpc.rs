@@ -14,48 +14,48 @@ pub fn msp() -> u32 {
     r
 }
 
-#[cortex_m_rt::pre_init]
-unsafe fn before_main() {
-    let peripherals = lpc55_hal::raw::Peripherals::steal();
+// #[cortex_m_rt::pre_init]
+// unsafe fn before_main() {
+//     let peripherals = lpc55_hal::raw::Peripherals::steal();
 
-    // Disable BOD VBAT reset so a brownout dip doesn't reset the MCU mid-init.
-    peripherals
-        .PMC
-        .resetctrl
-        .modify(|_, w| w.bodvbatresetenable().disable());
+//     // Disable BOD VBAT reset so a brownout dip doesn't reset the MCU mid-init.
+//     peripherals
+//         .PMC
+//         .resetctrl
+//         .modify(|_, w| w.bodvbatresetenable().disable());
 
-    // AHB divider 11 → CPU = FRO12 / 12 ≈ 1 MHz until init() reconfigures.
-    peripherals.SYSCON.ahbclkdiv.write(|w| w.div().bits(11));
+//     // AHB divider 11 → CPU = FRO12 / 12 ≈ 1 MHz until init() reconfigures.
+//     peripherals.SYSCON.ahbclkdiv.write(|w| w.div().bits(11));
 
-    peripherals.PMC.pdruncfg0.modify(|_, w| {
-        w.pden_bodvbat()
-            .poweredoff()
-            .pden_pll0()
-            .poweredoff()
-            .pden_pll0_sscg()
-            .poweredoff()
-            .pden_pll1()
-            .poweredoff()
-            .pden_xtal32m()
-            .poweredoff()
-            .pden_ldoxo32m()
-            .poweredoff()
-            .pden_xtal32k()
-            .poweredoff()
-            .pden_fro32k()
-            .poweredoff()
-            .pden_usbfsphy()
-            .poweredoff()
-            .pden_usbhsphy()
-            .poweredoff()
-            .pden_ldousbhs()
-            .poweredoff()
-            .pden_comp()
-            .poweredoff()
-            .pden_auxbias()
-            .poweredoff()
-    });
-}
+//     peripherals.PMC.pdruncfg0.modify(|_, w| {
+//         w.pden_bodvbat()
+//             .poweredoff()
+//             .pden_pll0()
+//             .poweredoff()
+//             .pden_pll0_sscg()
+//             .poweredoff()
+//             .pden_pll1()
+//             .poweredoff()
+//             .pden_xtal32m()
+//             .poweredoff()
+//             .pden_ldoxo32m()
+//             .poweredoff()
+//             .pden_xtal32k()
+//             .poweredoff()
+//             .pden_fro32k()
+//             .poweredoff()
+//             .pden_usbfsphy()
+//             .poweredoff()
+//             .pden_usbhsphy()
+//             .poweredoff()
+//             .pden_ldousbhs()
+//             .poweredoff()
+//             .pden_comp()
+//             .poweredoff()
+//             .pden_auxbias()
+//             .poweredoff()
+//     });
+// }
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
@@ -362,6 +362,7 @@ mod app {
 
     #[task(binds = PIN_INT0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
     fn nfc_irq(c: nfc_irq::Context) {
+        boards::measurement::record_irq();
         (
             c.shared.contactless,
             c.shared.perf_timer,

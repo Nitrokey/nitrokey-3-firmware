@@ -18,8 +18,8 @@ use embedded_hal::{
 use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
-    FifoAccess, FifoIrq, FifoWordCnt, MainIrq, NfcRats, NfcStatus, NfcTxen, NfcTxenValue, Register,
-    ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
+    FifoAccess, FifoIrq, FifoWordCnt, MainIrq, MainIrqMask, NfcRats, NfcStatus, NfcTxen,
+    NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
 };
 
 const BLOCK_SIZE: usize = 16;
@@ -395,6 +395,7 @@ where
             })?;
         }
 
+        txn.write_register(MainIrqMask(0x07))?;
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
@@ -444,7 +445,7 @@ where
     ) -> Result<Result<NfcState, NfcError>, I2C::BusError> {
         // self.set_led_state();
         // self.dump_registers();
-        let main_irq = self.read_register::<MainIrq>().unwrap();
+        let main_irq = self.read_register::<MainIrq>()?;
         // let fifo_irq = self.read_register::<FifoIrq>()?;
 
         let mut new_session = false;
@@ -504,9 +505,10 @@ where
         if !rf_status.nfc_tx() {
             let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             let count = count.min(24);
-            //     debug!("Second Count: {count:02x}");
-            self.read_fifo(count)?;
-            self.offset += count as usize;
+            if count > 0 {
+                self.read_fifo(count)?;
+                self.offset += count as usize;
+            }
         }
 
         // debug!("Packet {}", self.offset);
@@ -570,8 +572,7 @@ where
         // So we only send 24 bytes at a time after the first transmission
         let (first_chunk, rem) = buf.split_at_checked(32).unwrap_or((&buf, &[]));
         self.write_fifo(first_chunk)?;
-        self.write_register(NfcTxen::new(NfcTxenValue::SendBackData))
-            .unwrap();
+        self.write_register(NfcTxen::new(NfcTxenValue::SendBackData))?;
         let chunks = rem.chunks(24);
         for chunk in chunks {
             'this_chunk: loop {
@@ -602,15 +603,21 @@ where
 {
     #[inline(never)]
     fn read(&mut self, buf: &mut [u8]) -> Result<NfcState, NfcError> {
-        let res = self.read_packet(buf).unwrap();
-        // debug!("Got packet: {res:?}, {}", hexstr!(buf));
-        res
+        // Don't unwrap I2C bus errors into a panic — they happen
+        // occasionally on chip startup and are recoverable. Surface as
+        // NoActivity so the iso14443 driver retries on the next poll.
+        match self.read_packet(buf) {
+            Ok(inner) => inner,
+            Err(_e) => Err(NfcError::NoActivity),
+        }
     }
 
     #[inline(never)]
     fn send(&mut self, buf: &[u8]) -> Result<(), NfcError> {
-        // debug!("Sending: {}", hexstr!(buf));
-        self.send_packet(buf).unwrap()
+        match self.send_packet(buf) {
+            Ok(inner) => inner,
+            Err(_e) => Err(NfcError::NoActivity),
+        }
     }
 
     fn frame_size(&self) -> usize {
