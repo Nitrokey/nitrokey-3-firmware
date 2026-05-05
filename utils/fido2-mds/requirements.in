@@ -1,2 +1,2 @@
-cairosvg
-fido2
+cairosvg >=2.8,<3
+fido2 >=2,<3

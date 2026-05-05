@@ -2,25 +2,25 @@
 #    uv pip compile requirements.in -o requirements.txt
 cairocffi==1.7.1
     # via cairosvg
-cairosvg==2.8.2
+cairosvg==2.9.0
     # via -r requirements.in
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   cairocffi
     #   cryptography
-cryptography==45.0.6
+cryptography==48.0.0
     # via fido2
-cssselect2==0.8.0
+cssselect2==0.9.0
     # via cairosvg
 defusedxml==0.7.1
     # via cairosvg
-fido2==2.0.0
+fido2==2.2.0
     # via -r requirements.in
-pillow==11.3.0
+pillow==12.2.0
     # via cairosvg
-pycparser==2.22
+pycparser==3.0
     # via cffi
-tinycss2==1.4.0
+tinycss2==1.5.1
     # via
     #   cairosvg
     #   cssselect2
