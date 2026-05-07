@@ -102,6 +102,7 @@ mod app {
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usb_nfc = embedded_runner_lib::init_usb_nfc(
             &mut ctx.local.resources.usb,
+            || {},
             Some(usb_bus),
             None,
             nfc_rp,

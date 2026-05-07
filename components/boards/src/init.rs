@@ -123,6 +123,7 @@ const USB_VENDOR_ID: u16 = 0x20A0;
 
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
+    callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
@@ -136,10 +137,12 @@ pub fn init_usb_nfc<B: Board>(
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
-    let (ccid_rq, _ccid_rp) = CCID_CHANNEL.split().unwrap();
+    let (mut ccid_rq, _ccid_rp) = CCID_CHANNEL.split().unwrap();
     // We don't want the contact interface to interfere with contactless
     let (_, dummy_ccid_rp) = DUMMY_CHANNEL.split().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    let (mut ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    *ccid_rq.callback_mut() = callback;
+    *ctaphid_rq.callback_mut() = callback;
 
     /* initialize dispatchers */
     let apdu_dispatch = ApduDispatch::new(dummy_ccid_rp, nfc_rp);

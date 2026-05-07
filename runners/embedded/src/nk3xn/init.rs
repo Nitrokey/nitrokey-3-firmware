@@ -741,7 +741,8 @@ impl Stage2 {
         nfc_enabled: bool,
     ) -> Stage3 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
-        let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+        let (mut nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
+        *nfc_rq.callback_mut() = || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6);
 
         let se050_i2c = self.get_se050_i2c(flexcomm5);
 
@@ -1130,7 +1131,13 @@ impl Stage6 {
             None
         };
 
-        let usb_nfc = crate::init_usb_nfc(resources, usb_bus, self.nfc, self.nfc_rp);
+        let usb_nfc = crate::init_usb_nfc(
+            resources,
+            || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6),
+            usb_bus,
+            self.nfc,
+            self.nfc_rp,
+        );
 
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();

@@ -84,20 +84,12 @@ mod app {
 
     const USB_INTERRUPT: Interrupt = Interrupt::USB1;
     const NFC_INTERRUPT: Interrupt = Interrupt::PIN_INT0;
+    const APPS_INTERRUPT: Interrupt = Interrupt::PIN_INT6;
 
     #[shared]
     struct SharedResources {
-        /// Dispatches APDUs from contact+contactless interface to apps.
-        apdu_dispatch: ApduDispatch<'static>,
-
-        /// Dispatches CTAPHID messages to apps.
-        ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
-
         /// The Trussed service, used by all applications.
         trussed: Trussed<Board>,
-
-        /// All the applications that the device serves.
-        apps: Apps<Board>,
 
         /// The USB driver classes
         usb_classes: Option<UsbClasses<Soc>>,
@@ -129,6 +121,15 @@ mod app {
 
     #[local]
     struct LocalResources {
+        /// Dispatches APDUs from contact+contactless interface to apps.
+        apdu_dispatch: ApduDispatch<'static>,
+
+        /// Dispatches CTAPHID messages to apps.
+        ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
+
+        /// All the applications that the device serves.
+        apps: Apps<Board>,
+
         wwdt: nk3xn::init::MaybeEnabledWwdt,
         /// The endpoints that are polled by the Trussed service.
         endpoints: Endpoints,
@@ -178,25 +179,25 @@ mod app {
         }
 
         let shared = SharedResources {
-            apdu_dispatch: usb_nfc.apdu_dispatch,
-            ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
             trussed,
-            apps,
             usb_classes: usb_nfc.usb_classes,
             contactless: usb_nfc.iso14443,
             perf_timer,
             wait_extender,
         };
-        let local = LocalResources { wwdt, endpoints };
+        let local = LocalResources {
+            wwdt,
+            endpoints,
+            apdu_dispatch: usb_nfc.apdu_dispatch,
+            ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
+            apps,
+        };
         (shared, local, init::Monotonics(systick.into()))
     }
 
-    #[idle(shared = [apdu_dispatch, ctaphid_dispatch, apps, perf_timer, usb_classes], local = [wwdt])]
+    #[idle(shared = [perf_timer, usb_classes], local = [wwdt])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources {
-            mut apdu_dispatch,
-            mut ctaphid_dispatch,
-            mut apps,
             perf_timer: _,
             mut usb_classes,
         } = c.shared;
@@ -216,22 +217,6 @@ mod app {
             if let Some(wwdt) = wwdt {
                 wwdt.feed();
             }
-
-            #[cfg(not(feature = "no-delog"))]
-            if time > 1_200_000 {
-                boards::init::Delogger::flush();
-            }
-
-            let (usb_activity, nfc_activity) =
-                (&mut apps, &mut apdu_dispatch, &mut ctaphid_dispatch)
-                    .lock(|apps, apdu, ctaphid| runtime::poll_dispatchers(apdu, ctaphid, apps));
-            if usb_activity {
-                rtic::pend(USB_INTERRUPT);
-            }
-            if nfc_activity {
-                rtic::pend(NFC_INTERRUPT);
-            }
-
             usb_classes.lock(|usb_classes| {
                 runtime::poll_usb(
                     usb_classes,
@@ -244,7 +229,24 @@ mod app {
             // Sleep until the next interrupt wakes us. Any task pend (USB1,
             // PIN_INT0, OS_EVENT, CTIMER0, …) brings us back here to drain the
             // dispatchers; nothing else needs to run between events.
+            #[cfg(not(feature = "no-delog"))]
+            boards::init::Delogger::flush();
             cortex_m::asm::wfi();
+        }
+    }
+
+    #[task(binds =  PIN_INT6, local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
+    fn poll_apps(mut c: poll_apps::Context) {
+        let (usb_activity, nfc_activity) = runtime::poll_dispatchers(
+            &mut c.local.apdu_dispatch,
+            &mut c.local.ctaphid_dispatch,
+            &mut c.local.apps,
+        );
+        if usb_activity {
+            rtic::pend(USB_INTERRUPT);
+        }
+        if nfc_activity {
+            rtic::pend(NFC_INTERRUPT);
         }
     }
 
@@ -330,7 +332,7 @@ mod app {
         });
     }
 
-    #[task(shared = [trussed], priority = 1)]
+    #[task(shared = [trussed], priority = 2)]
     fn update_ui(mut c: update_ui::Context) {
         // debug_now!("update UI: remaining stack size: {} bytes", super::msp() - 0x2000_0000);
 
@@ -372,7 +374,7 @@ mod app {
                 let contactless = contactless.as_mut().unwrap();
                 // let _starttime = perf_timer.elapsed().0 / 100;
 
-                info!("[");
+                // info!("[");
                 let status = contactless.poll();
                 match status {
                     nfc_device::Iso14443Status::Idle => {}

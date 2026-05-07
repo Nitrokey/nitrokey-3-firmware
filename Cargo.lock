@@ -1882,8 +1882,7 @@ dependencies = [
 [[package]]
 name = "interchange"
 version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cc2a6b02f14a47afb0dbccdf96ae4f527ab32b05f78918d9da92e336bcbc222"
+source = "git+https://github.com/sosthene-nitrokey/interchange.git?rev=3dd20626c26627f58dbbf25dc0359a00916b7a0e#3dd20626c26627f58dbbf25dc0359a00916b7a0e"
 dependencies = [
  "loom",
 ]

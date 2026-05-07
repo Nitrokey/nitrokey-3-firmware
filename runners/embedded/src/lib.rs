@@ -36,6 +36,7 @@ pub fn init_alloc() {
 
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
+    callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
@@ -44,6 +45,7 @@ pub fn init_usb_nfc<B: Board>(
     const USB_PRODUCT_ID: u16 = 0x42B2;
     boards::init::init_usb_nfc(
         resources,
+        callback,
         usb_bus,
         nfc,
         nfc_rp,

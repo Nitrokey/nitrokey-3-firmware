@@ -42,6 +42,8 @@ littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "
 
 fm11nt08c = { path = "components/fm11nt08c" }
 
+interchange = { git = "https://github.com/sosthene-nitrokey/interchange.git", rev = "3dd20626c26627f58dbbf25dc0359a00916b7a0e" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"
