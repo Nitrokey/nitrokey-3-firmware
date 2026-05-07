@@ -395,7 +395,7 @@ where
             })?;
         }
 
-        txn.write_register(MainIrqMask(0x2F))?;
+        txn.write_register(MainIrqMask(0x0F))?;
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
@@ -447,7 +447,7 @@ where
         // self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
 
-        self.write_register(MainIrqMask(0x2F))?;
+        self.write_register(MainIrqMask(0x0F))?;
 
         // let fifo_irq = self.read_register::<FifoIrq>()?;
 
@@ -467,17 +467,25 @@ where
             //     self.current_frame_size
             // );
         }
+        let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
+        debug!(
+            "WORD_COUNT: {count:02x?}, offset: {:02x},{}{}",
+            self.offset,
+            if main_irq.rx_done() { " rx_done " } else { "" },
+            if main_irq.rx_start() {
+                " rx_start "
+            } else {
+                ""
+            },
+        );
 
         // Case where the full packet is available
         if main_irq.rx_done() {
             // error!("RxDone reached");
-            //     debug!("RX Done");
-            let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             if count == 32 {
                 //         error!("Fifo FULL");
             }
-            //     debug!("WORD_COUNT: {count:02x?}");
-            let count = count.min(24);
+            // let count = count.min(24);
             if count > 0 {
                 self.read_fifo(count)?;
                 self.offset += count as usize;
@@ -506,7 +514,6 @@ where
         // debug!("bare Count: {:02x?}", self.read_register::<FifoWordCnt>());
         // debug!("water_level: {fifo_irq:?}");
         if !rf_status.nfc_tx() {
-            let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
             let count = count.min(24);
             if count > 0 {
                 self.read_fifo(count)?;
