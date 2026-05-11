@@ -18,9 +18,14 @@ use embedded_hal::{
 use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
-    FifoAccess, FifoIrq, FifoWordCnt, MainIrq, MainIrqMask, NfcRats, NfcStatus, NfcTxen,
-    NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
+    FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcRats, NfcStatus,
+    NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
 };
+
+// bits: 4 (rx_done), 5 (rx_start), 6 (active_flag), 7 (power_on_flag) enabled; bit 1 (fifo_flag)
+const MAIN_IRQ_MASK_ACTIVE: u8 = 0x0D;
+// bits: upper 4 = 1 (rfu), 3 (water_level), 2 (overflow)
+const FIFO_IRQ_MASK_ACTIVE: u8 = 0xF3;
 
 const BLOCK_SIZE: usize = 16;
 
@@ -395,7 +400,8 @@ where
             })?;
         }
 
-        txn.write_register(MainIrqMask(0x0F))?;
+        txn.write_register(MainIrqMask(MAIN_IRQ_MASK_ACTIVE))?;
+        txn.write_register(FifoIrqMask(FIFO_IRQ_MASK_ACTIVE))?;
         txn.write_register(NfcTxen(0x77))?;
         txn.write_register(ResetSilence(0x55))?;
 
@@ -446,10 +452,12 @@ where
         // self.set_led_state();
         // self.dump_registers();
         let main_irq = self.read_register::<MainIrq>()?;
+        let fifo_irq = self.read_register::<FifoIrq>()?;
+        if fifo_irq.overflow() {
+            error!("FM11 FIFO overflow during RX: data lost");
+        }
 
-        self.write_register(MainIrqMask(0x0F))?;
-
-        // let fifo_irq = self.read_register::<FifoIrq>()?;
+        self.write_register(MainIrqMask(MAIN_IRQ_MASK_ACTIVE))?;
 
         let mut new_session = false;
 
@@ -469,11 +477,21 @@ where
         }
         let count = self.read_register::<FifoWordCnt>()?.fifo_wordcnt();
         debug!(
-            "WORD_COUNT: {count:02x?}, offset: {:02x},{}{}",
+            "WORD_COUNT: {count:02x?}, offset: {:02x},{}{}{}{}",
             self.offset,
             if main_irq.rx_done() { " rx_done " } else { "" },
             if main_irq.rx_start() {
                 " rx_start "
+            } else {
+                ""
+            },
+            if fifo_irq.water_level() {
+                " water_level "
+            } else {
+                ""
+            },
+            if fifo_irq.overflow() {
+                " overflow "
             } else {
                 ""
             },
