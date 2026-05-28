@@ -422,6 +422,26 @@ impl Stage2 {
         Some(iso14443)
     }
 
+    /// Similar to setup_fm11nt08c but instead of initialiazing the
+    /// NFC chip for use it just writes the EEPROM and configures it
+    /// Then disables it again.
+    fn configure_fm11nt08c(&mut self, i2c: I2C) -> I2C {
+        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        let mut nfc = nfc::try_setup_new(
+            i2c,
+            &mut self.clocks.gpio,
+            &mut self.clocks.iocon,
+            nfc_irq,
+            self.basic.perf_timer.take().unwrap(),
+        );
+        nfc.init(true);
+
+        let (i2c, csn, irq, timer) = nfc.close();
+        self.basic.perf_timer = Some(timer);
+        self.clocks.nfc_irq = Some(irq);
+        i2c
+    }
+
     fn setup_fm11nt08c(
         &mut self,
         i2c: I2C,
@@ -460,7 +480,7 @@ impl Stage2 {
 
         // Only run EEPROM configuration on USB power; energy-harvested boots
         // must never write the chip's NV memory.
-        nfc.init(!self.clocks.is_nfc_passive).ok();
+        nfc.init(false).ok();
 
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         #[cfg(not(feature = "no-delog"))]
@@ -757,10 +777,11 @@ impl Stage2 {
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
-            //self = self.reduce_power_draw();
+            self = self.reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
+            let se050_i2c = self.configure_fm11nt08c(se050_i2c);
             (Some(se050_i2c), None, Some(spi))
         };
 

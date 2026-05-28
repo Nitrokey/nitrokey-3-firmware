@@ -341,6 +341,11 @@ where
         }
     }
 
+    pub fn close(mut self) -> (I2C, CSN, IRQ, Timer) {
+        self.csn.set_high().unwrap();
+        (self.i2c, self.csn, self.irq, self.timer)
+    }
+
     /// Initialize the chip.
     pub fn init(&mut self, configure: bool) -> Result<(), I2C::BusError> {
         debug!("Init");
