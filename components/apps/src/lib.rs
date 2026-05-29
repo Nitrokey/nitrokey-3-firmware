@@ -1012,6 +1012,8 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 max_resident_credential_count: Some(100),
                 large_blobs,
                 nfc_transport: data.has_nfc,
+                ccid_transport: false,
+                firmware_version: None,
             },
         )
     }
