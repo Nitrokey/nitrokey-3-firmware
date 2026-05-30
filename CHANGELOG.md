@@ -3,11 +3,13 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
-- fido-authenticator: Update to [v0.4.0-rc.1](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.1)
+- fido-authenticator: Update to [v0.4.0-rc.3](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.3)
   - Add support for CTAP 2.3.
   - Implement the `credBlob`, `hmac-secret-mc` and `minPinLength` extensions.
   - Implement the `alwaysUv` feature.
   - Implement the `authenticatorConfig` command with the `toggleAlwaysUv` and `setMinPINLength` subcommands.
+  - Use AES-256-CBC to encrypt the credential metadata. (This change only takes effect on new devices or after a factory reset.)
+  - Set `firmwareVersion` to 1 (legacy credential format) or 2 (new credential format using AES-256-CBC).
   - Various fixes.
 
 ## v1.8.3 (2025-10-13)

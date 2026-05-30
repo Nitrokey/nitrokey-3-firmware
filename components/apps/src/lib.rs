@@ -990,6 +990,8 @@ impl<R: Runner> App<R> for FidoApp<R> {
     type Config = FidoConfig;
 
     fn with_client(runner: &R, trussed: Client<R>, data: FidoData, config: &Self::Config) -> Self {
+        use fido_authenticator::{credential::CredentialIdVersion, FirmwareVersion};
+
         let skip_up_timeout = if config.disable_skip_up_timeout {
             None
         } else {
@@ -1003,6 +1005,8 @@ impl<R: Runner> App<R> for FidoApp<R> {
         } else {
             None
         };
+        let mut firmware_version = FirmwareVersion::new(1);
+        firmware_version.credential_id_v2 = Some(2);
         fido_authenticator::Authenticator::new(
             trussed,
             fido_authenticator::Conforming {},
@@ -1013,7 +1017,8 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 large_blobs,
                 nfc_transport: data.has_nfc,
                 ccid_transport: false,
-                firmware_version: None,
+                firmware_version: Some(firmware_version),
+                credential_id_version: Some(CredentialIdVersion::V2),
             },
         )
     }

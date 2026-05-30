@@ -17,7 +17,7 @@ mod ctaphid;
 extern crate delog;
 generate_macros!();
 
-use core::convert::TryFrom;
+use core::convert::{TryFrom, TryInto};
 use heapless::{Vec, VecView};
 use littlefs2_core::{path, Path, PathBuf};
 use trussed::{
@@ -208,7 +208,7 @@ where
                 let serialized_key = Key {
                     flags: Flags::LOCAL | Flags::SENSITIVE,
                     kind: KeyKind::P256,
-                    material: Vec::from_slice(&seed).unwrap(),
+                    material: seed.as_slice().try_into().unwrap(),
                 };
 
                 let serialized_bytes = serialized_key.serialize();
@@ -235,7 +235,7 @@ where
                 let serialized_key = Key {
                     flags: Flags::LOCAL | Flags::SENSITIVE,
                     kind: KeyKind::Ed255,
-                    material: Vec::from_slice(&seed).unwrap(),
+                    material: seed.as_slice().try_into().unwrap(),
                 };
 
                 // let serialized_key = Key::try_deserialize(&seed[..])
@@ -264,7 +264,7 @@ where
                 let serialized_key = Key {
                     flags: Flags::LOCAL | Flags::SENSITIVE,
                     kind: KeyKind::X255,
-                    material: Vec::from_slice(&seed).unwrap(),
+                    material: seed.as_slice().try_into().unwrap(),
                 };
 
                 // let serialized_key = Key::try_deserialize(&seed[..])
@@ -342,7 +342,7 @@ where
                     let serialized_key = Key {
                         flags: Default::default(),
                         kind: KeyKind::P256,
-                        material: Vec::from_slice(data).unwrap(),
+                        material: data.try_into().unwrap(),
                     };
 
                     let serialized_key = serialized_key.serialize();
