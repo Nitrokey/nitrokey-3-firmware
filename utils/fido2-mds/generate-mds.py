@@ -11,6 +11,7 @@ from fido2.webauthn import Aaguid
 
 UPV_CTAP_2_0 = Version(1, 0)
 UPV_CTAP_2_1 = Version(1, 1)
+UPV_CTAP_2_3 = Version(1, 3)
 
 UVD_NONE = VerificationMethodDescriptor(user_verification_method="none")
 UVD_PRESENCE_INTERNAL = VerificationMethodDescriptor(
@@ -56,18 +57,12 @@ class Authenticator:
 
         aaguid = Aaguid.parse(self.aaguid)
 
-        upv = [UPV_CTAP_2_0, UPV_CTAP_2_1]
-        authenticator_versions = ["U2F_V2", "FIDO_2_0", "FIDO_2_1"]
-        options = {
-            "rk": True,
-            "up": True,
-            "plat": False,
-            "clientPin": False,
-            "credMgmt": True,
-            "largeBlobs": False,
-            "pinUvAuthToken": True,
-        }
-        pin_protocols = [2, 1]
+        with open("get-info.json") as f:
+            get_info = json.load(f)
+        get_info["aaguid"] = aaguid.hex()
+        get_info["transports"] = self.transports
+
+        upv = [UPV_CTAP_2_0, UPV_CTAP_2_1, UPV_CTAP_2_3]
 
         return MetadataStatement(
             aaguid=aaguid,
@@ -80,17 +75,7 @@ class Authenticator:
             tc_display=[],
             attestation_root_certificates=[attestation_root_certificate],
             upv=upv,
-            authenticator_get_info={
-                "versions": authenticator_versions,
-                "extensions": ["credProtect", "hmac-secret"],
-                "aaguid": aaguid.hex(),
-                "options": options,
-                "maxMsgSize": 3072,
-                "pinUvAuthProtocols": pin_protocols,
-                "maxCredentialCountInList": 10,
-                "maxCredentialIdLength": 255,
-                "transports": self.transports,
-            },
+            authenticator_get_info=get_info,
             crypto_strength=0,
             # TODO: Do we want to set caDesc?
             user_verification_details=[
@@ -99,15 +84,12 @@ class Authenticator:
                 [UVD_PASSCODE_EXTERNAL],
                 [UVD_PRESENCE_INTERNAL, UVD_PASSCODE_EXTERNAL],
             ],
-            # TODO: The spec says this should match the firmwareVersion
-            # reported in authenticatorGetInfo, but that value does not exist
-            authenticator_version=1,
+            authenticator_version=2,
             # TODO: Looks like this is only used for U2F.  Do we still need it?
             attestation_certificate_key_identifiers=None,
             # optional according to spec, but enforced by test suite
             # TODO: decide on icon, size and background
             icon=icon,
-            # to be investigated
             authentication_algorithms=[
                 "ed25519_eddsa_sha512_raw",
                 "secp256r1_ecdsa_sha256_raw",
