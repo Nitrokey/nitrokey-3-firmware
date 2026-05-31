@@ -21,19 +21,6 @@ UVD_PASSCODE_EXTERNAL = VerificationMethodDescriptor(
 )
 
 
-@enum.unique
-class CtapVersion(Enum):
-    CTAP_2_0 = "2.0"
-    CTAP_2_1 = "2.1"
-
-    @classmethod
-    def from_str(cls, s: str) -> "CtapVersion":
-        for variant in cls:
-            if variant.value == s:
-                return variant
-        raise ValueError("Unknown CTAP version {s}")
-
-
 # see https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html
 @dataclass
 class Authenticator:
@@ -58,7 +45,7 @@ class Authenticator:
             transports.append("nfc")
         return sorted(transports)
 
-    def mds(self, ctap: CtapVersion) -> MetadataStatement:
+    def mds(self) -> MetadataStatement:
         with open(self.attestation_root_certificate, "rb") as f:
             attestation_root_certificate = f.read()
 
@@ -69,14 +56,8 @@ class Authenticator:
 
         aaguid = Aaguid.parse(self.aaguid)
 
-        upv = [UPV_CTAP_2_0]
-        authenticator_versions = ["U2F_V2", "FIDO_2_0"]
-        if ctap == CtapVersion.CTAP_2_1:
-            upv.append(UPV_CTAP_2_1)
-            authenticator_versions.append("FIDO_2_1")
-        else:
-            authenticator_versions.append("FIDO_2_1_PRE")
-
+        upv = [UPV_CTAP_2_0, UPV_CTAP_2_1]
+        authenticator_versions = ["U2F_V2", "FIDO_2_0", "FIDO_2_1"]
         options = {
             "rk": True,
             "up": True,
@@ -84,13 +65,9 @@ class Authenticator:
             "clientPin": False,
             "credMgmt": True,
             "largeBlobs": False,
+            "pinUvAuthToken": True,
         }
-        if ctap == CtapVersion.CTAP_2_1:
-            options["pinUvAuthToken"] = True
-            pin_protocols = [2, 1]
-        else:
-            options["credentialMgmtPreview"] = True
-            pin_protocols = [1]
+        pin_protocols = [2, 1]
 
         return MetadataStatement(
             aaguid=aaguid,
@@ -192,5 +169,4 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown model {model}")
 
-    ctap = CtapVersion.CTAP_2_1
-    print(json.dumps(dict(authenticator.mds(ctap)), indent=4))
+    print(json.dumps(dict(authenticator.mds()), indent=4))
