@@ -3,6 +3,9 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+
+## v1.9.0-rc.1 (2026-06-01)
+
 - fido-authenticator: Update to [v0.4.0-rc.3](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.3)
   - Add support for CTAP 2.3.
   - Implement the `credBlob`, `hmac-secret-mc` and `minPinLength` extensions.
