@@ -11,7 +11,7 @@ use bitflags::bitflags;
 use core::marker::PhantomData;
 use ctaphid_app::App as CtaphidApp;
 use heapless::Vec;
-use littlefs2_core::path;
+use littlefs2_core::{path, Path};
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
@@ -24,15 +24,20 @@ generate_macros!();
 
 use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "opcard", feature = "se050"))]
-use trussed::{api::NotBefore, service::Filestore};
+use trussed::store::Filestore;
 use trussed::{
     backend::BackendId,
-    interrupt::InterruptFlag,
     pipe::{ServiceEndpoint, TrussedChannel},
     platform::Syscall,
-    store::filestore::ClientFilestore,
-    types::{CoreContext, Location, Mechanism, Path},
+    store::ClientFilestore,
+    types::CoreContext,
     ClientImplementation, Platform, Service,
+};
+#[cfg(all(feature = "opcard", feature = "se050"))]
+use trussed_core::types::NotBefore;
+use trussed_core::{
+    types::{Location, Mechanism},
+    InterruptFlag,
 };
 
 use utils::Version;

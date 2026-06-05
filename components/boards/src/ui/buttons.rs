@@ -1,6 +1,6 @@
 use core::convert::Infallible;
 
-use trussed::platform::consent;
+use trussed_core::types::consent;
 
 /// Trio of buttons.
 ///

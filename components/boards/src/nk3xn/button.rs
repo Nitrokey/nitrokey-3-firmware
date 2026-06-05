@@ -7,7 +7,7 @@ use lpc55_hal::{
     traits::wg::{digital::v2::InputPin, timer::CountDown},
     typestates::{init_state, pin},
 };
-use trussed::platform::consent;
+use trussed_core::types::consent;
 
 pub type UserButtonPin = pins::Pio0_31;
 // pub type WakeupButtonPin = pins::Pio1_18;

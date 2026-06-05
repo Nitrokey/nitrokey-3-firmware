@@ -21,11 +21,10 @@ use core::convert::{TryFrom, TryInto};
 use heapless::{Vec, VecView};
 use littlefs2_core::{path, Path, PathBuf};
 use trussed::{
-    client,
     key::{Flags, Key, Kind as KeyKind},
     store::{self, Store},
-    syscall,
 };
+use trussed_core::{syscall, types::Location, CryptoClient};
 
 const TESTER_FILENAME_ID: [u8; 2] = [0xe1, 0x01];
 const TESTER_FILE_ID: [u8; 2] = [0xe1, 0x02];
@@ -106,7 +105,7 @@ enum SelectedBuffer {
 pub struct Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     trussed: T,
 
@@ -122,7 +121,7 @@ where
 impl<S, T> Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     pub fn new(trussed: T, store: S, uuid: Uuid, rebooter: fn() -> !) -> Provisioner<S, T> {
         Self {
@@ -168,7 +167,7 @@ where
 
                     let res = store::store(
                         &self.store,
-                        trussed::types::Location::Internal,
+                        Location::Internal,
                         &buffer_path,
                         &self.buffer_file_contents,
                     );
@@ -215,7 +214,7 @@ where
 
                 store::store(
                     &self.store,
-                    trussed::types::Location::Internal,
+                    Location::Internal,
                     FILENAME_P256_SECRET,
                     &serialized_bytes,
                 )
@@ -245,7 +244,7 @@ where
 
                 store::store(
                     &self.store,
-                    trussed::types::Location::Internal,
+                    Location::Internal,
                     FILENAME_ED255_SECRET,
                     &serialized_bytes,
                 )
@@ -274,7 +273,7 @@ where
 
                 store::store(
                     &self.store,
-                    trussed::types::Location::Internal,
+                    Location::Internal,
                     FILENAME_X255_SECRET,
                     &serialized_bytes,
                 )
@@ -292,13 +291,8 @@ where
                     Err(Error::IncorrectDataParameter)
                 } else {
                     info!("saving P256 CERT, {} bytes", data.len());
-                    store::store(
-                        &self.store,
-                        trussed::types::Location::Internal,
-                        FILENAME_P256_CERT,
-                        data,
-                    )
-                    .map_err(|_| Error::NotEnoughMemory)?;
+                    store::store(&self.store, Location::Internal, FILENAME_P256_CERT, data)
+                        .map_err(|_| Error::NotEnoughMemory)?;
                     Ok(())
                 }
             }
@@ -308,13 +302,8 @@ where
                     Err(Error::IncorrectDataParameter)
                 } else {
                     info!("saving ED25519 CERT, {} bytes", data.len());
-                    store::store(
-                        &self.store,
-                        trussed::types::Location::Internal,
-                        FILENAME_ED255_CERT,
-                        data,
-                    )
-                    .map_err(|_| Error::NotEnoughMemory)?;
+                    store::store(&self.store, Location::Internal, FILENAME_ED255_CERT, data)
+                        .map_err(|_| Error::NotEnoughMemory)?;
                     Ok(())
                 }
             }
@@ -324,13 +313,8 @@ where
                     Err(Error::IncorrectDataParameter)
                 } else {
                     info!("saving X25519 CERT, {} bytes", data.len());
-                    store::store(
-                        &self.store,
-                        trussed::types::Location::Internal,
-                        FILENAME_X255_CERT,
-                        data,
-                    )
-                    .map_err(|_| Error::NotEnoughMemory)?;
+                    store::store(&self.store, Location::Internal, FILENAME_X255_CERT, data)
+                        .map_err(|_| Error::NotEnoughMemory)?;
                     Ok(())
                 }
             }
@@ -349,7 +333,7 @@ where
 
                     store::store(
                         &self.store,
-                        trussed::types::Location::Internal,
+                        Location::Internal,
                         FILENAME_T1_PUBLIC,
                         &serialized_key,
                     )

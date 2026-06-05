@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.21#261c47d791f7862a8fd1b52d485860ff82216478"
+source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.22#70086d9d99868def0a022c29c03b3270a4436385"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -397,6 +397,7 @@ dependencies = [
  "spi-memory",
  "systick-monotonic",
  "trussed",
+ "trussed-core",
  "trussed-manage",
  "usb-device",
  "usbd-ccid",
@@ -1162,6 +1163,7 @@ dependencies = [
  "serde",
  "systick-monotonic",
  "trussed",
+ "trussed-core",
  "usb-device",
  "utils",
 ]
@@ -2619,6 +2621,7 @@ dependencies = [
  "p256-cortex-m4",
  "salty",
  "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -3511,8 +3514,9 @@ dependencies = [
 
 [[package]]
 name = "trussed"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=ad577412599156ac98f29ee969e76537e506f2bc#ad577412599156ac98f29ee969e76537e506f2bc"
+version = "0.2.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "400475917c40f07716c84b201a363012f6c9b1acdb4b38a5ed05e227539cd05c"
 dependencies = [
  "aead",
  "aes",
@@ -3520,22 +3524,17 @@ dependencies = [
  "bitflags 2.9.4",
  "cbc",
  "cbor-smol",
- "cfg-if",
- "chacha20",
  "chacha20poly1305",
  "cipher",
  "cosey",
  "delog",
  "des",
- "flexiber",
  "generic-array 0.14.7",
  "heapless-bytes",
- "hex-literal 0.4.1",
  "hmac",
  "interchange",
  "littlefs2",
  "littlefs2-core",
- "nb 1.1.0",
  "p256-cortex-m4",
  "postcard 0.7.3",
  "rand_chacha",
@@ -3560,9 +3559,11 @@ dependencies = [
 
 [[package]]
 name = "trussed-auth-backend"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?tag=backend-v0.1.0#faeb596778be5739afc86c34e45634f57f0f28ff"
+version = "0.2.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddba6d39b34a5732dbc1b8938eff7a4e95e1a1ac2e28a91bcdac6d20af682fd6"
 dependencies = [
+ "cbor-smol",
  "chacha20poly1305",
  "hkdf",
  "hmac",
@@ -3647,8 +3648,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-rsa-alloc"
-version = "0.4.0"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.4.0#d9807ac604b2d66c943c48007795f1b732b708fe"
+version = "0.5.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "959e4ed92c9a39f3af0e41605422574deb067a4b52c2d0b3ec651a7769909e1b"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3673,8 +3675,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.7.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.7.0#ca2891263f4e661ddba56822adca64c8d630a8ad"
+version = "0.8.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8883814fc9e3a7b5ab94548fd26bc33ca0aeebbedc6c13f66849aa15dc187188"
 dependencies = [
  "bitflags 2.9.4",
  "cbor-smol",
@@ -3692,6 +3695,7 @@ dependencies = [
  "p256-cortex-m4",
  "postcard 0.7.3",
  "rand",
+ "rand_core",
  "salty",
  "se05x",
  "serde",
@@ -3722,8 +3726,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-staging"
-version = "0.4.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.4.0#bda6a9afec4f3ceeaf096002f95126653066615e"
+version = "0.5.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53e6deeae8561b46439244e293ca8b280e803a6c0ba37bdd6716ce5fb7a1afa4"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3741,6 +3746,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-chunked",
+ "trussed-core",
  "trussed-fs-info",
  "trussed-hkdf",
  "trussed-hpke",
@@ -3750,8 +3756,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-usbip"
-version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=017921df0930707c4af68882ccb1f8b3f1bbf7c5#017921df0930707c4af68882ccb1f8b3f1bbf7c5"
+version = "0.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f180e84c51b87ea68e90ad7c13703f80b9f099e293e008c075a46ae823e227cc"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3932,6 +3939,7 @@ dependencies = [
  "rand_core",
  "signal-hook",
  "trussed",
+ "trussed-core",
  "trussed-usbip",
  "utils",
 ]

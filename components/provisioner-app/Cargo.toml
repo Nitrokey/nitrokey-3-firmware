@@ -15,7 +15,8 @@ heapless-bytes = "0.5"
 iso7816 = "0.2"
 littlefs2-core = "0.1"
 salty = "0.3"
-trussed = { version = "0.1", default-features = false, features = ["crypto-client"] }
+trussed.workspace = true
+trussed-core = { workspace = true, features = ["crypto-client"] }
 p256-cortex-m4 = "0.1.0-alpha.6"
 
 

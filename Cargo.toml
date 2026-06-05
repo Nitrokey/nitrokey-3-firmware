@@ -14,6 +14,8 @@ version = "1.9.0-rc.1"
 
 [workspace.dependencies]
 littlefs2 = "0.7"
+trussed = { version = "=0.2.0-rc.1", default-features = false }
+trussed-core = "0.2"
 
 [patch.crates-io]
 # components
@@ -21,20 +23,12 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "ad577412599156ac98f29ee969e76537e506f2bc" }
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "017921df0930707c4af68882ccb1f8b3f1bbf7c5" }
 
 # applications
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.21" }
+admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.22" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.7.0" }
 piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }
-
-# backends
-trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "backend-v0.1.0" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.4.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.7.0" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.4.0" }
 
 [profile.release]
 codegen-units = 1

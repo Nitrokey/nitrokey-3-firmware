@@ -14,19 +14,19 @@ heapless-bytes = "0.5"
 interchange = "0.3"
 se05x = { version = "0.4", optional = true}
 serde = { version = "1.0.180", default-features = false }
-trussed = { version = "0.1", default-features = false, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
-trussed-core = "0.2"
-trussed-usbip = { version = "0.0.1", default-features = false, features = ["ctaphid"], optional = true }
+trussed = { workspace = true, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
+trussed-core.workspace = true
+trussed-usbip = { version = "=0.1.0-rc.1", default-features = false, features = ["ctaphid"], optional = true }
 usbd-ctaphid = { version = "0.4", optional = true }
 utils = { path = "../utils" }
 if_chain = "1.0.2"
 littlefs2-core = "0.1"
 
 # Backends
-trussed-auth-backend = { version = "0.1.0", optional = true }
-trussed-rsa-alloc = { version = "0.4.0", optional = true }
-trussed-se050-backend = { version = "0.7", optional = true }
-trussed-staging = { version = "0.4", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
+trussed-auth-backend = { version = "=0.2.0-rc.1", optional = true }
+trussed-rsa-alloc = { version = "=0.5.0-rc.1", optional = true }
+trussed-se050-backend = { version = "=0.8.0-rc.1", optional = true }
+trussed-staging = { version = "=0.5.0-rc.1", features = ["wrap-key-to-file", "chunked", "hkdf", "manage", "fs-info"] }
 
 # Extensions
 trussed-auth = { version = "0.5", optional = true }

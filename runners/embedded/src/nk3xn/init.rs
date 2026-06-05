@@ -62,7 +62,7 @@ use lpc55_hal as hal;
 #[cfg(any(feature = "log-info", feature = "log-all"))]
 use lpc55_hal::drivers::timer::Elapsed as _;
 use nfc_device::Iso14443;
-use trussed::types::Location;
+use trussed_core::types::Location;
 use utils::OptionalStorage;
 #[cfg(feature = "se050")]
 use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};

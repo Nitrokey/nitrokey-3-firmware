@@ -1,5 +1,5 @@
 use littlefs2::driver::Storage;
-use trussed::types::Bytes;
+use trussed_core::types::Bytes;
 
 use lfs_backup::{BackupBackend, FSBackupError, Result, MAX_DUMP_BLOB_LENGTH};
 

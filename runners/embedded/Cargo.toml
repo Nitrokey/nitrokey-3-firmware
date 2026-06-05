@@ -26,7 +26,8 @@ se05x = { version = "0.4", optional = true }
 apdu-dispatch = "0.4"
 
 ### trussed core
-trussed = { version = "0.1", default-features = false }
+trussed.workspace = true
+trussed-core.workspace = true
 interchange = "0.3"
 
 ### usb machinery
