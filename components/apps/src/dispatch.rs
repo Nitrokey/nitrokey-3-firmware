@@ -1,22 +1,19 @@
 #[cfg(not(feature = "se050"))]
 use core::marker::PhantomData;
 
-use trussed::{
-    api::{Reply, Request},
-    error::Error as TrussedError,
-    service::ServiceResources,
-    types::Context,
-    Platform,
+use trussed::{service::ServiceResources, types::Context, Platform};
+use trussed_core::{
+    api::{reply, request, Reply, Request},
+    Error as TrussedError,
 };
 
 #[cfg(feature = "backend-auth")]
-use trussed::types::Location;
+use trussed_core::types::Location;
 
 use littlefs2_core::{path, Path};
 
 use if_chain::if_chain;
 use trussed::{
-    api::{reply, request},
     backend::Backend as _,
     serde_extensions::{ExtensionDispatch, ExtensionId, ExtensionImpl},
 };
@@ -150,7 +147,7 @@ impl<T: Twi, D: Delay> Dispatch<T, D> {
     #[cfg(feature = "backend-auth")]
     pub fn with_hw_key(
         auth_location: Location,
-        hw_key: trussed::Bytes<MAX_HW_KEY_LEN>,
+        hw_key: trussed_core::types::Bytes<MAX_HW_KEY_LEN>,
         #[cfg(feature = "se050")] se050: Option<Se05X<T, D>>,
     ) -> Self {
         #[cfg(feature = "se050")]

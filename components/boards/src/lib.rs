@@ -29,7 +29,7 @@ use littlefs2::{
 };
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
-use trussed::{client::Syscall, Platform};
+use trussed::platform::{Platform, Syscall};
 
 use crate::{
     soc::{Soc, Uuid},

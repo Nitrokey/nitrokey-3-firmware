@@ -1,5 +1,5 @@
 use nrf52840_hal::{gpio::Level, pac, prelude::InputPin, pwm, pwm::Pwm};
-use trussed::platform::consent;
+use trussed_core::types::consent;
 
 use super::OutPin;
 use crate::ui::{

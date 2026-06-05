@@ -8,7 +8,8 @@ use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
-use trussed::{platform::Platform as _, types::Location, Bytes};
+use trussed::platform::Platform as _;
+use trussed_core::types::{Bytes, Location};
 use trussed_usbip::{Platform, Store, Syscall};
 use utils::Version;
 

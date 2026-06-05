@@ -4,7 +4,8 @@ use core::{
     time::Duration,
 };
 
-use trussed::platform::{self, consent, ui};
+use trussed::{platform, types::ui};
+use trussed_core::types::consent;
 
 use buttons::UserPresence;
 use rgb_led::{Intensities, RgbLed};
