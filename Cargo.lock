@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "admin-app"
 version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.21#261c47d791f7862a8fd1b52d485860ff82216478"
+source = "git+https://github.com/Nitrokey/admin-app.git?branch=trussed-v0.2.0-rc.1#a3be4e2d5c976de04ce349a89fc0f53723cc7821"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -397,6 +397,7 @@ dependencies = [
  "spi-memory",
  "systick-monotonic",
  "trussed",
+ "trussed-core",
  "trussed-manage",
  "usb-device",
  "usbd-ccid",
@@ -1162,6 +1163,7 @@ dependencies = [
  "serde",
  "systick-monotonic",
  "trussed",
+ "trussed-core",
  "usb-device",
  "utils",
 ]
@@ -2619,6 +2621,7 @@ dependencies = [
  "p256-cortex-m4",
  "salty",
  "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -3511,8 +3514,8 @@ dependencies = [
 
 [[package]]
 name = "trussed"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=ad577412599156ac98f29ee969e76537e506f2bc#ad577412599156ac98f29ee969e76537e506f2bc"
+version = "0.2.0-rc.1"
+source = "git+https://github.com/trussed-dev/trussed.git?branch=release-v0.2.0-rc.1#8ec7f2f44abf2c3c7410bfe1f54f05433486a758"
 dependencies = [
  "aead",
  "aes",
@@ -3520,22 +3523,17 @@ dependencies = [
  "bitflags 2.9.4",
  "cbc",
  "cbor-smol",
- "cfg-if",
- "chacha20",
  "chacha20poly1305",
  "cipher",
  "cosey",
  "delog",
  "des",
- "flexiber",
  "generic-array 0.14.7",
  "heapless-bytes",
- "hex-literal 0.4.1",
  "hmac",
  "interchange",
  "littlefs2",
  "littlefs2-core",
- "nb 1.1.0",
  "p256-cortex-m4",
  "postcard 0.7.3",
  "rand_chacha",
@@ -3561,8 +3559,9 @@ dependencies = [
 [[package]]
 name = "trussed-auth-backend"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed-auth?tag=backend-v0.1.0#faeb596778be5739afc86c34e45634f57f0f28ff"
+source = "git+https://github.com/trussed-dev/trussed-auth?branch=trussed-v0.2.0-rc.1#2d8da45b7f5208bd73e7dbce307780206069e697"
 dependencies = [
+ "cbor-smol",
  "chacha20poly1305",
  "hkdf",
  "hmac",
@@ -3648,7 +3647,7 @@ dependencies = [
 [[package]]
 name = "trussed-rsa-alloc"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?tag=v0.4.0#d9807ac604b2d66c943c48007795f1b732b708fe"
+source = "git+https://github.com/trussed-dev/trussed-rsa-backend.git?branch=trussed-v0.2.0-rc.1#32443e39b1974dc500654378f8f0ad568d5dfcd7"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3674,7 +3673,7 @@ dependencies = [
 [[package]]
 name = "trussed-se050-backend"
 version = "0.7.0"
-source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?tag=v0.7.0#ca2891263f4e661ddba56822adca64c8d630a8ad"
+source = "git+https://github.com/Nitrokey/trussed-se050-backend.git?branch=trussed-v0.2.0-rc.1#47b5692c1ec78e4b09c12cbe2a3eb6af75e1a952"
 dependencies = [
  "bitflags 2.9.4",
  "cbor-smol",
@@ -3692,6 +3691,7 @@ dependencies = [
  "p256-cortex-m4",
  "postcard 0.7.3",
  "rand",
+ "rand_core",
  "salty",
  "se05x",
  "serde",
@@ -3723,7 +3723,7 @@ dependencies = [
 [[package]]
 name = "trussed-staging"
 version = "0.4.0"
-source = "git+https://github.com/trussed-dev/trussed-staging.git?tag=v0.4.0#bda6a9afec4f3ceeaf096002f95126653066615e"
+source = "git+https://github.com/trussed-dev/trussed-staging.git?branch=trussed-v0.2.0-rc.1#e73ee94ba9f35747a57f0f56bc4cb0a711f61eb4"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3741,6 +3741,7 @@ dependencies = [
  "sha2",
  "trussed",
  "trussed-chunked",
+ "trussed-core",
  "trussed-fs-info",
  "trussed-hkdf",
  "trussed-hpke",
@@ -3751,7 +3752,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.0.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?rev=017921df0930707c4af68882ccb1f8b3f1bbf7c5#017921df0930707c4af68882ccb1f8b3f1bbf7c5"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?branch=trussed-v0.2.0-rc.1#42b612fd5c9642f982f3e423b47aca4dd6407f14"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3932,6 +3933,7 @@ dependencies = [
  "rand_core",
  "signal-hook",
  "trussed",
+ "trussed-core",
  "trussed-usbip",
  "utils",
 ]

@@ -3,7 +3,8 @@ use apdu_app::{App, CommandView, Interface, Result};
 use core::convert::{TryFrom, TryInto};
 use heapless::VecView;
 use iso7816::{Aid, Instruction, Status};
-use trussed::{client, store::Store};
+use trussed::store::Store;
+use trussed_core::CryptoClient;
 
 const SOLO_PROVISIONER_AID: &[u8] = &[0xA0, 0x00, 0x00, 0x08, 0x47, 0x01, 0x00, 0x00, 0x01];
 
@@ -34,7 +35,7 @@ impl From<Error> for Status {
 impl<S, T> iso7816::App for Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     fn aid(&self) -> Aid {
         Aid::new(SOLO_PROVISIONER_AID)
@@ -44,7 +45,7 @@ where
 impl<S, T> App for Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     fn select(
         &mut self,

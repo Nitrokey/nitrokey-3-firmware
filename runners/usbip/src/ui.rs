@@ -11,7 +11,8 @@ use std::{
 use dialoguer::Confirm;
 use log::{debug, info};
 use signal_hook::{consts::signal::SIGUSR1, flag};
-use trussed::platform::{consent, reboot, ui::Status};
+use trussed::types::ui::Status;
+use trussed_core::types::{consent, reboot};
 
 pub struct UserInterface {
     start_time: std::time::Instant,

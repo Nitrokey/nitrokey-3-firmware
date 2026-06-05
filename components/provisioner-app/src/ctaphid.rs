@@ -2,14 +2,15 @@ use crate::{Instruction, Provisioner};
 use core::convert::TryFrom;
 use ctaphid_app::{App, Command, Error, VendorCommand};
 use heapless_bytes::BytesView;
-use trussed::{client, store::Store};
+use trussed::store::Store;
+use trussed_core::CryptoClient;
 
 const COMMAND_PROVISIONER: VendorCommand = VendorCommand::H71;
 
 impl<S, T> App<'_> for Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     fn commands(&self) -> &'static [Command] {
         &[Command::Vendor(COMMAND_PROVISIONER)]
