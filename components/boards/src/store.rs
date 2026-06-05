@@ -305,7 +305,7 @@ mod tests {
     pub struct DummyButtons;
     pub struct DummyLed;
     impl UserPresence for DummyButtons {
-        fn check_user_presence(&mut self) -> trussed::types::consent::Level {
+        fn check_user_presence(&mut self) -> trussed_core::types::consent::Level {
             unimplemented!()
         }
     }
