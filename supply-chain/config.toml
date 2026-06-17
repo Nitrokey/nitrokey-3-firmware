@@ -185,10 +185,6 @@ criteria = "safe-to-run"
 version = "4.5.47"
 criteria = "safe-to-run"
 
-[[exemptions.clap_lex]]
-version = "0.7.5"
-criteria = "safe-to-run"
-
 [[exemptions.cmac]]
 version = "0.7.2"
 criteria = "safe-to-run"
@@ -227,10 +223,6 @@ criteria = "safe-to-run"
 
 [[exemptions.crc16]]
 version = "0.4.0"
-criteria = "safe-to-run"
-
-[[exemptions.crunchy]]
-version = "0.2.4"
 criteria = "safe-to-run"
 
 [[exemptions.crypto-bigint]]
@@ -417,10 +409,6 @@ criteria = "safe-to-run"
 version = "1.0.3"
 criteria = "safe-to-run"
 
-[[exemptions.inout]]
-version = "0.1.4"
-criteria = "safe-to-run"
-
 [[exemptions.is-terminal]]
 version = "0.4.16"
 criteria = "safe-to-run"
@@ -483,10 +471,6 @@ criteria = "safe-to-run"
 
 [[exemptions.nrf52840-pac]]
 version = "0.11.0"
-criteria = "safe-to-run"
-
-[[exemptions.num]]
-version = "0.3.1"
 criteria = "safe-to-run"
 
 [[exemptions.num-bigint-dig]]
@@ -559,10 +543,6 @@ criteria = "safe-to-run"
 
 [[exemptions.postcard-cobs]]
 version = "0.1.5-pre"
-criteria = "safe-to-run"
-
-[[exemptions.potential_utf]]
-version = "0.1.3"
 criteria = "safe-to-run"
 
 [[exemptions.pretty_env_logger]]
@@ -673,14 +653,6 @@ criteria = "safe-to-run"
 version = "0.6.9"
 criteria = "safe-to-run"
 
-[[exemptions.serde_spanned]]
-version = "1.0.2"
-criteria = "safe-to-run"
-
-[[exemptions.serial_test]]
-version = "1.0.0"
-criteria = "safe-to-run"
-
 [[exemptions.serial_test_derive]]
 version = "1.0.0"
 criteria = "safe-to-run"
@@ -785,10 +757,6 @@ criteria = "safe-to-run"
 version = "0.1.2"
 criteria = "safe-to-run"
 
-[[exemptions.toml_writer]]
-version = "1.0.3"
-criteria = "safe-to-run"
-
 [[exemptions.trussed-rsa-alloc]]
 version = "0.5.0-rc.1"
 criteria = "safe-to-run"
@@ -865,10 +833,6 @@ criteria = "safe-to-run"
 version = "0.2.104"
 criteria = "safe-to-run"
 
-[[exemptions.winapi-util]]
-version = "0.1.11"
-criteria = "safe-to-run"
-
 [[exemptions.windows]]
 version = "0.48.0"
 criteria = "safe-to-run"
@@ -883,10 +847,6 @@ criteria = "safe-to-run"
 
 [[exemptions.windows-interface]]
 version = "0.59.1"
-criteria = "safe-to-run"
-
-[[exemptions.windows-link]]
-version = "0.1.3"
 criteria = "safe-to-run"
 
 [[exemptions.windows-result]]
