@@ -1,2 +1,127 @@
 
 # cargo-vet imports lock
+
+[[publisher.apdu-app]]
+version = "0.2.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/apdu-dispatch"
+
+[[publisher.apdu-dispatch]]
+version = "0.4.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/apdu-dispatch"
+
+[[publisher.ctap-types]]
+version = "0.6.0-rc.4"
+when = "2026-06-01"
+trusted-publisher = "github:trussed-dev/ctap-types"
+
+[[publisher.ctaphid-app]]
+version = "0.2.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
+
+[[publisher.ctaphid-dispatch]]
+version = "0.4.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
+
+[[publisher.fido-authenticator]]
+version = "0.4.0-rc.3"
+when = "2026-06-01"
+trusted-publisher = "github:trussed-dev/fido-authenticator"
+
+[[publisher.heapless-bytes]]
+version = "0.5.0"
+when = "2025-09-18"
+trusted-publisher = "github:trussed-dev/heapless-bytes"
+
+[[publisher.iso7816]]
+version = "0.2.0"
+when = "2025-09-25"
+trusted-publisher = "github:trussed-dev/iso7816"
+
+[[publisher.littlefs2]]
+version = "0.7.0"
+when = "2026-03-09"
+trusted-publisher = "github:trussed-dev/littlefs2"
+
+[[publisher.littlefs2-core]]
+version = "0.1.2"
+when = "2025-10-16"
+trusted-publisher = "github:trussed-dev/littlefs2"
+
+[[publisher.littlefs2-sys]]
+version = "0.3.2"
+when = "2026-03-03"
+trusted-publisher = "github:trussed-dev/littlefs2-sys"
+
+[[publisher.lpc55-hal]]
+version = "0.5.0"
+when = "2026-03-20"
+trusted-publisher = "github:lpc55/lpc55-hal"
+
+[[publisher.se05x]]
+version = "0.4.0"
+when = "2026-03-31"
+trusted-publisher = "github:Nitrokey/se05x"
+
+[[publisher.trussed-auth]]
+version = "0.5.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/trussed-auth"
+
+[[publisher.trussed-chunked]]
+version = "0.3.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-core]]
+version = "0.2.2"
+when = "2026-06-01"
+trusted-publisher = "github:trussed-dev/trussed"
+
+[[publisher.trussed-fs-info]]
+version = "0.3.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-hkdf]]
+version = "0.4.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-hpke]]
+version = "0.3.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-manage]]
+version = "0.3.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-rsa-types]]
+version = "0.2.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
+
+[[publisher.trussed-se050-manage]]
+version = "0.3.0"
+when = "2026-03-25"
+trusted-publisher = "github:Nitrokey/trussed-se050-backend"
+
+[[publisher.trussed-wrap-key-to-file]]
+version = "0.3.0"
+when = "2026-03-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.usbd-ccid]]
+version = "0.4.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/usbd-ccid"
+
+[[publisher.usbd-ctaphid]]
+version = "0.4.0"
+when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/usbd-ctaphid"

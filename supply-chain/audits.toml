@@ -1,4 +1,242 @@
 
 # cargo-vet audits file
 
-[audits]
+[[wildcard-audits.apdu-app]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/apdu-dispatch"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.apdu-dispatch]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/apdu-dispatch"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.ctap-types]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/ctap-types"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.ctaphid-app]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.ctaphid-dispatch]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.fido-authenticator]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/fido-authenticator"
+start = "2025-09-02"
+end = "2027-06-17"
+
+[[wildcard-audits.heapless-bytes]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/heapless-bytes"
+start = "2025-09-18"
+end = "2027-06-17"
+
+[[wildcard-audits.iso7816]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/iso7816"
+start = "2025-09-25"
+end = "2027-06-17"
+
+[[wildcard-audits.littlefs2]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/littlefs2"
+start = "2026-03-09"
+end = "2027-06-17"
+
+[[wildcard-audits.littlefs2-core]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/littlefs2"
+start = "2025-10-16"
+end = "2027-06-17"
+
+[[wildcard-audits.littlefs2-sys]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/littlefs2-sys"
+start = "2026-03-03"
+end = "2027-06-17"
+
+[[wildcard-audits.lpc55-hal]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:lpc55/lpc55-hal"
+start = "2026-03-20"
+end = "2027-06-17"
+
+[[wildcard-audits.se05x]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:Nitrokey/se05x"
+start = "2025-09-25"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-auth]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-auth"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-chunked]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-core]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed"
+start = "2026-03-20"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-fs-info]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-hkdf]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-hpke]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-manage]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-rsa-types]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-se050-manage]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:Nitrokey/trussed-se050-backend"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.trussed-wrap-key-to-file]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-03-23"
+end = "2027-06-17"
+
+[[wildcard-audits.usbd-ccid]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/usbd-ccid"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[wildcard-audits.usbd-ctaphid]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/usbd-ctaphid"
+start = "2026-03-25"
+end = "2027-06-17"
+
+[[audits.cbor-smol]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.5.1"
+
+[[audits.cosey]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+
+[[audits.delog]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.1.8"
+
+[[audits.flexiber]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+
+[[audits.flexiber_derive]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.1.3"
+
+[[audits.interchange]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+
+[[audits.serde-indexed]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.1.1"
+
+[[audits.trussed]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.2.0-rc.1"
+
+[[audits.trussed-auth-backend]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.2.0-rc.1"
+
+[[audits.trussed-rsa-alloc]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.2.0-rc.1"
+
+[[audits.trussed-se050-backend]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.8.0-rc.1"
+
+[[audits.trussed-staging]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.5.0-rc.1"
+
+[[audits.trussed-usbip]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "0.1.0-rc.1"
