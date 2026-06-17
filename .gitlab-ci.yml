@@ -186,6 +186,18 @@ build-firmware:
       - artifacts
       - binaries
 
+vet-dependencies:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
+  tags:
+    - docker
+  stage: build
+  script:
+    - cargo vet check --locked
+
 # metrics stage
 
 metrics:
