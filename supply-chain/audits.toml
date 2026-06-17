@@ -221,6 +221,18 @@ who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.3.2"
 
+[[audits.log]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.29 -> 0.4.32"
+notes = "Mostly lint/formatting changes, other changes are sensible"
+
+[[audits.memchr]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "2.7.5 -> 2.8.2"
+notes = "Mostly changes that correspond to applying lints, otherwise addition of one vector operation that is as safe as the existing ones"
+
 [[audits.num]]
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
@@ -230,6 +242,24 @@ delta = "0.4.0 -> 0.3.1"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.2 -> 0.1.3"
+
+[[audits.regex]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "1.12.3 -> 1.12.4"
+notes = "No changes in this crate, changes are only in dependencies but their version criterias are not changed"
+
+[[audits.regex]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-run"
+delta = "1.12.3 -> 1.12.4"
+notes = "Nothing has been changed in the code of this crate, only in the dependencies that are part of the regex project"
+
+[[audits.regex-syntax]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.5 -> 0.8.11"
+notes = "Mostly lint/formatting changes small feature change"
 
 [[audits.serde-indexed]]
 who = "Robin Krahl <robin@nitrokey.com>"
@@ -245,6 +275,18 @@ delta = "1.0.3 -> 1.0.2"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 delta = "2.0.0 -> 1.0.0"
+
+[[audits.shlex]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "1.3.0 -> 2.0.1"
+notes = "Mostly function removals"
+
+[[audits.stable_deref_trait]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "1.2.0 -> 1.2.1"
+notes = "Just a stricter CFG and support for `Cow`"
 
 [[audits.toml_writer]]
 who = "Robin Krahl <robin@nitrokey.com>"
@@ -280,6 +322,12 @@ version = "0.5.0-rc.1"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.1.0-rc.1"
+
+[[audits.version_check]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.4 -> 0.9.5"
+notes = "Only documentation changes"
 
 [[audits.winapi-util]]
 who = "Robin Krahl <robin@nitrokey.com>"
