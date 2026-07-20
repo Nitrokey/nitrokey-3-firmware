@@ -2330,6 +2330,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_enum"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3786,7 +3806,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.1.0-rc.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=35746252fa68724d18efa960559e4d216e85e667#35746252fa68724d18efa960559e4d216e85e667"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=10cc4ca8a6d0c45c8134472a53d6269d7cbc6420#10cc4ca8a6d0c45c8134472a53d6269d7cbc6420"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3800,6 +3820,7 @@ dependencies = [
  "usb-device 0.3.2",
  "usbd-ccid",
  "usbd-ctaphid",
+ "usbd-storage",
  "usbip-device 0.1.5",
  "usbip-device 0.2.0",
 ]
@@ -3951,6 +3972,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "usbd-storage"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9596ded13538d5407d0cef1c2879d6e5d9038d6ba601aa9e90a7d08a21ba5215"
+dependencies = [
+ "num_enum",
+ "usb-device 0.3.2",
+]
+
+[[package]]
 name = "usbip-device"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3964,7 +3995,7 @@ dependencies = [
 [[package]]
 name = "usbip-device"
 version = "0.2.0"
-source = "git+https://github.com/Sawchord/usbip-device?rev=e0444bb3a593026d972e3dddb400d5afc41c988a#e0444bb3a593026d972e3dddb400d5afc41c988a"
+source = "git+https://github.com/daringer/usbip-device?rev=ad359ae257e4bd931d9424732132cf085e0fac02#ad359ae257e4bd931d9424732132cf085e0fac02"
 dependencies = [
  "bitflags 1.3.2",
  "log",

@@ -31,4 +31,7 @@ provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid", "trussed-usbip/ccid"]
 
 # Build against usb-device 0.3.
-"usb-device-0-3" = ["trussed-usbip/usb-device-0-3", "apps/usb-device-0-3"]
+usb-device-0-3 = ["trussed-usbip/usb-device-0-3", "apps/usb-device-0-3"]
+
+# SCSI block device over USB/IP
+usb-storage = ["trussed-usbip/storage", "usb-device-0-3"]
