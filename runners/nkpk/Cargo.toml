@@ -8,7 +8,7 @@ authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 [dependencies]
 apdu-dispatch = "0.4"
 apps = { path = "../../components/apps", features = ["nkpk"] }
-boards = { path = "../../components/boards", features = ["board-nkpk"] }
+boards = { path = "../../components/boards", default-features = false, features = ["board-nkpk"] }
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 ctaphid-dispatch = "0.4"
@@ -24,6 +24,12 @@ memory-regions = "1"
 utils = { path = "../../components/utils", features = ["build"] }
 
 [features]
+default = ["usb-device-0-2"]
+
+# `boards` is taken without defaults so asking for 0.3 does not drag in 0.2.
+"usb-device-0-2" = ["boards/usb-device-0-2"]
+"usb-device-0-3" = ["boards/usb-device-0-3", "apps/usb-device-0-3"]
+
 log-all = ["boards/log-all"]
 log-trace = []
 log-debug = []

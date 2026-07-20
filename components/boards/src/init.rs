@@ -6,6 +6,10 @@ use apdu_dispatch::{
 use apps::AUTH_LOCATION;
 use apps::{AdminData, ClientBuilder, Data, Dispatch, Endpoints, FidoData, InitStatus};
 
+use crate::usb_device::{
+    bus::UsbBusAllocator,
+    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
+};
 use ctaphid_dispatch::Channel as CtapChannel;
 #[cfg(not(feature = "no-delog"))]
 use delog::delog;
@@ -16,10 +20,6 @@ use rand_chacha::ChaCha8Rng;
 use ref_swap::OptionRefSwap;
 use trussed::store::Store as _;
 use trussed_core::InterruptFlag;
-use usb_device::{
-    bus::UsbBusAllocator,
-    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
-};
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
 use utils::Version;
@@ -131,6 +131,46 @@ const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
 const USB_MANUFACTURER: &str = "Nitrokey";
 const USB_VENDOR_ID: u16 = 0x20A0;
 
+#[cfg(not(feature = "usb-device-0-3"))]
+fn build_usb_device<'a, B: crate::usb_device::bus::UsbBus>(
+    usb_bus: &'a UsbBusAllocator<B>,
+    usb_product: &'a str,
+    usb_product_id: u16,
+    version: Version,
+) -> UsbDevice<'a, B> {
+    UsbDeviceBuilder::new(usb_bus, UsbVidPid(USB_VENDOR_ID, usb_product_id))
+        .product(usb_product)
+        .manufacturer(USB_MANUFACTURER)
+        .device_release(version.usb_release())
+        .max_packet_size_0(64)
+        .composite_with_iads()
+        .build()
+}
+
+/// usb-device 0.3 replaced the string setters with `strings()` and returns `Result`.
+#[cfg(feature = "usb-device-0-3")]
+fn build_usb_device<'a, B: crate::usb_device::bus::UsbBus>(
+    usb_bus: &'a UsbBusAllocator<B>,
+    usb_product: &'a str,
+    usb_product_id: u16,
+    version: Version,
+) -> UsbDevice<'a, B> {
+    use crate::usb_device::prelude::{LangID, StringDescriptors};
+
+    let strings = StringDescriptors::new(LangID::EN)
+        .manufacturer(USB_MANUFACTURER)
+        .product(usb_product);
+
+    UsbDeviceBuilder::new(usb_bus, UsbVidPid(USB_VENDOR_ID, usb_product_id))
+        .strings(&[strings])
+        .expect("failed to set USB string descriptors")
+        .device_release(version.usb_release())
+        .max_packet_size_0(64)
+        .expect("invalid max packet size for EP0")
+        .composite_with_iads()
+        .build()
+}
+
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
@@ -165,14 +205,7 @@ pub fn init_usb_nfc<B: Board>(
             .implements_ctap2()
             .implements_wink();
 
-        let vidpid = UsbVidPid(USB_VENDOR_ID, usb_product_id);
-        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
-            .product(usb_product)
-            .manufacturer(USB_MANUFACTURER)
-            .device_release(version.usb_release())
-            .max_packet_size_0(64)
-            .composite_with_iads()
-            .build();
+        let usbd = build_usb_device(usb_bus, usb_product, usb_product_id, version);
 
         UsbClasses {
             usbd,

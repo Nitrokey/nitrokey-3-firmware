@@ -69,7 +69,7 @@ use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
 
 use crate::{VERSION, VERSION_STRING};
 
-type UsbBusType = usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
+type UsbBusType = boards::usb_device::bus::UsbBusAllocator<<Lpc55 as Soc>::UsbBus>;
 
 pub type WwdtEnabled = wwdt::Active;
 pub type WwdtResetting = wwdt::Active;

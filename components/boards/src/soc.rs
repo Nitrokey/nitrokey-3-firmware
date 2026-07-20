@@ -1,6 +1,6 @@
+use crate::usb_device::bus::UsbBus;
 use cortex_m::interrupt::InterruptNumber;
 use embedded_time::duration::Milliseconds;
-use usb_device::bus::UsbBus;
 
 use apps::{Reboot, Variant};
 

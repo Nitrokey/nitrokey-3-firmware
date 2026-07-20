@@ -282,6 +282,7 @@ fn init_vfs(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::usb_device::bus::UsbBus;
     use crate::{
         soc::Soc,
         ui::{buttons::UserPresence, rgb_led::RgbLed, Clock},
@@ -291,7 +292,6 @@ mod tests {
     use embedded_time::duration::Milliseconds;
     use littlefs2::{path, path::PathBuf};
     use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as NfcState};
-    use usb_device::bus::UsbBus;
 
     struct TestBoard<EfsStorage> {
         __: PhantomData<EfsStorage>,
@@ -352,12 +352,12 @@ mod tests {
     impl UsbBus for DummyUsbBus {
         fn alloc_ep(
             &mut self,
-            _ep_dir: usb_device::UsbDirection,
-            _ep_addr: Option<usb_device::endpoint::EndpointAddress>,
-            _ep_type: usb_device::endpoint::EndpointType,
+            _ep_dir: crate::usb_device::UsbDirection,
+            _ep_addr: Option<crate::usb_device::endpoint::EndpointAddress>,
+            _ep_type: crate::usb_device::endpoint::EndpointType,
             _max_packet_size: u16,
             _interval: u8,
-        ) -> usb_device::Result<usb_device::endpoint::EndpointAddress> {
+        ) -> crate::usb_device::Result<crate::usb_device::endpoint::EndpointAddress> {
             unimplemented!()
         }
         fn enable(&mut self) {
@@ -374,25 +374,29 @@ mod tests {
 
         fn write(
             &self,
-            _ep_addr: usb_device::endpoint::EndpointAddress,
+            _ep_addr: crate::usb_device::endpoint::EndpointAddress,
             _buf: &[u8],
-        ) -> usb_device::Result<usize> {
+        ) -> crate::usb_device::Result<usize> {
             unimplemented!()
         }
 
         fn read(
             &self,
-            _ep_addr: usb_device::endpoint::EndpointAddress,
+            _ep_addr: crate::usb_device::endpoint::EndpointAddress,
             _buf: &mut [u8],
-        ) -> usb_device::Result<usize> {
+        ) -> crate::usb_device::Result<usize> {
             unimplemented!()
         }
 
-        fn set_stalled(&self, _ep_addr: usb_device::endpoint::EndpointAddress, _stalled: bool) {
+        fn set_stalled(
+            &self,
+            _ep_addr: crate::usb_device::endpoint::EndpointAddress,
+            _stalled: bool,
+        ) {
             unimplemented!()
         }
 
-        fn is_stalled(&self, _ep_addr: usb_device::endpoint::EndpointAddress) -> bool {
+        fn is_stalled(&self, _ep_addr: crate::usb_device::endpoint::EndpointAddress) -> bool {
             unimplemented!()
         }
 
@@ -404,7 +408,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn poll(&self) -> usb_device::bus::PollResult {
+        fn poll(&self) -> crate::usb_device::bus::PollResult {
             unimplemented!()
         }
     }

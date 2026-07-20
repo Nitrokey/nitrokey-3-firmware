@@ -1,7 +1,8 @@
 use apps::Variant;
+#[cfg(not(feature = "usb-device-0-3"))]
+use nrf52840_hal::usbd::{UsbPeripheral, Usbd};
 use nrf52840_hal::{
     clocks::Clocks,
-    usbd::{UsbPeripheral, Usbd},
     wdt::{self, count::One, handles::Hdl0, Watchdog, WatchdogHandle},
 };
 use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
@@ -13,12 +14,26 @@ use rtic_monotonic::{RtcDuration, RtcMonotonic};
 pub mod flash;
 pub mod rtic_monotonic;
 
+/// nrf-usbd 0.3's `UsbPeripheral` is a trait, not a struct owning the peripheral.
+#[cfg(feature = "usb-device-0-3")]
+pub struct Peripheral;
+
+// SAFETY: only constructed in `build_usb_bus`, which takes the one USBD token,
+// so nothing else can be driving this register block.
+#[cfg(feature = "usb-device-0-3")]
+unsafe impl nrf_usbd::UsbPeripheral for Peripheral {
+    const REGISTERS: *const () = nrf52840_pac::USBD::ptr() as *const ();
+}
+
 pub struct Nrf52 {
     uuid: Uuid,
 }
 
 impl Soc for Nrf52 {
+    #[cfg(not(feature = "usb-device-0-3"))]
     type UsbBus = Usbd<UsbPeripheral<'static>>;
+    #[cfg(feature = "usb-device-0-3")]
+    type UsbBus = nrf_usbd::Usbd<Peripheral>;
     type Clock = RtcMonotonic;
 
     type Duration = RtcDuration;
@@ -107,7 +122,7 @@ pub type UsbClockType = Clocks<
     nrf52840_hal::clocks::Internal,
     nrf52840_hal::clocks::LfOscStarted,
 >;
-type UsbBusType = usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
+type UsbBusType = crate::usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
 
 pub fn setup_usb_bus(
     static_usb_clock: &'static mut Option<UsbClockType>,
@@ -129,7 +144,20 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
+    build_usb_bus(usb_pac, usb_clock)
+}
+
+#[cfg(not(feature = "usb-device-0-3"))]
+fn build_usb_bus(usb_pac: nrf52840_pac::USBD, usb_clock: &'static UsbClockType) -> UsbBusType {
     Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
+}
+
+/// nrf-usbd 0.3 addresses the registers statically; the token only proves ownership.
+#[cfg(feature = "usb-device-0-3")]
+fn build_usb_bus(usb_pac: nrf52840_pac::USBD, _usb_clock: &'static UsbClockType) -> UsbBusType {
+    drop(usb_pac);
+    // nrf-usbd 0.1 returned a ready-made allocator; 0.3 returns the bus itself.
+    crate::usb_device::bus::UsbBusAllocator::new(nrf_usbd::Usbd::new(Peripheral))
 }
 
 #[derive(Debug)]
