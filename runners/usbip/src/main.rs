@@ -149,6 +149,8 @@ fn main() {
         pid: PID,
         #[cfg(feature = "usb-storage")]
         block_device: args.block_device,
+        #[cfg(feature = "usb-storage")]
+        block_device_key: Some(*b"12_123456789_123456789_123456789"),
     };
 
     let store = store::init(args.ifs, args.efs);

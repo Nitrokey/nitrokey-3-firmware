@@ -3806,8 +3806,9 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.1.0-rc.1"
-source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=10cc4ca8a6d0c45c8134472a53d6269d7cbc6420#10cc4ca8a6d0c45c8134472a53d6269d7cbc6420"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=ecadf7fff837c148fbd30b9dafa8e3f512b0393d#ecadf7fff837c148fbd30b9dafa8e3f512b0393d"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "ctaphid-dispatch",
  "interchange",
@@ -3823,6 +3824,7 @@ dependencies = [
  "usbd-storage",
  "usbip-device 0.1.5",
  "usbip-device 0.2.0",
+ "xts-mode",
 ]
 
 [[package]]
@@ -4468,6 +4470,16 @@ name = "writeable"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
+
+[[package]]
+name = "xts-mode"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cbddb7545ca0b9ffa7bdc653e8743303e1712687a6918ced25f2cdbed42520"
+dependencies = [
+ "byteorder",
+ "cipher",
+]
 
 [[package]]
 name = "yoke"
