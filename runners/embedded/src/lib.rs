@@ -2,13 +2,13 @@
 #![warn(trivial_casts, unused, unused_qualifications)]
 
 use apdu_dispatch::interchanges::Responder as CcidResponder;
+use boards::usb_device::bus::UsbBusAllocator;
 use boards::{
     init::{UsbNfc, UsbResources},
     soc::Soc,
     Board,
 };
 use nfc_device::Iso14443;
-use usb_device::bus::UsbBusAllocator;
 use utils::Version;
 
 delog::generate_macros!();

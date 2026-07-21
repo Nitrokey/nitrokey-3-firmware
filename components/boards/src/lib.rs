@@ -3,6 +3,15 @@
 
 delog::generate_macros!();
 
+// The selected `usb-device` version; 0.3 wins if both features are enabled.
+#[cfg(all(feature = "usb-device-0-2", not(feature = "usb-device-0-3")))]
+pub use usb_device_0_2 as usb_device;
+#[cfg(feature = "usb-device-0-3")]
+pub use usb_device_0_3 as usb_device;
+
+#[cfg(not(any(feature = "usb-device-0-2", feature = "usb-device-0-3")))]
+compile_error!("No usb-device version chosen! Enable `usb-device-0-2` or `usb-device-0-3`.");
+
 use cortex_m_rt::ExceptionFrame;
 
 pub mod flash;

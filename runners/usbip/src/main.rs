@@ -42,6 +42,11 @@ struct Args {
     #[clap(short, long)]
     efs: Option<PathBuf>,
 
+    /// Path for persistant block-device-in-file, `None` means in RAM
+    #[cfg(feature = "usb-storage")]
+    #[clap(short, long)]
+    block_device: Option<PathBuf>,
+
     /// User presence check mechanism.
     ///
     /// The interactive option shows a prompt on stderr requesting consent from the user.  Note
@@ -142,6 +147,10 @@ fn main() {
         serial_number: None,
         vid: VID,
         pid: PID,
+        #[cfg(feature = "usb-storage")]
+        block_device: args.block_device,
+        #[cfg(feature = "usb-storage")]
+        block_device_key: Some(*b"12_123456789_123456789_123456789"),
     };
 
     let store = store::init(args.ifs, args.efs);

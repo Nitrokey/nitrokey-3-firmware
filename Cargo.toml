@@ -24,6 +24,12 @@ memory-regions = { path = "components/memory-regions" }
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
+# These carry the unreleased `usb-device-0-3` feature.
+lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal", rev = "ad0b163bba8b884409e7da012fade5edde0d0375" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", rev = "9912b35c5d7ad0253a60219c1555084eab3844d7" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "91ecf98c88b1a61276ebf3e77e65009bba3c4e17" }
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", rev = "ecadf7fff837c148fbd30b9dafa8e3f512b0393d" }
+
 # applications
 admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.22" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.7.0" }
