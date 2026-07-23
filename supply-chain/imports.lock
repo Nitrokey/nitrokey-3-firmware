@@ -1,6 +1,11 @@
 
 # cargo-vet imports lock
 
+[[publisher.admin-app]]
+version = "0.2.0"
+when = "2026-07-22"
+trusted-publisher = "github:trussed-dev/admin-app"
+
 [[publisher.apdu-app]]
 version = "0.2.0"
 when = "2026-03-25"
@@ -56,8 +61,8 @@ when = "2025-09-25"
 trusted-publisher = "github:trussed-dev/iso7816"
 
 [[publisher.littlefs2]]
-version = "0.7.0"
-when = "2026-03-09"
+version = "0.8.0"
+when = "2026-06-23"
 trusted-publisher = "github:trussed-dev/littlefs2"
 
 [[publisher.littlefs2-core]]
@@ -66,23 +71,33 @@ when = "2025-10-16"
 trusted-publisher = "github:trussed-dev/littlefs2"
 
 [[publisher.littlefs2-sys]]
-version = "0.3.2"
-when = "2026-03-03"
+version = "0.4.0"
+when = "2026-06-22"
 trusted-publisher = "github:trussed-dev/littlefs2-sys"
 
 [[publisher.lpc55-hal]]
-version = "0.5.0"
-when = "2026-03-20"
+version = "0.6.0"
+when = "2026-07-15"
 trusted-publisher = "github:lpc55/lpc55-hal"
 
 [[publisher.se05x]]
-version = "0.4.0"
-when = "2026-03-31"
+version = "0.4.1"
+when = "2026-07-23"
 trusted-publisher = "github:Nitrokey/se05x"
+
+[[publisher.trussed]]
+version = "0.2.0"
+when = "2026-07-22"
+trusted-publisher = "github:trussed-dev/trussed"
 
 [[publisher.trussed-auth]]
 version = "0.5.0"
 when = "2026-03-25"
+trusted-publisher = "github:trussed-dev/trussed-auth"
+
+[[publisher.trussed-auth-backend]]
+version = "0.2.0"
+when = "2026-07-23"
 trusted-publisher = "github:trussed-dev/trussed-auth"
 
 [[publisher.trussed-chunked]]
@@ -115,15 +130,35 @@ version = "0.3.0"
 when = "2026-03-23"
 trusted-publisher = "github:trussed-dev/trussed-staging"
 
+[[publisher.trussed-rsa-alloc]]
+version = "0.5.0"
+when = "2026-07-23"
+trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
+
 [[publisher.trussed-rsa-types]]
 version = "0.2.0"
 when = "2026-03-25"
 trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
 
+[[publisher.trussed-se050-backend]]
+version = "0.8.0"
+when = "2026-07-23"
+trusted-publisher = "github:Nitrokey/trussed-se050-backend"
+
 [[publisher.trussed-se050-manage]]
 version = "0.3.0"
 when = "2026-03-25"
 trusted-publisher = "github:Nitrokey/trussed-se050-backend"
+
+[[publisher.trussed-staging]]
+version = "0.5.0"
+when = "2026-07-23"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+
+[[publisher.trussed-usbip]]
+version = "0.1.0"
+when = "2026-07-23"
+trusted-publisher = "github:trussed-dev/pc-usbip-runner"
 
 [[publisher.trussed-wrap-key-to-file]]
 version = "0.3.0"

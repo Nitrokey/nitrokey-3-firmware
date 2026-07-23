@@ -19,7 +19,7 @@ rand_core = { version = "0.6.4", features = ["getrandom"] }
 signal-hook = { version = "0.3.17", default-features = false }
 trussed.workspace = true
 trussed-core.workspace = true
-trussed-usbip = { version = "=0.1.0-rc.1", default-features = false, features = ["ctaphid"] }
+trussed-usbip = { version = "0.1", default-features = false, features = ["ctaphid"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
 
 [build-dependencies]

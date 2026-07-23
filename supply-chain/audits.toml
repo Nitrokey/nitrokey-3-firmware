@@ -338,3 +338,45 @@ delta = "0.1.9 -> 0.1.11"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.1 -> 0.1.3"
+
+[[trusted.admin-app]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/admin-app"
+start = "2026-07-22"
+end = "2027-07-23"
+
+[[trusted.trussed]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed"
+start = "2026-07-22"
+end = "2027-07-23"
+
+[[trusted.trussed-auth-backend]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-auth"
+start = "2026-07-23"
+end = "2027-07-23"
+
+[[trusted.trussed-rsa-alloc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
+start = "2026-07-23"
+end = "2027-07-23"
+
+[[trusted.trussed-se050-backend]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:Nitrokey/trussed-se050-backend"
+start = "2026-07-23"
+end = "2027-07-23"
+
+[[trusted.trussed-staging]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/trussed-staging"
+start = "2026-07-23"
+end = "2027-07-23"
+
+[[trusted.trussed-usbip]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/pc-usbip-runner"
+start = "2026-07-23"
+end = "2027-07-23"

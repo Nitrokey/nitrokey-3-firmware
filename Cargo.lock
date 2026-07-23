@@ -4,8 +4,9 @@ version = 4
 
 [[package]]
 name = "admin-app"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/admin-app.git?tag=v0.1.0-nitrokey.22#70086d9d99868def0a022c29c03b3270a4436385"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32b02a99bf03dced64b9b0bc9b2f101987e5676fba19fc76580702c8ba32bd7c"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -1979,9 +1980,9 @@ checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
 name = "littlefs2"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09962f5a4debc842f60156499ba53364cff174f4afb0ac210156d114d843cc4d"
+checksum = "3e00aee790b8914c83815e9f6952731f4ddd9965c160aa66fe2a89abeb5c406a"
 dependencies = [
  "bitflags 2.9.4",
  "delog",
@@ -2004,12 +2005,13 @@ dependencies = [
 
 [[package]]
 name = "littlefs2-sys"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae112b732df34c1420471e1ff21c562dfdf81219efb5960dd15b3947097e784a"
+checksum = "999d08bb7fae46d63ecb98d2474d28f7af1a6c928a51b4dfe5f1804abf9afc46"
 dependencies = [
  "bindgen",
  "cc",
+ "tinyrlibc",
 ]
 
 [[package]]
@@ -2043,9 +2045,9 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41e86e4e491dd3f8e07e7ba6de4aace716459ddefebd05743b2cb67b6a566d3c"
+checksum = "1b5eeac224f2ed643cdd682ad20ed018af5c08963a5667906d658eb18f3b8c44"
 dependencies = [
  "block-buffer",
  "cipher",
@@ -2149,6 +2151,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "interchange",
+ "littlefs2-sys",
  "memory-regions",
  "nrf52840-hal",
  "nrf52840-pac",
@@ -2326,8 +2329,8 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "opcard"
-version = "1.7.0"
-source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.7.0#2b94d6aa0d1d533e01997b61332b229247e41c49"
+version = "1.8.0"
+source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.8.0#2cf214a95ccbdd8c1f5dbdd286f5381526c68ee2"
 dependencies = [
  "admin-app",
  "apdu-app",
@@ -2862,9 +2865,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "se05x"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "577dd859bde220795c4afca496d850c62c794e72b49c475d3febceca329c718a"
+checksum = "d33abe6f15b9695e82eef4d45391dd476d1011b54914fa314e3d27c68a59e79a"
 dependencies = [
  "aes",
  "bitflags 2.9.4",
@@ -3362,6 +3365,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyrlibc"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9af8adde15cc59c61328c5d709b41b8464522a733033584d33def687b26bd009"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "tinystr"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3514,9 +3526,9 @@ dependencies = [
 
 [[package]]
 name = "trussed"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "400475917c40f07716c84b201a363012f6c9b1acdb4b38a5ed05e227539cd05c"
+checksum = "7b5782830442198b88886b5e165b61b4626cda85316b7912e563950e65fa5e20"
 dependencies = [
  "aead",
  "aes",
@@ -3559,9 +3571,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-auth-backend"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddba6d39b34a5732dbc1b8938eff7a4e95e1a1ac2e28a91bcdac6d20af682fd6"
+checksum = "32af78560d0e3e415b86b34bfdf7abdfc00e0117f401e2f5f5048f58d6f95540"
 dependencies = [
  "cbor-smol",
  "chacha20poly1305",
@@ -3648,9 +3660,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-rsa-alloc"
-version = "0.5.0-rc.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "959e4ed92c9a39f3af0e41605422574deb067a4b52c2d0b3ec651a7769909e1b"
+checksum = "7aacf018840cb3ad6cb18ab3fbf9dc56e686e2c00e46fabccc4bc6436ce19374"
 dependencies = [
  "delog",
  "heapless-bytes",
@@ -3675,9 +3687,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8883814fc9e3a7b5ab94548fd26bc33ca0aeebbedc6c13f66849aa15dc187188"
+checksum = "75b9f1a4147d9a0b674a7121bccfb871c7538fe85416212fab21de92af72ce49"
 dependencies = [
  "bitflags 2.9.4",
  "cbor-smol",
@@ -3726,9 +3738,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-staging"
-version = "0.5.0-rc.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e6deeae8561b46439244e293ca8b280e803a6c0ba37bdd6716ce5fb7a1afa4"
+checksum = "267ecfbae9d6f86498ea3a9635a6b3d3897d2591efa7f398cabd21390cf5535d"
 dependencies = [
  "aead",
  "chacha20poly1305",
@@ -3756,9 +3768,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-usbip"
-version = "0.1.0-rc.1"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f180e84c51b87ea68e90ad7c13703f80b9f099e293e008c075a46ae823e227cc"
+checksum = "f097fde89905249b0530e502b90e3b83392eb6c909bb5b4a60b9718d1bda536a"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
