@@ -6,12 +6,11 @@ use boards::{
     flash::ExtFlashStorage,
     init::{self, UsbNfc, UsbResources},
     nk3xn::{
-        button::ThreeButtons,
         led::RgbLed,
         nfc::{self, NfcChip},
         prince,
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+        InternalFlashStorage, NK3xN, PwmTimer,
     },
     soc::{
         lpc55::{clock_controller::DynamicClockController, Lpc55},
@@ -25,10 +24,10 @@ use boards::{
     },
     Apps, Trussed,
 };
-use embedded_hal::{
-    blocking::i2c::{Read, Write},
-    timer::{Cancel, CountDown},
-};
+// The blocking I2C traits are only used to talk to the SE050 secure element.
+#[cfg(feature = "se050")]
+use embedded_hal::blocking::i2c::{Read, Write};
+use embedded_hal::timer::{Cancel, CountDown};
 use hal::{
     drivers::{
         clocks,
@@ -66,6 +65,11 @@ use trussed_core::types::Location;
 use utils::OptionalStorage;
 #[cfg(feature = "se050")]
 use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
+
+use boards::nk3xn::{button::ThreeButtons, ButtonsTimer};
+// The SE050 I2C bus only exists when the secure element is present.
+#[cfg(feature = "se050")]
+use boards::nk3xn::I2C;
 
 use crate::{VERSION, VERSION_STRING};
 
@@ -265,17 +269,14 @@ impl Stage1 {
     }
 
     fn init_buttons(&mut self, ctimer: ButtonsTimer) -> ThreeButtons {
-        #[cfg(feature = "board-nk3xn")]
-        {
-            ThreeButtons::new(
-                Timer::new(ctimer.enabled(
-                    &mut self.peripherals.syscon,
-                    self.clocks.clocks.support_1mhz_fro_token().unwrap(),
-                )),
-                &mut self.clocks.gpio,
-                &mut self.clocks.iocon,
-            )
-        }
+        ThreeButtons::new(
+            Timer::new(ctimer.enabled(
+                &mut self.peripherals.syscon,
+                self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+            )),
+            &mut self.clocks.gpio,
+            &mut self.clocks.iocon,
+        )
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -309,6 +310,10 @@ impl Stage1 {
         let mut delay_timer = Timer::new(
             delay_timer.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
+        // The SE050 timer and the Solo2 touch sample timer both need Ctimer2, so
+        // only one of them is built. On the Solo2 (no SE050) Ctimer2 is consumed
+        // by the touch buttons below instead.
+        #[cfg(feature = "se050")]
         let se050_timer = Timer::new(
             ctimer2.enabled(syscon, self.clocks.clocks.support_1mhz_fro_token().unwrap()),
         );
@@ -355,6 +360,7 @@ impl Stage1 {
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
+            #[cfg(feature = "se050")]
             se050_timer,
             basic,
             wwdt: self.wwdt,
@@ -367,6 +373,7 @@ pub struct Stage2 {
     peripherals: Peripherals,
     clocks: Clocks,
     basic: Basic,
+    #[cfg(feature = "se050")]
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
     wwdt: EnabledWwdt,
 }
@@ -413,6 +420,7 @@ impl Stage2 {
         Some(iso14443)
     }
 
+    #[cfg(feature = "se050")]
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>) -> I2C {
         // SE050 check
         let _enabled = pins::Pio1_26::take()
@@ -473,7 +481,11 @@ impl Stage2 {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
 
+        #[cfg(feature = "se050")]
         let se050_i2c = (!self.clocks.is_nfc_passive).then(|| self.get_se050_i2c(flexcomm5));
+        // The Solo2 has no SE050; Flexcomm5 (the SE050 I2C bus) is unused.
+        #[cfg(not(feature = "se050"))]
+        let _ = flexcomm5;
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive);
         let (nfc, spi) = if use_nfc {
@@ -493,7 +505,9 @@ impl Stage2 {
             nfc,
             nfc_rp,
             spi,
+            #[cfg(feature = "se050")]
             se050_timer: self.se050_timer,
+            #[cfg(feature = "se050")]
             se050_i2c,
             wwdt: self.wwdt,
         }
@@ -508,7 +522,9 @@ pub struct Stage3 {
     nfc: Option<Iso14443<NfcChip>>,
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
+    #[cfg(feature = "se050")]
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    #[cfg(feature = "se050")]
     se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
@@ -545,7 +561,9 @@ impl Stage3 {
             nfc: self.nfc,
             nfc_rp: self.nfc_rp,
             spi: self.spi,
+            #[cfg(feature = "se050")]
             se050_timer: self.se050_timer,
+            #[cfg(feature = "se050")]
             se050_i2c: self.se050_i2c,
             flash,
             wwdt: self.wwdt,
@@ -562,7 +580,9 @@ pub struct Stage4 {
     nfc_rp: CcidResponder<'static>,
     spi: Option<Spi>,
     flash: Flash,
+    #[cfg(feature = "se050")]
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    #[cfg(feature = "se050")]
     se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
@@ -666,7 +686,9 @@ impl Stage4 {
             rng: self.flash.rng,
             nfc: self.nfc,
             nfc_rp: self.nfc_rp,
+            #[cfg(feature = "se050")]
             se050_timer: self.se050_timer,
+            #[cfg(feature = "se050")]
             se050_i2c: self.se050_i2c,
             store,
             wwdt: self.wwdt,
@@ -717,7 +739,9 @@ pub struct Stage5 {
     nfc_rp: CcidResponder<'static>,
     rng: Rng<Enabled>,
     store: RunnerStore<NK3xN>,
+    #[cfg(feature = "se050")]
     se050_timer: Timer<ctimer::Ctimer2<Enabled>>,
+    #[cfg(feature = "se050")]
     se050_i2c: Option<I2C>,
     wwdt: EnabledWwdt,
 }
@@ -752,12 +776,6 @@ impl Stage5 {
             self.se050_i2c
                 .map(|i2c| (Hal027(i2c), Hal027(TimerDelay(self.se050_timer)))),
         );
-
-        #[cfg(not(feature = "se050"))]
-        {
-            let _ = self.se050_timer;
-            let _ = self.se050_i2c;
-        }
 
         Stage6 {
             status: self.status,
