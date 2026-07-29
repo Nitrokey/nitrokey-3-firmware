@@ -16,6 +16,19 @@ const FLASH_PROPERTIES: FlashProperties = FlashProperties {
     _cont: 0, /* should be 6, but device doesn't report those */
 };
 
+/// External-flash JEDEC IDs (manufacturer code + 2-byte device id) accepted by
+/// the firmware. All are 2 MB SPI-NOR parts with a compatible command set.
+const ACCEPTED_JEDEC: &[[u8; 3]] = &[
+    // GigaDevice GD25Q16 (Nitrokey 3).
+    FLASH_PROPERTIES.jedec,
+    // The Solo2 additionally ships pin- and command-compatible Winbond W25Q16JV
+    // parts (manufacturer 0xEF), which the Nitrokey 3 does not.
+    #[cfg(feature = "board-solo2")]
+    [0xef, 0x40, 0x15], // Winbond W25Q16JV
+    #[cfg(feature = "board-solo2")]
+    [0xef, 0x70, 0x15], // Winbond W25Q16JV-DTR
+];
+
 // defines how much space we leave untouched at the end
 pub const SPARE_LEN: usize = 4096 * 32; // 128kb
 
@@ -112,9 +125,9 @@ where
         let mut flash = spi_memory::series25::Flash::init(spim, cs).ok()?;
         let jedec_id = flash.read_jedec_id().ok()?;
         info!("Ext. Flash: {:?}", jedec_id);
-        if jedec_id.mfr_code() != FLASH_PROPERTIES.jedec[0]
-            || jedec_id.device_id() != &FLASH_PROPERTIES.jedec[1..]
-        {
+        let device_id = jedec_id.device_id();
+        let id = [jedec_id.mfr_code(), device_id[0], device_id[1]];
+        if !ACCEPTED_JEDEC.contains(&id) {
             error_now!("Unknown Ext. Flash: {:?}", jedec_id);
             None
         } else {
