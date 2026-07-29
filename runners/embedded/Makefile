@@ -9,6 +9,10 @@ else ifeq ($(BOARD), nk3xn)
   SOC := lpc55
   TARGET := thumbv8m.main-none-eabi
   LEGACY_BUILD_PROFILE := lpc55
+else ifeq ($(BOARD), solo2)
+  SOC := lpc55
+  TARGET := thumbv8m.main-none-eabi
+  LEGACY_BUILD_PROFILE := lpc55
 else ifneq ($(BOARD), )
   $(error Unsupported board $(BOARD))
 endif
@@ -81,6 +85,8 @@ GET_TARGET = $(shell echo $(@) | cut -d '-' -f 1)
 	$(MAKE) $(GET_TARGET) BOARD=nk3am FEATURES=$(FEATURES)
 %-nk3xn: $(ARTIFACTS)
 	$(MAKE) $(GET_TARGET) BOARD=nk3xn FEATURES=$(FEATURES)
+%-solo2: $(ARTIFACTS)
+	$(MAKE) $(GET_TARGET) BOARD=solo2 FEATURES=$(FEATURES)
 
 check-var-%:
 	@if [ -z '${${*}}' ]; then echo 'FAIL: var: $* required!!!' && exit 1; fi

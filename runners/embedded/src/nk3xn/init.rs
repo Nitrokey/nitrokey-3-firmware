@@ -66,6 +66,11 @@ use utils::OptionalStorage;
 #[cfg(feature = "se050")]
 use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
 
+// Buttons differ per board: the Nitrokey 3 (nk3xn) uses a single GPIO button,
+// the Solo2 uses three capacitive touch pads.
+#[cfg(feature = "board-solo2")]
+use boards::nk3xn::button_touch::ThreeButtons;
+#[cfg(not(feature = "board-solo2"))]
 use boards::nk3xn::{button::ThreeButtons, ButtonsTimer};
 // The SE050 I2C bus only exists when the secure element is present.
 #[cfg(feature = "se050")]
@@ -256,24 +261,55 @@ impl Stage1 {
     }
 
     fn init_rgb(&mut self, ctimer: PwmTimer) -> RgbLed {
-        #[cfg(feature = "board-nk3xn")]
-        {
-            RgbLed::new(
-                hal::drivers::Pwm::new(ctimer.enabled(
-                    &mut self.peripherals.syscon,
-                    self.clocks.clocks.support_1mhz_fro_token().unwrap(),
-                )),
-                &mut self.clocks.iocon,
-            )
-        }
+        // The RGB LED is wired identically on the Nitrokey 3 and the Solo2.
+        RgbLed::new(
+            hal::drivers::Pwm::new(ctimer.enabled(
+                &mut self.peripherals.syscon,
+                self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+            )),
+            &mut self.clocks.iocon,
+        )
     }
 
+    // The Nitrokey 3 single-GPIO button.
+    #[cfg(not(feature = "board-solo2"))]
     fn init_buttons(&mut self, ctimer: ButtonsTimer) -> ThreeButtons {
         ThreeButtons::new(
             Timer::new(ctimer.enabled(
                 &mut self.peripherals.syscon,
                 self.clocks.clocks.support_1mhz_fro_token().unwrap(),
             )),
+            &mut self.clocks.gpio,
+            &mut self.clocks.iocon,
+        )
+    }
+
+    // The Solo2's three capacitive touch pads, driven by the ADC, one DMA
+    // channel, Ctimer1 (charge/sample trigger) and Ctimer2 (sample correlation).
+    #[cfg(feature = "board-solo2")]
+    fn init_touch_buttons(
+        &mut self,
+        adc: hal::Adc<Enabled>,
+        adc_timer: ctimer::Ctimer1,
+        sample_timer: ctimer::Ctimer2,
+        dma: hal::Dma<Unknown>,
+    ) -> ThreeButtons {
+        let touch_token = self.clocks.clocks.support_touch_token().unwrap();
+        let adc_timer = adc_timer.enabled(
+            &mut self.peripherals.syscon,
+            self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+        );
+        let sample_timer = sample_timer.enabled(
+            &mut self.peripherals.syscon,
+            self.clocks.clocks.support_1mhz_fro_token().unwrap(),
+        );
+        let mut dma = dma.enabled(&mut self.peripherals.syscon);
+        ThreeButtons::new(
+            adc,
+            adc_timer,
+            sample_timer,
+            &mut dma,
+            touch_token,
             &mut self.clocks.gpio,
             &mut self.clocks.iocon,
         )
@@ -289,6 +325,8 @@ impl Stage1 {
         ctimer2: ctimer::Ctimer2,
         ctimer3: ctimer::Ctimer3,
         perf_timer: ctimer::Ctimer4,
+        // Only the Solo2 touch buttons use DMA; unused on the Nitrokey 3.
+        #[allow(unused_variables)] dma: hal::Dma<Unknown>,
         pfr: Pfr<Unknown>,
         secure_firmware_version: Option<u32>,
         require_prince: bool,
@@ -324,8 +362,19 @@ impl Stage1 {
 
         let mut rgb = self.init_rgb(ctimer3);
 
+        // Nitrokey 3: single GPIO button.
+        #[cfg(not(feature = "board-solo2"))]
         let mut three_buttons = if !self.clocks.is_nfc_passive {
             Some(self.init_buttons(ctimer1))
+        } else {
+            None
+        };
+        // Solo2: three capacitive touch pads (see `init_touch_buttons`). Only
+        // built in active (USB) mode; in passive NFC mode the ADC drives the
+        // clock controller instead, exactly as on the Nitrokey 3.
+        #[cfg(feature = "board-solo2")]
+        let mut three_buttons = if !self.clocks.is_nfc_passive {
+            Some(self.init_touch_buttons(adc.take().unwrap(), ctimer1, ctimer2, dma))
         } else {
             None
         };

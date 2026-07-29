@@ -13,7 +13,8 @@ use utils::Version;
 
 delog::generate_macros!();
 
-#[cfg(feature = "board-nk3xn")]
+// Shared LPC55 runner glue, used by both the Nitrokey 3 (nk3xn) and the Solo2.
+#[cfg(any(feature = "board-nk3xn", feature = "board-solo2"))]
 pub mod nk3xn;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]

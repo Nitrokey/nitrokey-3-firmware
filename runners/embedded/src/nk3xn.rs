@@ -29,6 +29,7 @@ pub fn init(
             hal.ctimer.2,
             hal.ctimer.3,
             hal.ctimer.4,
+            hal.dma,
             hal.pfr,
             secure_firmware_version,
             require_prince,
