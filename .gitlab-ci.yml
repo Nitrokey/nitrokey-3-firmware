@@ -75,6 +75,23 @@ check-components:
   script:
     - make check-components
 
+# Community-maintained SoloKeys Solo2 support (see docs/solo2.md).
+# Non-blocking (allow_failure): a Solo2 breakage must never block a Nitrokey
+# device release. It only surfaces as a warning for the Solo2 code owners.
+build-solo2:
+  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  tags:
+    - docker
+  stage: build
+  allow_failure: true
+  script:
+    - rustup target add thumbv8m.main-none-eabi
+    - make -C runners/embedded build-solo2
+    - make -C runners/embedded build-solo2 FEATURES=develop
+
 lint:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
