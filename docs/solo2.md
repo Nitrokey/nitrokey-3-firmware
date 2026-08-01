@@ -126,6 +126,122 @@ e.g.:
 $ make -C runners/embedded build-solo2 FEATURES=provisioner
 ```
 
+## Self-signed secure boot
+
+The `utils/lpc55-builder` flow above still carries a `# TODO: add secure boot`.
+If you want secure boot **now**, with your own root of trust, you can sign the
+firmware yourself using NXP's [spsdk](https://github.com/nxp-mcuxpresso/spsdk)
+(`nxpimage`/`nxpcrypto`, tested with 3.10) and turn it on via the CMPA.  This was
+verified end-to-end on a Solo2 Hacker.  The `lpc55 configure`/`lpc55 write-flash`
+steps need the device in the LPC55 ROM ISP (`nitropy nk3 reboot --bootloader`
+once a correctly signed image is installed, or the ROM's automatic fallback when
+no bootable image is present).
+
+**1. Build** `runners/embedded/artifacts/runner-lpc55-solo2.bin`:
+
+```
+$ make -C runners/embedded build-solo2
+```
+
+**2. Root key + a non-CA certificate** (the LPC55 rejects a CA cert as the last
+link of the signing chain):
+
+```
+$ nxpcrypto key generate -k rsa4096 -o root_key.pem
+$ openssl req -x509 -new -key root_key.pem -sha256 -days 3650 \
+      -outform DER -out root_cert.der \
+      -subj "/O=you/CN=Solo2 Secure Boot Root" \
+      -addext "basicConstraints=critical,CA:FALSE"
+```
+
+**3. Certificate block → RKTH.**  The LPC55 stores a hash of the 4-slot
+root-key table (the "RKTH") in the CMPA; with a single root that is the hash of
+your key:
+
+```
+$ cat > cert_block.yaml <<EOF
+family: lpc55s69
+revision: latest
+rootCertificate0File: root_cert.der
+mainRootCertId: 0
+containerOutputFile: cert_block.bin
+EOF
+$ nxpimage cert-block export -c cert_block.yaml   # prints "RKTH: <64 hex>"
+```
+
+There is **no multi-root shortcut**: the image embeds the whole root-key table
+and the CMPA stores its hash, so adding your key changes the RKTH and SoloKeys'
+pre-signed firmware no longer validates.  Single root = your key only.
+
+**4. Sign the firmware — TrustZone must stay enabled:**
+
+```
+$ cat > mbi.yaml <<EOF
+family: lpc55s69
+revision: latest
+outputImageExecutionTarget: xip
+outputImageAuthenticationType: signed
+outputImageExecutionAddress: 0
+inputImageFile: runners/embedded/artifacts/runner-lpc55-solo2.bin
+masterBootOutputFile: runner-lpc55-solo2.signed.bin
+enableTrustZone: true
+certBlock: cert_block.bin
+signer: type=file;file_path=root_key.pem
+EOF
+$ nxpimage mbi export -c mbi.yaml
+```
+
+> **`enableTrustZone: true` is mandatory.**  With `false`, the signed image marks
+> TrustZone-M as *disabled*; then "reboot to bootloader" (`boot_to_bootrom`, used
+> by `nitropy nk3 reboot --bootloader`) warm-jumps into the *secure* boot ROM at
+> `0x03000000`, which is unreachable while TrustZone is disabled — USB ISP never
+> enumerates and the device looks dead until a destructive recovery.  `true`
+> selects "TrustZone enabled, default settings" (no preset file), matching the
+> plain-image state, so the firmware is unchanged and reboot-to-bootloader keeps
+> working.  A plain unsigned `.bin` never disables TrustZone, which is why it
+> reboots fine.
+
+**5. Enable secure boot in the CMPA (reversible until sealed).**  Dump the
+factory CMPA first and edit only what you must, so every other field (including
+`customer-data`) keeps its factory value:
+
+```
+$ lpc55 pfr native > cmpa.yaml     # then edit the factory-settings block:
+#   secure-boot-configuration.secure-boot-enabled: true
+#   secure-boot-configuration.use-rsa4096-keys:    true
+#   rot-fingerprint: <RKTH from step 3>
+#   (leave `seal` unset so it stays reversible)
+$ lpc55 configure factory-settings -vvv cmpa.yaml
+```
+
+**6. Flash the signed image** (from now on, only `*.signed.bin`, never the raw
+`.bin`):
+
+```
+$ lpc55 write-flash runner-lpc55-solo2.signed.bin
+$ lpc55 reboot
+```
+
+The device now boots only firmware signed by your key, and
+`nitropy nk3 reboot --bootloader` re-enters the ROM normally.
+
+### Sealing (irreversible)
+
+Secure boot is enforced **whether or not the CMPA is sealed** — sealing only
+prevents *rewriting* the CMPA, i.e. it removes the escape hatch.  While unsealed
+you can always recover: re-enter the ROM ISP and write a CMPA with
+`secure-boot-enabled: false`, then flash the plain `.bin`.  Seal only after a
+signed image is confirmed booting and you no longer need reversibility:
+
+```
+$ lpc55 configure factory-settings -vvv cmpa.yaml   # with `seal: true` added
+```
+
+Once sealed, the CMPA can never change: a lost signing key, or an image whose
+build number is below the CFPA anti-rollback counter (`secure_firmware_version`,
+readable via `lpc55 pfr native`), bricks the device permanently.  **Do not seal a
+development key.**
+
 ## Status and caveats
 
 * **Verified on real Solo2 hardware** (a "Solo 2 Security Key" Hacker).  Both the
