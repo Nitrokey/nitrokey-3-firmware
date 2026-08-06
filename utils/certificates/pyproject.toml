@@ -1,0 +1,11 @@
+[project]
+name = "certificates"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "cryptography >=49",
+]
+
+[tool.uv]
+exclude-newer = "7 days"
+package = false
