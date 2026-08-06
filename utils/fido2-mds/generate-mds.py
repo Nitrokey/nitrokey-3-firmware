@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 from cairosvg import svg2png
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from fido2.mds3 import MetadataStatement, VerificationMethodDescriptor, Version
 from fido2.webauthn import Aaguid
 
@@ -48,7 +50,10 @@ class Authenticator:
 
     def mds(self) -> MetadataStatement:
         with open(self.attestation_root_certificate, "rb") as f:
-            attestation_root_certificate = f.read()
+            cert_pem = f.read()
+        cert_pem = cert_pem.replace(b"TRUSTED CERTIFICATE", b"CERTIFICATE")
+        cert = x509.load_pem_x509_certificate(cert_pem)
+        attestation_root_certificate = cert.public_bytes(Encoding.DER)
 
         with open("nitrokey.svg", "rb") as f:
             icon_bytes = svg2png(file_obj=f, output_width=128, output_height=128)
@@ -105,21 +110,21 @@ NK3AM = Authenticator(
     name="Nitrokey 3 AM",
     aaguid="2cd2f727-f6ca-44da-8f48-5c2e5da000a2",
     has_nfc=False,
-    attestation_root_certificate="attestation/nk3am.der",
+    attestation_root_certificate="../certificates/nk3/nk3am/fido-ca.pem",
 )
 
 NK3XN = Authenticator(
     name="Nitrokey 3 xN",
     aaguid="ec99db19-cd1f-4c06-a2a9-940f17a6a30b",
     has_nfc=True,
-    attestation_root_certificate="attestation/nk3xn.der",
+    attestation_root_certificate="../certificates/nk3/nk3xn/fido-ca.pem",
 )
 
 NK3AM_TEST = Authenticator(
     name="Nitrokey 3 AM Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=False,
-    attestation_root_certificate="attestation/test.der",
+    attestation_root_certificate="../test-certificates/fido/nk-fido-ca-cert.pem",
     is_test=True,
 )
 
@@ -127,7 +132,7 @@ NK3XN_TEST = Authenticator(
     name="Nitrokey 3 xN Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=True,
-    attestation_root_certificate="attestation/test.der",
+    attestation_root_certificate="../test-certificates/fido/nk-fido-ca-cert.pem",
     is_test=True,
 )
 

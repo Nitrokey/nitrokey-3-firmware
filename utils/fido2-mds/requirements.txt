@@ -9,7 +9,9 @@ cffi==2.1.0
     #   cairocffi
     #   cryptography
 cryptography==49.0.0
-    # via fido2
+    # via
+    #   -r requirements.in
+    #   fido2
 cssselect2==0.9.0
     # via cairosvg
 defusedxml==0.7.1
