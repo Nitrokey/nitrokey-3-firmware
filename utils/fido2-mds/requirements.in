@@ -1,3 +1,0 @@
-cairosvg >=2.8,<3
-cryptography >=49
-fido2 >=2,<3

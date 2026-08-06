@@ -1,0 +1,13 @@
+[project]
+name = "fido2-mds"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "cairosvg >=2.8,<3",
+  "cryptography >=49",
+  "fido2 >=2,<3",
+]
+
+[tool.uv]
+exclude-newer = "7 days"
+package = false
