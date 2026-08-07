@@ -25,6 +25,10 @@ build-all:
 jlink:
 	JLinkGDBServerCLExe -strict -device LPC55S69 -if SWD -vd
 
+.PHONY: linkserver
+linkserver:
+	LinkServer gdbserver LPC55S69 --gdb-port 2331
+
 .PHONY: run
 run: build
 	arm-none-eabi-gdb -q -x ./jlink.gdb "$(OUTPUT_ELF)"
