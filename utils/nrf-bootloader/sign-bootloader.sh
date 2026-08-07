@@ -32,4 +32,5 @@ HW_VERSION=52
 SD_VERSION=0x0
 
 # Create an update package signed with the private key
-nrfutil pkg generate --hw-version $HW_VERSION --bootloader-version $BOOTLOADER_VERSION --bootloader $BOOTLOADER_HEX_FILE --sd-req $SD_VERSION --key-file $KEY_PATH  $OUTPUT_FILE
+#nrfutil pkg generate --hw-version $HW_VERSION --bootloader-version $BOOTLOADER_VERSION --bootloader $BOOTLOADER_HEX_FILE --sd-req $SD_VERSION --key-file $KEY_PATH  $OUTPUT_FILE
+nitropy-nrf pkg generate --hw-version $HW_VERSION --bootloader-version $BOOTLOADER_VERSION --bootloader $BOOTLOADER_HEX_FILE --sd-req $SD_VERSION --key-file $KEY_PATH $OUTPUT_FILE
