@@ -9,7 +9,7 @@ apdu-app = "0.2"
 bitflags = "2"
 ctaphid-app = "0.2"
 embedded-hal = "0.2.7"
-heapless = "0.9"
+heapless = { version = "0.9", features = ["serde"] }
 heapless-bytes = "0.5"
 interchange = "0.3"
 se05x = { version = "0.4", optional = true}
