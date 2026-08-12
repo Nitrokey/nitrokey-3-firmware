@@ -25,6 +25,8 @@ memory-regions = { path = "components/memory-regions" }
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
 # applications
+# TODO: revert to the crates.io release
+admin-app = { git = "https://github.com/ABuljko/admin-app", branch = "config-string" }
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }
 piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }

@@ -10,7 +10,7 @@ use apdu_app::App as ApduApp;
 use bitflags::bitflags;
 use core::marker::PhantomData;
 use ctaphid_app::App as CtaphidApp;
-use heapless::Vec;
+use heapless::{String, Vec};
 use littlefs2_core::{path, Path};
 
 #[cfg(feature = "factory-reset")]
@@ -57,8 +57,16 @@ fn is_default<T: Default + PartialEq>(value: &T) -> bool {
 
 mod migrations;
 
+/// Maximum length of the device label in bytes
+///
+/// This value must never be decreased. A stored label that is longer than this makes the whole
+/// config fail to deserialize, which sets `InitStatus::CONFIG_ERROR` and therefore disables opcard
+pub const DEVICE_LABEL_LEN: usize = 32;
+
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default, rename = "g", skip_serializing_if = "is_default")]
+    global: GlobalConfig,
     #[serde(default, rename = "f", skip_serializing_if = "is_default")]
     fido: FidoConfig,
     #[cfg(feature = "opcard")]
@@ -78,6 +86,7 @@ impl admin_app::Config for Config {
     fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
         let (app, key) = key.split_once('.')?;
         match app {
+            "global" => self.global.field(key),
             "fido" => self.fido.field(key),
             #[cfg(feature = "opcard")]
             "opcard" => self.opcard.field(key),
@@ -89,6 +98,13 @@ impl admin_app::Config for Config {
 
     fn list_available_fields(&self) -> &'static [ConfigField] {
         &[
+            ConfigField {
+                name: "global.device_label",
+                requires_touch_confirmation: false,
+                requires_reboot: false,
+                destructive: false,
+                ty: FieldType::String,
+            },
             ConfigField {
                 name: "fido.disable_skip_up_timeout",
                 requires_touch_confirmation: false,
@@ -170,6 +186,21 @@ impl admin_app::Config for Config {
     fn set_migration_version(&mut self, version: u32) -> bool {
         self.fs_version = version;
         true
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct GlobalConfig {
+    #[serde(default, rename = "l", skip_serializing_if = "is_default")]
+    device_label: String<DEVICE_LABEL_LEN>,
+}
+
+impl GlobalConfig {
+    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
+        match key {
+            "device_label" => Some(ConfigValueMut::String(self.device_label.as_mut_view())),
+            _ => None,
+        }
     }
 }
 
@@ -1227,12 +1258,16 @@ mod tests {
     use super::OpcardConfig;
     #[cfg(feature = "piv-authenticator")]
     use super::PivConfig;
-    use super::{Config, FidoConfig};
+    use super::{Config, FidoConfig, GlobalConfig};
     use cbor_smol::cbor_serialize;
 
     #[test]
     fn test_config_size() {
+        let mut device_label = heapless::String::new();
+        while device_label.push('a').is_ok() {}
+
         let config = Config {
+            global: GlobalConfig { device_label },
             fido: FidoConfig {
                 disable_skip_up_timeout: true,
             },
@@ -1252,7 +1287,8 @@ mod tests {
         let data = cbor_serialize(&config, &mut buffer).unwrap();
         // littlefs2 is most efficient with files < 1/4 of the block size.  The block sizes are 512
         // bytes for LPC55 and 256 bytes for NRF52.  As the block count is only problematic on the
-        // LPC55, this could be increased to 128 if necessary.
-        assert!(data.len() < 64, "{}: {}", data.len(), hex::encode(data));
+        // LPC55, it was increased to 128 because a config with a device_label at its maximum
+        // length no longer fits into 64 bytes.
+        assert!(data.len() < 128, "{}: {}", data.len(), hex::encode(data));
     }
 }
