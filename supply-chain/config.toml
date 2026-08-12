@@ -13,6 +13,10 @@ url = "https://raw.githubusercontent.com/google/supply-chain/main/audits.toml"
 [imports.mozilla]
 url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 
+[policy.admin-app]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
 [policy.collect-license-info]
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
