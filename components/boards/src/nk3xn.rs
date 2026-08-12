@@ -25,6 +25,10 @@ use utils::OptionalStorage;
 use crate::{flash::ExtFlashStorage, soc::lpc55::Lpc55, Board};
 
 pub mod button;
+/// Capacitive touch buttons, used by the `board-solo2` target instead of the
+/// single-GPIO [`button`] used by the Nitrokey 3.
+#[cfg(feature = "board-solo2")]
+pub mod button_touch;
 pub mod led;
 pub mod nfc;
 pub mod prince;
@@ -61,7 +65,10 @@ impl Board for NK3xN {
     type Resources = ();
 
     type NfcDevice = NfcChip;
+    #[cfg(not(feature = "board-solo2"))]
     type Buttons = button::ThreeButtons;
+    #[cfg(feature = "board-solo2")]
+    type Buttons = button_touch::ThreeButtons;
     type Led = led::RgbLed;
 
     type InternalStorage = InternalFlashStorage;
@@ -76,9 +83,19 @@ impl Board for NK3xN {
     #[cfg(not(feature = "se050"))]
     type Se050Timer = ();
 
+    #[cfg(not(feature = "board-solo2"))]
     const BOARD_NAME: &'static str = "nk3xn";
+    #[cfg(feature = "board-solo2")]
+    const BOARD_NAME: &'static str = "solo2";
     const HAS_NFC: bool = true;
 }
+
+/// The SoloKeys Solo2 shares the LPC55 board implementation with the Nitrokey 3
+/// (`NK3xN`), differing only in the button hardware (capacitive touch instead of
+/// a single GPIO) and the absence of the SE050 secure element.  Both are
+/// selected at compile time via the `board-nk3xn` / `board-solo2` features.
+#[cfg(feature = "board-solo2")]
+pub use NK3xN as Solo2;
 
 pub type InternalFlashStorage = InternalFilesystem;
 pub type ExternalFlashStorage = OptionalStorage<ExtFlashStorage<Spi, FlashCs>>;

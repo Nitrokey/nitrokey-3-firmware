@@ -5,6 +5,9 @@ use utils::Soc;
 
 #[cfg(feature = "board-nk3xn")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
+// The Solo2 uses the same LPC55S69 flash layout as the Nitrokey 3 (nk3xn).
+#[cfg(feature = "board-solo2")]
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
 #[cfg(feature = "board-nk3am")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;
 

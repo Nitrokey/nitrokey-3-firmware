@@ -14,7 +14,9 @@ pub mod ui;
 
 #[cfg(feature = "board-nk3am")]
 pub mod nk3am;
-#[cfg(feature = "board-nk3xn")]
+// The Solo2 reuses the LPC55 board implementation of the Nitrokey 3 (`nk3xn`),
+// so the module is compiled for both targets.
+#[cfg(any(feature = "board-nk3xn", feature = "board-solo2"))]
 pub mod nk3xn;
 #[cfg(feature = "board-nkpk")]
 pub mod nkpk;

@@ -498,10 +498,11 @@ const fn validate_mechanisms() {
         if contains(trussed_se050_backend::MECHANISMS, mechanism) {
             continue;
         }
-        // The usbip runner does not have the mechanisms normally provided by the se050 backend.
+        // Some targets do not have the se050 backend that normally provides these mechanisms:
+        // the usbip runner, and hardware without an SE050 secure element (e.g. the Solo2).
         // Until there is a backend implementing them in software, we ignore them and return an
         // error at runtime.
-        #[cfg(feature = "trussed-usbip")]
+        #[cfg(any(feature = "trussed-usbip", not(feature = "se050")))]
         if contains(
             &[
                 Mechanism::BrainpoolP256R1,
@@ -516,6 +517,11 @@ const fn validate_mechanisms() {
                 Mechanism::P521Prehashed,
                 Mechanism::Secp256k1,
                 Mechanism::Secp256k1Prehashed,
+                // Raw RSA is only provided by the se050 backend (or the usbip runner's
+                // `trussed-rsa-alloc/raw`); PKCS#1 v1.5 RSA remains covered by backend-rsa.
+                Mechanism::Rsa2048Raw,
+                Mechanism::Rsa3072Raw,
+                Mechanism::Rsa4096Raw,
             ],
             mechanism,
         ) {

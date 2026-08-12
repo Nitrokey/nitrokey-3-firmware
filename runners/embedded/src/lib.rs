@@ -13,7 +13,8 @@ use utils::Version;
 
 delog::generate_macros!();
 
-#[cfg(feature = "board-nk3xn")]
+// Shared LPC55 runner glue, used by both the Nitrokey 3 (nk3xn) and the Solo2.
+#[cfg(any(feature = "board-nk3xn", feature = "board-solo2"))]
 pub mod nk3xn;
 
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
@@ -40,7 +41,10 @@ pub fn init_usb_nfc<B: Board>(
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfc<B> {
+    #[cfg(not(feature = "board-solo2"))]
     const USB_PRODUCT: &str = "Nitrokey 3";
+    #[cfg(feature = "board-solo2")]
+    const USB_PRODUCT: &str = "Nitrokey 3 (Solo2)";
     const USB_PRODUCT_ID: u16 = 0x42B2;
     boards::init::init_usb_nfc(
         resources,
