@@ -2,8 +2,8 @@
 # cargo-vet imports lock
 
 [[publisher.admin-app]]
-version = "0.2.0"
-when = "2026-07-22"
+version = "0.3.0"
+when = "2026-08-18"
 trusted-publisher = "github:trussed-dev/admin-app"
 
 [[publisher.apdu-app]]
@@ -79,6 +79,11 @@ trusted-publisher = "github:trussed-dev/littlefs2-sys"
 version = "0.6.0"
 when = "2026-07-15"
 trusted-publisher = "github:lpc55/lpc55-hal"
+
+[[publisher.piv-authenticator]]
+version = "0.7.0"
+when = "2026-08-19"
+trusted-publisher = "github:trussed-dev/piv-authenticator"
 
 [[publisher.se05x]]
 version = "0.4.1"
