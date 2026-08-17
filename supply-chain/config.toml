@@ -29,10 +29,6 @@ notes = "relaxed to reduce initial efforts"
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
-[policy.opcard]
-audit-as-crates-io = false
-notes = "pinned to a reviewed revision"
-
 [policy.p256-cortex-m4]
 audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
@@ -343,10 +339,6 @@ criteria = "safe-to-run"
 
 [[exemptions.ghash]]
 version = "0.5.1"
-criteria = "safe-to-run"
-
-[[exemptions.glob]]
-version = "0.3.3"
 criteria = "safe-to-run"
 
 [[exemptions.group]]
@@ -795,10 +787,6 @@ criteria = "safe-to-run"
 
 [[exemptions.valuable]]
 version = "0.1.1"
-criteria = "safe-to-run"
-
-[[exemptions.version_check]]
-version = "0.9.5"
 criteria = "safe-to-run"
 
 [[exemptions.volatile-register]]
