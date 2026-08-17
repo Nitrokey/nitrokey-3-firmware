@@ -1224,19 +1224,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34aa73646ffb006b8f5147f3dc182bd4bcb190227ce861fc4a4844bf8e3cb2c0"
 
 [[package]]
-name = "encrypted_container"
-version = "0.1.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.15.0#b22216f86a6c72827fb0900f38f1363c55b2619e"
-dependencies = [
- "cbor-smol",
- "delog",
- "heapless 0.9.1",
- "heapless-bytes",
- "serde",
- "trussed-core",
-]
-
-[[package]]
 name = "env_logger"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2508,17 +2495,17 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.6.0"
-source = "git+https://github.com/trussed-dev/piv-authenticator.git?tag=v0.6.0#be6918199642d53ae1af75f181e0b5577449d7a2"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14e6f47cf14578da3dd2e441cfb71a4df68a4632c6e8157ab375deaf65cd2f5f"
 dependencies = [
  "apdu-app",
  "cbor-smol",
- "cfg-if",
  "delog",
  "flexiber",
  "heapless 0.9.1",
  "heapless-bytes",
- "hex-literal 0.3.4",
+ "hex-literal 1.1.0",
  "iso7816",
  "littlefs2-core",
  "log",
@@ -2972,8 +2959,9 @@ dependencies = [
 
 [[package]]
 name = "secrets-app"
-version = "0.15.0"
-source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.15.0#b22216f86a6c72827fb0900f38f1363c55b2619e"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f24881c60d91443a9ea779403b9fdb94a018b7ba49315a19e036f167a9b02f84"
 dependencies = [
  "apdu-app",
  "bitflags 2.13.1",
@@ -2981,7 +2969,6 @@ dependencies = [
  "cbor-smol",
  "ctaphid-app",
  "delog",
- "encrypted_container",
  "flexiber",
  "heapless 0.9.1",
  "heapless-bytes",
