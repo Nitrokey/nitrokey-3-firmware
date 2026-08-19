@@ -39,12 +39,12 @@ trussed-fs-info = "0.3.0"
 trussed-hpke = "0.3.0"
 
 # apps
-admin-app = "0.2"
+admin-app = "0.3"
 fido-authenticator = { version = "=0.4.0-rc.3", features = ["chunked", "dispatch", "credential-id-format-v2"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
-secrets-app = { version = "0.15", features = ["apdu-dispatch", "ctaphid"], optional = true }
+secrets-app = { version = "0.16", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.7", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }
-piv-authenticator = { version = "0.6", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
+piv-authenticator = { version = "0.7", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]
