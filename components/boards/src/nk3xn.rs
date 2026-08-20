@@ -30,8 +30,10 @@ pub mod nfc;
 pub mod prince;
 pub mod spi;
 
+// lpc55-hal 0.6 replaced the `littlefs2_filesystem!` macro with this struct.
 #[cfg(feature = "no-encrypted-storage")]
-lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT));
+pub type InternalFilesystem =
+    lpc55_hal::drivers::flash::Storage<{ prince::FS_START }, { prince::BLOCK_COUNT }>;
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 

@@ -18,7 +18,8 @@ use trussed::store::Store as _;
 use trussed_core::InterruptFlag;
 use usb_device::{
     bus::UsbBusAllocator,
-    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
+    device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
+    LangID,
 };
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
@@ -166,11 +167,15 @@ pub fn init_usb_nfc<B: Board>(
             .implements_wink();
 
         let vidpid = UsbVidPid(USB_VENDOR_ID, usb_product_id);
-        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
+        let strings = StringDescriptors::new(LangID::EN)
             .product(usb_product)
-            .manufacturer(USB_MANUFACTURER)
+            .manufacturer(USB_MANUFACTURER);
+        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
+            .strings(&[strings])
+            .expect("failed to set USB string descriptors")
             .device_release(version.usb_release())
             .max_packet_size_0(64)
+            .expect("invalid max packet size for EP0")
             .composite_with_iads()
             .build();
 

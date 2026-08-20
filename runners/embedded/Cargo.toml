@@ -31,7 +31,7 @@ trussed-core.workspace = true
 interchange = "0.3"
 
 ### usb machinery
-usb-device = "0.2"
+usb-device = "0.3.2"
 
 ### NRF52 specific dependencies
 nrf52840-hal = { version = "0.15.1", optional = true }
