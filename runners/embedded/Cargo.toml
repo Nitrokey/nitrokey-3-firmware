@@ -12,7 +12,7 @@ license = "MIT"
 ### base dependencies
 apps = { path = "../../components/apps", features = ["nk3"] }
 boards = { path = "../../components/boards", features = ["trussed-auth"] }
-delog = "0.1"
+delog.workspace = true
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rt = "0.7.5"
 cortex-m-rtic = "1.0"
@@ -24,7 +24,7 @@ se05x = { version = "0.4", optional = true }
 heapless = "0.9.1"
 
 ### protocols and dispatchers
-apdu-dispatch = "0.4"
+apdu-dispatch.workspace = true
 
 ### trussed core
 trussed.workspace = true

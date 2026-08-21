@@ -4,10 +4,10 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
-delog = "0.1"
 apdu-app = "0.2"
 bitflags = "2"
 ctaphid-app = "0.2"
+delog.workspace = true
 embedded-hal = "0.2.7"
 heapless = "0.9"
 heapless-bytes = "0.5"

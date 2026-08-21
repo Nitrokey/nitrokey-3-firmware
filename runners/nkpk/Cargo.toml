@@ -6,13 +6,13 @@ license = "Apache-2.0 OR MIT"
 authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 
 [dependencies]
-apdu-dispatch = "0.4"
+apdu-dispatch.workspace = true
 apps = { path = "../../components/apps", features = ["nkpk"] }
 boards = { path = "../../components/boards", features = ["board-nkpk"] }
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
-ctaphid-dispatch = "0.4"
-delog = "0.1"
+ctaphid-dispatch.workspace = true
+delog.workspace = true
 interchange.workspace = true
 littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
 nrf52840-hal.workspace = true
