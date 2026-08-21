@@ -5,12 +5,12 @@ authors = ["Conor Patrick <conor@solokeys.com>"]
 edition = "2018"
 
 [dependencies]
-delog = "0.1.0"
-embedded-time = "0.12"
+delog.workspace = true
+embedded-time.workspace = true
 heapless = "0.9"
 nb = "1"
 
-apdu-dispatch = "0.4"
+apdu-dispatch.workspace = true
 iso7816 = "0.2"
 interchange.workspace = true
 

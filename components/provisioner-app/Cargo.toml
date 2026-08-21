@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 apdu-app = "0.2"
 ctaphid-app = "0.2"
-delog = "0.1"
+delog.workspace = true
 heapless = "0.9"
 heapless-bytes = "0.5"
 iso7816 = "0.2"

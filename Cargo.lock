@@ -407,6 +407,7 @@ dependencies = [
  "trussed",
  "trussed-core",
  "trussed-manage",
+ "usb-classes",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -3910,6 +3911,21 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "usb-classes"
+version = "0.1.0"
+dependencies = [
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "delog",
+ "embedded-time",
+ "ref-swap",
+ "trussed-core",
+ "usb-device",
+ "usbd-ccid",
+ "usbd-ctaphid",
 ]
 
 [[package]]
