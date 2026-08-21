@@ -140,7 +140,10 @@ pub fn init_usb_nfc<B: Board>(
         let usb_bus = resources.usb_bus.insert(usb_bus);
         usb_classes::build(
             usb_bus,
-            ccid_rq,
+            Some(usb_classes::CcidConfig {
+                requester: ccid_rq,
+                card_issuer: Some(CARD_ISSUER),
+            }),
             ctaphid_rq,
             &CTAP_INTERRUPT,
             usb_classes::Config {
@@ -149,7 +152,6 @@ pub fn init_usb_nfc<B: Board>(
                 vid: USB_VENDOR_ID,
                 pid: usb_product_id,
                 device_release: version.usb_release(),
-                card_issuer: Some(CARD_ISSUER),
             },
         )
     });

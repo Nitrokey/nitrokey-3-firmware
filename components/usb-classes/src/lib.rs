@@ -29,14 +29,19 @@ pub struct Config<'a> {
     pub pid: u16,
     /// `bcdDevice`.
     pub device_release: u16,
+}
+
+/// Enables the CCID interface. Omitting it leaves the interface out entirely.
+pub struct CcidConfig<'a> {
+    pub requester: CcidRequester<'static>,
     /// CCID historical bytes; `None` yields the generic ATR.
     pub card_issuer: Option<&'a [u8]>,
 }
 
-/// The USB device together with the CCID and CTAPHID classes.
+/// The USB device together with the CTAPHID class and, optionally, CCID.
 pub struct UsbClasses<B: UsbBus + 'static, const CTAP_N: usize> {
     pub usbd: UsbDevice<'static, B>,
-    pub ccid: Ccid<'static, 'static, B, CCID_SIZE>,
+    pub ccid: Option<Ccid<'static, 'static, B, CCID_SIZE>>,
     pub ctaphid: CtapHid<'static, 'static, 'static, B, CTAP_N>,
 }
 
@@ -47,8 +52,14 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
     /// application responses have to be picked up first.
     pub fn poll(&mut self) {
         self.ctaphid.check_for_app_response();
-        self.ccid.check_for_app_response();
-        self.usbd.poll(&mut [&mut self.ccid, &mut self.ctaphid]);
+        if let Some(ccid) = &mut self.ccid {
+            ccid.check_for_app_response();
+        }
+
+        match &mut self.ccid {
+            Some(ccid) => self.usbd.poll(&mut [ccid, &mut self.ctaphid]),
+            None => self.usbd.poll(&mut [&mut self.ctaphid]),
+        };
     }
 }
 
@@ -58,12 +69,12 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
 /// endpoint, interface or string allocation panics.
 pub fn build<B: UsbBus + 'static, const CTAP_N: usize>(
     bus: &'static UsbBusAllocator<B>,
-    ccid_rq: CcidRequester<'static>,
+    ccid: Option<CcidConfig<'static>>,
     ctaphid_rq: CtapRequester<'static, CTAP_N>,
     ctap_interrupt: &'static OptionRefSwap<'static, InterruptFlag>,
     config: Config<'static>,
 ) -> UsbClasses<B, CTAP_N> {
-    let ccid = Ccid::new(bus, ccid_rq, config.card_issuer);
+    let ccid = ccid.map(|ccid| Ccid::new(bus, ccid.requester, ccid.card_issuer));
     let ctaphid = CtapHid::with_interrupt(bus, ctaphid_rq, Some(ctap_interrupt), 0u32)
         .implements_ctap1()
         .implements_ctap2()
