@@ -59,9 +59,18 @@ impl Setup<Dispatch> for NkSetup {
         let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
         let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
+        let ccid = if cfg!(feature = "ccid") {
+            Some(usb_classes::CcidConfig {
+                requester: ccid_rq,
+                card_issuer: Some(CARD_ISSUER),
+            })
+        } else {
+            None
+        };
+
         let classes = usb_classes::build(
             allocator,
-            ccid_rq,
+            ccid,
             ctaphid_rq,
             &CTAP_INTERRUPT,
             Config {
@@ -70,7 +79,6 @@ impl Setup<Dispatch> for NkSetup {
                 vid: self.vid,
                 pid: self.pid,
                 device_release: self.device_release,
-                card_issuer: Some(CARD_ISSUER),
             },
         );
 
@@ -96,7 +104,9 @@ impl Classes for NkClasses<'_> {
     }
 
     fn keepalive(&mut self, epoch: Instant) {
-        trussed_usbip::ccid::keepalive(&mut self.classes.ccid, &mut self.timeout_ccid, epoch);
+        if let Some(ccid) = &mut self.classes.ccid {
+            trussed_usbip::ccid::keepalive(ccid, &mut self.timeout_ccid, epoch);
+        }
         trussed_usbip::ctaphid::keepalive(
             &mut self.classes.ctaphid,
             &mut self.timeout_ctaphid,
