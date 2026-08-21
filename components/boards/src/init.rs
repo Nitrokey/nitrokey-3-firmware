@@ -1,6 +1,6 @@
 use apdu_dispatch::{
     dispatch::ApduDispatch,
-    interchanges::{Channel as CcidChannel, Responder as CcidResponder, SIZE as CCID_SIZE},
+    interchanges::{Channel as CcidChannel, Responder as CcidResponder},
 };
 #[cfg(any(feature = "trussed-auth", feature = "se050"))]
 use apps::AUTH_LOCATION;
@@ -16,13 +16,7 @@ use rand_chacha::ChaCha8Rng;
 use ref_swap::OptionRefSwap;
 use trussed::store::Store as _;
 use trussed_core::InterruptFlag;
-use usb_device::{
-    bus::UsbBusAllocator,
-    device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
-    LangID,
-};
-use usbd_ccid::Ccid;
-use usbd_ctaphid::CtapHid;
+use usb_device::bus::UsbBusAllocator;
 use utils::Version;
 
 use crate::{
@@ -107,19 +101,7 @@ pub fn init_logger<B: Board>(_version: &str) {
     );
 }
 
-pub struct UsbClasses<S: Soc> {
-    pub usbd: UsbDevice<'static, S::UsbBus>,
-    pub ccid: Ccid<'static, 'static, S::UsbBus, CCID_SIZE>,
-    pub ctaphid: CtapHid<'static, 'static, 'static, S::UsbBus, CTAPHID_MESSAGE_SIZE>,
-}
-
-impl<S: Soc> UsbClasses<S> {
-    pub fn poll(&mut self) {
-        self.ctaphid.check_for_app_response();
-        self.ccid.check_for_app_response();
-        self.usbd.poll(&mut [&mut self.ccid, &mut self.ctaphid]);
-    }
-}
+pub type UsbClasses<S> = usb_classes::UsbClasses<<S as Soc>::UsbBus, CTAPHID_MESSAGE_SIZE>;
 
 pub struct UsbNfc<B: Board> {
     pub usb_classes: Option<UsbClasses<B::Soc>>,
@@ -156,34 +138,20 @@ pub fn init_usb_nfc<B: Board>(
     /* populate requesters (if bus options are provided) */
     let usb_classes = usb_bus.map(|usb_bus| {
         let usb_bus = resources.usb_bus.insert(usb_bus);
-
-        /* Class #1: CCID */
-        let ccid = Ccid::new(usb_bus, ccid_rq, Some(CARD_ISSUER));
-
-        /* Class #2: CTAPHID */
-        let ctaphid = CtapHid::with_interrupt(usb_bus, ctaphid_rq, Some(&CTAP_INTERRUPT), 0u32)
-            .implements_ctap1()
-            .implements_ctap2()
-            .implements_wink();
-
-        let vidpid = UsbVidPid(USB_VENDOR_ID, usb_product_id);
-        let strings = StringDescriptors::new(LangID::EN)
-            .product(usb_product)
-            .manufacturer(USB_MANUFACTURER);
-        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
-            .strings(&[strings])
-            .expect("failed to set USB string descriptors")
-            .device_release(version.usb_release())
-            .max_packet_size_0(64)
-            .expect("invalid max packet size for EP0")
-            .composite_with_iads()
-            .build();
-
-        UsbClasses {
-            usbd,
-            ccid,
-            ctaphid,
-        }
+        usb_classes::build(
+            usb_bus,
+            ccid_rq,
+            ctaphid_rq,
+            &CTAP_INTERRUPT,
+            usb_classes::Config {
+                manufacturer: USB_MANUFACTURER,
+                product: usb_product,
+                vid: USB_VENDOR_ID,
+                pid: usb_product_id,
+                device_release: version.usb_release(),
+                card_issuer: Some(CARD_ISSUER),
+            },
+        )
     });
 
     UsbNfc {

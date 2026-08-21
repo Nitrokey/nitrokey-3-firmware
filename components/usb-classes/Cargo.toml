@@ -1,0 +1,26 @@
+[package]
+name = "usb-classes"
+version = { workspace = true }
+edition = "2021"
+
+[dependencies]
+apdu-dispatch = "0.4"
+ctaphid-dispatch = "0.4"
+delog = "0.1"
+embedded-time = "0.12"
+ref-swap = "0.1.0"
+trussed-core = "0.2"
+usb-device = "0.3.2"
+usbd-ccid = "0.4"
+usbd-ctaphid = "0.4"
+
+[features]
+default = []
+
+log-all = []
+log-none = []
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []

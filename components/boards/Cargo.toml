@@ -26,6 +26,7 @@ ref-swap = "0.1.0"
 spi-memory = "0.2.0"
 trussed.workspace = true
 trussed-core.workspace = true
+usb-classes = { path = "../usb-classes" }
 usb-device = "0.3.2"
 usbd-ccid = "0.4"
 usbd-ctaphid = "0.4"
@@ -69,13 +70,13 @@ board-nkpk = ["board-nk3am", "utils/storage"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.6", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf-usbd", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
-log-all = []
-log-trace = []
-log-debug = []
-log-info = []
-log-warn = []
-log-error = []
-log-none = []
+log-all = ["usb-classes/log-all"]
+log-trace = ["usb-classes/log-trace"]
+log-debug = ["usb-classes/log-debug"]
+log-info = ["usb-classes/log-info"]
+log-warn = ["usb-classes/log-warn"]
+log-error = ["usb-classes/log-error"]
+log-none = ["usb-classes/log-none"]
 
 log-rtt = ["rtt-target"]
 log-semihosting = ["cortex-m-semihosting"]

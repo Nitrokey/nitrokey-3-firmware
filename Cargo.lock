@@ -401,6 +401,7 @@ dependencies = [
  "trussed",
  "trussed-core",
  "trussed-manage",
+ "usb-classes",
  "usb-device 0.3.2",
  "usbd-ccid",
  "usbd-ctaphid",
@@ -3912,6 +3913,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "usb-classes"
+version = "1.9.0-rc.1"
+dependencies = [
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "delog",
+ "embedded-time",
+ "ref-swap",
+ "trussed-core",
+ "usb-device 0.3.2",
+ "usbd-ccid",
+ "usbd-ctaphid",
+]
+
+[[package]]
 name = "usb-device"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3956,7 +3972,7 @@ dependencies = [
 [[package]]
 name = "usbip-device"
 version = "0.2.0"
-source = "git+https://github.com/daringer/usbip-device?rev=ad359ae257e4bd931d9424732132cf085e0fac02#ad359ae257e4bd931d9424732132cf085e0fac02"
+source = "git+https://github.com/Sawchord/usbip-device?rev=e0444bb3a593026d972e3dddb400d5afc41c988a#e0444bb3a593026d972e3dddb400d5afc41c988a"
 dependencies = [
  "bitflags 1.3.2",
  "log",
