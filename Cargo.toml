@@ -25,7 +25,7 @@ nrf52840-hal = "0.18"
 nrf52840-pac = "0.12"
 trussed = { version = "0.2", default-features = false }
 trussed-core = "0.2"
-trussed-usbip = { version = "0.2", default-features = false }
+trussed-usbip = { version = "0.3", default-features = false }
 usb-device = "0.3"
 usbd-ccid = "0.5"
 usbd-ctaphid = "0.5"

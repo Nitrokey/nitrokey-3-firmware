@@ -1,12 +1,12 @@
 mod store;
 mod ui;
+mod usb;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
 use apps::{AdminData, Apps, Dispatch, FidoData, InitStatus, Model, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
-use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
 use trussed::platform::Platform as _;
 use trussed_core::types::{Bytes, Location};
@@ -118,17 +118,9 @@ fn main() {
         return;
     }
 
-    let options = trussed_usbip::Options {
-        manufacturer: Some(MANUFACTURER.to_owned()),
-        product: Some(PRODUCT.to_owned()),
-        serial_number: None,
-        vid: VID,
-        pid: PID,
-    };
-
     let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store, options, args.serial, user_presence)
+    exec(store, args.serial, user_presence)
 }
 
 fn print_version() {
@@ -148,12 +140,7 @@ fn print_version() {
     println!();
 }
 
-fn exec(
-    store: Store,
-    options: trussed_usbip::Options,
-    serial: Option<u128>,
-    user_presence: UserPresence,
-) {
+fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence) {
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {
@@ -184,7 +171,7 @@ fn exec(
         },
         fido: FidoData {
             has_nfc: false,
-            max_message_size: DEFAULT_MESSAGE_SIZE,
+            max_message_size: usb::CTAPHID_MESSAGE_SIZE,
         },
         #[cfg(feature = "provisioner")]
         provisioner: apps::ProvisionerData {
@@ -195,7 +182,15 @@ fn exec(
     };
     let runner = Runner::new(serial);
 
-    trussed_usbip::Builder::new(options)
+    let usb_setup = usb::NkSetup {
+        manufacturer: MANUFACTURER,
+        product: PRODUCT,
+        vid: VID,
+        pid: PID,
+        device_release: VERSION.usb_release(),
+    };
+
+    trussed_usbip::Builder::with_usb_classes(usb_setup)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
             Bytes::from(b"Unique hw key"),

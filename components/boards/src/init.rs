@@ -101,7 +101,7 @@ pub fn init_logger<B: Board>(_version: &str) {
     );
 }
 
-pub type UsbClasses<S> = usb_classes::UsbClasses<<S as Soc>::UsbBus, CTAPHID_MESSAGE_SIZE>;
+pub type UsbClasses<S> = usb_classes::UsbClasses<'static, <S as Soc>::UsbBus, CTAPHID_MESSAGE_SIZE>;
 
 pub struct UsbNfc<B: Board> {
     pub usb_classes: Option<UsbClasses<B::Soc>>,

@@ -13,7 +13,7 @@ use crate::{
 
 /// Bus-generic spelling of [`crate::init::UsbClasses`], so that the bus type can
 /// be inferred from the argument.
-type UsbClasses<B> = usb_classes::UsbClasses<B, CTAPHID_MESSAGE_SIZE>;
+type UsbClasses<B> = usb_classes::UsbClasses<'static, B, CTAPHID_MESSAGE_SIZE>;
 
 pub fn poll_dispatchers<B: Board>(
     apdu_dispatch: &mut ApduDispatch<'_>,

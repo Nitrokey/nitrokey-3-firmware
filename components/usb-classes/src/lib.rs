@@ -34,13 +34,13 @@ pub struct Config<'a> {
 }
 
 /// The USB device together with the CCID and CTAPHID classes.
-pub struct UsbClasses<B: UsbBus + 'static, const CTAP_N: usize> {
-    pub usbd: UsbDevice<'static, B>,
-    pub ccid: Ccid<'static, 'static, B, CCID_SIZE>,
-    pub ctaphid: CtapHid<'static, 'static, 'static, B, CTAP_N>,
+pub struct UsbClasses<'a, B: UsbBus + 'static, const CTAP_N: usize> {
+    pub usbd: UsbDevice<'a, B>,
+    pub ccid: Ccid<'a, 'static, B, CCID_SIZE>,
+    pub ctaphid: CtapHid<'a, 'static, 'static, B, CTAP_N>,
 }
 
-impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
+impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<'_, B, CTAP_N> {
     /// Runs one iteration of the USB poll loop.
     ///
     /// [`UsbDevice::poll`] only polls classes on bus activity, so queued
@@ -56,13 +56,13 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
 ///
 /// The device is built last: building freezes the allocator and any later
 /// endpoint, interface or string allocation panics.
-pub fn build<B: UsbBus + 'static, const CTAP_N: usize>(
-    bus: &'static UsbBusAllocator<B>,
+pub fn build<'a, B: UsbBus + 'static, const CTAP_N: usize>(
+    bus: &'a UsbBusAllocator<B>,
     ccid_rq: CcidRequester<'static>,
     ctaphid_rq: CtapRequester<'static, CTAP_N>,
     ctap_interrupt: &'static OptionRefSwap<'static, InterruptFlag>,
-    config: Config<'static>,
-) -> UsbClasses<B, CTAP_N> {
+    config: Config<'a>,
+) -> UsbClasses<'a, B, CTAP_N> {
     let ccid = Ccid::new(bus, ccid_rq, config.card_issuer);
     let ctaphid = CtapHid::with_interrupt(bus, ctaphid_rq, Some(ctap_interrupt), 0u32)
         .implements_ctap1()
