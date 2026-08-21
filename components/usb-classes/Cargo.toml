@@ -17,6 +17,9 @@ usbd-ctaphid = "0.4"
 [features]
 default = []
 
+# 512-byte CCID bulk endpoints, as required when enumerating at high speed.
+highspeed-usb = ["usbd-ccid/highspeed-usb"]
+
 log-all = []
 log-none = []
 log-trace = []

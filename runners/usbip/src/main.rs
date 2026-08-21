@@ -1,12 +1,12 @@
 mod store;
 mod ui;
+mod usb;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
 use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
-use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
 use trussed::platform::Platform as _;
 use trussed_core::types::{Bytes, Location};
@@ -189,7 +189,7 @@ fn exec(
         admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
         fido: FidoData {
             has_nfc: false,
-            max_message_size: DEFAULT_MESSAGE_SIZE,
+            max_message_size: usb::CTAPHID_MESSAGE_SIZE,
         },
         #[cfg(feature = "provisioner")]
         provisioner: apps::ProvisionerData {
@@ -205,6 +205,13 @@ fn exec(
             Location::Internal,
             Bytes::from(b"Unique hw key"),
         ))
+        .usb(usb::NkSetup {
+            manufacturer: MANUFACTURER,
+            product: PRODUCT,
+            vid: VID,
+            pid: PID,
+            device_release: VERSION.usb_release(),
+        })
         .build::<Apps<Runner>>()
         .exec(platform, (runner, data));
 }

@@ -3972,7 +3972,6 @@ dependencies = [
 [[package]]
 name = "usbip-device"
 version = "0.2.0"
-source = "git+https://github.com/Sawchord/usbip-device?rev=e0444bb3a593026d972e3dddb400d5afc41c988a#e0444bb3a593026d972e3dddb400d5afc41c988a"
 dependencies = [
  "bitflags 1.3.2",
  "log",
@@ -3983,6 +3982,7 @@ dependencies = [
 name = "usbip-runner"
 version = "1.9.0-rc.1"
 dependencies = [
+ "apdu-dispatch",
  "apps",
  "cfg-if",
  "clap",
@@ -3990,15 +3990,18 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "dialoguer",
+ "interchange",
  "littlefs2",
  "littlefs2-core",
  "log",
  "pretty_env_logger",
  "rand_core",
+ "ref-swap",
  "signal-hook",
  "trussed",
  "trussed-core",
  "trussed-usbip",
+ "usb-classes",
  "utils",
 ]
 
