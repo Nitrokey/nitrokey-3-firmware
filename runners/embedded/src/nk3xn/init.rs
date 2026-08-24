@@ -751,6 +751,19 @@ impl Stage2 {
         self
     }
 
+    fn using_old_nfc(mut self) -> (Self, bool) {
+        let id_pin = pins::Pio0_0::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_input();
+        let iocon = self.clocks.iocon.release();
+        iocon.pio0_0.modify(|_, w| w.mode().pull_up());
+        let ret = id_pin.is_high().unwrap();
+        iocon.pio0_0.modify(|_, w| w.mode().pull_down());
+        self.clocks.iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
+        (self, ret)
+    }
+
     #[inline(never)]
     pub fn next(
         mut self,
@@ -770,7 +783,9 @@ impl Stage2 {
             (nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive)) || true;
         let (se050_i2c, nfc, spi) = if use_nfc {
             // TODO: Add hardware based approach to detect which chip is there
-            let using_old_nfc = false;
+            let (tmp_self, using_old_nfc) = self.using_old_nfc();
+            self = tmp_self;
+            info!("using old nfc:: {}", using_old_nfc);
             let nfc = if using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
