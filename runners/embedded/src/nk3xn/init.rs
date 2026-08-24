@@ -158,7 +158,6 @@ impl Stage0 {
 
         let (new_iocon, nfc_irq, is_nfc_passive) =
             self.enable_low_speed_for_passive_nfc(iocon, &mut gpio);
-        let is_nfc_passive = true;
         iocon = new_iocon;
         let nfc_irq = Some(nfc_irq);
 
@@ -480,7 +479,7 @@ impl Stage2 {
 
         // Only run EEPROM configuration on USB power; energy-harvested boots
         // must never write the chip's NV memory.
-        nfc.init(false).ok();
+        nfc.init(!self.clocks.is_nfc_passive).ok();
 
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         #[cfg(not(feature = "no-delog"))]
