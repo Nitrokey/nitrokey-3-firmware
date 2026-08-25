@@ -551,7 +551,7 @@ impl Stage2 {
     fn reduce_power_draw(mut self) -> Self {
         let iocon = self.clocks.iocon.release();
         // Put all unused pins in pulldown so that they're not drawing power by floating
-        iocon.pio0_0.modify(|_, w| w.mode().pull_down());
+        iocon.pio0_0.modify(|_, w| w.mode().pull_up()); // We use it later to determine the nfc chip version, it is then set to pull-down again
         iocon.pio0_1.modify(|_, w| w.mode().pull_down());
         iocon.pio0_2.modify(|_, w| w.mode().pull_down());
         iocon.pio0_3.modify(|_, w| w.mode().pull_down());
@@ -756,7 +756,6 @@ impl Stage2 {
             .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
             .into_input();
         let iocon = self.clocks.iocon.release();
-        iocon.pio0_0.modify(|_, w| w.mode().pull_up());
         let ret = id_pin.is_high().unwrap();
         iocon.pio0_0.modify(|_, w| w.mode().pull_down());
         self.clocks.iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
@@ -781,7 +780,7 @@ impl Stage2 {
         let use_nfc =
             (nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive)) || true;
         let (se050_i2c, nfc, spi) = if use_nfc {
-            // TODO: Add hardware based approach to detect which chip is there
+            self = self.reduce_power_draw();
             let (tmp_self, using_old_nfc) = self.using_old_nfc();
             self = tmp_self;
             info!("using old nfc:: {}", using_old_nfc);
@@ -791,7 +790,6 @@ impl Stage2 {
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
-            self = self.reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
