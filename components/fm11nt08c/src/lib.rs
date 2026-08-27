@@ -130,197 +130,11 @@ pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     packet: [u8; 256],
 }
 
-pub struct Txn<'a, I2C, CSN, IRQ, Timer>
-where
-    CSN: OutputPin,
-    CSN::Error: Debug,
-{
-    device: &'a mut Fm11nt082c<I2C, CSN, IRQ, Timer>,
-}
-
 fn addr_to_bytes(addr: u16) -> [u8; 2] {
     let [b1, b2] = addr.to_be_bytes();
 
     [b1, b2]
 }
-
-impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Txn<'_, I2C, CSN, IRQ, Timer>
-where
-    I2C: I2CBus,
-    CSN::Error: Debug,
-    IRQ::Error: Debug,
-    Timer: CountDown<Time = Microseconds>,
-{
-    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
-        let buf = &mut [0u8];
-        self.device
-            .i2c
-            .write_read(ADDRESS, &addr_to_bytes(address), buf)?;
-        Ok(buf[0])
-    }
-
-    pub fn read_eeprom(&mut self, address: u16, buf: &mut [u8]) -> Result<(), I2C::BusError> {
-        self.device
-            .i2c
-            .write_read(ADDRESS, &addr_to_bytes(address), buf)
-    }
-
-    /// Returns whether there should be a wait before the next transactio
-    fn write_page(
-        &mut self,
-        address: u16,
-        data: &[u8],
-        checked: bool,
-    ) -> Result<bool, I2C::BusError> {
-        if checked {
-            let buf = &mut [0; BLOCK_SIZE][..data.len()];
-            self.read_eeprom(address, buf)?;
-            if buf == data {
-                debug!("Not writing data thanks to check");
-                return Ok(false);
-            }
-        }
-        let mut buf = [0; BLOCK_SIZE + 2];
-        buf[0] = address.to_be_bytes()[0];
-        buf[1] = address.to_be_bytes()[1];
-        buf[2..][..data.len()].copy_from_slice(data);
-        self.device.i2c.write(ADDRESS, &buf[..data.len() + 2])?;
-        Ok(true)
-    }
-
-    /// If checked is true, only write when the data is not the same
-    pub fn write_eeprom(
-        &mut self,
-        mut address: u16,
-        mut data: &[u8],
-        checked: bool,
-    ) -> Result<(), I2C::BusError> {
-        let mut should_wait = false;
-        if !address.is_multiple_of(BLOCK_SIZE as _) {
-            let offset = BLOCK_SIZE - (address as usize % BLOCK_SIZE);
-            if data.len() > offset {
-                let tmp = data.split_at(offset);
-                data = tmp.1;
-                should_wait |= self.write_page(address, tmp.0, checked)?;
-                address += offset as u16;
-            } else {
-                should_wait |= self.write_page(address, data, checked)?;
-                data = &[];
-            }
-        }
-        for (idx, chunk) in data.chunks(BLOCK_SIZE).enumerate() {
-            let adr = address + (idx * BLOCK_SIZE) as u16;
-            should_wait |= self.write_page(adr, chunk, checked)?;
-        }
-        if should_wait {
-            self.device.timer.start(Microseconds::new(10_000));
-            nb::block!(self.device.timer.wait()).unwrap();
-        }
-        Ok(())
-    }
-
-    pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
-        debug!("Configure");
-        // // NOT documented in the datasheet
-        // // FIXME: use bitlfags to document what is being configured
-        // const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
-        // // In the example code, FM11_E2_REGU_CFG_ADDR, not documented in the datasheet
-        // const REGU_ADDR: u16 = 0x0391;
-        // let buf = &mut [0; 1];
-
-        let mut crc8_buf = [0; 13];
-        const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
-        self.read_eeprom(SERIAL_NUMBER_ADDRESS, &mut crc8_buf[..9])?;
-        crc8_buf[9..].copy_from_slice(&[
-            conf.atqa.to_be_bytes()[0],
-            conf.atqa.to_be_bytes()[1],
-            conf.sak1,
-            conf.sak2,
-        ]);
-        let crc8 = crc8(&crc8_buf);
-        let config_buf = [
-            conf.tl,
-            conf.t0,
-            conf.vout_reg_cfg.0,
-            ADDRESS,
-            conf.ta,
-            conf.tb,
-            conf.tc,
-            0x1E, // default value
-            conf.user_cfg0.0,
-            conf.user_cfg1.0,
-            conf.user_cfg2.0,
-            crc8,
-            conf.atqa.to_be_bytes()[0],
-            conf.atqa.to_be_bytes()[1],
-            conf.sak1,
-            conf.sak2,
-        ];
-        self.write_eeprom(0x3B0, &config_buf, true)?;
-
-        Ok(())
-    }
-
-    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2C::BusError> {
-        let [b1, b2] = addr_to_bytes(address);
-        let buf = [b1, b2, value];
-        self.device.i2c.write(ADDRESS, &buf)
-    }
-
-    pub fn read_register<R: Register>(&mut self) -> Result<R, I2C::BusError> {
-        self.read_register_raw(R::ADDRESS).map(R::from)
-    }
-
-    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
-        self.write_register_raw(value.into(), R::ADDRESS)
-    }
-
-    fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
-        let len = data.len() + 2;
-        // Max length of FIFO (32 bytes + address)
-        let mut buf = [0; 32 + 2];
-        buf[..2].copy_from_slice(&FifoAccess::ADDRESS.to_be_bytes());
-        buf[2..][..data.len()].copy_from_slice(data);
-        self.device.i2c.write(ADDRESS, &buf[..len])?;
-        Ok(())
-    }
-
-    fn dump_registers(&mut self) {
-        // return;
-        // debug!("Frame size: {}", self.device.current_frame_size);
-        // let aux_irq = self.read_register::<AuxIrq>();
-        // debug!("{:02x?}", aux_irq);
-        // debug!("{:02x?}", self.read_register::<AuxIrqMask>());
-        // // debug!("{:02x?}", self.read_register::<FifoAccess>());
-        // // debug!("{:02x?}", self.read_register::<FifoClear>());
-        // debug!("{:02x?}", self.read_register::<FifoIrq>());
-        // debug!("{:02x?}", self.read_register::<FifoIrqMask>());
-        // debug!("WORDCOUNT: {:02x?}", self.read_register::<FifoWordCnt>());
-        // debug!("{:02x?}", self.read_register::<MainIrq>());
-        // debug!("{:02x?}", self.read_register::<MainIrqMask>());
-        // debug!("{:02x?}", self.read_register::<NfcCfg>());
-        // debug!("{:02x?}", self.read_register::<NfcRats>());
-        // // debug!("{:02x?}", self.read_register::<NfcTxen>());
-        // // debug!("{:02x?}", self.read_register::<ResetSilence>());
-        // debug!("{:02x?}", self.read_register::<registers::Status>());
-        // debug!("{:02x?}", self.read_register::<UserCfg0>());
-        // debug!("{:02x?}", self.read_register::<UserCfg1>());
-        // debug!("{:02x?}", self.read_register::<UserCfg2>());
-        // debug!("{:02x?}", self.read_register::<VoutEnCfg>());
-        // debug!("{:02x?}", self.read_register::<VoutResCfg>());
-        // debug!("{:02x?}", self.read_register::<NfcStatus>());
-    }
-}
-
-// impl<'a, I2C, CSN, IRQ, Timer> Drop for Txn<'a, I2C, CSN, IRQ, Timer>
-// where
-//     CSN: OutputPin,
-//     CSN::Error: Debug,
-// {
-//     fn drop(&mut self) {
-//         // self.device.csn.set_high().unwrap();
-//     }
-// }
 
 impl<I2C, CSN: OutputPin, IRQ: InputPin, Timer> Fm11nt082c<I2C, CSN, IRQ, Timer>
 where
@@ -350,7 +164,6 @@ where
     pub fn init(&mut self, configure: bool) -> Result<(), I2C::BusError> {
         debug!("Init");
         self.csn.set_low().unwrap();
-        let mut txn = self.txn();
 
         if configure {
             let user_cfg0 = UserCfg0(0x91);
@@ -358,7 +171,7 @@ where
             let user_cfg2 = UserCfg2(0x21);
 
             let usercfg_chk_word = !(user_cfg0.0 ^ user_cfg1.0 ^ user_cfg2.0);
-            txn.write_eeprom(
+            self.write_eeprom(
                 0x0390,
                 &[user_cfg0.0, user_cfg1.0, user_cfg2.0, usercfg_chk_word],
                 true,
@@ -384,7 +197,7 @@ where
             assert_eq!(0x80, ta.0);
             assert_eq!(0x78, tb.0);
 
-            txn.configure(Configuration {
+            self.configure(Configuration {
                 user_cfg0,
                 user_cfg1,
                 user_cfg2,
@@ -405,48 +218,20 @@ where
             })?;
         }
 
-        txn.write_register(MainIrqMask(MAIN_IRQ_MASK_ACTIVE))?;
-        txn.write_register(FifoIrqMask(FIFO_IRQ_MASK_ACTIVE))?;
-        txn.write_register(NfcTxen(0x77))?;
-        txn.write_register(ResetSilence(0x55))?;
+        self.write_register(MainIrqMask(MAIN_IRQ_MASK_ACTIVE))?;
+        self.write_register(FifoIrqMask(FIFO_IRQ_MASK_ACTIVE))?;
+        self.write_register(NfcTxen(0x77))?;
+        self.write_register(ResetSilence(0x55))?;
 
         //self.timer.start(Microseconds::new(500));
         //nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
 
-    /// Get a transaction
-    ///
-    /// While the transaction is open, the `csn` stays low
-    fn txn<'a>(&'a mut self) -> Txn<'a, I2C, CSN, IRQ, Timer> {
-        // self.csn.set_low().unwrap();
-        // self.timer.start(Microseconds::new(250));
-        // nb::block!(self.timer.wait()).unwrap();
-        Txn { device: self }
-    }
-    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
-        self.txn().read_register_raw(address)
-    }
-
-    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2C::BusError> {
-        self.txn().write_register_raw(value, address)
-    }
-
-    pub fn read_register<R: Register>(&mut self) -> Result<R, I2C::BusError> {
-        self.txn().read_register()
-    }
-
-    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
-        self.txn().write_register_raw(value.into(), R::ADDRESS)
-    }
-
     pub fn read_fifo(&mut self, count: u8) -> Result<(), I2C::BusError> {
-        let txn = self.txn();
-        let buf: &mut [u8] = &mut txn.device.packet[txn.device.offset..][..count as usize];
-        txn.device
-            .i2c
+        let buf: &mut [u8] = &mut self.packet[self.offset..][..count as usize];
+        self.i2c
             .write_read(ADDRESS, &FifoAccess::ADDRESS.to_be_bytes(), buf)?;
-        // txn.write_register(FifoClear(0))?;
         Ok(())
     }
 
@@ -556,10 +341,6 @@ where
         }
     }
 
-    fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
-        self.txn().write_fifo(data)
-    }
-
     #[allow(unused)]
     /// Returns true for sucess
     fn wait_for_transmission(&mut self) -> Result<bool, I2C::BusError> {
@@ -620,9 +401,134 @@ where
         Ok(Ok(()))
     }
 
-    #[allow(unused)]
-    fn dump_registers(&mut self) {
-        self.txn().dump_registers();
+    pub fn read_register_raw(&mut self, address: u16) -> Result<u8, I2C::BusError> {
+        let buf = &mut [0u8];
+        self.i2c.write_read(ADDRESS, &addr_to_bytes(address), buf)?;
+        Ok(buf[0])
+    }
+
+    pub fn read_eeprom(&mut self, address: u16, buf: &mut [u8]) -> Result<(), I2C::BusError> {
+        self.i2c.write_read(ADDRESS, &addr_to_bytes(address), buf)
+    }
+
+    /// Returns whether there should be a wait before the next transactio
+    fn write_page(
+        &mut self,
+        address: u16,
+        data: &[u8],
+        checked: bool,
+    ) -> Result<bool, I2C::BusError> {
+        if checked {
+            let buf = &mut [0; BLOCK_SIZE][..data.len()];
+            self.read_eeprom(address, buf)?;
+            if buf == data {
+                debug!("Not writing data thanks to check");
+                return Ok(false);
+            }
+        }
+        let mut buf = [0; BLOCK_SIZE + 2];
+        buf[0] = address.to_be_bytes()[0];
+        buf[1] = address.to_be_bytes()[1];
+        buf[2..][..data.len()].copy_from_slice(data);
+        self.i2c.write(ADDRESS, &buf[..data.len() + 2])?;
+        Ok(true)
+    }
+
+    /// If checked is true, only write when the data is not the same
+    pub fn write_eeprom(
+        &mut self,
+        mut address: u16,
+        mut data: &[u8],
+        checked: bool,
+    ) -> Result<(), I2C::BusError> {
+        let mut should_wait = false;
+        if !address.is_multiple_of(BLOCK_SIZE as _) {
+            let offset = BLOCK_SIZE - (address as usize % BLOCK_SIZE);
+            if data.len() > offset {
+                let tmp = data.split_at(offset);
+                data = tmp.1;
+                should_wait |= self.write_page(address, tmp.0, checked)?;
+                address += offset as u16;
+            } else {
+                should_wait |= self.write_page(address, data, checked)?;
+                data = &[];
+            }
+        }
+        for (idx, chunk) in data.chunks(BLOCK_SIZE).enumerate() {
+            let adr = address + (idx * BLOCK_SIZE) as u16;
+            should_wait |= self.write_page(adr, chunk, checked)?;
+        }
+        if should_wait {
+            self.timer.start(Microseconds::new(10_000));
+            nb::block!(self.timer.wait()).unwrap();
+        }
+        Ok(())
+    }
+
+    pub fn configure(&mut self, conf: Configuration) -> Result<(), I2C::BusError> {
+        debug!("Configure");
+        // // NOT documented in the datasheet
+        // // FIXME: use bitlfags to document what is being configured
+        // const REGU_CONFIG: u8 = (0b11 << 4) | (0b10 << 2) | (0b11 << 0);
+        // // In the example code, FM11_E2_REGU_CFG_ADDR, not documented in the datasheet
+        // const REGU_ADDR: u16 = 0x0391;
+        // let buf = &mut [0; 1];
+
+        let mut crc8_buf = [0; 13];
+        const SERIAL_NUMBER_ADDRESS: u16 = 0x0000;
+        self.read_eeprom(SERIAL_NUMBER_ADDRESS, &mut crc8_buf[..9])?;
+        crc8_buf[9..].copy_from_slice(&[
+            conf.atqa.to_be_bytes()[0],
+            conf.atqa.to_be_bytes()[1],
+            conf.sak1,
+            conf.sak2,
+        ]);
+        let crc8 = crc8(&crc8_buf);
+        let config_buf = [
+            conf.tl,
+            conf.t0,
+            conf.vout_reg_cfg.0,
+            ADDRESS,
+            conf.ta,
+            conf.tb,
+            conf.tc,
+            0x1E, // default value
+            conf.user_cfg0.0,
+            conf.user_cfg1.0,
+            conf.user_cfg2.0,
+            crc8,
+            conf.atqa.to_be_bytes()[0],
+            conf.atqa.to_be_bytes()[1],
+            conf.sak1,
+            conf.sak2,
+        ];
+        self.write_eeprom(0x3B0, &config_buf, true)?;
+
+        Ok(())
+    }
+
+    pub fn write_register_raw(&mut self, value: u8, address: u16) -> Result<(), I2C::BusError> {
+        let [b1, b2] = addr_to_bytes(address);
+        let buf = [b1, b2, value];
+        self.i2c.write(ADDRESS, &buf)
+    }
+
+    pub fn read_register<R: Register>(&mut self) -> Result<R, I2C::BusError> {
+        self.read_register_raw(R::ADDRESS).map(R::from)
+    }
+
+    pub fn write_register<R: Register>(&mut self, value: R) -> Result<(), I2C::BusError> {
+        self.write_register_raw(value.into(), R::ADDRESS)
+    }
+
+    fn write_fifo(&mut self, data: &[u8]) -> Result<(), I2C::BusError> {
+        let len = data.len() + 2;
+        // Max length of FIFO (32 bytes + address)
+        let mut buf = [0; 32 + 2];
+        buf[..2].copy_from_slice(&FifoAccess::ADDRESS.to_be_bytes());
+        buf[2..][..data.len()].copy_from_slice(data);
+        self.i2c.write(ADDRESS, &buf[..len])?;
+        Ok(())
     }
 }
 
