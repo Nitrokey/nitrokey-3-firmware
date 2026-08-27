@@ -164,7 +164,7 @@ version = "1.9.0-rc.1"
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cbor-smol",
  "ctaphid-app",
  "delog",
@@ -313,7 +313,7 @@ version = "0.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f49d8fed880d473ea71efb9bf597651e77201bdd4893efe54c9e5d65ae04ce6f"
 dependencies = [
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
@@ -332,6 +332,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46afbd2983a5d5a7bd740ccb198caf5b82f45c40c09c0eed36052d91cb92e719"
 
 [[package]]
+name = "bitfield"
+version = "0.19.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b45721c9db4c7a20899d05efb7ad9235f50b256e980db30ffb229abf732934c3"
+dependencies = [
+ "bitfield-macros",
+]
+
+[[package]]
+name = "bitfield-macros"
+version = "0.19.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0cb6f3d4773a2107b94cbeccaa5b5f0b35a88389b5d522d13d659f64317b22d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.4",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -339,9 +359,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.9.4"
+version = "2.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
+checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
 name = "block-buffer"
@@ -377,6 +397,7 @@ dependencies = [
  "embedded-storage",
  "embedded-time",
  "fm11nc08",
+ "fm11nt08c",
  "generic-array 0.14.7",
  "interchange",
  "lfs-backup",
@@ -762,7 +783,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
 dependencies = [
  "bare-metal 0.2.5",
- "bitfield",
+ "bitfield 0.13.2",
  "critical-section",
  "embedded-hal",
  "volatile-register",
@@ -1332,6 +1353,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "fm11nt08c"
+version = "0.1.0"
+dependencies = [
+ "bitfield 0.19.5",
+ "bitflags 2.13.1",
+ "delog",
+ "embedded-hal",
+ "embedded-time",
+ "hex-literal 1.1.0",
+ "lpc55-hal",
+ "nb 1.1.0",
+ "nfc-device",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1660,6 +1696,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
+name = "hex-literal"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e712f64ec3850b98572bffac52e2c6f282b29fe6c5fa6d42334b30be438d95c1"
+
+[[package]]
 name = "hkdf"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1853,8 +1895,7 @@ dependencies = [
 [[package]]
 name = "interchange"
 version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cc2a6b02f14a47afb0dbccdf96ae4f527ab32b05f78918d9da92e336bcbc222"
+source = "git+https://github.com/sosthene-nitrokey/interchange.git?rev=3dd20626c26627f58dbbf25dc0359a00916b7a0e#3dd20626c26627f58dbbf25dc0359a00916b7a0e"
 dependencies = [
  "loom",
 ]
@@ -1984,7 +2025,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e00aee790b8914c83815e9f6952731f4ddd9965c160aa66fe2a89abeb5c406a"
 dependencies = [
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "delog",
  "generic-array 0.14.7",
  "heapless 0.9.1",
@@ -1998,7 +2039,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0dd2d1cad5532f5e11b0fd871b8a981885efd3fdaec0427c0d637322ae09efbf"
 dependencies = [
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "heapless-bytes",
  "serde",
 ]
@@ -2334,7 +2375,7 @@ source = "git+https://github.com/Nitrokey/opcard-rs?tag=v1.8.0#2cf214a95ccbdd8c1
 dependencies = [
  "admin-app",
  "apdu-app",
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cbor-smol",
  "cfg-if",
  "delog",
@@ -2683,7 +2724,7 @@ version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5407465600fb0548f1442edf71dd20683c6ed326200ace4b1ef0763521bb3b77"
 dependencies = [
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
 ]
 
 [[package]]
@@ -2870,7 +2911,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d33abe6f15b9695e82eef4d45391dd476d1011b54914fa314e3d27c68a59e79a"
 dependencies = [
  "aes",
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cmac",
  "crc16",
  "delog",
@@ -2905,7 +2946,7 @@ version = "0.15.0"
 source = "git+https://github.com/Nitrokey/trussed-secrets-app?tag=v0.15.0#b22216f86a6c72827fb0900f38f1363c55b2619e"
 dependencies = [
  "apdu-app",
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "block-padding",
  "cbor-smol",
  "ctaphid-app",
@@ -3285,6 +3326,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "3.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6275cddf4610d1775e6d1fe9469b2e77d0f39fd98fb7450901b821e0c53649f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "synstructure"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3533,7 +3585,7 @@ dependencies = [
  "aead",
  "aes",
  "aes-gcm",
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cbc",
  "cbor-smol",
  "chacha20poly1305",
@@ -3691,7 +3743,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b9f1a4147d9a0b674a7121bccfb871c7538fe85416212fab21de92af72ce49"
 dependencies = [
- "bitflags 2.9.4",
+ "bitflags 2.13.1",
  "cbor-smol",
  "chacha20poly1305",
  "crypto-bigint",

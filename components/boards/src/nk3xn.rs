@@ -31,11 +31,11 @@ pub mod prince;
 pub mod spi;
 
 #[cfg(feature = "no-encrypted-storage")]
-lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT));
+type InternalFilesystem =
+    lpc55_hal::drivers::flash::Storage<{ prince::FS_START }, { prince::BLOCK_COUNT }>;
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 
-use nfc::NfcChip;
 use spi::{FlashCs, Spi};
 
 pub const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
@@ -60,7 +60,7 @@ impl Board for NK3xN {
 
     type Resources = ();
 
-    type NfcDevice = NfcChip;
+    type NfcDevice = nfc::NfcChip;
     type Buttons = button::ThreeButtons;
     type Led = led::RgbLed;
 
