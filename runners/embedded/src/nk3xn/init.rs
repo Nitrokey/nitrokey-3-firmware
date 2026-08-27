@@ -482,8 +482,6 @@ impl Stage2 {
         nfc.init(!self.clocks.is_nfc_passive).ok();
 
         let mut iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
-        #[cfg(not(feature = "no-delog"))]
-        boards::init::Delogger::flush();
         //iso14443.poll();
         Some(iso14443)
     }
@@ -547,8 +545,16 @@ impl Stage2 {
         i2c
     }
 
-    /// Reduce power draw by disabling everything not used over NFC
-    fn reduce_power_draw(mut self) -> Self {
+    /// Reduce power draw pulling down all gpios
+    ///
+    /// This function also reads the board ID pin (pio0_0) to detect
+    /// which nfc chip is in use
+    fn nfc_pull_down(mut self) -> (bool, Self) {
+        let nfc_id_pin = pins::Pio0_0::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_input();
+
         let iocon = self.clocks.iocon.release();
         // Put all unused pins in pulldown so that they're not drawing power by floating
         iocon.pio0_0.modify(|_, w| w.mode().pull_up()); // We use it later to determine the nfc chip version, it is then set to pull-down again
@@ -614,8 +620,16 @@ impl Stage2 {
         iocon.pio1_29.modify(|_, w| w.mode().pull_down());
         iocon.pio1_30.modify(|_, w| w.mode().pull_down());
         iocon.pio1_31.modify(|_, w| w.mode().pull_down());
+
+        let using_old_nfc = nfc_id_pin.is_high().unwrap();
+        iocon.pio0_0.modify(|_, w| w.mode().pull_down());
         self.clocks.iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
 
+        (using_old_nfc, self)
+    }
+
+    /// Disable all peripherals to reduce power draw
+    fn periherals_to_reduce_power_draw(mut self) -> Self {
         // Gate off unused peripheral clocks
         let syscon = self.peripherals.syscon.release();
         syscon.ahbclkctrl0.modify(|_, w| {
@@ -750,18 +764,6 @@ impl Stage2 {
         self
     }
 
-    fn using_old_nfc(mut self) -> (Self, bool) {
-        let id_pin = pins::Pio0_0::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_input();
-        let iocon = self.clocks.iocon.release();
-        let ret = id_pin.is_high().unwrap();
-        iocon.pio0_0.modify(|_, w| w.mode().pull_down());
-        self.clocks.iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
-        (self, ret)
-    }
-
     #[inline(never)]
     pub fn next(
         mut self,
@@ -780,8 +782,7 @@ impl Stage2 {
         let use_nfc =
             (nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.is_nfc_passive)) || true;
         let (se050_i2c, nfc, spi) = if use_nfc {
-            self = self.reduce_power_draw();
-            let (tmp_self, using_old_nfc) = self.using_old_nfc();
+            let (using_old_nfc, tmp_self) = self.nfc_pull_down();
             self = tmp_self;
             info!("using old nfc:: {}", using_old_nfc);
             let nfc = if using_old_nfc {
@@ -790,6 +791,7 @@ impl Stage2 {
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
             };
+            self = self.periherals_to_reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
@@ -1178,6 +1180,9 @@ impl Stage6 {
         if let Some(wwdt) = self.wwdt.as_mut() {
             debug_now!("Wwdt tv again: {:?}", wwdt.timer());
         }
+
+        #[cfg(not(feature = "no-delog"))]
+        boards::init::Delogger::flush();
 
         All {
             basic: self.basic,
