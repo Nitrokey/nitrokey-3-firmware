@@ -99,6 +99,7 @@ mod app {
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usb_nfc = boards::init::init_usb_nfc::<Board>(
             &mut ctx.local.resources.usb,
+            || {},
             Some(usb_bus),
             None,
             nfc_rp,

@@ -29,6 +29,8 @@ opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }
 piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }
 
+interchange = { git = "https://github.com/sosthene-nitrokey/interchange.git", rev = "3dd20626c26627f58dbbf25dc0359a00916b7a0e" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"
