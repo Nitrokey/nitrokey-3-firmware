@@ -223,8 +223,8 @@ where
         self.write_register(NfcTxen(0x77))?;
         self.write_register(ResetSilence(0x55))?;
 
-        //self.timer.start(Microseconds::new(500));
-        //nb::block!(self.timer.wait()).unwrap();
+        self.timer.start(Microseconds::new(5_000));
+        nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
 
