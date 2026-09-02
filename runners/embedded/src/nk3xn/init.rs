@@ -188,6 +188,7 @@ fn nfc_pull_down(
     iocon.pio0_0.modify(|_, w| w.mode().pull_down());
 
     let is_passive = nfc_irq.is_low().ok().unwrap();
+    let is_passive = true;
 
     NfcUse {
         is_passive,
