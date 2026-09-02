@@ -6,11 +6,14 @@ from dataclasses import dataclass
 from enum import Enum
 
 from cairosvg import svg2png
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from fido2.mds3 import MetadataStatement, VerificationMethodDescriptor, Version
 from fido2.webauthn import Aaguid
 
 UPV_CTAP_2_0 = Version(1, 0)
 UPV_CTAP_2_1 = Version(1, 1)
+UPV_CTAP_2_3 = Version(1, 3)
 
 UVD_NONE = VerificationMethodDescriptor(user_verification_method="none")
 UVD_PRESENCE_INTERNAL = VerificationMethodDescriptor(
@@ -19,19 +22,6 @@ UVD_PRESENCE_INTERNAL = VerificationMethodDescriptor(
 UVD_PASSCODE_EXTERNAL = VerificationMethodDescriptor(
     user_verification_method="passcode_external"
 )
-
-
-@enum.unique
-class CtapVersion(Enum):
-    CTAP_2_0 = "2.0"
-    CTAP_2_1 = "2.1"
-
-    @classmethod
-    def from_str(cls, s: str) -> "CtapVersion":
-        for variant in cls:
-            if variant.value == s:
-                return variant
-        raise ValueError("Unknown CTAP version {s}")
 
 
 # see https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html
@@ -58,9 +48,12 @@ class Authenticator:
             transports.append("nfc")
         return sorted(transports)
 
-    def mds(self, ctap: CtapVersion) -> MetadataStatement:
+    def mds(self) -> MetadataStatement:
         with open(self.attestation_root_certificate, "rb") as f:
-            attestation_root_certificate = f.read()
+            cert_pem = f.read()
+        cert_pem = cert_pem.replace(b"TRUSTED CERTIFICATE", b"CERTIFICATE")
+        cert = x509.load_pem_x509_certificate(cert_pem)
+        attestation_root_certificate = cert.public_bytes(Encoding.DER)
 
         with open("nitrokey.svg", "rb") as f:
             icon_bytes = svg2png(file_obj=f, output_width=128, output_height=128)
@@ -69,28 +62,12 @@ class Authenticator:
 
         aaguid = Aaguid.parse(self.aaguid)
 
-        upv = [UPV_CTAP_2_0]
-        authenticator_versions = ["U2F_V2", "FIDO_2_0"]
-        if ctap == CtapVersion.CTAP_2_1:
-            upv.append(UPV_CTAP_2_1)
-            authenticator_versions.append("FIDO_2_1")
-        else:
-            authenticator_versions.append("FIDO_2_1_PRE")
+        with open("get-info.json") as f:
+            get_info = json.load(f)
+        get_info["aaguid"] = aaguid.hex()
+        get_info["transports"] = self.transports
 
-        options = {
-            "rk": True,
-            "up": True,
-            "plat": False,
-            "clientPin": False,
-            "credMgmt": True,
-            "largeBlobs": False,
-        }
-        if ctap == CtapVersion.CTAP_2_1:
-            options["pinUvAuthToken"] = True
-            pin_protocols = [2, 1]
-        else:
-            options["credentialMgmtPreview"] = True
-            pin_protocols = [1]
+        upv = [UPV_CTAP_2_0, UPV_CTAP_2_1, UPV_CTAP_2_3]
 
         return MetadataStatement(
             aaguid=aaguid,
@@ -103,17 +80,7 @@ class Authenticator:
             tc_display=[],
             attestation_root_certificates=[attestation_root_certificate],
             upv=upv,
-            authenticator_get_info={
-                "versions": authenticator_versions,
-                "extensions": ["credProtect", "hmac-secret"],
-                "aaguid": aaguid.hex(),
-                "options": options,
-                "maxMsgSize": 3072,
-                "pinUvAuthProtocols": pin_protocols,
-                "maxCredentialCountInList": 10,
-                "maxCredentialIdLength": 255,
-                "transports": self.transports,
-            },
+            authenticator_get_info=get_info,
             crypto_strength=0,
             # TODO: Do we want to set caDesc?
             user_verification_details=[
@@ -122,15 +89,12 @@ class Authenticator:
                 [UVD_PASSCODE_EXTERNAL],
                 [UVD_PRESENCE_INTERNAL, UVD_PASSCODE_EXTERNAL],
             ],
-            # TODO: The spec says this should match the firmwareVersion
-            # reported in authenticatorGetInfo, but that value does not exist
-            authenticator_version=1,
+            authenticator_version=2,
             # TODO: Looks like this is only used for U2F.  Do we still need it?
             attestation_certificate_key_identifiers=None,
             # optional according to spec, but enforced by test suite
             # TODO: decide on icon, size and background
             icon=icon,
-            # to be investigated
             authentication_algorithms=[
                 "ed25519_eddsa_sha512_raw",
                 "secp256r1_ecdsa_sha256_raw",
@@ -146,21 +110,21 @@ NK3AM = Authenticator(
     name="Nitrokey 3 AM",
     aaguid="2cd2f727-f6ca-44da-8f48-5c2e5da000a2",
     has_nfc=False,
-    attestation_root_certificate="attestation/nk3am.der",
+    attestation_root_certificate="../certificates/nk3/nk3am/fido-ca.pem",
 )
 
 NK3XN = Authenticator(
     name="Nitrokey 3 xN",
     aaguid="ec99db19-cd1f-4c06-a2a9-940f17a6a30b",
     has_nfc=True,
-    attestation_root_certificate="attestation/nk3xn.der",
+    attestation_root_certificate="../certificates/nk3/nk3xn/fido-ca.pem",
 )
 
 NK3AM_TEST = Authenticator(
     name="Nitrokey 3 AM Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=False,
-    attestation_root_certificate="attestation/test.der",
+    attestation_root_certificate="../test-certificates/fido/nk-fido-ca-cert.pem",
     is_test=True,
 )
 
@@ -168,7 +132,7 @@ NK3XN_TEST = Authenticator(
     name="Nitrokey 3 xN Test",
     aaguid="8bc54968-07b1-4d5f-b249-607f5d527da2",
     has_nfc=True,
-    attestation_root_certificate="attestation/test.der",
+    attestation_root_certificate="../test-certificates/fido/nk-fido-ca-cert.pem",
     is_test=True,
 )
 
@@ -192,5 +156,4 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown model {model}")
 
-    ctap = CtapVersion.CTAP_2_1
-    print(json.dumps(dict(authenticator.mds(ctap)), indent=4))
+    print(json.dumps(dict(authenticator.mds()), indent=4))

@@ -118,13 +118,6 @@ bl-provision-keystore:
 # The following targets prefixed with fw- require that the device is in firmware mode.
 
 .PHONY: fw-provision-certs
-fw-provision-certs: data/fido.key data/fido.cert
+fw-provision-certs:
 	# TODO: add Trussed key & cert
-	solo2 app provision store-fido-batch-cert data/fido.cert
-	solo2 app provision store-fido-batch-key data/fido.key
-
-data/fido.key: data/fido.cert
-
-data/fido.cert:
-	mkdir -p data
-	solo2 pki dev fido data/fido.key data/fido.cert
+	nitropy nk3 provision fido2 --key ../test-certificates/fido/nk-fido-ee-key.trussed --cert ../test-certificates/fido/nk-fido-ee-cert.der

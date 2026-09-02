@@ -22,16 +22,20 @@ const_ram_storage!(
     cache_size_ty = littlefs2::consts::U256,
     // We use 256 instead of the default 512 to avoid loosing too much space to nearly empty blocks containing only folder metadata.
     block_size = 256,
-    block_count = 8192 / 256,
+    block_count = 2 * 8192 / 256,
     lookahead_size_ty = littlefs2::consts::U1,
-    filename_max_plus_one_ty = littlefs2::consts::U256,
-    path_max_plus_one_ty = littlefs2::consts::U256,
 );
 
 pub struct StoreResources<B: Board> {
     internal: StorageResources<B::InternalStorage>,
     external: StorageResources<B::ExternalStorage>,
     volatile: StorageResources<VolatileStorage>,
+}
+
+impl<B: Board> Default for StoreResources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<B: Board> StoreResources<B> {
@@ -48,6 +52,12 @@ pub struct StorageResources<S: Storage + 'static> {
     fs: MaybeUninit<Filesystem<'static, S>>,
     alloc: MaybeUninit<Allocation<S>>,
     storage: MaybeUninit<S>,
+}
+
+impl<S: Storage + 'static> Default for StorageResources<S> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S: Storage + 'static> StorageResources<S> {
@@ -125,6 +135,8 @@ impl<B: Board> Store for RunnerStore<B> {
         unsafe { Self::pointers().vfs.assume_init() }
     }
 }
+
+unsafe impl<B> Send for RunnerStore<B> {}
 
 pub fn init_store<B: Board>(
     resources: &'static mut StoreResources<B>,
@@ -293,7 +305,7 @@ mod tests {
     pub struct DummyButtons;
     pub struct DummyLed;
     impl UserPresence for DummyButtons {
-        fn check_user_presence(&mut self) -> trussed::types::consent::Level {
+        fn check_user_presence(&mut self) -> trussed_core::types::consent::Level {
             unimplemented!()
         }
     }
@@ -443,8 +455,6 @@ mod tests {
         block_size = 4096,
         block_count = FULL_EXTERNAL_STORAGE_BLOCK_COUNT,
         lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
     );
 
     const_ram_storage!(
@@ -456,8 +466,6 @@ mod tests {
         block_size = 4096,
         block_count = CROPPED_EXTERNAL_STORAGE_BLOCK_COUNT,
         lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
     );
 
     const_ram_storage!(
@@ -469,8 +477,6 @@ mod tests {
         block_size = 4096,
         block_count = 0x20_0000 / 4096,
         lookahead_size_ty = littlefs2::consts::U1,
-        filename_max_plus_one_ty = littlefs2::consts::U1,
-        path_max_plus_one_ty = littlefs2::consts::U2,
     );
 
     impl<EfsStorage: Storage + 'static> Board for TestBoard<EfsStorage> {

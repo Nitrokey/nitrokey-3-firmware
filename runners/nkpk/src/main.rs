@@ -28,7 +28,7 @@ mod app {
 
     type Soc = <Board as boards::Board>::Soc;
 
-    const VERSION: Version = Version::from_env();
+    const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
     const VERSION_STRING: &str = env!("NKPK_FIRMWARE_VERSION");
 
     #[shared]

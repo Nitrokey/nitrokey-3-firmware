@@ -1,8 +1,28 @@
 # Changelog
 
-- fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+## Unreleased
 
-## 1.8.2 (2025-08-12)
+- fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+- Update applications (maintenance only):
+  - admin-app v0.2.0
+  - opcard v1.8.0
+
+## v1.9.0-rc.1 (2026-06-01)
+
+- fido-authenticator: Update to [v0.4.0-rc.3](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.3)
+  - Add support for CTAP 2.3.
+  - Implement the `credBlob`, `hmac-secret-mc` and `minPinLength` extensions.
+  - Implement the `alwaysUv` feature.
+  - Implement the `authenticatorConfig` command with the `toggleAlwaysUv` and `setMinPINLength` subcommands.
+  - Use AES-256-CBC to encrypt the credential metadata. (This change only takes effect on new devices or after a factory reset.)
+  - Set `firmwareVersion` to 1 (legacy credential format) or 2 (new credential format using AES-256-CBC).
+  - Various fixes.
+
+## v1.8.3 (2025-10-13)
+
+- OpenPGP: fix factory reset and retry counter display
+
+## v1.8.2 (2025-08-12)
 
 - provisioner-app: Remove ReformatFilesystem command
 - fido-authenticator: Increase the maximum number of discoverable credentials (resident keys) to 100.
@@ -13,6 +33,8 @@
   - Forbid up = false when using the hmac-secret extension ([fido-authenticator#19](https://github.com/Nitrokey/fido-authenticator/issues/19))
   - Allow creating credentials without PIN (`makeCredUvNotRqd`, [fido-authenticator#34](https://github.com/Nitrokey/fido-authenticator/issues/34))
   - Support clientPin getRetries without PIN protocol ([fido-authenticator#118](https://github.com/Nitrokey/fido-authenticator/issues/118))
+- OpenPGP: Update to [opcard v1.6.1](https://github.com/Nitrokey/opcard-rs/releases/tag/v1.6.1)
+  - Add support for secp256k1
 
 ## v1.8.1 (2025-02-11)
 

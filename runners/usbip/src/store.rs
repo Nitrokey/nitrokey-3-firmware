@@ -27,8 +27,6 @@ const_ram_storage!(
     block_size = 4096,
     block_count = 0x2_0000 / 4096,
     lookahead_size_ty = U1,
-    filename_max_plus_one_ty = U256,
-    path_max_plus_one_ty = U256,
 );
 const_ram_storage!(VolatileStorage, IFS_STORAGE_SIZE);
 

@@ -10,10 +10,12 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.8.2"
+version = "1.9.0-rc.1"
 
 [workspace.dependencies]
-littlefs2 = "0.6"
+littlefs2 = "0.8"
+trussed = { version = "0.2", default-features = false }
+trussed-core = "0.2"
 
 [patch.crates-io]
 # components
@@ -21,24 +23,11 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e107ed315a07dc6c992fac39d542e847cc3a1b6c" }
-trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", rev = "504674453c9573a30aa2f155101df49eb2af1ba7" }
 
 # applications
-admin-app = { git = "https://github.com/Nitrokey/admin-app.git", tag = "v0.1.0-nitrokey.20" }
-fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git",tag = "v0.1.1-nitrokey.27" }
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.6.1" }
-piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.5.3" }
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.14.0" }
-
-# backends
-trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth", tag = "v0.4.0" }
-trussed-rsa-alloc = { git = "https://github.com/trussed-dev/trussed-rsa-backend.git", tag = "v0.3.0" }
-trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", tag = "v0.5.0" }
-trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", tag = "v0.3.3" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys.git", rev = "v0.3.1-nitrokey.1" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "v0.6.1-nitrokey.1" }
+opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }
+piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
+secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }
 
 fm11nt08c = { path = "components/fm11nt08c" }
 

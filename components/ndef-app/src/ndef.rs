@@ -1,6 +1,7 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use apdu_app::{CommandView, Data, Interface};
+use apdu_app::{CommandView, Interface};
+use heapless::VecView;
 use iso7816::{Instruction, Status};
 
 static URL_RX_FN: AtomicUsize = AtomicUsize::new(0);
@@ -200,12 +201,12 @@ impl iso7816::App for App {
     }
 }
 
-impl<const R: usize> apdu_app::App<R> for App {
+impl apdu_app::App for App {
     fn select(
         &mut self,
         _interface: Interface,
         _apdu: CommandView<'_>,
-        _reply: &mut Data<R>,
+        _reply: &mut VecView<u8>,
     ) -> apdu_app::Result {
         debug_now!("Got Select");
         Ok(())
@@ -217,7 +218,7 @@ impl<const R: usize> apdu_app::App<R> for App {
         &mut self,
         _type: Interface,
         apdu: CommandView<'_>,
-        reply: &mut Data<R>,
+        reply: &mut VecView<u8>,
     ) -> apdu_app::Result {
         debug_now!("Got call: {apdu:02x?}");
         let instruction = apdu.instruction();

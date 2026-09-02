@@ -8,13 +8,14 @@ use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
-use trussed::{platform::Platform as _, types::Location, Bytes};
+use trussed::platform::Platform as _;
+use trussed_core::types::{Bytes, Location};
 use trussed_usbip::{Platform, Store, Syscall};
 use utils::Version;
 
 use ui::{Signals, UserInterface, UserPresence};
 
-const VERSION: Version = Version::from_env();
+const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
 const VERSION_STRING: &str = env!("USBIP_FIRMWARE_VERSION");
 const MANUFACTURER: &str = "Nitrokey";
 const PRODUCT: &str = "Nitrokey 3";
@@ -158,7 +159,7 @@ fn print_version() {
         "provisioner",
     ];
 
-    print!("{} {}", crate_name, crate_version);
+    print!("{crate_name} {crate_version}");
     if !enabled_features.is_empty() {
         print!(" ({})", enabled_features.join(", "));
     }
@@ -202,7 +203,7 @@ fn exec(
     trussed_usbip::Builder::new(options)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
-            Bytes::from_slice(b"Unique hw key").unwrap(),
+            Bytes::from(b"Unique hw key"),
         ))
         .build::<Apps<Runner>>()
         .exec(platform, (runner, data));

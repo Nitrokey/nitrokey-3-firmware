@@ -1,15 +1,16 @@
 use crate::{Instruction, Provisioner};
 use core::convert::TryFrom;
 use ctaphid_app::{App, Command, Error, VendorCommand};
-use heapless_bytes::Bytes;
-use trussed::{client, store::Store};
+use heapless_bytes::BytesView;
+use trussed::store::Store;
+use trussed_core::CryptoClient;
 
 const COMMAND_PROVISIONER: VendorCommand = VendorCommand::H71;
 
-impl<S, T, const N: usize> App<'_, N> for Provisioner<S, T>
+impl<S, T> App<'_> for Provisioner<S, T>
 where
     S: Store,
-    T: client::CryptoClient,
+    T: CryptoClient,
 {
     fn commands(&self) -> &'static [Command] {
         &[Command::Vendor(COMMAND_PROVISIONER)]
@@ -19,7 +20,7 @@ where
         &mut self,
         command: Command,
         request: &[u8],
-        response: &mut Bytes<N>,
+        response: &mut BytesView,
     ) -> Result<(), Error> {
         if command != Command::Vendor(COMMAND_PROVISIONER) {
             return Err(Error::InvalidCommand);
@@ -28,7 +29,7 @@ where
             return Err(Error::InvalidLength);
         }
         Instruction::try_from(request[0])
-            .and_then(|instruction| self.handle(instruction, &request[1..], response))
+            .and_then(|instruction| self.handle(instruction, &request[1..], response.as_mut()))
             .map_err(|_| Error::InvalidCommand)
     }
 }

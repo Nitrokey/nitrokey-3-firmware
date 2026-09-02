@@ -1,26 +1,26 @@
 [package]
 name = "nkpk"
 edition = "2021"
-version = "1.0.0"
+version = "1.1.0"
 license = "Apache-2.0 OR MIT"
 authors = ["Nitrokey GmbH <info@nitrokey.com>"]
 
 [dependencies]
-apdu-dispatch = "0.3"
+apdu-dispatch = "0.4"
 apps = { path = "../../components/apps", features = ["nkpk"] }
 boards = { path = "../../components/boards", features = ["board-nkpk"] }
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
-ctaphid-dispatch = "0.3"
+ctaphid-dispatch = "0.4"
 delog = "0.1"
 interchange = "0.3"
+littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
 nrf52840-hal = "0.15.1"
 nrf52840-pac = "0.11"
 utils = { path = "../../components/utils", features = ["storage"] }
-cortex-m-rt = "0.6.15"
+cortex-m-rt = "0.7.5"
 
 [build-dependencies]
-cargo-lock = "10"
 memory-regions = "1"
 utils = { path = "../../components/utils", features = ["build"] }
 
@@ -37,6 +37,7 @@ no-delog = ["boards/no-delog", "delog/knock-it-off"]
 log-rtt = ["boards/log-rtt"]
 
 provisioner = ["apps/nkpk-provisioner", "boards/provisioner", "no-buttons", "apps/no-reset-time-window"]
+develop = ["no-buttons", "apps/no-reset-time-window"]
 
 no-buttons = ["boards/no-buttons"]
 

@@ -11,7 +11,8 @@ use std::{
 use dialoguer::Confirm;
 use log::{debug, info};
 use signal_hook::{consts::signal::SIGUSR1, flag};
-use trussed::platform::{consent, reboot, ui::Status};
+use trussed::types::ui::Status;
+use trussed_core::types::{consent, reboot};
 
 pub struct UserInterface {
     start_time: std::time::Instant,
@@ -78,7 +79,7 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 
     fn set_status(&mut self, status: Status) {
-        info!("Set status: {:?}", status);
+        info!("Set status: {status:?}");
 
         let is_waiting = status == Status::WaitingForUserPresence;
         trussed_usbip::set_waiting(is_waiting);
@@ -100,7 +101,7 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 
     fn reboot(&mut self, to: reboot::To) -> ! {
-        info!("Restart!  ({:?})", to);
+        info!("Restart!  ({to:?})");
         process::exit(25);
     }
 }

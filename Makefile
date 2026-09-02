@@ -1,6 +1,7 @@
 .PHONY: check
 check:
 	$(MAKE) -C runners/embedded check-all
+	$(MAKE) -C runners/embedded check-nk3xn FEATURES=develop
 	$(MAKE) -C runners/nkpk check
 	$(MAKE) -C runners/usbip check
 
@@ -77,5 +78,6 @@ manifest.json:
 
 .PHONY: software-tests
 software-tests:
-	cd components/apps && cargo test
+	cd components/apps && cargo test --all-features
 	cd components/boards && cargo test
+	cd components/utils && cargo test

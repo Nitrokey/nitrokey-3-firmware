@@ -14,7 +14,8 @@ use nfc_device::Iso14443;
 use rand::{CryptoRng, Rng as _, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use ref_swap::OptionRefSwap;
-use trussed::{interrupt::InterruptFlag, platform::Store as _};
+use trussed::store::Store as _;
+use trussed_core::InterruptFlag;
 use usb_device::{
     bus::UsbBusAllocator,
     device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
@@ -43,6 +44,12 @@ pub struct Resources<B: Board> {
     pub usb: UsbResources<B>,
 }
 
+impl<B: Board> Default for Resources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<B: Board> Resources<B> {
     pub const fn new() -> Self {
         Self {
@@ -55,6 +62,12 @@ impl<B: Board> Resources<B> {
 
 pub struct UsbResources<B: Board> {
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+}
+
+impl<B: Board> Default for UsbResources<B> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<B: Board> UsbResources<B> {
@@ -305,7 +318,7 @@ pub fn init_trussed<B: Board, R: CryptoRng + RngCore>(
     let dispatch = if let Some(hw_key) = hw_key {
         Dispatch::with_hw_key(
             AUTH_LOCATION,
-            trussed::types::Bytes::from_slice(hw_key).unwrap(),
+            trussed_core::types::Bytes::try_from(hw_key).unwrap(),
             #[cfg(feature = "se050")]
             se050,
         )

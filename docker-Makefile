@@ -12,4 +12,4 @@ build:
 
 .PHONY: docker-build
 docker-build:
-	docker run --interactive --rm --volume $(PWD):/app $(TAG) make -C $(RUNNER)
+	docker run --interactive --rm --volume "$(CURDIR)":/app $(TAG) make -C $(RUNNER)

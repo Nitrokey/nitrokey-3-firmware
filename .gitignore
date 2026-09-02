@@ -1,6 +1,7 @@
 binaries
 target
 **/.gdb_history
+/rust-analyzer.toml
 ctap-2-1-pre.pdf
 solo-bee.code-workspace
 ref/

@@ -31,10 +31,8 @@ pub mod prince;
 pub mod spi;
 
 #[cfg(feature = "no-encrypted-storage")]
-use trussed::types::LfsResult;
-
-#[cfg(feature = "no-encrypted-storage")]
-lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT));
+type InternalFilesystem =
+    lpc55_hal::drivers::flash::Storage<{ prince::FS_START }, { prince::BLOCK_COUNT }>;
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 

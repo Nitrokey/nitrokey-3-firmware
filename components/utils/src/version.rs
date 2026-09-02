@@ -17,10 +17,17 @@ impl Version {
         }
     }
 
-    pub const fn from_env() -> Self {
-        let major = parse_simple_u8(env!("CARGO_PKG_VERSION_MAJOR"));
-        let minor = parse_simple_u8(env!("CARGO_PKG_VERSION_MINOR"));
-        let patch = parse_simple_u8(env!("CARGO_PKG_VERSION_PATCH"));
+    pub const fn from_str(s: &str) -> Self {
+        // strip pre-release or build components
+        let version = split_off(s, b'-');
+        let version = split_off(version, b'+');
+        // extract major, minor, patch version
+        let (major, rest) = split_str(version, b'.').unwrap();
+        let (minor, patch) = split_str(rest, b'.').unwrap();
+        // parse version numbers
+        let major = parse_simple_u8(major);
+        let minor = parse_simple_u8(minor);
+        let patch = parse_simple_u8(patch);
         Self::new(major, minor, patch)
     }
 
@@ -42,6 +49,32 @@ impl Version {
 
     pub const fn patch(&self) -> u8 {
         self.patch
+    }
+}
+
+const fn split_str(s: &str, c: u8) -> Option<(&str, &str)> {
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == c {
+            let Some((first, last)) = s.split_at_checked(i) else {
+                return None;
+            };
+            let Some((_mid, last)) = last.split_at_checked(1) else {
+                return None;
+            };
+            return Some((first, last));
+        }
+        i += 1;
+    }
+    None
+}
+
+const fn split_off(s: &str, c: u8) -> &str {
+    if let Some((start, _)) = split_str(s, c) {
+        start
+    } else {
+        s
     }
 }
 
@@ -71,5 +104,32 @@ mod tests {
         fn test_parse_simple_u8(value: u8) -> bool {
             parse_simple_u8(&value.to_string()) == value
         }
+    }
+
+    #[test]
+    fn test_split_str() {
+        assert_eq!(split_str("0.1", b'.'), Some(("0", "1")));
+        assert_eq!(split_str("0.", b'.'), Some(("0", "")));
+        assert_eq!(split_str("0.1.2", b'.'), Some(("0", "1.2")));
+        assert_eq!(split_str("012", b'.'), None);
+        assert_eq!(split_str("", b'.'), None);
+    }
+
+    #[test]
+    fn test_version_from_str() {
+        let version = Version {
+            major: 1,
+            minor: 2,
+            patch: 3,
+        };
+        assert_eq!(Version::from_str("1.2.3"), version);
+        assert_eq!(Version::from_str("1.2.3-test.1"), version);
+        assert_eq!(Version::from_str("1.2.3-test.1+32"), version);
+        assert_eq!(Version::from_str("1.2.3+32"), version);
+    }
+
+    #[test]
+    fn test_version_from_str_cargo() {
+        Version::from_str(env!("CARGO_PKG_VERSION"));
     }
 }
