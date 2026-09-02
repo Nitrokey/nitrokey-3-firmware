@@ -556,10 +556,12 @@ impl Stage2 {
 
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>, is_nfc_passive: bool) -> I2C {
         // SE050 check
-        let _enabled = pins::Pio1_26::take()
-            .unwrap()
-            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-            .into_output_high();
+        if !is_nfc_passive {
+            let _enabled = pins::Pio1_26::take()
+                .unwrap()
+                .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+                .into_output_high();
+        }
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();

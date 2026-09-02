@@ -172,6 +172,9 @@ mod app {
                 );
             });
 
+            // Sleep until the next interrupt wakes us. Any task pend (USB1,
+            // PIN_INT0, OS_EVENT, CTIMER0, …) brings us back here to drain the
+            // dispatchers; nothing else needs to run between events.
             #[cfg(not(feature = "no-delog"))]
             boards::init::Delogger::flush();
             cortex_m::asm::wfi();
@@ -309,10 +312,10 @@ mod app {
     fn nfc_irq(c: nfc_irq::Context) {
         (
             c.shared.contactless,
-            c.shared.wait_extender,
             c.shared.perf_timer,
+            c.shared.wait_extender,
         )
-            .lock(|contactless, wait_extender, perf_timer| {
+            .lock(|contactless, perf_timer, wait_extender| {
                 let contactless = contactless.as_mut().unwrap();
                 let _starttime = perf_timer.elapsed().0 / 100;
 
