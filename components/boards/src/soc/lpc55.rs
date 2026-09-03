@@ -13,7 +13,6 @@ use lpc55_hal::{
 };
 
 pub mod clock_controller;
-pub mod monotonic;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 

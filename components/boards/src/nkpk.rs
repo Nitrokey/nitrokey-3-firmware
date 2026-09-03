@@ -5,9 +5,9 @@ use utils::RamStorage;
 use super::nk3am::{
     self,
     ui::{HardwareButtons, RgbLed},
-    DummyNfc,
 };
 use crate::{
+    nfc::DummyNfc,
     soc::nrf52::{flash::FlashStorage, Nrf52, UsbClockType},
     Board,
 };

@@ -3,7 +3,6 @@ use littlefs2::{
     io::Result as LfsResult,
 };
 use memory_regions::MemoryRegions;
-use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as NfcState};
 use nrf52840_hal::{
     gpio::{p0, p1, Level, Output, Pin, PushPull},
     gpiote::Gpiote,
@@ -20,6 +19,7 @@ use {
 
 use crate::{
     flash::ExtFlashStorage,
+    nfc::DummyNfc,
     soc::nrf52::{flash::FlashStorage, rtic_monotonic::RtcMonotonic, Nrf52, UsbClockType},
     ui::UserInterface,
     Board,
@@ -109,20 +109,6 @@ impl Board for NK3AM {
 pub type InternalFlashStorage =
     FlashStorage<{ MEMORY_REGIONS.filesystem.start }, { MEMORY_REGIONS.filesystem.end }>;
 pub type ExternalFlashStorage = ExtFlashStorage<Spim<SPIM3>, OutPin>;
-
-pub struct DummyNfc;
-
-impl NfcDevice for DummyNfc {
-    fn read(&mut self, _buf: &mut [u8]) -> Result<NfcState, NfcError> {
-        Err(NfcError::NoActivity)
-    }
-    fn send(&mut self, _buf: &[u8]) -> Result<(), NfcError> {
-        Err(NfcError::NoActivity)
-    }
-    fn frame_size(&self) -> usize {
-        0
-    }
-}
 
 pub struct BoardGPIO {
     pub gpiote: Gpiote,

@@ -8,6 +8,8 @@ use crate::ui::Clock;
 
 #[cfg(feature = "soc-lpc55")]
 pub mod lpc55;
+#[cfg(feature = "soc-lpc55")]
+pub mod monotonic;
 #[cfg(feature = "soc-nrf52")]
 pub mod nrf52;
 
