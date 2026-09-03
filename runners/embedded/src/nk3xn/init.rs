@@ -80,7 +80,6 @@ struct Peripherals {
 }
 
 struct Clocks {
-    nfc_use: NfcUse,
     clocks: clocks::Clocks,
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
     iocon: hal::Iocon<Enabled>,
@@ -269,7 +268,6 @@ impl Stage0 {
 
         let clocks = self.enable_clocks(nfc_use.is_passive);
         let clocks = Clocks {
-            nfc_use,
             clocks,
             nfc_irq,
             iocon,
@@ -279,6 +277,7 @@ impl Stage0 {
             debug_now!("Wwdt tv again: {:?}", _wwdt.timer());
         }
         Stage1 {
+            nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks,
@@ -288,6 +287,7 @@ impl Stage0 {
 }
 
 pub struct Stage1 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -409,7 +409,7 @@ impl Stage1 {
 
         let mut rgb = self.init_rgb(ctimer3);
 
-        let mut three_buttons = if !self.clocks.nfc_use.is_passive {
+        let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
         } else {
             None
@@ -438,9 +438,10 @@ impl Stage1 {
             perf_timer,
             three_buttons,
             rgb: Some(rgb),
-            old_firmware_version,
+            old_firmware_version, 
         };
         Stage2 {
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -452,6 +453,7 @@ impl Stage1 {
 }
 
 pub struct Stage2 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -549,7 +551,7 @@ impl Stage2 {
 
         // Only run EEPROM configuration on USB power; energy-harvested boots
         // must never write the chip's NV memory.
-        nfc.init(!self.clocks.nfc_use.is_passive).ok();
+        nfc.init(!self.nfc_use.is_passive).ok();
 
         let iso14443 = Iso14443::new(nfc_device::either::Either::B(nfc), nfc_rq);
         Some(iso14443)
@@ -766,12 +768,12 @@ impl Stage2 {
         let (mut nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         *nfc_rq.callback_mut() = || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6);
 
-        let se050_i2c = self.get_se050_i2c(flexcomm5, self.clocks.nfc_use.is_passive);
+        let se050_i2c = self.get_se050_i2c(flexcomm5, self.nfc_use.is_passive);
 
         let use_nfc =
-            nfc_enabled && (cfg!(feature = "provisioner") || self.clocks.nfc_use.is_passive);
+            nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
         let (se050_i2c, nfc, spi) = if use_nfc {
-            let nfc = if self.clocks.nfc_use.using_old_nfc {
+            let nfc = if self.nfc_use.using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
             } else {
@@ -786,6 +788,7 @@ impl Stage2 {
         };
 
         Stage3 {
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -800,6 +803,7 @@ impl Stage2 {
 }
 
 pub struct Stage3 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -836,6 +840,7 @@ impl Stage3 {
             rng,
         };
         Stage4 {
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -851,6 +856,7 @@ impl Stage3 {
 }
 
 pub struct Stage4 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -910,7 +916,7 @@ impl Stage4 {
         let internal = InternalFlashStorage::new(self.flash.flash_gordon);
 
         // temporarily increase clock for the storage mounting or else it takes a long time.
-        if self.clocks.nfc_use.is_passive {
+        if self.nfc_use.is_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
                     .system_frequency(48.MHz())
@@ -939,7 +945,7 @@ impl Stage4 {
         // info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
-        if self.clocks.nfc_use.is_passive {
+        if self.nfc_use.is_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
                     .system_frequency(48.MHz())
@@ -952,6 +958,7 @@ impl Stage4 {
         }
 
         Stage5 {
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -1001,6 +1008,7 @@ fn initialize_fs_flash(flash_gordon: &mut FlashGordon, prince: &mut Prince<Enabl
 }
 
 pub struct Stage5 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -1023,7 +1031,7 @@ impl Stage5 {
         let mut rtc = rtc.enabled(syscon, clocks.enable_32k_fro(pmc));
         rtc.reset();
 
-        let rgb = if self.clocks.nfc_use.is_passive {
+        let rgb = if self.nfc_use.is_passive {
             None
         } else {
             self.basic.rgb.take()
@@ -1051,6 +1059,7 @@ impl Stage5 {
         }
 
         Stage6 {
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -1065,6 +1074,7 @@ impl Stage5 {
 }
 
 pub struct Stage6 {
+    nfc_use: NfcUse,
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
@@ -1124,12 +1134,12 @@ impl Stage6 {
             &mut self.trussed,
             self.status,
             &self.store,
-            self.clocks.nfc_use.is_passive,
+            self.nfc_use.is_passive,
             VERSION,
             VERSION_STRING,
         );
 
-        let usb_bus = if !self.clocks.nfc_use.is_passive {
+        let usb_bus = if !self.nfc_use.is_passive {
             Some(self.setup_usb_bus(usbhs))
         } else {
             None
