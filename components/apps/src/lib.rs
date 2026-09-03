@@ -850,6 +850,7 @@ pub enum Variant {
     Usbip,
     Lpc55,
     Nrf52,
+    Stm32n6,
 }
 
 impl From<Variant> for u8 {
@@ -858,6 +859,7 @@ impl From<Variant> for u8 {
             Variant::Usbip => 0,
             Variant::Lpc55 => 1,
             Variant::Nrf52 => 2,
+            Variant::Stm32n6 => 3,
         }
     }
 }
