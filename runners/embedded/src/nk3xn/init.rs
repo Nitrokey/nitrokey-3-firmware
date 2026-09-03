@@ -33,6 +33,7 @@ use hal::{
         pins::{self, direction},
         Timer,
     },
+    peripherals::iocon::GpioMode,
     peripherals::{
         ctimer::{self, Ctimer},
         flexcomm::{Flexcomm0, Flexcomm5},
@@ -44,7 +45,7 @@ use hal::{
         usbhs::Usbhs,
         wwdt::{self, Wwdt},
     },
-    raw::{IOCON, WWDT},
+    raw::WWDT,
     time::{DurationExtensions as _, RateExtensions as _},
     traits::wg::digital::v2::InputPin,
     typestates::{
@@ -81,7 +82,6 @@ struct Peripherals {
 
 struct Clocks {
     clocks: clocks::Clocks,
-    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
     iocon: hal::Iocon<Enabled>,
     gpio: hal::Gpio<Enabled>,
 }
@@ -107,6 +107,28 @@ struct NfcUse {
     /// If yes, we assume we're being powered by it
     is_passive: bool,
     using_old_nfc: bool,
+    nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
+    nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
+}
+
+impl NfcUse {
+    fn refresh(&mut self, iocon: &hal::Iocon<Enabled>) -> bool {
+        let Some(nfc_irq) = &mut self.nfc_irq else {
+            panic!("Refresh should only happen once and nfc irq should still be available");
+        };
+        let old_is_passive = self.is_passive;
+        self.is_passive = nfc_irq.is_low().ok().unwrap();
+        self.using_old_nfc = self.nfc_id_pin.is_high().unwrap();
+
+        // ext. flash power
+        if self.is_passive {
+            iocon.set_gpio_pio0_21_mode(GpioMode::PullDown);
+        } else {
+            iocon.set_gpio_pio0_21_mode(GpioMode::PullUp);
+        }
+
+        self.is_passive != old_is_passive
+    }
 }
 
 /// Reduce power draw pulling down all gpios
@@ -114,84 +136,84 @@ struct NfcUse {
 /// This function also reads the board ID pin (pio0_0) to detect
 /// which nfc chip is in use
 fn nfc_pull_down(
-    nfc_id_pin: &Pin<pins::Pio0_0, Gpio<direction::Input>>,
-    nfc_irq: &Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
-    iocon: &IOCON,
+    nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
+    nfc_irq: Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
+    iocon: &hal::Iocon<Enabled>,
 ) -> NfcUse {
     // Put all unused pins in pulldown so that they're not drawing power by floating
-    iocon.pio0_0.modify(|_, w| w.mode().pull_up()); // We use it later to determine the nfc chip version, it is then set to pull-down again
-    iocon.pio0_19.modify(|_, w| w.mode().pull_up()); // We use it later to determine whether we're in an NFC field
-    iocon.pio0_1.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_2.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_3.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_4.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_6.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_7.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_8.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_10.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_11.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_12.modify(|_, w| w.mode().pull_down());
-    // iocon.pio0_13.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_14.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_15.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_16.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_17.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_18.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_20.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_21.modify(|_, w| w.mode().pull_down()); // ext. flash power
+    iocon.set_gpio_pio0_0_mode(GpioMode::PullUp); // We use it later to determine the nfc chip version, it is then set to pull-down again
+    iocon.set_gpio_pio0_19_mode(GpioMode::PullUp); // We use it later to determine whether we're in an NFC field
+    iocon.set_gpio_pio0_1_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_2_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_3_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_4_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_6_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_7_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_8_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_10_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_11_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_12_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio0_13_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_14_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_15_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_16_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_17_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_18_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_20_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_21_mode(GpioMode::PullDown); // ext. flash power
 
-    // iocon.pio0_22.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_23.modify(|_, w| w.mode().pull_down());
-    // iocon.pio0_24.modify(|_, w| w.mode().pull_down());
-    // iocon.pio0_25.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_26.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_27.modify(|_, w| w.mode().pull_down());
-    // iocon.pio0_28.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_29.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_30.modify(|_, w| w.mode().pull_down());
-    iocon.pio0_31.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_0.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_1.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_2.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_3.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_4.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_5.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_6.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_7.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_8.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_9.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_10.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_11.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_12.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_13.modify(|_, w| w.mode().pull_down());
-    // iocon.pio1_14.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_15.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_16.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_17.modify(|_, w| w.mode().pull_down());
-    // iocon.pio1_18.modify(|_, w| w.mode().pull_down());
-    // iocon.pio1_19.modify(|_, w| w.mode().pull_down());
-    // iocon.pio1_20.modify(|_, w| w.mode().pull_down());
-    // iocon.pio1_21.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_22.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_23.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_24.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_25.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_26.modify(|_, w| w.mode().pull_down()); //  se050 enable
-    iocon.pio1_27.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_28.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_29.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_30.modify(|_, w| w.mode().pull_down());
-    iocon.pio1_31.modify(|_, w| w.mode().pull_down());
+    // iocon.set_gpio_pio0_22_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_23_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio0_24_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio0_25_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_26_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_27_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio0_28_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_29_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_30_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio0_31_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_0_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_1_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_2_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_3_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_4_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_5_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_6_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_7_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_8_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_9_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_10_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_11_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_12_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_13_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio1_14_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_15_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_16_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_17_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio1_18_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio1_19_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio1_20_mode(GpioMode::PullDown);
+    // iocon.set_gpio_pio1_21_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_22_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_23_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_24_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_25_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_26_mode(GpioMode::PullDown); //  se050 enable
+    iocon.set_gpio_pio1_27_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_28_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_29_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_30_mode(GpioMode::PullDown);
+    iocon.set_gpio_pio1_31_mode(GpioMode::PullDown);
 
     let using_old_nfc = nfc_id_pin.is_high().unwrap();
-    iocon.pio0_0.modify(|_, w| w.mode().pull_down());
 
     let is_passive = nfc_irq.is_low().ok().unwrap();
-    let is_passive = true;
 
     NfcUse {
         is_passive,
         using_old_nfc,
+        nfc_id_pin,
+        nfc_irq: Some(nfc_irq),
     }
 }
 
@@ -203,32 +225,27 @@ pub struct Stage0 {
 impl Stage0 {
     fn enable_low_speed_for_passive_nfc(
         &mut self,
-        mut iocon: hal::Iocon<Enabled>,
+        iocon: &mut hal::Iocon<Enabled>,
         gpio: &mut hal::Gpio<Enabled>,
-    ) -> (
-        hal::Iocon<Enabled>,
-        Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
-        NfcUse,
-    ) {
+    ) -> NfcUse {
         let nfc_irq = nfc::NfcIrqPin::take()
             .unwrap()
-            .into_gpio_pin(&mut iocon, gpio)
+            .into_gpio_pin(iocon, gpio)
             .into_input();
         let nfc_id_pin = pins::Pio0_0::take()
             .unwrap()
-            .into_gpio_pin(&mut iocon, gpio)
+            .into_gpio_pin(iocon, gpio)
             .into_input();
         // Need to enable pullup for NFC IRQ input.
-        let iocon = iocon.release();
-        let nfc_use = nfc_pull_down(&nfc_id_pin, &nfc_irq, &iocon);
+        let nfc_use = nfc_pull_down(nfc_id_pin, nfc_irq, iocon);
 
-        let iocon = hal::Iocon::from(iocon).enabled(&mut self.peripherals.syscon);
-        (iocon, nfc_irq, nfc_use)
+        nfc_use
     }
 
-    fn enable_clocks(&mut self, is_nfc_passive: bool) -> clocks::Clocks {
+    fn enable_clocks(&mut self) -> clocks::Clocks {
         // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
+        // let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
+        let frequency = 4.MHz();
         hal::ClockRequirements::default()
             .system_frequency(frequency)
             .configure(
@@ -249,7 +266,9 @@ impl Stage0 {
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
-        let (new_iocon, nfc_irq, nfc_use) = self.enable_low_speed_for_passive_nfc(iocon, &mut gpio);
+        let nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
+
+        let clocks = self.enable_clocks();
 
         let wwdt = (!nfc_use.is_passive).then(|| {
             let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
@@ -263,13 +282,8 @@ impl Stage0 {
             wwdt
         });
 
-        iocon = new_iocon;
-        let nfc_irq = Some(nfc_irq);
-
-        let clocks = self.enable_clocks(nfc_use.is_passive);
         let clocks = Clocks {
             clocks,
-            nfc_irq,
             iocon,
             gpio,
         };
@@ -295,6 +309,24 @@ pub struct Stage1 {
 }
 
 impl Stage1 {
+    fn reconfigure_clocks(
+        &mut self,
+        clocks: clocks::Clocks,
+        is_nfc_passive: bool,
+    ) -> clocks::Clocks {
+        // Start out with slow clock if in passive mode;
+        let frequency = if is_nfc_passive { 4.MHz() } else { 96.MHz() };
+        unsafe {
+            hal::ClockRequirements::default()
+                .system_frequency(frequency)
+                .reconfigure(
+                    clocks,
+                    &mut self.peripherals.pmc,
+                    &mut self.peripherals.syscon,
+                )
+        }
+    }
+
     fn validate_cfpa(
         pfr: &mut Pfr<Enabled>,
         current_version_maybe: Option<u32>,
@@ -409,6 +441,12 @@ impl Stage1 {
 
         let mut rgb = self.init_rgb(ctimer3);
 
+        self.nfc_use.refresh(&self.clocks.iocon);
+        self.clocks.clocks =
+            self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
+
+        info!("After refresh: NFC USE: is_passive {}, is_old {}", self.nfc_use.is_passive, self.nfc_use.using_old_nfc);
+
         let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
         } else {
@@ -438,7 +476,7 @@ impl Stage1 {
             perf_timer,
             three_buttons,
             rgb: Some(rgb),
-            old_firmware_version, 
+            old_firmware_version,
         };
         Stage2 {
             nfc_use: self.nfc_use,
@@ -479,7 +517,7 @@ impl Stage2 {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
-        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        let nfc_irq = self.nfc_use.nfc_irq.take().unwrap();
         pint.enable_interrupt(
             &mut mux,
             &nfc_irq,
@@ -507,7 +545,7 @@ impl Stage2 {
     /// NFC chip for use it just writes the EEPROM and configures it
     /// Then disables it again.
     fn configure_fm11nt08c(&mut self, i2c: I2C) -> (I2C, Timer<ctimer::Ctimer2<Enabled>>) {
-        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        let nfc_irq = self.nfc_use.nfc_irq.take().unwrap();
         let mut nfc = nfc::try_setup_new(
             i2c,
             &mut self.clocks.gpio,
@@ -518,7 +556,7 @@ impl Stage2 {
         nfc.init(true).unwrap();
 
         let (i2c, _csn, irq, timer) = nfc.close();
-        self.clocks.nfc_irq = Some(irq);
+        self.nfc_use.nfc_irq = Some(irq);
         (i2c, timer)
     }
 
@@ -532,7 +570,7 @@ impl Stage2 {
         // TODO save these so they can be released later
         let mut mux = inputmux.enabled(&mut self.peripherals.syscon);
         let mut pint = pint.enabled(&mut self.peripherals.syscon);
-        let nfc_irq = self.clocks.nfc_irq.take().unwrap();
+        let nfc_irq = self.nfc_use.nfc_irq.take().unwrap();
         pint.enable_interrupt(
             &mut mux,
             &nfc_irq,
@@ -560,11 +598,11 @@ impl Stage2 {
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>, is_nfc_passive: bool) -> I2C {
         // SE050 check
         if !is_nfc_passive {
-            let _enabled = pins::Pio1_26::take()
+            let _enabled =pins::Pio1_26::take()
                 .unwrap()
                 .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
                 .into_output_high();
-        }
+       }
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
@@ -770,8 +808,7 @@ impl Stage2 {
 
         let se050_i2c = self.get_se050_i2c(flexcomm5, self.nfc_use.is_passive);
 
-        let use_nfc =
-            nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
+        let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
         let (se050_i2c, nfc, spi) = if use_nfc {
             let nfc = if self.nfc_use.using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
@@ -783,12 +820,12 @@ impl Stage2 {
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
-            let se050_i2c = self.configure_fm11nt08c(se050_i2c);
+            let se050_i2c =self.configure_fm11nt08c(se050_i2c);
             (Some(se050_i2c), None, Some(spi))
         };
 
         Stage3 {
-            nfc_use: self.nfc_use,
+           nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -914,21 +951,6 @@ impl Stage4 {
 
         #[cfg(feature = "no-encrypted-storage")]
         let internal = InternalFlashStorage::new(self.flash.flash_gordon);
-
-        // temporarily increase clock for the storage mounting or else it takes a long time.
-        if self.nfc_use.is_passive {
-            self.clocks.clocks = unsafe {
-                hal::ClockRequirements::default()
-                    .system_frequency(48.MHz())
-                    .reconfigure(
-                        self.clocks.clocks,
-                        &mut self.peripherals.pmc,
-                        &mut self.peripherals.syscon,
-                    )
-            };
-        }
-
-        // info_now!(
         //     "mount start {} ms",
         //     self.basic.perf_timer.elapsed().0 / 1000
         // );
@@ -948,7 +970,7 @@ impl Stage4 {
         if self.nfc_use.is_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(48.MHz())
+                    .system_frequency(4.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
