@@ -61,6 +61,9 @@ nk3-provisioner = ["nk3", "provisioner-app"]
 nkpk = ["fido-authenticator", "factory-reset"]
 nkpk-provisioner = ["nkpk", "provisioner-app"]
 
+# nkso3
+nkso3 = ["fido-authenticator", "factory-reset"]
+
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth", "trussed/chacha8-poly1305", "trussed/hmac-sha1", "trussed/hmac-sha256", "trussed/sha256"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid", "trussed/aes256-cbc", "trussed/aes256-gcm", "trussed/certificate-client", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/hmac-sha256", "trussed/p256", "trussed/sha256"]

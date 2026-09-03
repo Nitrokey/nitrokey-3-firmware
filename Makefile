@@ -16,7 +16,7 @@ check-components:
 	cargo check --manifest-path components/provisioner-app/Cargo.toml
 
 	cargo check --manifest-path components/apps/Cargo.toml
-	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner ; do \
+	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner nkso3 ; do \
 	echo "apps: $$feature" ; \
 	cargo check --manifest-path components/apps/Cargo.toml --features $$feature ; \
 	done
