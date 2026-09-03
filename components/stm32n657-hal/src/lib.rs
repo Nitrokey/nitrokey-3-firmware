@@ -11,6 +11,7 @@ pub mod gpio;
 #[cfg(feature = "otg")]
 pub mod otg;
 pub mod rcc;
+pub mod rng;
 pub mod timer;
 
 pub type Rate = fugit::HertzU32;

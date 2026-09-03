@@ -3311,6 +3311,7 @@ dependencies = [
  "embedded-hal",
  "fugit",
  "nb 0.1.3",
+ "rand_core",
  "stm32n6",
  "synopsys-usb-otg",
 ]
