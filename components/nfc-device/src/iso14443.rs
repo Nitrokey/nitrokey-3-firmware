@@ -6,6 +6,8 @@ use heapless::Vec;
 
 use crate::traits::nfc;
 
+const WTX_CYCLE_MS: u32 = 32;
+
 pub enum SourceError {
     NoActivity,
 }
@@ -61,7 +63,9 @@ impl Block {
             None
         };
 
+        // 0b11000010
         if (header & 0xc2) == 0x02 {
+            // Case where bits 8 and 7 are 00, I Block.
             // NAD included
             let nad = if (header & 0x4) != 0 {
                 offset += 1;
@@ -75,6 +79,7 @@ impl Block {
             };
             Block::IBlock(block_num, nad, cid, flag, offset)
         } else if (header & 0xe2) == 0xa2 {
+            // Case of the bits 8 and 8 are 1, 7 is 0, and 2 is 1 => RBlock.
             // Ack or Nack
             Block::RBlock(block_num, cid, !flag, offset)
         } else {
@@ -402,7 +407,7 @@ where
         } else {
             let did_recv_apdu = self.check_for_apdu();
             if did_recv_apdu.is_ok() {
-                Iso14443Status::ReceivedData(Milliseconds(30))
+                Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS))
             } else {
                 Iso14443Status::Idle
             }
@@ -412,18 +417,18 @@ where
     pub fn poll_wait_extensions(&mut self) -> Iso14443Status {
         if self.wtx_requested {
             info!("warning: still awaiting wtx response.");
-            return Iso14443Status::ReceivedData(Milliseconds(32));
+            return Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS));
         }
 
         match self.interchange.state() {
             interchange::State::Responded => {
                 info!("could-send-from-wtx!");
-                Iso14443Status::ReceivedData(Milliseconds(32))
+                self.poll()
             }
             interchange::State::Requested | interchange::State::BuildingResponse => {
                 self.send_wtx();
                 self.wtx_requested = true;
-                Iso14443Status::ReceivedData(Milliseconds(32))
+                Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS))
             }
             _ => {
                 info!("wtx done");
