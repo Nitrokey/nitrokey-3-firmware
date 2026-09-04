@@ -3,23 +3,31 @@
 //! Shared by the firmware and the USB/IP runner so that both present the same
 //! descriptors, ATR and message sizes.
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(trivial_casts, unused, unused_qualifications)]
 
 delog::generate_macros!();
 
+#[cfg(feature = "storage")]
+pub mod storage;
+
 use apdu_dispatch::interchanges::{Requester as CcidRequester, SIZE as CCID_SIZE};
 use ctaphid_dispatch::Requester as CtapRequester;
 use embedded_time::duration::Milliseconds;
+use heapless::Vec;
 use ref_swap::OptionRefSwap;
 use trussed_core::InterruptFlag;
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
+    class::UsbClass,
     device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
     LangID,
 };
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
+
+/// CCID, CTAPHID and one caller-supplied class.
+const MAX_CLASSES: usize = 3;
 
 /// Identification and descriptor settings for the USB device.
 pub struct Config<'a> {
@@ -51,15 +59,27 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
     /// [`UsbDevice::poll`] only polls classes on bus activity, so queued
     /// application responses have to be picked up first.
     pub fn poll(&mut self) {
+        self.poll_with(&mut []);
+    }
+
+    /// As [`UsbClasses::poll`], additionally polling caller-owned classes such
+    /// as mass storage.
+    pub fn poll_with(&mut self, extra: &mut [&mut dyn UsbClass<B>]) {
         self.ctaphid.check_for_app_response();
         if let Some(ccid) = &mut self.ccid {
             ccid.check_for_app_response();
         }
 
-        match &mut self.ccid {
-            Some(ccid) => self.usbd.poll(&mut [ccid, &mut self.ctaphid]),
-            None => self.usbd.poll(&mut [&mut self.ctaphid]),
-        };
+        let mut classes: Vec<&mut dyn UsbClass<B>, MAX_CLASSES> = Vec::new();
+        if let Some(ccid) = &mut self.ccid {
+            classes.push(ccid).ok();
+        }
+        classes.push(&mut self.ctaphid).ok();
+        for class in extra {
+            classes.push(&mut **class).ok();
+        }
+
+        self.usbd.poll(&mut classes);
     }
 }
 

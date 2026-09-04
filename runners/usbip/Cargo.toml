@@ -36,3 +36,6 @@ utils = { path = "../../components/utils", features = ["build"] }
 test = ["apps/nk3-test"]
 provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid"]
+
+# SCSI block device over USB/IP
+usb-storage = ["usb-classes/std"]
