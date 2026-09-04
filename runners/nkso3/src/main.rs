@@ -22,6 +22,7 @@ mod app {
         bsec::Bsec,
         gpio::{GpioC, GpioG},
         otg::{Otg1, UsbBus1},
+        pwr::Pwr,
         rcc::{ClockConfig, Rcc},
         timer::{MillisecondsCounter, Tim6, Tim7, Timer},
         Rate,
@@ -80,12 +81,14 @@ mod app {
         timer.start(Rate::Hz(100));
 
         let vidpid = UsbVidPid(0x20A0, 0x42B2);
-        let otg1 = Otg1::new(cx.device.OTG1_S, clock_config);
+        let pwr = Pwr::new(cx.device.PWR_S);
+        let otg1 = Otg1::new(cx.device.OTG1_S, &rcc, &pwr, clock_config);
         let usb_bus = UsbBus1::new(otg1, cx.local.ep_memory);
         let usb_bus = cx.local.usb_bus.insert(usb_bus);
         let usb_device = UsbDeviceBuilder::new(usb_bus, vidpid)
             .product("Nitrokey Storage 3")
             .manufacturer("Nitrokey")
+            .max_packet_size_0(64)
             .build();
 
         (

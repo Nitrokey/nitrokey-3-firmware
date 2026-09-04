@@ -39,7 +39,53 @@ impl Rcc {
     }
 
     pub fn reset(&self, peripheral: Peripheral) {
-        peripheral.reset(&self.0);
+        self.assert_reset(peripheral);
+        self.release_reset(peripheral);
+    }
+
+    pub fn assert_reset(&self, peripheral: Peripheral) {
+        peripheral.assert_reset(&self.0);
+    }
+
+    pub fn release_reset(&self, peripheral: Peripheral) {
+        peripheral.release_reset(&self.0);
+    }
+
+    /// Starts the HSE in digital bypass mode (external oscillator) and waits until it is ready.
+    pub fn enable_hse_bypass_digital(&self) {
+        self.0.cr().modify(|_, w| w.hseon().clear_bit());
+        self.0
+            .hsecfgr()
+            .modify(|_, w| w.hsebyp().set_bit().hseext().set_bit());
+        self.0.cr().modify(|_, w| w.hseon().set_bit());
+        while self.0.sr().read().hserdy().bit_is_clear() {}
+    }
+
+    /// Feeds the OTGPHY1 reference input with the HSE divided by two (see Section 14.7).
+    ///
+    /// Must be called while the OTGPHY1 clock is disabled.
+    pub fn select_otgphy1_hse_div2(&self) {
+        // The PAC names HSEDIV2SEL hsediv2byp.
+        self.0.hsecfgr().modify(|_, w| w.hsediv2byp().set_bit());
+        self.0.ccipr6().modify(|_, w| {
+            // SAFETY: 0b00 selects hse_div2_ck for the kernel clock mux.
+            unsafe { w.otgphy1sel().bits(0) }
+                .otgphy1ckrefsel()
+                .set_bit()
+        });
+    }
+
+    /// The OTG1 PHY controller is clocked through OTG1 and has no enable bit of its own.
+    pub fn assert_reset_otg1_phy_ctl(&self) {
+        self.0
+            .ahb5rstsr()
+            .write(|w| w.syscfgotghsphy1rsts().set_bit());
+    }
+
+    pub fn release_reset_otg1_phy_ctl(&self) {
+        self.0
+            .ahb5rstcr()
+            .write(|w| w.syscfgotghsphy1rstc().set_bit());
     }
 }
 
@@ -47,6 +93,7 @@ macro_rules! impl_peripheral {
     ($(($ensr:ident, $rstsr:ident, $rstcr:ident) => [
         $(($peripheral:ident, $ens:ident, $rsts:ident, $rstc:ident),)*
     ],)*) => {
+        #[derive(Clone, Copy)]
         pub enum Peripheral {
             $($($peripheral,)*)*
         }
@@ -60,11 +107,20 @@ macro_rules! impl_peripheral {
                 };
             }
 
-            fn reset(&self, rcc: &RCC) {
+            fn assert_reset(&self, rcc: &RCC) {
                 match self {
                     $($(
                         Self::$peripheral => {
                             rcc.$rstsr().write(|w| w.$rsts().set_bit());
+                        }
+                    )*)*
+                }
+            }
+
+            fn release_reset(&self, rcc: &RCC) {
+                match self {
+                    $($(
+                        Self::$peripheral => {
                             rcc.$rstcr().write(|w| w.$rstc().set_bit());
                         }
                     )*)*
@@ -84,6 +140,7 @@ impl_peripheral!(
     ],
     (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
         (Otg1, otg1ens, otg1rsts, otg1rstc),
+        (OtgPhy1, otgphy1ens, otgphy1rsts, otgphy1rstc),
     ],
     (apb1lensr, apb1lrstsr, apb1lrstcr) => [
         (Tim6, tim6ens, tim6rsts, tim6rstc),
