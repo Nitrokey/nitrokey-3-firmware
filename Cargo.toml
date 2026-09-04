@@ -21,6 +21,7 @@ trussed-core = "0.2"
 [patch.crates-io]
 # components
 memory-regions = { path = "components/memory-regions" }
+synopsys-usb-otg = { path = "components/synopsys-usb-otg" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
