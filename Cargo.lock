@@ -2332,6 +2332,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_enum"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3921,11 +3941,13 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
+ "heapless 0.9.1",
  "ref-swap",
  "trussed-core",
  "usb-device",
  "usbd-ccid",
  "usbd-ctaphid",
+ "usbd-storage",
 ]
 
 [[package]]
@@ -3969,6 +3991,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "usbd-storage"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9596ded13538d5407d0cef1c2879d6e5d9038d6ba601aa9e90a7d08a21ba5215"
+dependencies = [
+ "num_enum",
+ "usb-device",
+]
+
+[[package]]
 name = "usbip-device"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3983,6 +4015,7 @@ dependencies = [
 name = "usbip-runner"
 version = "1.9.1"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "apps",
  "cfg-if",
@@ -4004,6 +4037,7 @@ dependencies = [
  "trussed-usbip",
  "usb-classes",
  "utils",
+ "xts-mode",
 ]
 
 [[package]]
@@ -4449,6 +4483,16 @@ name = "writeable"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
+
+[[package]]
+name = "xts-mode"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cbddb7545ca0b9ffa7bdc653e8743303e1712687a6918ced25f2cdbed42520"
+dependencies = [
+ "byteorder",
+ "cipher",
+]
 
 [[package]]
 name = "yoke"

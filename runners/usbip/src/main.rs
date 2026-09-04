@@ -1,3 +1,5 @@
+#[cfg(feature = "usb-storage")]
+mod block_device;
 mod store;
 mod ui;
 mod usb;
@@ -45,6 +47,11 @@ struct Args {
     /// External file system (default: use RAM).
     #[clap(short, long)]
     efs: Option<PathBuf>,
+
+    /// Backing file for the block device (default: use RAM).
+    #[cfg(feature = "usb-storage")]
+    #[clap(short, long)]
+    block_device: Option<PathBuf>,
 
     /// User presence check mechanism.
     ///
@@ -122,9 +129,22 @@ fn main() {
         return;
     }
 
+    let usb = usb::NkSetup {
+        manufacturer: MANUFACTURER,
+        product: PRODUCT,
+        vid: VID,
+        pid: PID,
+        device_release: VERSION.usb_release(),
+        ccid: args.ccid,
+        #[cfg(feature = "usb-storage")]
+        block_device: args.block_device,
+        #[cfg(feature = "usb-storage")]
+        block_device_key: Some(*b"12_123456789_123456789_123456789"),
+    };
+
     let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store, args.serial, user_presence, args.ccid)
+    exec(store, usb, args.serial, user_presence)
 }
 
 fn print_version() {
@@ -144,7 +164,7 @@ fn print_version() {
     println!();
 }
 
-fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence, ccid: bool) {
+fn exec(store: Store, usb: usb::NkSetup, serial: Option<u128>, user_presence: UserPresence) {
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {
@@ -186,16 +206,7 @@ fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence, ccid: b
     };
     let runner = Runner::new(serial);
 
-    let usb_setup = usb::NkSetup {
-        manufacturer: MANUFACTURER,
-        product: PRODUCT,
-        vid: VID,
-        pid: PID,
-        device_release: VERSION.usb_release(),
-        ccid,
-    };
-
-    trussed_usbip::Builder::with_usb_classes(usb_setup)
+    trussed_usbip::Builder::with_usb_classes(usb)
         .dispatch(Dispatch::with_hw_key(
             Location::Internal,
             Bytes::from(b"Unique hw key"),

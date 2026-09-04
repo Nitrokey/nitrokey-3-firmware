@@ -79,7 +79,17 @@ Note that some log message use the `!` target so you might not be able to filter
 
 For more information on these options, execute `cargo run -- --help`.
 
+### Mass Storage
+
+The `usb-storage` feature adds a SCSI block device (8 MiB, 512-byte blocks) to the simulated device:
+
+```
+$ cargo run --features usb-storage
+```
+
 ## Limitations
+
+(@TODO: to be verified - this is working now)
 
 The Nitrokey 3 implements two transport protocols over USB: CTAPHID and CCID.
 There is an unresolved issue that triggers a kernel bug if the CCID transport is used with the USB/IP runner ([#261][]).

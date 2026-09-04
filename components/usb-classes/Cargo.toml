@@ -8,17 +8,25 @@ apdu-dispatch.workspace = true
 ctaphid-dispatch.workspace = true
 delog.workspace = true
 embedded-time.workspace = true
+heapless.workspace = true
 ref-swap = "0.1.0"
 trussed-core.workspace = true
 usb-device.workspace = true
 usbd-ccid.workspace = true
 usbd-ctaphid.workspace = true
 
+# storage
+usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
+
 [features]
 default = []
 
 # 512-byte CCID bulk endpoints, as required when enumerating at high speed.
 highspeed-usb = ["usbd-ccid/highspeed-usb"]
+
+# SCSI mass storage over Bulk Only Transport. The block device backing it is
+# provided by the runner.
+storage = ["dep:usbd-storage"]
 
 log-all = []
 log-none = []

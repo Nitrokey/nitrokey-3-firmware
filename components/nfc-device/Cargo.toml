@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 delog.workspace = true
 embedded-time.workspace = true
-heapless = "0.9"
+heapless.workspace = true
 nb = "1"
 
 apdu-dispatch.workspace = true
