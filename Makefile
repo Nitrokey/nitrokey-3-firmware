@@ -24,7 +24,7 @@ check-components:
 	cargo check --manifest-path components/apps/Cargo.toml --all-features
 
 	cargo check --manifest-path components/boards/Cargo.toml
-	for feature in board-nk3am board-nk3xn board-nkpk ; do \
+	for feature in board-nk3am board-nk3xn board-nkpk board-nkso3 ; do \
 	echo "boards: $$feature" ; \
 	cargo check --manifest-path components/boards/Cargo.toml --features $$feature ; \
 	done
