@@ -44,6 +44,10 @@ nrf-usbd = { version = "0.3", optional = true }
 nrf52840-hal = { version = "0.15.1", optional = true }
 nrf52840-pac = { version = "0.11", optional = true }
 
+# soc-stm32n6
+stm32n6 = { version = "0.16", features = ["stm32n657"], optional = true }
+stm32n657-hal = { path = "../stm32n657-hal", optional = true }
+
 # board-nk3am
 lfs-backup = { path = "../lfs-backup", optional = true }
 
@@ -69,6 +73,7 @@ board-nkpk = ["board-nk3am", "utils/storage"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf-usbd", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
+soc-stm32n6 = ["stm32n6", "stm32n657-hal", "systick-monotonic"]
 
 log-all = ["usb-classes/log-all"]
 log-trace = ["usb-classes/log-trace"]

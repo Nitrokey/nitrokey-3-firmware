@@ -403,6 +403,8 @@ dependencies = [
  "rtt-target",
  "se05x",
  "spi-memory",
+ "stm32n6",
+ "stm32n657-hal",
  "systick-monotonic",
  "trussed",
  "trussed-core",
