@@ -10,6 +10,7 @@ pub mod bsec;
 pub mod gpio;
 #[cfg(feature = "otg")]
 pub mod otg;
+pub mod pac;
 pub mod pwr;
 pub mod rcc;
 pub mod rng;
