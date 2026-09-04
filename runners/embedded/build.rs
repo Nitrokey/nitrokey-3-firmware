@@ -7,26 +7,36 @@ use utils::Soc;
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3XN;
 #[cfg(feature = "board-nk3am")]
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;
+#[cfg(feature = "board-nkso3")]
+const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NKSO3;
 
 fn check_build_triplet() -> Soc {
     let target = env::var("TARGET").expect("$TARGET unset");
     let soc_is_lpc55 = env::var_os("CARGO_FEATURE_SOC_LPC55").is_some();
     let soc_is_nrf52840 = env::var_os("CARGO_FEATURE_SOC_NRF52").is_some();
+    let soc_is_stm32n6 = env::var_os("CARGO_FEATURE_SOC_STM32N6").is_some();
 
-    if soc_is_lpc55 && !soc_is_nrf52840 {
+    if soc_is_lpc55 && !soc_is_nrf52840 && !soc_is_stm32n6 {
         if target != "thumbv8m.main-none-eabi" {
             panic!(
                 "Wrong build triplet for LPC55, expecting thumbv8m.main-none-eabi, got {target}"
             );
         }
         Soc::Lpc55
-    } else if soc_is_nrf52840 && !soc_is_lpc55 {
+    } else if soc_is_nrf52840 && !soc_is_lpc55 && !soc_is_stm32n6 {
         if target != "thumbv7em-none-eabihf" {
             panic!(
                 "Wrong build triplet for NRF52840, expecting thumbv7em-none-eabihf, got {target}",
             );
         }
         Soc::Nrf52
+    } else if soc_is_stm32n6 && !soc_is_lpc55 && !soc_is_nrf52840 {
+        if target != "thumbv8m.main-none-eabi" {
+            panic!(
+                "Wrong build triplet for STM32N6, expecting thumbv8m.main-none-eabi, got {target}"
+            );
+        }
+        Soc::Stm32n6
     } else {
         panic!("Multiple or no SOC features set.");
     }

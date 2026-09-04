@@ -10,7 +10,7 @@ license = "MIT"
 
 [dependencies]
 ### base dependencies
-apps = { path = "../../components/apps", features = ["nk3"] }
+apps = { path = "../../components/apps" }
 boards = { path = "../../components/boards", features = ["trussed-auth"] }
 delog = "0.1"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
@@ -42,6 +42,11 @@ lpc55-hal = { version = "0.7", optional = true }
 lpc55-pac = { version = "0.5", optional = true }
 nb = { version = "1", optional = true }
 systick-monotonic = { version = "1.0.0", optional = true }
+
+### STM32N6 specific dependencies
+embedded-time = { version = "0.12", optional = true }
+stm32n6 = { version = "0.16", features = ["stm32n657"], optional = true }
+stm32n657-hal = { path = "../../components/stm32n657-hal", optional = true }
 
 ### Allocator
 embedded-alloc = { version = "0.6.0", optional = true }
@@ -81,11 +86,14 @@ format-filesystem = ["boards/format-filesystem"]
 
 alloc = ["embedded-alloc"]
 
-board-nk3am = ["boards/board-nk3am", "soc-nrf52", "se050"]
-board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050"]
+board-nk3am = ["boards/board-nk3am", "soc-nrf52", "se050", "apps/nk3"]
+board-nk3xn = ["boards/board-nk3xn", "soc-lpc55", "se050", "apps/nk3"]
+board-nkso3 = ["boards/board-nkso3", "soc-stm32n6", "apps/nkso3"]
 
 soc-nrf52 = ["nrf52840-hal", "nrf52840-pac"]
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "nb", "systick-monotonic"]
+# The firmware is started from the debugger, so Reset must load SP and VTOR itself.
+soc-stm32n6 = ["embedded-time", "stm32n6", "stm32n657-hal", "systick-monotonic", "cortex-m-rt/set-sp", "cortex-m-rt/set-vtor"]
 
 se050 = ["apps/se050", "boards/se050", "dep:se05x"]
 
@@ -116,3 +124,8 @@ required-features = ["soc-nrf52"]
 name = "lpc55_runner"
 path = "src/bin/app-lpc.rs"
 required-features = ["soc-lpc55"]
+
+[[bin]]
+name = "stm32n6_runner"
+path = "src/bin/app-stm32n6.rs"
+required-features = ["soc-stm32n6"]

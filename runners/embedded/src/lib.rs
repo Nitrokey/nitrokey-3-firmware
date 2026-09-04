@@ -16,7 +16,7 @@ delog::generate_macros!();
 #[cfg(feature = "board-nk3xn")]
 pub mod nk3xn;
 
-#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52")))]
+#[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52", feature = "soc-stm32n6")))]
 compile_error!("No SoC chosen!");
 
 pub const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
@@ -40,7 +40,11 @@ pub fn init_usb_nfc<B: Board>(
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfc<B> {
-    const USB_PRODUCT: &str = "Nitrokey 3";
+    const USB_PRODUCT: &str = if cfg!(feature = "board-nkso3") {
+        "Nitrokey Storage 3"
+    } else {
+        "Nitrokey 3"
+    };
     const USB_PRODUCT_ID: u16 = 0x42B2;
     boards::init::init_usb_nfc(
         resources,

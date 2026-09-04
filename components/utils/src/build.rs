@@ -122,6 +122,7 @@ fn is_release() -> bool {
 pub enum Soc {
     Lpc55,
     Nrf52,
+    Stm32n6,
 }
 
 pub fn setup_linker_script(soc: Soc, regions: &MemoryRegions) {
@@ -130,6 +131,7 @@ pub fn setup_linker_script(soc: Soc, regions: &MemoryRegions) {
     let soc = match soc {
         Soc::Lpc55 => "lpc55",
         Soc::Nrf52 => "nrf52",
+        Soc::Stm32n6 => "stm32n6",
     };
 
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
