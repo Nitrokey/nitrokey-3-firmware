@@ -65,7 +65,10 @@ use nfc_device::Iso14443;
 use trussed_core::types::Location;
 use utils::OptionalStorage;
 #[cfg(feature = "se050")]
-use {boards::nk3xn::TimerDelay, se05x::embedded_hal::Hal027};
+use {
+    boards::nk3xn::{Se050I2c, TimerDelay},
+    se05x::embedded_hal::Hal027,
+};
 
 use crate::{VERSION, VERSION_STRING};
 
@@ -750,7 +753,7 @@ impl Stage5 {
             None,
             #[cfg(feature = "se050")]
             self.se050_i2c
-                .map(|i2c| (Hal027(i2c), Hal027(TimerDelay(self.se050_timer)))),
+                .map(|i2c| (Hal027(Se050I2c(i2c)), Hal027(TimerDelay(self.se050_timer)))),
         );
 
         #[cfg(not(feature = "se050"))]

@@ -67,7 +67,7 @@ board-nk3am = ["soc-nrf52", "lfs-backup", "se05x/embedded-hal-v0.2.7"]
 board-nk3xn = ["soc-lpc55", "fm11nc08", "utils/storage", "se05x/embedded-hal-v0.2.7"]
 board-nkpk = ["board-nk3am", "utils/storage"]
 
-soc-lpc55 = ["lpc55-hal", "lpc55-pac", "se05x?/lpc55-v0.6", "systick-monotonic"]
+soc-lpc55 = ["lpc55-hal", "lpc55-pac", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf-usbd", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]
 
 log-all = ["usb-classes/log-all"]
