@@ -388,6 +388,7 @@ dependencies = [
  "memory-regions",
  "nb 1.1.0",
  "nfc-device",
+ "nrf-usbd 0.3.0",
  "nrf52840-hal",
  "nrf52840-pac",
  "rand",
@@ -400,7 +401,8 @@ dependencies = [
  "trussed",
  "trussed-core",
  "trussed-manage",
- "usb-device",
+ "usb-classes",
+ "usb-device 0.3.2",
  "usbd-ccid",
  "usbd-ctaphid",
  "utils",
@@ -1165,7 +1167,7 @@ dependencies = [
  "systick-monotonic",
  "trussed",
  "trussed-core",
- "usb-device",
+ "usb-device 0.3.2",
  "utils",
 ]
 
@@ -1599,6 +1601,16 @@ dependencies = [
  "rustc_version 0.4.1",
  "serde",
  "spin",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "heapless"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
+dependencies = [
+ "hash32 0.3.1",
  "stable_deref_trait",
 ]
 
@@ -2045,9 +2057,9 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5eeac224f2ed643cdd682ad20ed018af5c08963a5667906d658eb18f3b8c44"
+checksum = "8e651ffb6312614667ee2f95557d4420a1daaf33f5a57d4c38ce1a4a090b120b"
 dependencies = [
  "block-buffer",
  "cipher",
@@ -2060,7 +2072,7 @@ dependencies = [
  "lpc55-pac",
  "nb 1.1.0",
  "rand_core",
- "usb-device",
+ "usb-device 0.3.2",
  "vcell",
  "void",
 ]
@@ -2182,7 +2194,7 @@ dependencies = [
  "embedded-storage",
  "fixed",
  "nb 1.1.0",
- "nrf-usbd",
+ "nrf-usbd 0.1.0",
  "nrf52840-pac",
  "rand_core",
  "void",
@@ -2195,7 +2207,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "945a178131ac5f69941dadb0d51c8e17cbe34cc09a0e2d51c099160a463751b8"
 dependencies = [
  "cortex-m",
- "usb-device",
+ "usb-device 0.2.9",
+ "vcell",
+]
+
+[[package]]
+name = "nrf-usbd"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aedf862f941154442271ae9914777bd1c93f6d2e0dc9db4cafa160e55ffb9085"
+dependencies = [
+ "cortex-m",
+ "critical-section",
+ "usb-device 0.3.2",
  "vcell",
 ]
 
@@ -2307,6 +2331,26 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
  "libm",
+]
+
+[[package]]
+name = "num_enum"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -2511,6 +2555,12 @@ dependencies = [
  "opaque-debug",
  "universal-hash",
 ]
+
+[[package]]
+name = "portable-atomic"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05c8b63e8d9609db387f0324918f81d68fe27748f084ef092fb35954d0539a85"
 
 [[package]]
 name = "postcard"
@@ -2878,7 +2928,6 @@ dependencies = [
  "heapless 0.9.1",
  "hex-literal 0.4.1",
  "iso7816",
- "lpc55-hal",
  "nrf-hal-common",
  "rand",
  "serde",
@@ -3769,8 +3818,7 @@ dependencies = [
 [[package]]
 name = "trussed-usbip"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f097fde89905249b0530e502b90e3b83392eb6c909bb5b4a60b9718d1bda536a"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner?rev=6e85bc6157ec482368c7fcc266b8ba5fb56ffaea#6e85bc6157ec482368c7fcc266b8ba5fb56ffaea"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3780,7 +3828,7 @@ dependencies = [
  "rand_chacha",
  "rand_core",
  "trussed",
- "usb-device",
+ "usb-device 0.3.2",
  "usbd-ccid",
  "usbd-ctaphid",
  "usbip-device",
@@ -3887,29 +3935,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "usb-classes"
+version = "1.9.0-rc.1"
+dependencies = [
+ "apdu-dispatch",
+ "ctaphid-dispatch",
+ "delog",
+ "embedded-time",
+ "heapless 0.9.1",
+ "ref-swap",
+ "trussed-core",
+ "usb-device 0.3.2",
+ "usbd-ccid",
+ "usbd-ctaphid",
+ "usbd-storage",
+]
+
+[[package]]
 name = "usb-device"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
-name = "usbd-ccid"
-version = "0.4.0"
+name = "usb-device"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8acbc8d41fe1b6dc92347f5988a44252fc9e2511f7cb312fa23e9eee186bfdd3"
+checksum = "98816b1accafbb09085168b90f27e93d790b4bfa19d883466b5e53315b5f06a6"
+dependencies = [
+ "heapless 0.8.0",
+ "portable-atomic",
+]
+
+[[package]]
+name = "usbd-ccid"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58fb96f99caab23718dbb9ef7aaea53e5f890fafe0e4af802c78e7b91fc95c46"
 dependencies = [
  "delog",
  "embedded-time",
  "heapless 0.9.1",
  "interchange",
- "usb-device",
+ "usb-device 0.3.2",
 ]
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c527a4840bcb38299924c7a6b0c31f95a89172bdfb4577c515315ce9b097f15a"
+checksum = "35793a1b9c6ae908defdef01fab01a4192e5415ca0609b56c778e5751cf64adb"
 dependencies = [
  "ctaphid-dispatch",
  "delog",
@@ -3919,24 +3994,35 @@ dependencies = [
  "ref-swap",
  "serde",
  "trussed-core",
- "usb-device",
+ "usb-device 0.3.2",
+]
+
+[[package]]
+name = "usbd-storage"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9596ded13538d5407d0cef1c2879d6e5d9038d6ba601aa9e90a7d08a21ba5215"
+dependencies = [
+ "num_enum",
+ "usb-device 0.3.2",
 ]
 
 [[package]]
 name = "usbip-device"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
+version = "0.2.0"
+source = "git+https://github.com/daringer/usbip-device?rev=2daeb4282dcafa6c2b82e83949d8566dacc16e19#2daeb4282dcafa6c2b82e83949d8566dacc16e19"
 dependencies = [
  "bitflags 1.3.2",
  "log",
- "usb-device",
+ "usb-device 0.3.2",
 ]
 
 [[package]]
 name = "usbip-runner"
 version = "1.9.0-rc.1"
 dependencies = [
+ "aes",
+ "apdu-dispatch",
  "apps",
  "cfg-if",
  "clap",
@@ -3944,16 +4030,20 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "dialoguer",
+ "interchange",
  "littlefs2",
  "littlefs2-core",
  "log",
  "pretty_env_logger",
  "rand_core",
+ "ref-swap",
  "signal-hook",
  "trussed",
  "trussed-core",
  "trussed-usbip",
+ "usb-classes",
  "utils",
+ "xts-mode",
 ]
 
 [[package]]
@@ -4399,6 +4489,16 @@ name = "writeable"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
+
+[[package]]
+name = "xts-mode"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cbddb7545ca0b9ffa7bdc653e8743303e1712687a6918ced25f2cdbed42520"
+dependencies = [
+ "byteorder",
+ "cipher",
+]
 
 [[package]]
 name = "yoke"

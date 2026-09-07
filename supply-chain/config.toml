@@ -37,6 +37,22 @@ notes = "pinned to a reviewed revision"
 audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
 
+[policy.piv-authenticator]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
+[policy.secrets-app]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
+[policy.trussed-usbip]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
+[policy.usbip-device]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
 [policy.usbip-runner]
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
@@ -345,10 +361,6 @@ criteria = "safe-to-run"
 version = "0.5.1"
 criteria = "safe-to-run"
 
-[[exemptions.glob]]
-version = "0.3.3"
-criteria = "safe-to-run"
-
 [[exemptions.group]]
 version = "0.13.0"
 criteria = "safe-to-run"
@@ -375,6 +387,10 @@ criteria = "safe-to-run"
 
 [[exemptions.hashbrown]]
 version = "0.14.5"
+criteria = "safe-to-run"
+
+[[exemptions.heapless]]
+version = "0.8.0"
 criteria = "safe-to-run"
 
 [[exemptions.heapless]]
@@ -461,6 +477,10 @@ criteria = "safe-to-run"
 version = "0.1.0"
 criteria = "safe-to-run"
 
+[[exemptions.nrf-usbd]]
+version = "0.3.0"
+criteria = "safe-to-run"
+
 [[exemptions.nrf52840-hal]]
 version = "0.15.1"
 criteria = "safe-to-run"
@@ -483,6 +503,14 @@ criteria = "safe-to-run"
 
 [[exemptions.num-rational]]
 version = "0.3.2"
+criteria = "safe-to-run"
+
+[[exemptions.num_enum]]
+version = "0.6.1"
+criteria = "safe-to-run"
+
+[[exemptions.num_enum_derive]]
+version = "0.6.1"
 criteria = "safe-to-run"
 
 [[exemptions.once_cell]]
@@ -531,6 +559,10 @@ criteria = "safe-to-run"
 
 [[exemptions.polyval]]
 version = "0.6.2"
+criteria = "safe-to-run"
+
+[[exemptions.portable-atomic]]
+version = "1.15.0"
 criteria = "safe-to-run"
 
 [[exemptions.postcard]]
@@ -789,16 +821,16 @@ criteria = "safe-to-run"
 version = "0.2.9"
 criteria = "safe-to-run"
 
-[[exemptions.usbip-device]]
-version = "0.1.5"
+[[exemptions.usb-device]]
+version = "0.3.2"
+criteria = "safe-to-run"
+
+[[exemptions.usbd-storage]]
+version = "3.0.0"
 criteria = "safe-to-run"
 
 [[exemptions.valuable]]
 version = "0.1.1"
-criteria = "safe-to-run"
-
-[[exemptions.version_check]]
-version = "0.9.5"
 criteria = "safe-to-run"
 
 [[exemptions.volatile-register]]
@@ -975,4 +1007,8 @@ criteria = "safe-to-run"
 
 [[exemptions.winnow]]
 version = "0.7.13"
+criteria = "safe-to-run"
+
+[[exemptions.xts-mode]]
+version = "0.5.1"
 criteria = "safe-to-run"

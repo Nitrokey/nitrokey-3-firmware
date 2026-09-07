@@ -4,8 +4,10 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
+apdu-dispatch = "0.4"
 apps = { path = "../../components/apps", features = ["log-all", "nk3", "trussed-usbip"] }
 cfg-if = { version = "1.0.0" }
+interchange = "0.3"
 clap = { version = "4.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
 ctaphid-dispatch = "0.4"
@@ -16,11 +18,20 @@ littlefs2-core = "0.1"
 log = { version = "0.4.14", default-features = false }
 pretty_env_logger = "0.5.0"
 rand_core = { version = "0.6.4", features = ["getrandom"] }
+ref-swap = "0.1.0"
 signal-hook = { version = "0.3.17", default-features = false }
 trussed.workspace = true
 trussed-core.workspace = true
-trussed-usbip = { version = "0.1", default-features = false, features = ["ctaphid"] }
+# `ccid` is needed for the keepalive helper; the CCID interface itself is
+# selected by this crate's `ccid` feature.
+trussed-usbip = { version = "0.1", default-features = false, features = ["ccid", "ctaphid"] }
+# usbip-device always enumerates as high speed.
+usb-classes = { path = "../../components/usb-classes", features = ["highspeed-usb"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
+
+# usb-storage
+aes = { version = "0.8", optional = true }
+xts-mode = { version = "0.5", optional = true }
 
 [build-dependencies]
 utils = { path = "../../components/utils", features = ["build"] }
@@ -28,4 +39,7 @@ utils = { path = "../../components/utils", features = ["build"] }
 [features]
 test = ["apps/nk3-test"]
 provisioner = ["apps/nk3-provisioner"]
-ccid = ["apps/trussed-usbip-ccid", "trussed-usbip/ccid"]
+ccid = ["apps/trussed-usbip-ccid"]
+
+# SCSI block device over USB/IP
+usb-storage = ["usb-classes/storage", "dep:aes", "dep:xts-mode"]

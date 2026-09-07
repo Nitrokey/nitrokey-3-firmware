@@ -1,7 +1,15 @@
 #[cfg(feature = "se050")]
-use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
+use embedded_hal::{
+    blocking::{
+        delay::DelayUs,
+        i2c::{Read, Write, WriteRead},
+    },
+    timer::CountDown,
+};
 #[cfg(feature = "se050")]
 use embedded_time::duration::Microseconds;
+#[cfg(feature = "se050")]
+use lpc55_hal::drivers::i2c::Error as I2cError;
 #[cfg(feature = "se050")]
 use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
@@ -17,7 +25,7 @@ use lpc55_hal::{
     I2cMaster, Pin,
 };
 #[cfg(feature = "se050")]
-use se05x::embedded_hal::Hal027;
+use se05x::{embedded_hal::Hal027, t1::I2CErrorNack};
 
 use memory_regions::MemoryRegions;
 use utils::OptionalStorage;
@@ -30,8 +38,10 @@ pub mod nfc;
 pub mod prince;
 pub mod spi;
 
+// lpc55-hal 0.6 replaced the `littlefs2_filesystem!` macro with this struct.
 #[cfg(feature = "no-encrypted-storage")]
-lpc55_hal::littlefs2_filesystem!(InternalFilesystem: (prince::FS_START, prince::BLOCK_COUNT));
+pub type InternalFilesystem =
+    lpc55_hal::drivers::flash::Storage<{ prince::FS_START }, { prince::BLOCK_COUNT }>;
 #[cfg(not(feature = "no-encrypted-storage"))]
 use prince::InternalFilesystem;
 
@@ -70,7 +80,7 @@ impl Board for NK3xN {
     #[cfg(feature = "se050")]
     type Se050Timer = Hal027<TimerDelay<Timer<ctimer::Ctimer2<lpc55_hal::Enabled>>>>;
     #[cfg(feature = "se050")]
-    type Twi = Hal027<I2C>;
+    type Twi = Hal027<Se050I2c>;
     #[cfg(not(feature = "se050"))]
     type Twi = ();
     #[cfg(not(feature = "se050"))]
@@ -94,5 +104,54 @@ where
     fn delay_us(&mut self, delay: u32) {
         self.0.start(Microseconds::new(delay));
         nb::block!(self.0.wait()).unwrap();
+    }
+}
+
+/// I2C for the SE050, wrapping the errors so that `I2CErrorNack` can be
+/// implemented for them; `se05x` only does that for selected lpc55-hal versions.
+#[cfg(feature = "se050")]
+pub struct Se050I2c(pub I2C);
+
+#[cfg(feature = "se050")]
+#[derive(Debug)]
+pub struct Se050I2cError(pub I2cError);
+
+#[cfg(feature = "se050")]
+impl I2CErrorNack for Se050I2cError {
+    fn is_address_nack(&self) -> bool {
+        matches!(self.0, I2cError::NackAddress)
+    }
+
+    fn is_data_nack(&self) -> bool {
+        matches!(self.0, I2cError::NackData)
+    }
+}
+
+#[cfg(feature = "se050")]
+impl Write for Se050I2c {
+    type Error = Se050I2cError;
+
+    fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.0.write(addr, bytes).map_err(Se050I2cError)
+    }
+}
+
+#[cfg(feature = "se050")]
+impl Read for Se050I2c {
+    type Error = Se050I2cError;
+
+    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        self.0.read(addr, buffer).map_err(Se050I2cError)
+    }
+}
+
+#[cfg(feature = "se050")]
+impl WriteRead for Se050I2c {
+    type Error = Se050I2cError;
+
+    fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Self::Error> {
+        self.0
+            .write_read(addr, bytes, buffer)
+            .map_err(Se050I2cError)
     }
 }
