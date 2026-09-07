@@ -28,10 +28,11 @@ mod app {
         Rate,
     };
     use systick_monotonic::Systick;
-    use trussed::platform::consent;
+    use trussed_core::types::consent;
     use usb_device::{
         bus::UsbBusAllocator,
-        device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
+        descriptor::lang_id::LangID,
+        device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
     };
 
     use crate::nucleo::{Button, Led};
@@ -85,10 +86,14 @@ mod app {
         let otg1 = Otg1::new(cx.device.OTG1_S, &rcc, &pwr, clock_config);
         let usb_bus = UsbBus1::new(otg1, cx.local.ep_memory);
         let usb_bus = cx.local.usb_bus.insert(usb_bus);
-        let usb_device = UsbDeviceBuilder::new(usb_bus, vidpid)
+        let strings = StringDescriptors::new(LangID::EN)
             .product("Nitrokey Storage 3")
-            .manufacturer("Nitrokey")
+            .manufacturer("Nitrokey");
+        let usb_device = UsbDeviceBuilder::new(usb_bus, vidpid)
+            .strings(&[strings])
+            .expect("failed to set USB string descriptors")
             .max_packet_size_0(64)
+            .expect("invalid max packet size for EP0")
             .build();
 
         (
