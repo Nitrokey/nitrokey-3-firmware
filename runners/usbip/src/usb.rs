@@ -31,7 +31,7 @@ const BLOCKS: u32 = 16384;
 #[cfg(feature = "usb-storage")]
 struct Storage {
     scsi: usb_classes::storage::StorageClass<'static, UsbIpBus, Vec<u8>>,
-    device: usb_classes::storage::host::HostBlockDevice,
+    device: crate::block_device::HostBlockDevice,
     state: usb_classes::storage::State,
 }
 
@@ -92,7 +92,7 @@ impl Setup<Dispatch> for NkSetup {
         let storage = Storage {
             // usbip-device enumerates as high speed, so bulk endpoints are 512.
             scsi: usb_classes::storage::setup(allocator, 512, vec![0; 512]),
-            device: usb_classes::storage::host::HostBlockDevice::open(
+            device: crate::block_device::HostBlockDevice::open(
                 self.block_device.as_deref(),
                 BLOCKS,
                 self.block_device_key,

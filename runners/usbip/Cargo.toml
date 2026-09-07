@@ -29,6 +29,10 @@ trussed-usbip = { version = "0.1", default-features = false, features = ["ccid",
 usb-classes = { path = "../../components/usb-classes", features = ["highspeed-usb"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
 
+# usb-storage
+aes = { version = "0.8", optional = true }
+xts-mode = { version = "0.5", optional = true }
+
 [build-dependencies]
 utils = { path = "../../components/utils", features = ["build"] }
 
@@ -38,4 +42,4 @@ provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid"]
 
 # SCSI block device over USB/IP
-usb-storage = ["usb-classes/std"]
+usb-storage = ["usb-classes/storage", "dep:aes", "dep:xts-mode"]

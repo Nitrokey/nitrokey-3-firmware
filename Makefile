@@ -82,3 +82,4 @@ software-tests:
 	cd components/boards && cargo test
 	cd components/usb-classes && cargo test --all-features
 	cd components/utils && cargo test
+	cd runners/usbip && cargo test --features usb-storage

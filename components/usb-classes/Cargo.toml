@@ -17,9 +17,6 @@ usbd-ctaphid = "0.5"
 
 # storage
 usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
-aes = { version = "0.8", optional = true }
-log = { version = "0.4", optional = true }
-xts-mode = { version = "0.5", optional = true }
 
 [features]
 default = []
@@ -27,10 +24,9 @@ default = []
 # 512-byte CCID bulk endpoints, as required when enumerating at high speed.
 highspeed-usb = ["usbd-ccid/highspeed-usb"]
 
-# SCSI mass storage over Bulk Only Transport.
+# SCSI mass storage over Bulk Only Transport. The block device backing it is
+# provided by the runner.
 storage = ["dep:usbd-storage"]
-# File-backed and encrypted block devices for host runners.
-std = ["storage", "dep:aes", "dep:log", "dep:xts-mode"]
 
 log-all = []
 log-none = []

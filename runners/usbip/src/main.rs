@@ -1,3 +1,5 @@
+#[cfg(feature = "usb-storage")]
+mod block_device;
 mod store;
 mod ui;
 mod usb;
@@ -157,8 +159,6 @@ fn main() {
         device_release: VERSION.usb_release(),
         #[cfg(feature = "usb-storage")]
         block_device: args.block_device,
-        // Fixed development key: this runner is a virtual device for testing, so
-        // the image is not expected to protect anything.
         #[cfg(feature = "usb-storage")]
         block_device_key: Some(*b"12_123456789_123456789_123456789"),
     };

@@ -3,7 +3,7 @@
 //! Shared by the firmware and the USB/IP runner so that both present the same
 //! descriptors, ATR and message sizes.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(test), no_std)]
 #![warn(trivial_casts, unused, unused_qualifications)]
 
 delog::generate_macros!();

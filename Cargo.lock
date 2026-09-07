@@ -3938,20 +3938,17 @@ dependencies = [
 name = "usb-classes"
 version = "1.9.0-rc.1"
 dependencies = [
- "aes",
  "apdu-dispatch",
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
  "heapless 0.9.1",
- "log",
  "ref-swap",
  "trussed-core",
  "usb-device 0.3.2",
  "usbd-ccid",
  "usbd-ctaphid",
  "usbd-storage",
- "xts-mode",
 ]
 
 [[package]]
@@ -4024,6 +4021,7 @@ dependencies = [
 name = "usbip-runner"
 version = "1.9.0-rc.1"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "apps",
  "cfg-if",
@@ -4045,6 +4043,7 @@ dependencies = [
  "trussed-usbip",
  "usb-classes",
  "utils",
+ "xts-mode",
 ]
 
 [[package]]

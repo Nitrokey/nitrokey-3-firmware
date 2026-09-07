@@ -14,9 +14,6 @@ use usbd_storage::{
     },
 };
 
-#[cfg(feature = "std")]
-pub mod host;
-
 /// Bytes per logical block. 512 is mostly assumed.
 pub const BLOCK_SIZE: u32 = 512;
 

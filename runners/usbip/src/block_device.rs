@@ -1,4 +1,4 @@
-//! File- or memory-backed block device for host runners.
+//! File- or memory-backed block device for the USB/IP runner.
 
 use std::{
     fs::OpenOptions,
@@ -10,9 +10,8 @@ use aes::{
     cipher::{generic_array::GenericArray, KeyInit},
     Aes128,
 };
+use usb_classes::storage::{BlockDevice, BLOCK_SIZE};
 use xts_mode::{get_tweak_default, Xts128};
-
-use super::{BlockDevice, BLOCK_SIZE};
 
 enum Backing {
     File(std::fs::File),
