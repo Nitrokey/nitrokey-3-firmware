@@ -326,12 +326,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bit_field"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
-
-[[package]]
 name = "bitfield"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2196,7 +2190,8 @@ dependencies = [
  "stm32n657-hal",
  "systick-monotonic",
  "trussed",
- "usb-device",
+ "trussed-core",
+ "usb-device 0.3.2",
 ]
 
 [[package]]
@@ -2727,6 +2722,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ral-registers"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46b71a9d9206e8b46714c74255adcaea8b11e0350c1d8456165073c3f75fc81a"
+
+[[package]]
 name = "rand"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2808,27 +2809,6 @@ checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac",
  "subtle",
-]
-
-[[package]]
-name = "riscv"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2f0b705d428e9d0f78e2bb73093887ee58a83c9688de3faedbb4c0631c4618e"
-dependencies = [
- "bare-metal 0.2.5",
- "bit_field",
- "riscv-target",
-]
-
-[[package]]
-name = "riscv-target"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88aa938cda42a0cf62a20cfe8d139ff1af20c2e681212b5b34adb5a58333f222"
-dependencies = [
- "lazy_static",
- "regex",
 ]
 
 [[package]]
@@ -3410,12 +3390,13 @@ dependencies = [
 
 [[package]]
 name = "synopsys-usb-otg"
-version = "0.3.2"
+version = "0.5.0"
+source = "git+https://github.com/daringer/synopsys-usb-otg?rev=d4c4b4b535348dab14c253d0ad1974e644249768#d4c4b4b535348dab14c253d0ad1974e644249768"
 dependencies = [
- "cortex-m",
+ "critical-section",
  "embedded-hal",
- "riscv",
- "usb-device",
+ "ral-registers",
+ "usb-device 0.3.2",
  "vcell",
 ]
 

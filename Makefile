@@ -13,7 +13,6 @@ check-components:
 	cargo check --manifest-path components/ndef-app/Cargo.toml
 	cargo check --manifest-path components/nfc-device/Cargo.toml
 	cargo check --manifest-path components/stm32n657-hal/Cargo.toml
-	cargo check --manifest-path components/synopsys-usb-otg/Cargo.toml --features cortex-m,hs
 	cargo check --manifest-path components/provisioner-app/Cargo.toml
 
 	cargo check --manifest-path components/apps/Cargo.toml
