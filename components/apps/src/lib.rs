@@ -806,7 +806,6 @@ where
         self.ctaphid_dispatch(f)
     }
 
-    #[cfg(feature = "trussed-usbip-ccid")]
     fn with_ccid_apps<T>(&mut self, f: impl FnOnce(&mut [&mut dyn apdu_app::App]) -> T) -> T {
         self.apdu_dispatch(f)
     }
@@ -851,6 +850,7 @@ pub enum Variant {
     Usbip,
     Lpc55,
     Nrf52,
+    Stm32n6,
 }
 
 impl From<Variant> for u8 {
@@ -859,6 +859,7 @@ impl From<Variant> for u8 {
             Variant::Usbip => 0,
             Variant::Lpc55 => 1,
             Variant::Nrf52 => 2,
+            Variant::Stm32n6 => 3,
         }
     }
 }

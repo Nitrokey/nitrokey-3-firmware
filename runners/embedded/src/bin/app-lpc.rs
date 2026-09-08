@@ -22,7 +22,7 @@ mod app {
         init::{CtaphidDispatch, Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
         runtime,
-        soc::lpc55::{self, monotonic::SystickMonotonic},
+        soc::{lpc55, monotonic::SystickMonotonic},
         Apps, Trussed,
     };
     use embedded_runner_lib::nk3xn;

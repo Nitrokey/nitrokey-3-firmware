@@ -1,12 +1,14 @@
+#[cfg(feature = "usb-storage")]
+mod block_device;
 mod store;
 mod ui;
+mod usb;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
 use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
-use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 use rand_core::{OsRng, RngCore};
 use trussed::platform::Platform as _;
 use trussed_core::types::{Bytes, Location};
@@ -41,6 +43,11 @@ struct Args {
     /// External file system (default: use RAM).
     #[clap(short, long)]
     efs: Option<PathBuf>,
+
+    /// Backing file for the block device (default: use RAM).
+    #[cfg(feature = "usb-storage")]
+    #[clap(short, long)]
+    block_device: Option<PathBuf>,
 
     /// User presence check mechanism.
     ///
@@ -144,9 +151,21 @@ fn main() {
         pid: PID,
     };
 
+    let usb = usb::NkSetup {
+        manufacturer: MANUFACTURER,
+        product: PRODUCT,
+        vid: VID,
+        pid: PID,
+        device_release: VERSION.usb_release(),
+        #[cfg(feature = "usb-storage")]
+        block_device: args.block_device,
+        #[cfg(feature = "usb-storage")]
+        block_device_key: Some(*b"12_123456789_123456789_123456789"),
+    };
+
     let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store, options, args.serial, user_presence)
+    exec(store, options, usb, args.serial, user_presence)
 }
 
 fn print_version() {
@@ -169,6 +188,7 @@ fn print_version() {
 fn exec(
     store: Store,
     options: trussed_usbip::Options,
+    usb: usb::NkSetup,
     serial: Option<u128>,
     user_presence: UserPresence,
 ) {
@@ -189,7 +209,7 @@ fn exec(
         admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
         fido: FidoData {
             has_nfc: false,
-            max_message_size: DEFAULT_MESSAGE_SIZE,
+            max_message_size: usb::CTAPHID_MESSAGE_SIZE,
         },
         #[cfg(feature = "provisioner")]
         provisioner: apps::ProvisionerData {
@@ -205,6 +225,7 @@ fn exec(
             Location::Internal,
             Bytes::from(b"Unique hw key"),
         ))
+        .usb(usb)
         .build::<Apps<Runner>>()
         .exec(platform, (runner, data));
 }

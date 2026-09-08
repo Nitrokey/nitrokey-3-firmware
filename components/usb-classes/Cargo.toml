@@ -1,0 +1,37 @@
+[package]
+name = "usb-classes"
+version = { workspace = true }
+edition = "2021"
+
+[dependencies]
+apdu-dispatch = "0.4"
+ctaphid-dispatch = "0.4"
+delog = "0.1"
+embedded-time = "0.12"
+heapless = "0.9"
+ref-swap = "0.1.0"
+trussed-core = "0.2"
+usb-device = "0.3.2"
+usbd-ccid = "0.5"
+usbd-ctaphid = "0.5"
+
+# storage
+usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
+
+[features]
+default = []
+
+# 512-byte CCID bulk endpoints, as required when enumerating at high speed.
+highspeed-usb = ["usbd-ccid/highspeed-usb"]
+
+# SCSI mass storage over Bulk Only Transport. The block device backing it is
+# provided by the runner.
+storage = ["dep:usbd-storage"]
+
+log-all = []
+log-none = []
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []

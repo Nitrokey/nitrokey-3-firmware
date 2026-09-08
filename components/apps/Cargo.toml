@@ -16,8 +16,8 @@ se05x = { version = "0.4", optional = true}
 serde = { version = "1.0.180", default-features = false }
 trussed = { workspace = true, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
 trussed-core.workspace = true
-trussed-usbip = { version = "0.1", default-features = false, features = ["ctaphid"], optional = true }
-usbd-ctaphid = { version = "0.4", optional = true }
+trussed-usbip = { version = "0.1", default-features = false, features = ["ccid", "ctaphid"], optional = true }
+usbd-ctaphid = { version = "0.5", optional = true }
 utils = { path = "../utils" }
 if_chain = "1.0.2"
 littlefs2-core = "0.1"
@@ -61,6 +61,9 @@ nk3-provisioner = ["nk3", "provisioner-app"]
 nkpk = ["fido-authenticator", "factory-reset"]
 nkpk-provisioner = ["nkpk", "provisioner-app"]
 
+# nkso3
+nkso3 = ["fido-authenticator", "factory-reset"]
+
 # apps
 secrets-app = ["dep:secrets-app", "backend-auth", "trussed/chacha8-poly1305", "trussed/hmac-sha1", "trussed/hmac-sha256", "trussed/sha256"]
 fido-authenticator = ["dep:fido-authenticator", "usbd-ctaphid", "trussed/aes256-cbc", "trussed/aes256-gcm", "trussed/certificate-client", "trussed/chacha8-poly1305", "trussed/ed255", "trussed/hmac-sha256", "trussed/p256", "trussed/sha256"]
@@ -82,7 +85,7 @@ log-trace = []
 log-none = []
 
 trussed-usbip = ["dep:trussed-usbip", "backend-rsa", "trussed-rsa-alloc/raw"]
-trussed-usbip-ccid = ["trussed-usbip/ccid", "backend-software-hpke"]
+trussed-usbip-ccid = ["backend-software-hpke"]
 
 factory-reset = ["admin-app/factory-reset"]
 

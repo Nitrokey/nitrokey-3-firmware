@@ -1,7 +1,6 @@
 use apps::Variant;
 use nrf52840_hal::{
     clocks::Clocks,
-    usbd::{UsbPeripheral, Usbd},
     wdt::{self, count::One, handles::Hdl0, Watchdog, WatchdogHandle},
 };
 use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
@@ -13,12 +12,22 @@ use rtic_monotonic::{RtcDuration, RtcMonotonic};
 pub mod flash;
 pub mod rtic_monotonic;
 
+/// nrf-usbd 0.3's `UsbPeripheral` is a trait addressing the registers statically,
+/// not a struct owning the PAC token.
+pub struct Peripheral;
+
+// SAFETY: only constructed in `setup_usb_bus`, which takes the one USBD token,
+// so nothing else can be driving this register block.
+unsafe impl nrf_usbd::UsbPeripheral for Peripheral {
+    const REGISTERS: *const () = nrf52840_pac::USBD::ptr() as *const ();
+}
+
 pub struct Nrf52 {
     uuid: Uuid,
 }
 
 impl Soc for Nrf52 {
-    type UsbBus = Usbd<UsbPeripheral<'static>>;
+    type UsbBus = nrf_usbd::Usbd<Peripheral>;
     type Clock = RtcMonotonic;
 
     type Duration = RtcDuration;
@@ -114,7 +123,7 @@ pub fn setup_usb_bus(
     clock: nrf52840_pac::CLOCK,
     usb_pac: nrf52840_pac::USBD,
 ) -> UsbBusType {
-    let usb_clock = static_usb_clock.insert(Clocks::new(clock).start_lfclk().enable_ext_hfosc());
+    let _ = static_usb_clock.insert(Clocks::new(clock).start_lfclk().enable_ext_hfosc());
 
     usb_pac.intenset.write(|w| {
         w.usbreset()
@@ -129,7 +138,10 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
-    Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
+    // nrf-usbd 0.3 addresses the registers statically, so the PAC token is only
+    // proof of ownership; the clocks stay started in `static_usb_clock`.
+    drop(usb_pac);
+    UsbBusType::new(nrf_usbd::Usbd::new(Peripheral))
 }
 
 #[derive(Debug)]

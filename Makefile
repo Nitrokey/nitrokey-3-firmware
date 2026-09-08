@@ -12,17 +12,18 @@ check-components:
 	cargo check --manifest-path components/memory-regions/Cargo.toml
 	cargo check --manifest-path components/ndef-app/Cargo.toml
 	cargo check --manifest-path components/nfc-device/Cargo.toml
+	cargo check --manifest-path components/stm32n657-hal/Cargo.toml
 	cargo check --manifest-path components/provisioner-app/Cargo.toml
 
 	cargo check --manifest-path components/apps/Cargo.toml
-	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner ; do \
+	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner nkso3 ; do \
 	echo "apps: $$feature" ; \
 	cargo check --manifest-path components/apps/Cargo.toml --features $$feature ; \
 	done
 	cargo check --manifest-path components/apps/Cargo.toml --all-features
 
 	cargo check --manifest-path components/boards/Cargo.toml
-	for feature in board-nk3am board-nk3xn board-nkpk ; do \
+	for feature in board-nk3am board-nk3xn board-nkpk board-nkso3 ; do \
 	echo "boards: $$feature" ; \
 	cargo check --manifest-path components/boards/Cargo.toml --features $$feature ; \
 	done
@@ -80,4 +81,7 @@ manifest.json:
 software-tests:
 	cd components/apps && cargo test --all-features
 	cd components/boards && cargo test
+	cd components/usb-classes && cargo test --all-features
+	cd components/stm32n657-hal && cargo test
 	cd components/utils && cargo test
+	cd runners/usbip && cargo test --features usb-storage

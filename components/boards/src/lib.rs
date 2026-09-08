@@ -7,6 +7,7 @@ use cortex_m_rt::ExceptionFrame;
 
 pub mod flash;
 pub mod init;
+pub mod nfc;
 pub mod runtime;
 pub mod soc;
 pub mod store;
@@ -18,6 +19,8 @@ pub mod nk3am;
 pub mod nk3xn;
 #[cfg(feature = "board-nkpk")]
 pub mod nkpk;
+#[cfg(feature = "board-nkso3")]
+pub mod nkso3;
 
 use core::marker::PhantomData;
 

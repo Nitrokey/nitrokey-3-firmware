@@ -19,6 +19,12 @@ impl MemoryRegions {
 
     pub const NKPK: Self = Self::split(NRF52_MEMORY, 0xB8_000);
 
+    // Code lives in AXISRAM1, loaded by the debugger; filesystems are RAM-backed.
+    pub const NKSO3: Self = Self {
+        firmware: 0x3406_4000..0x3410_0000,
+        filesystem: 0..0,
+    };
+
     pub const fn split(region: Range<usize>, boundary: usize) -> Self {
         Self {
             firmware: region.start..boundary,

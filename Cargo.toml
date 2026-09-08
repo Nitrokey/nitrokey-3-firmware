@@ -20,9 +20,13 @@ trussed-core = "0.2"
 [patch.crates-io]
 # components
 memory-regions = { path = "components/memory-regions" }
+synopsys-usb-otg = { git = "https://github.com/daringer/synopsys-usb-otg", rev = "d4c4b4b535348dab14c253d0ad1974e644249768" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
+
+# usb-device 0.3 support is not released yet
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner", rev = "6e85bc6157ec482368c7fcc266b8ba5fb56ffaea" }
 
 # applications
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }

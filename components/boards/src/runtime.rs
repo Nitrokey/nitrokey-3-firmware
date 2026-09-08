@@ -2,12 +2,18 @@ use apdu_dispatch::dispatch::{ApduDispatch, Interface};
 use apps::Endpoints;
 use embedded_time::duration::Milliseconds;
 use nfc_device::{traits::nfc::Device as NfcDevice, Iso14443};
+use usb_device::bus::UsbBus;
+
+use usb_classes::Keepalive as _;
 
 use crate::{
-    init::{CtaphidDispatch, UsbClasses},
-    soc::Soc,
+    init::{CtaphidDispatch, CTAPHID_MESSAGE_SIZE},
     ui, Apps, Board, Trussed,
 };
+
+/// Bus-generic spelling of [`crate::init::UsbClasses`], so that the bus type can
+/// be inferred from the argument.
+type UsbClasses<B> = usb_classes::UsbClasses<B, CTAPHID_MESSAGE_SIZE>;
 
 pub fn poll_dispatchers<B: Board>(
     apdu_dispatch: &mut ApduDispatch<'_>,
@@ -23,15 +29,16 @@ pub fn poll_dispatchers<B: Board>(
     )
 }
 
-pub fn poll_usb<S, FA, FB, TA, TB, E>(
-    usb_classes: &mut Option<UsbClasses<S>>,
+pub fn poll_usb<B, D, FA, FB, TA, TB, E>(
+    usb_classes: &mut Option<UsbClasses<B>>,
     ccid_spawner: FA,
     ctaphid_spawner: FB,
     t_now: Milliseconds,
 ) where
-    S: Soc,
-    FA: Fn(S::Duration) -> Result<TA, E>,
-    FB: Fn(S::Duration) -> Result<TB, E>,
+    B: UsbBus + 'static,
+    D: From<Milliseconds>,
+    FA: Fn(D) -> Result<TA, E>,
+    FB: Fn(D) -> Result<TB, E>,
 {
     let Some(usb_classes) = usb_classes.as_mut() else {
         return;
@@ -40,7 +47,9 @@ pub fn poll_usb<S, FA, FB, TA, TB, E>(
     usb_classes.ctaphid.check_timeout(t_now.0);
     usb_classes.poll();
 
-    maybe_spawn_ccid(usb_classes.ccid.did_start_processing(), ccid_spawner);
+    if let Some(ccid) = &mut usb_classes.ccid {
+        maybe_spawn_ccid(ccid.did_start_processing(), ccid_spawner);
+    }
     maybe_spawn_ctaphid(usb_classes.ctaphid.did_start_processing(), ctaphid_spawner);
 }
 
@@ -56,21 +65,25 @@ where
     maybe_spawn_nfc(contactless.poll(), nfc_spawner);
 }
 
-pub fn ccid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ccid_spawner: F)
+pub fn ccid_keepalive<B, D, F, T, E>(usb_classes: &mut Option<UsbClasses<B>>, ccid_spawner: F)
 where
-    S: Soc,
-    F: Fn(S::Duration) -> Result<T, E>,
+    B: UsbBus + 'static,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     let Some(usb_classes) = usb_classes.as_mut() else {
         return;
     };
-    maybe_spawn_ccid(usb_classes.ccid.send_wait_extension(), ccid_spawner);
+    if let Some(ccid) = &mut usb_classes.ccid {
+        maybe_spawn_ccid(ccid.send_wait_extension(), ccid_spawner);
+    }
 }
 
-pub fn ctaphid_keepalive<S, F, T, E>(usb_classes: &mut Option<UsbClasses<S>>, ctaphid_spawner: F)
+pub fn ctaphid_keepalive<B, D, F, T, E>(usb_classes: &mut Option<UsbClasses<B>>, ctaphid_spawner: F)
 where
-    S: Soc,
-    F: Fn(S::Duration) -> Result<T, E>,
+    B: UsbBus + 'static,
+    D: From<Milliseconds>,
+    F: Fn(D) -> Result<T, E>,
 {
     let Some(usb_classes) = usb_classes.as_mut() else {
         return;
@@ -98,7 +111,7 @@ where
     D: From<Milliseconds>,
     F: Fn(D) -> Result<T, E>,
 {
-    if let usbd_ccid::Status::ReceivedData(ms) = status {
+    if let Some(ms) = status.delay() {
         ccid_spawner(ms.into()).ok();
     };
 }
@@ -108,7 +121,7 @@ where
     D: From<Milliseconds>,
     F: Fn(D) -> Result<T, E>,
 {
-    if let usbd_ctaphid::types::Status::ReceivedData(ms) = status {
+    if let Some(ms) = status.delay() {
         ctaphid_spawner(ms.into()).ok();
     };
 }
