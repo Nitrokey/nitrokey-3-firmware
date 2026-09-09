@@ -16,8 +16,8 @@ se05x = { version = "0.4", optional = true}
 serde = { version = "1.0.180", default-features = false }
 trussed = { workspace = true, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
 trussed-core.workspace = true
-trussed-usbip = { version = "0.1", default-features = false, features = ["ctaphid"], optional = true }
-usbd-ctaphid = { version = "0.4", optional = true }
+trussed-usbip = { workspace = true, features = ["ctaphid"], optional = true }
+usbd-ctaphid = { workspace = true, optional = true }
 utils = { path = "../utils" }
 if_chain = "1.0.2"
 littlefs2-core = "0.1"
@@ -39,7 +39,7 @@ trussed-fs-info = "0.3.0"
 trussed-hpke = "0.3.0"
 
 # apps
-admin-app = "0.2"
+admin-app = "0.3"
 fido-authenticator = { version = "=0.4.0-rc.3", features = ["chunked", "dispatch", "credential-id-format-v2"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 secrets-app = { version = "0.15", features = ["apdu-dispatch", "ctaphid"], optional = true }

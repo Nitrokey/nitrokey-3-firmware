@@ -15,8 +15,8 @@ ctaphid-dispatch = "0.4"
 delog = "0.1"
 interchange = "0.3"
 littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
-nrf52840-hal = "0.15.1"
-nrf52840-pac = "0.11"
+nrf52840-hal.workspace = true
+nrf52840-pac.workspace = true
 utils = { path = "../../components/utils", features = ["storage"] }
 cortex-m-rt = "0.7.5"
 
