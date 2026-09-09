@@ -54,10 +54,11 @@ pub struct UserInterface<C, P, L> {
     rgb: Option<L>,
     status: Status,
     provisioner: bool,
+    is_nfc_passive: bool,
 }
 
 impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
-    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>) -> Self {
+    pub fn new(mut clock: C, buttons: Option<P>, rgb: Option<L>, is_nfc_passive: bool) -> Self {
         let uptime = clock.uptime();
         let status = Status::Startup(uptime);
         let buttons = if cfg!(feature = "no-buttons") {
@@ -73,12 +74,16 @@ impl<C: Clock, P: UserPresence, L: RgbLed> UserInterface<C, P, L> {
             status,
             rgb,
             provisioner,
+            is_nfc_passive,
         };
         ui.refresh_ui(uptime);
         ui
     }
 
     fn refresh_ui(&mut self, uptime: Duration) {
+        if self.is_nfc_passive {
+            return;
+        }
         if let Some(rgb) = &mut self.rgb {
             self.status.refresh(uptime);
             let mode = self.status.led_mode(self.provisioner);

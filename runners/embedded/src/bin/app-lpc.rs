@@ -6,6 +6,7 @@ delog::generate_macros!();
 use core::arch::asm;
 
 use cortex_m_rt::{exception, ExceptionFrame};
+use heapless::mpmc::Queue;
 
 #[inline]
 pub fn msp() -> u32 {
@@ -14,8 +15,14 @@ pub fn msp() -> u32 {
     r
 }
 
+#[cfg(not(feature = "no-delog"))]
+#[allow(deprecated)]
+static NFC_IRQ_QUEUE: Queue<bool, 64> = Queue::new();
+
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
+    #[cfg(not(feature = "no-delog"))]
+    use super::NFC_IRQ_QUEUE;
     use apdu_dispatch::dispatch::ApduDispatch;
     use apps::Endpoints;
     use boards::{
@@ -152,7 +159,7 @@ mod app {
         (shared, local, init::Monotonics(systick.into()))
     }
 
-    #[idle(shared = [ usb_classes], local = [wwdt])]
+    #[idle(shared = [usb_classes], local = [wwdt])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources { mut usb_classes } = c.shared;
         let idle::LocalResources { wwdt } = c.local;
@@ -171,6 +178,11 @@ mod app {
                     monotonics::now(),
                 );
             });
+
+            #[cfg(not(feature = "no-delog"))]
+            while let Some(v) = NFC_IRQ_QUEUE.dequeue() {
+                debug!("IRQ PIN IS HIGH: {v}");
+            }
 
             // Sleep until the next interrupt wakes us. Any task pend (USB1,
             // PIN_INT0, OS_EVENT, CTIMER0, …) brings us back here to drain the
@@ -293,8 +305,11 @@ mod app {
                 c.shared.wait_extender.lock(|wait_extender| {
                     // clear the interrupt
                     wait_extender.cancel().ok();
-
-                    info!("<{}", _perf_timer.elapsed().0 / 100);
+                    #[cfg(not(feature = "no-delog"))]
+                    if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                        NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                    }
+                    // info!("<{}", _perf_timer.elapsed().0 / 100);
                     let status = contactless.poll_wait_extensions();
                     match status {
                         nfc_device::Iso14443Status::Idle => {}
@@ -302,7 +317,12 @@ mod app {
                             wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                         }
                     }
-                    info!(" {}>", _perf_timer.elapsed().0 / 100);
+                    #[cfg(not(feature = "no-delog"))]
+                    if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                        NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                    }
+
+                    // info!(" {}>", _perf_timer.elapsed().0 / 100);
                 });
             }
         });
@@ -319,7 +339,14 @@ mod app {
                 let contactless = contactless.as_mut().unwrap();
                 let _starttime = perf_timer.elapsed().0 / 100;
 
-                info!("[");
+                #[cfg(not(feature = "no-delog"))]
+                if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                    NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                }
+                perf_timer.cancel().ok();
+                perf_timer.start(500.microseconds());
+                nb::block!(perf_timer.wait());
+                // info!("[");
                 let status = contactless.poll();
                 match status {
                     nfc_device::Iso14443Status::Idle => {}
@@ -328,10 +355,14 @@ mod app {
                         wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                     }
                 }
-                info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
+                // info!("{}-{}]", _starttime, perf_timer.elapsed().0 / 100);
 
                 perf_timer.cancel().ok();
                 perf_timer.start(60_000_000.microseconds());
+                #[cfg(not(feature = "no-delog"))]
+                if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                    NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                }
             });
     }
 }

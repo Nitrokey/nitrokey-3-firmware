@@ -150,10 +150,13 @@ fn nfc_pull_down(
     iocon.set_gpio_pio0_6_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_7_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_8_mode(GpioMode::PullDown);
+    // SE050 I2C
+    // iocon.set_gpio_pio0_9_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_10_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_11_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_12_mode(GpioMode::PullDown);
     // iocon.set_gpio_pio0_13_mode(GpioMode::PullDown);
+    // SE050 I2C
     iocon.set_gpio_pio0_14_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_15_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_16_mode(GpioMode::PullDown);
@@ -186,6 +189,7 @@ fn nfc_pull_down(
     iocon.set_gpio_pio1_11_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_12_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_13_mode(GpioMode::PullDown);
+    // SE050 I2C
     // iocon.set_gpio_pio1_14_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_15_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_16_mode(GpioMode::PullDown);
@@ -208,6 +212,8 @@ fn nfc_pull_down(
     let using_old_nfc = nfc_id_pin.is_high().unwrap();
 
     let is_passive = nfc_irq.is_low().ok().unwrap();
+    error!("IS PASSIVE: {is_passive}");
+    // let is_passive = true;
 
     NfcUse {
         is_passive,
@@ -242,10 +248,10 @@ impl Stage0 {
         nfc_use
     }
 
-    fn enable_clocks(&mut self) -> clocks::Clocks {
+    fn enable_clocks(&mut self, is_nfc_passive: bool) -> clocks::Clocks {
         // Start out with slow clock if in passive mode;
-        // let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
-        let frequency = 4.MHz();
+        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
+        // let frequency = 4.MHz();
         hal::ClockRequirements::default()
             .system_frequency(frequency)
             .configure(
@@ -268,7 +274,7 @@ impl Stage0 {
 
         let nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
 
-        let clocks = self.enable_clocks();
+        let clocks = self.enable_clocks(nfc_use.is_passive);
 
         let wwdt = (!nfc_use.is_passive).then(|| {
             let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
@@ -441,11 +447,13 @@ impl Stage1 {
 
         let mut rgb = self.init_rgb(ctimer3);
 
-        self.nfc_use.refresh(&self.clocks.iocon);
-        self.clocks.clocks =
-            self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
+        // self.nfc_use.refresh(&self.clocks.iocon);
+        // self.clocks.clocks = self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
 
-        info!("After refresh: NFC USE: is_passive {}, is_old {}", self.nfc_use.is_passive, self.nfc_use.using_old_nfc);
+        info!(
+            "After refresh: NFC USE: is_passive {}, is_old {}",
+            self.nfc_use.is_passive, self.nfc_use.using_old_nfc
+        );
 
         let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
@@ -598,11 +606,11 @@ impl Stage2 {
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>, is_nfc_passive: bool) -> I2C {
         // SE050 check
         if !is_nfc_passive {
-            let _enabled =pins::Pio1_26::take()
+            let _enabled = pins::Pio1_26::take()
                 .unwrap()
                 .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
                 .into_output_high();
-       }
+        }
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
@@ -830,7 +838,7 @@ impl Stage2 {
         };
 
         Stage3 {
-           nfc_use: self.nfc_use,
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -1066,7 +1074,7 @@ impl Stage5 {
 
         let three_buttons = self.basic.three_buttons.take();
 
-        let user_interface = UserInterface::new(rtc, three_buttons, rgb);
+        let user_interface = UserInterface::new(rtc, three_buttons, rgb, self.nfc_use.is_passive);
 
         let trussed = init::init_trussed(
             &mut self.rng,
