@@ -820,7 +820,12 @@ impl Stage2 {
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
-            let se050_i2c =self.configure_fm11nt08c(se050_i2c);
+            let se050_i2c = if self.nfc_use.using_old_nfc {
+                let timer = self.se050_timer.take().unwrap();
+                (se050_i2c, timer)
+            } else {
+                self.configure_fm11nt08c(se050_i2c)
+            };
             (Some(se050_i2c), None, Some(spi))
         };
 
