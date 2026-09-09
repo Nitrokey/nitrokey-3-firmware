@@ -1,8 +1,8 @@
-#[cfg(feature = "lpc55-v0.6")]
-mod lpc55_06 {
+#[cfg(feature = "lpc55-v0.7")]
+mod lpc55_07 {
     use crate::I2CError;
 
-    use lpc55_hal_06::drivers::i2c::Error;
+    use lpc55_hal_07::drivers::i2c::Error;
 
     impl I2CError for Error {
         fn is_address_nack(&self) -> bool {
