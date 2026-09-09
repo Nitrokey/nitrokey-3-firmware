@@ -176,6 +176,24 @@ trusted-publisher = "github:trussed-dev/usbd-ctaphid"
 start = "2026-03-25"
 end = "2027-06-17"
 
+[[audits.bitfield]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.19.5"
+notes = "Quite convulated macro but it only generates bitfield access"
+
+[[audits.bitfield-macros]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.19.5"
+notes = "Simple macro that generates bitfield access with nothing suspicious"
+
+[[audits.bitflags]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "2.11.1 -> 2.13.1"
+notes = "Mostly refactors about adding names to flags"
+
 [[audits.cbor-smol]]
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
@@ -210,6 +228,12 @@ version = "0.2.0"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.1.3"
+
+[[audits.hex-literal]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "1.1.0"
+notes = "Very easy to audit as it's mostly safe `const` functions and one macro making it easier to use"
 
 [[audits.inout]]
 who = "Robin Krahl <robin@nitrokey.com>"
@@ -287,6 +311,12 @@ who = "Sosthène Guédon <sosthene@nitrokey.com>"
 criteria = "safe-to-deploy"
 delta = "1.2.0 -> 1.2.1"
 notes = "Just a stricter CFG and support for `Cow`"
+
+[[audits.syn]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-run"
+delta = "2.0.98 -> 3.0.4"
+notes = "Nothing suspicious at a glance"
 
 [[audits.toml_writer]]
 who = "Robin Krahl <robin@nitrokey.com>"

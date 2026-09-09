@@ -12,7 +12,6 @@ use lpc55_hal::{
     typestates::init_state::Enabled,
 };
 
-pub mod clock_controller;
 pub mod monotonic;
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
@@ -77,7 +76,6 @@ impl apps::Reboot for Lpc55 {
     }
 }
 
-pub type DynamicClockController = clock_controller::DynamicClockController;
 pub type NfcWaitExtender = Timer<ctimer::Ctimer0<Enabled>>;
 pub type PerformanceTimer = Timer<ctimer::Ctimer4<Enabled>>;
 

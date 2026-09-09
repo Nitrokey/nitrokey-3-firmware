@@ -23,7 +23,6 @@ pub fn init(
     init::start(hal.syscon, hal.pmc, hal.anactrl)
         .next(hal.iocon, hal.gpio, hal.wwdt)
         .next(
-            hal.adc,
             hal.ctimer.0,
             hal.ctimer.1,
             hal.ctimer.2,

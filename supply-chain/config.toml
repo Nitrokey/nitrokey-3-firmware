@@ -25,6 +25,10 @@ notes = "relaxed to reduce initial efforts"
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
+[policy.interchange]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
 [policy.nkpk]
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
@@ -34,6 +38,14 @@ audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
 
 [policy.p256-cortex-m4]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
+[policy.piv-authenticator]
+audit-as-crates-io = false
+notes = "pinned to a reviewed revision"
+
+[policy.secrets-app]
 audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
 
