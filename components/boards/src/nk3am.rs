@@ -13,7 +13,8 @@ use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3};
 
 #[cfg(feature = "se050")]
 use {
-    nrf52840_hal::{prelude::OutputPin as _, timer::Timer, Twim},
+    embedded_hal::digital::v2::OutputPin as _,
+    nrf52840_hal::{timer::Timer, Twim},
     nrf52840_pac::{TIMER1, TWIM1},
     se05x::embedded_hal::Hal027,
 };
@@ -176,7 +177,7 @@ pub fn init_pins(gpiote: GPIOTE, p0: P0, p1: P1) -> BoardGPIO {
     //let _flash_hold = gpio_p0.p0_23.into_push_pull_output(Level::High).degrade();
 
     let flash_spi = spim::Pins {
-        sck: flash_spi_clk,
+        sck: Some(flash_spi_clk),
         miso: Some(flash_spi_miso),
         mosi: Some(flash_spi_mosi),
     };
@@ -249,15 +250,15 @@ pub fn power_handler(power: &mut POWER) {
         power.pofcon.read().bits()
     );
 
-    if power.events_usbdetected.read().events_usbdetected().bits() {
+    if power.events_usbdetected.read().events_usbdetected().bit() {
         power.events_usbdetected.write(|w| unsafe { w.bits(0) });
         trace!("usb+");
     }
-    if power.events_usbpwrrdy.read().events_usbpwrrdy().bits() {
+    if power.events_usbpwrrdy.read().events_usbpwrrdy().bit() {
         power.events_usbpwrrdy.write(|w| unsafe { w.bits(0) });
         trace!("usbY");
     }
-    if power.events_usbremoved.read().events_usbremoved().bits() {
+    if power.events_usbremoved.read().events_usbremoved().bit() {
         power.events_usbremoved.write(|w| unsafe { w.bits(0) });
         trace!("usb-");
     }
