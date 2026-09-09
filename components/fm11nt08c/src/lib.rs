@@ -123,7 +123,6 @@ pub struct Fm11nt082c<I2C, CSN, IRQ, Timer> {
     i2c: I2C,
     csn: CSN,
     timer: Timer,
-    #[allow(unused)]
     irq: IRQ,
     current_frame_size: usize,
     offset: usize,
@@ -153,6 +152,10 @@ where
             offset: 0,
             packet: [0; 256],
         }
+    }
+
+    pub fn irq_is_high(&self) -> bool {
+        self.irq.is_high().unwrap()
     }
 
     pub fn close(mut self) -> (I2C, CSN, IRQ, Timer) {

@@ -208,7 +208,7 @@ pub fn init_ui(
     let rgb = RgbLed::new(leds, pwm_red, pwm_green, pwm_blue);
     let buttons = HardwareButtons::new(touch);
 
-    UserInterface::new(rtc_mono, Some(buttons), Some(rgb))
+    UserInterface::new(rtc_mono, Some(buttons), Some(rgb), false)
 }
 
 pub fn init_external_flash(spim3: SPIM3, spi: spim::Pins, cs: OutPin) -> ExternalFlashStorage {

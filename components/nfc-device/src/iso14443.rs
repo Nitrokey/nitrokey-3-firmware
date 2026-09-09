@@ -91,7 +91,7 @@ impl Block {
 /// Iso14443 device follows related rules for PICC in iso14443-4.
 /// Rules C - E and rules 9 - 13.
 pub struct Iso14443<DEV: nfc::Device> {
-    device: DEV,
+    pub device: DEV,
 
     state: Iso14443State,
 

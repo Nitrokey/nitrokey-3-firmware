@@ -16,7 +16,7 @@ bitflags = "2.10.0"
 hex-literal = "1"
 
 [features]
-default = ["log-all"]
+default = []
 
 log-all = []
 log-none = []
