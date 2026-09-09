@@ -213,7 +213,7 @@ fn nfc_pull_down(
 
     let is_passive = nfc_irq.is_low().ok().unwrap();
     error!("IS PASSIVE: {is_passive}");
-    // let is_passive = true;
+    let is_passive = true;
 
     NfcUse {
         is_passive,
@@ -321,7 +321,7 @@ impl Stage1 {
         is_nfc_passive: bool,
     ) -> clocks::Clocks {
         // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 4.MHz() } else { 96.MHz() };
+        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
         unsafe {
             hal::ClockRequirements::default()
                 .system_frequency(frequency)
@@ -610,10 +610,10 @@ impl Stage2 {
                 .unwrap()
                 .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
                 .into_output_high();
-        }
 
-        self.basic.delay_timer.start(100_000.microseconds());
-        nb::block!(self.basic.delay_timer.wait()).ok();
+            self.basic.delay_timer.start(100_000.microseconds());
+            nb::block!(self.basic.delay_timer.wait()).ok();
+        }
 
         let token = self.clocks.clocks.support_flexcomm_token().unwrap();
         let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
@@ -983,7 +983,7 @@ impl Stage4 {
         if self.nfc_use.is_passive {
             self.clocks.clocks = unsafe {
                 hal::ClockRequirements::default()
-                    .system_frequency(4.MHz())
+                    .system_frequency(48.MHz())
                     .reconfigure(
                         self.clocks.clocks,
                         &mut self.peripherals.pmc,
