@@ -2087,8 +2087,7 @@ dependencies = [
 [[package]]
 name = "lpc55-hal"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5eeac224f2ed643cdd682ad20ed018af5c08963a5667906d658eb18f3b8c44"
+source = "git+https://github.com/lpc55/lpc55-hal.git?rev=138a6253d7344326a7d83ef10356298b0e6ddb65#138a6253d7344326a7d83ef10356298b0e6ddb65"
 dependencies = [
  "block-buffer",
  "cipher",
