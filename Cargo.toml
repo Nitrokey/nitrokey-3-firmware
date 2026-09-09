@@ -14,8 +14,16 @@ version = "1.9.0-rc.1"
 
 [workspace.dependencies]
 littlefs2 = "0.8"
+lpc55-hal = "0.7"
+lpc55-pac = "0.5"
+nrf52840-hal = "0.18"
+nrf52840-pac = "0.12"
 trussed = { version = "0.2", default-features = false }
 trussed-core = "0.2"
+trussed-usbip = { version = "0.2", default-features = false }
+usb-device = "0.3"
+usbd-ccid = "0.5"
+usbd-ctaphid = "0.5"
 
 [patch.crates-io]
 # components
@@ -28,6 +36,10 @@ p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev =
 opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }
 piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
 secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }
+
+# patches
+trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", branch = "usb-device-v0.3" }
+se05x = { git = "https://github.com/Nitrokey/se05x.git", branch = "lpc-hal-v0.7" }
 
 [profile.release]
 codegen-units = 1
