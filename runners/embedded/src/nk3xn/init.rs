@@ -120,6 +120,8 @@ impl NfcUse {
         self.is_passive = nfc_irq.is_low().ok().unwrap();
         self.using_old_nfc = self.nfc_id_pin.is_high().unwrap();
 
+        iocon.set_gpio_pio0_0_mode(GpioMode::Inactive);
+
         // ext. flash power
         if self.is_passive {
             iocon.set_gpio_pio0_21_mode(GpioMode::PullDown);
@@ -210,6 +212,7 @@ fn nfc_pull_down(
     iocon.set_gpio_pio1_31_mode(GpioMode::PullDown);
 
     let using_old_nfc = nfc_id_pin.is_high().unwrap();
+    iocon.set_gpio_pio0_0_mode(GpioMode::PullDown);
 
     let is_passive = nfc_irq.is_low().ok().unwrap();
     error!("IS PASSIVE: {is_passive}");

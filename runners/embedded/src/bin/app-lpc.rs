@@ -343,9 +343,9 @@ mod app {
                 if let nfc_device::either::Either::B(ref dev) = &contactless.device {
                     NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
                 }
-                perf_timer.cancel().ok();
-                perf_timer.start(500.microseconds());
-                nb::block!(perf_timer.wait());
+                // perf_timer.cancel().ok();
+                // perf_timer.start(500.microseconds());
+                // nb::block!(perf_timer.wait());
                 // info!("[");
                 let status = contactless.poll();
                 match status {
