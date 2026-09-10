@@ -442,10 +442,12 @@ impl Stage1 {
         let mut rgb = self.init_rgb(ctimer3);
 
         self.nfc_use.refresh(&self.clocks.iocon);
-        self.clocks.clocks =
-            self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
+        self.clocks.clocks = self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
 
-        info!("After refresh: NFC USE: is_passive {}, is_old {}", self.nfc_use.is_passive, self.nfc_use.using_old_nfc);
+        info!(
+            "After refresh: NFC USE: is_passive {}, is_old {}",
+            self.nfc_use.is_passive, self.nfc_use.using_old_nfc
+        );
 
         let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
@@ -598,11 +600,11 @@ impl Stage2 {
     fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>, is_nfc_passive: bool) -> I2C {
         // SE050 check
         if !is_nfc_passive {
-            let _enabled =pins::Pio1_26::take()
+            let _enabled = pins::Pio1_26::take()
                 .unwrap()
                 .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
                 .into_output_high();
-       }
+        }
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
@@ -830,7 +832,7 @@ impl Stage2 {
         };
 
         Stage3 {
-           nfc_use: self.nfc_use,
+            nfc_use: self.nfc_use,
             status: self.status,
             peripherals: self.peripherals,
             clocks: self.clocks,
@@ -1154,6 +1156,7 @@ impl Stage6 {
         mut self,
         resources: &'static mut UsbResources<NK3xN>,
         usbhs: Usbhs<Unknown>,
+        nfc_callback: interchange::Callback,
     ) -> All {
         self.perform_data_migrations();
         let (apps, endpoints) = init::init_apps(
@@ -1172,13 +1175,7 @@ impl Stage6 {
             None
         };
 
-        let usb_nfc = crate::init_usb_nfc(
-            resources,
-            || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6),
-            usb_bus,
-            self.nfc,
-            self.nfc_rp,
-        );
+        let usb_nfc = crate::init_usb_nfc(resources, nfc_callback, usb_bus, self.nfc, self.nfc_rp);
 
         // Cancel any possible outstanding use in delay timer
         self.basic.delay_timer.cancel().ok();

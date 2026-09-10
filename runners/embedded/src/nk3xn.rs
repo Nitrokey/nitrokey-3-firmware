@@ -8,6 +8,7 @@ pub fn init(
     device_peripherals: lpc55_hal::raw::Peripherals,
     core_peripherals: rtic::export::Peripherals,
     resources: &'static mut Resources<NK3xN>,
+    nfc_task_callback: interchange::Callback,
 ) -> init::All {
     const SECURE_FIRMWARE_VERSION: u32 = VERSION.encode();
 
@@ -43,5 +44,5 @@ pub fn init(
         .next(hal.rng, hal.prince, hal.flash)
         .next(&mut resources.store)
         .next(hal.rtc)
-        .next(&mut resources.usb, hal.usbhs)
+        .next(&mut resources.usb, hal.usbhs, nfc_task_callback)
 }

@@ -110,7 +110,9 @@ mod app {
             apps,
             endpoints,
             wwdt,
-        } = nk3xn::init(c.device, c.core, c.local.resources);
+        } = nk3xn::init(c.device, c.core, c.local.resources, || {
+            let _ = poll_apps::spawn();
+        });
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
 
@@ -152,7 +154,7 @@ mod app {
         (shared, local, init::Monotonics(systick.into()))
     }
 
-    #[idle(shared = [ usb_classes], local = [wwdt])]
+    #[idle(shared = [usb_classes], local = [wwdt])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources { mut usb_classes } = c.shared;
         let idle::LocalResources { wwdt } = c.local;
@@ -181,7 +183,7 @@ mod app {
         }
     }
 
-    #[task(binds =  PIN_INT6, local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
+    #[task(local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
     fn poll_apps(mut c: poll_apps::Context) {
         let (usb_activity, nfc_activity) = runtime::poll_dispatchers(
             &mut c.local.apdu_dispatch,
