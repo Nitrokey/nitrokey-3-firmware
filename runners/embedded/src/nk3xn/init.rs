@@ -110,8 +110,6 @@ struct NfcUse {
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
 }
 
-/// Reduce power draw pulling down all gpios
-///
 /// This function also reads the board ID pin (pio0_0) to detect
 /// which nfc chip is in use
 fn nfc_pull_down(
@@ -294,6 +292,18 @@ impl Stage0 {
         let mut nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
         let mut clocks = self.enable_clocks();
 
+        let wwdt = (!nfc_use.is_passive).then(|| {
+            let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
+            // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
+            const TIMER_COUNT: u32 =
+                (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
+            wwdt.set_timer(TIMER_COUNT).unwrap();
+            wwdt.set_warning(0b1_1111_1111).unwrap();
+            let wwdt = wwdt.set_resetting().set_enabled();
+            debug_now!("Wwdt tv: {:?}", wwdt.timer());
+            wwdt
+        });
+
         let mut i2c = self.setup_i2c(
             flexcomm5,
             &clocks,
@@ -318,18 +328,6 @@ impl Stage0 {
         } else {
             clocks = self.reconfigure_clocks(clocks, false);
         }
-
-        let wwdt = (!nfc_use.is_passive).then(|| {
-            let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
-            // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
-            const TIMER_COUNT: u32 =
-                (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
-            wwdt.set_timer(TIMER_COUNT).unwrap();
-            wwdt.set_warning(0b1_1111_1111).unwrap();
-            let wwdt = wwdt.set_resetting().set_enabled();
-            debug_now!("Wwdt tv: {:?}", wwdt.timer());
-            wwdt
-        });
 
         let clocks = Clocks {
             clocks,
@@ -473,11 +471,6 @@ impl Stage1 {
         perf_timer.start(60_000_000.microseconds());
 
         let mut rgb = self.init_rgb(ctimer3);
-
-        info!(
-            "After refresh: NFC USE: is_passive {}, is_old {}",
-            self.nfc_use.is_passive, self.nfc_use.using_old_nfc
-        );
 
         let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
@@ -823,6 +816,7 @@ impl Stage2 {
         let (se050_i2c, nfc, spi) = if use_nfc {
             let nfc = if self.nfc_use.using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
+                se050_i2c.release();
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
