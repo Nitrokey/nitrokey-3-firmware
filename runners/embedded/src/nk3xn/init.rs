@@ -713,8 +713,8 @@ impl Stage2 {
                 .disable() // micro-tick timer not used
                 .usb0_dev()
                 .disable() // USB not used
-                .fc0()
-                .disable() // FLEXCOMM0..4, 6..7 not used (only FC5/I2C5 is)
+                // .fc0()
+                // .disable() // FLEXCOMM0..4, 6..7 not used (only FC5/I2C5 and FC0 (spi) are)
                 .fc1()
                 .disable()
                 .fc2()
