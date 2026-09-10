@@ -301,30 +301,31 @@ mod app {
     #[task(binds = CTIMER0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
     fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
         (c.shared.contactless, c.shared.perf_timer).lock(|contactless, _perf_timer| {
-            if let Some(contactless) = contactless.as_mut() {
-                c.shared.wait_extender.lock(|wait_extender| {
-                    // clear the interrupt
-                    wait_extender.cancel().ok();
-                    #[cfg(not(feature = "no-delog"))]
-                    if let nfc_device::either::Either::B(ref dev) = &contactless.device {
-                        NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+            let Some(mut contactless) = contactless.as_mut() else {
+                return;
+            };
+            c.shared.wait_extender.lock(|wait_extender| {
+                // clear the interrupt
+                wait_extender.cancel().ok();
+                #[cfg(not(feature = "no-delog"))]
+                if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                    NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                }
+                // info!("<{}", _perf_timer.elapsed().0 / 100);
+                let status = contactless.poll_wait_extensions();
+                match status {
+                    nfc_device::Iso14443Status::Idle => {}
+                    nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
+                        wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
                     }
-                    // info!("<{}", _perf_timer.elapsed().0 / 100);
-                    let status = contactless.poll_wait_extensions();
-                    match status {
-                        nfc_device::Iso14443Status::Idle => {}
-                        nfc_device::Iso14443Status::ReceivedData(milliseconds) => {
-                            wait_extender.start(Microseconds::try_from(milliseconds).unwrap());
-                        }
-                    }
-                    #[cfg(not(feature = "no-delog"))]
-                    if let nfc_device::either::Either::B(ref dev) = &contactless.device {
-                        NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
-                    }
+                }
+                #[cfg(not(feature = "no-delog"))]
+                if let nfc_device::either::Either::B(ref dev) = &contactless.device {
+                    NFC_IRQ_QUEUE.enqueue(dev.irq_is_high()).ok();
+                }
 
-                    // info!(" {}>", _perf_timer.elapsed().0 / 100);
-                });
-            }
+                // info!(" {}>", _perf_timer.elapsed().0 / 100);
+            });
         });
     }
 
