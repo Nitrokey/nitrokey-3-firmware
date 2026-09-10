@@ -23,7 +23,7 @@ use boards::{
     Apps, Trussed,
 };
 use embedded_hal::{
-    blocking::i2c::{Read, Write},
+    blocking::i2c::{Read, Write, WriteRead},
     timer::{Cancel, CountDown},
 };
 use hal::{
@@ -214,9 +214,8 @@ fn nfc_pull_down(
     let using_old_nfc = nfc_id_pin.is_high().unwrap();
     iocon.set_gpio_pio0_0_mode(GpioMode::PullDown);
 
+    // expected to work only with old NFC chip
     let is_passive = nfc_irq.is_low().ok().unwrap();
-    error!("IS PASSIVE: {is_passive}");
-    let is_passive = true;
 
     NfcUse {
         is_passive,
@@ -265,19 +264,93 @@ impl Stage0 {
             .expect("Clock configuration failed")
     }
 
+    fn reconfigure_clocks(
+        &mut self,
+        clocks: clocks::Clocks,
+        is_nfc_passive: bool,
+    ) -> clocks::Clocks {
+        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
+        unsafe {
+            hal::ClockRequirements::default()
+                .system_frequency(frequency)
+                .reconfigure(
+                    clocks,
+                    &mut self.peripherals.pmc,
+                    &mut self.peripherals.syscon,
+                )
+        }
+    }
+
+    fn setup_i2c(
+        &mut self,
+        flexcomm5: Flexcomm5<Unknown>,
+        clocks: &clocks::Clocks,
+        iocon: &mut hal::Iocon<Enabled>,
+        freq: hal::time::Hertz,
+    ) -> I2C {
+        let token = clocks.support_flexcomm_token().unwrap();
+        let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
+        let scl = pins::Pio0_9::take().unwrap().into_i2c5_scl_pin(iocon);
+        let sda = pins::Pio1_14::take().unwrap().into_i2c5_sda_pin(iocon);
+        hal::I2cMaster::new(i2c, (scl, sda), freq)
+    }
+
+    /// Ask the FM11NT082C whether it currently sees an RF field.
+    fn nfc_field_present(i2c: &mut I2C) -> bool {
+        const I2C_ADDR: u8 = 0x57;
+        const NFC_STATUS: [u8; 2] = 0xFFF3u16.to_be_bytes();
+        const NFC_RX: u8 = 1 << 1;
+        const NFC_ACTIVE: u8 = 1 << 4;
+        for _ in 0..3 {
+            let mut status = [0u8];
+            if i2c.write_read(I2C_ADDR, &NFC_STATUS, &mut status).is_ok() {
+                return status[0] & NFC_RX != 0;
+            }
+            //if i2c.write_read(I2C_ADDR, &NFC_STATUS, &mut status).is_ok() {
+            //    return status[0] & NFC_ACTIVE != 0;
+            //}
+        }
+        false
+    }
+
     #[inline(never)]
     pub fn next(
         mut self,
         iocon: hal::Iocon<Unknown>,
         gpio: hal::Gpio<Unknown>,
         wwdt: WWDT,
+        flexcomm5: Flexcomm5<Unknown>,
     ) -> Stage1 {
         let mut iocon = iocon.enabled(&mut self.peripherals.syscon);
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
-        let nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
+        let mut nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
+        let mut clocks = self.enable_clocks(true);
 
-        let clocks = self.enable_clocks(nfc_use.is_passive);
+        let mut i2c = self.setup_i2c(
+            flexcomm5,
+            &clocks,
+            &mut iocon,
+            hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
+        );
+        if !nfc_use.using_old_nfc {
+            nfc_use.is_passive = Self::nfc_field_present(&mut i2c);
+        }
+        info!(
+            "NFC USE: is_passive {}, is_old {}",
+            nfc_use.is_passive, nfc_use.using_old_nfc
+        );
+
+        if nfc_use.is_passive {
+            let (i2c_raw, pins) = i2c.release();
+            i2c = hal::I2cMaster::new(
+                i2c_raw,
+                pins,
+                hal::time::Hertz::try_from(1_000u32.kHz()).unwrap(),
+            );
+        } else {
+            clocks = self.reconfigure_clocks(clocks, false);
+        }
 
         let wwdt = (!nfc_use.is_passive).then(|| {
             let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
@@ -304,6 +377,7 @@ impl Stage0 {
             status: self.status,
             peripherals: self.peripherals,
             clocks,
+            i2c,
             wwdt,
         }
     }
@@ -314,28 +388,11 @@ pub struct Stage1 {
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
+    i2c: I2C,
     wwdt: MaybeEnabledWwdt,
 }
 
 impl Stage1 {
-    fn reconfigure_clocks(
-        &mut self,
-        clocks: clocks::Clocks,
-        is_nfc_passive: bool,
-    ) -> clocks::Clocks {
-        // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
-        unsafe {
-            hal::ClockRequirements::default()
-                .system_frequency(frequency)
-                .reconfigure(
-                    clocks,
-                    &mut self.peripherals.pmc,
-                    &mut self.peripherals.syscon,
-                )
-        }
-    }
-
     fn validate_cfpa(
         pfr: &mut Pfr<Enabled>,
         current_version_maybe: Option<u32>,
@@ -495,6 +552,7 @@ impl Stage1 {
             peripherals: self.peripherals,
             clocks: self.clocks,
             se050_timer: Some(se050_timer),
+            i2c: Some(self.i2c),
             basic,
             wwdt: self.wwdt,
         }
@@ -508,6 +566,7 @@ pub struct Stage2 {
     clocks: Clocks,
     basic: Basic,
     se050_timer: Option<Timer<ctimer::Ctimer2<Enabled>>>,
+    i2c: Option<I2C>,
     wwdt: MaybeEnabledWwdt,
 }
 
@@ -606,43 +665,20 @@ impl Stage2 {
         Some(iso14443)
     }
 
-    fn get_se050_i2c(&mut self, flexcomm5: Flexcomm5<Unknown>, is_nfc_passive: bool) -> I2C {
-        // SE050 check
-        if !is_nfc_passive {
-            let _enabled = pins::Pio1_26::take()
-                .unwrap()
-                .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
-                .into_output_high();
-
-            self.basic.delay_timer.start(100_000.microseconds());
-            nb::block!(self.basic.delay_timer.wait()).ok();
-        }
-
-        let token = self.clocks.clocks.support_flexcomm_token().unwrap();
-        let i2c = flexcomm5.enabled_as_i2c(&mut self.peripherals.syscon, &token);
-        let scl = pins::Pio0_9::take()
-            .unwrap()
-            .into_i2c5_scl_pin(&mut self.clocks.iocon);
-        let sda = pins::Pio1_14::take()
-            .unwrap()
-            .into_i2c5_sda_pin(&mut self.clocks.iocon);
-
-        let i2c_freq = if is_nfc_passive {
-            1_000u32.kHz()
-        } else {
-            100u32.kHz()
-        };
-
-        let mut i2c = hal::I2cMaster::new(
-            i2c,
-            (scl, sda),
-            hal::time::Hertz::try_from(i2c_freq).unwrap(),
-        );
-
+    /// Enable and check the SE050; the bus itself was set up in `Stage0`.
+    fn get_se050_i2c(&mut self, mut i2c: I2C, is_nfc_passive: bool) -> I2C {
         // Don't perform SE050 checks if powered through NFC
         if is_nfc_passive {
             return i2c;
         }
+
+        let _enabled = pins::Pio1_26::take()
+            .unwrap()
+            .into_gpio_pin(&mut self.clocks.iocon, &mut self.clocks.gpio)
+            .into_output_high();
+
+        self.basic.delay_timer.start(100_000.microseconds());
+        nb::block!(self.basic.delay_timer.wait()).ok();
 
         self.basic.delay_timer.start(100_000.microseconds());
         nb::block!(self.basic.delay_timer.wait()).ok();
@@ -808,7 +844,6 @@ impl Stage2 {
     pub fn next(
         mut self,
         flexcomm0: Flexcomm0<Unknown>,
-        flexcomm5: Flexcomm5<Unknown>,
         mux: InputMux<Unknown>,
         pint: Pint<Unknown>,
         nfc_enabled: bool,
@@ -817,7 +852,8 @@ impl Stage2 {
         let (mut nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         *nfc_rq.callback_mut() = || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6);
 
-        let se050_i2c = self.get_se050_i2c(flexcomm5, self.nfc_use.is_passive);
+        let i2c = self.i2c.take().unwrap();
+        let se050_i2c = self.get_se050_i2c(i2c, self.nfc_use.is_passive);
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
         let (se050_i2c, nfc, spi) = if use_nfc {

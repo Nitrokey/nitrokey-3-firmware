@@ -21,7 +21,7 @@ pub fn init(
     let boot_to_bootrom = true;
 
     init::start(hal.syscon, hal.pmc, hal.anactrl)
-        .next(hal.iocon, hal.gpio, hal.wwdt)
+        .next(hal.iocon, hal.gpio, hal.wwdt, hal.flexcomm.5)
         .next(
             hal.ctimer.0,
             hal.ctimer.1,
@@ -33,13 +33,7 @@ pub fn init(
             require_prince,
             boot_to_bootrom,
         )
-        .next(
-            hal.flexcomm.0,
-            hal.flexcomm.5,
-            hal.inputmux,
-            hal.pint,
-            nfc_enabled,
-        )
+        .next(hal.flexcomm.0, hal.inputmux, hal.pint, nfc_enabled)
         .next(hal.rng, hal.prince, hal.flash)
         .next(&mut resources.store)
         .next(hal.rtc)
