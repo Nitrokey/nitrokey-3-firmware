@@ -111,29 +111,7 @@ struct NfcUse {
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
 }
 
-impl NfcUse {
-    fn refresh(&mut self, iocon: &hal::Iocon<Enabled>) -> bool {
-        let Some(nfc_irq) = &mut self.nfc_irq else {
-            panic!("Refresh should only happen once and nfc irq should still be available");
-        };
-        let old_is_passive = self.is_passive;
-        self.is_passive = nfc_irq.is_low().ok().unwrap();
-        self.using_old_nfc = self.nfc_id_pin.is_high().unwrap();
-
-        iocon.set_gpio_pio0_0_mode(GpioMode::Inactive);
-
-        // ext. flash power
-        if self.is_passive {
-            iocon.set_gpio_pio0_21_mode(GpioMode::PullDown);
-        } else {
-            iocon.set_gpio_pio0_21_mode(GpioMode::PullUp);
-        }
-
-        self.is_passive != old_is_passive
-    }
-}
-
-/// Reduce power draw pulling down all gpios
+/// Reuce power draw pulling down all gpios
 ///
 /// This function also reads the board ID pin (pio0_0) to detect
 /// which nfc chip is in use
@@ -327,6 +305,18 @@ impl Stage0 {
         let mut nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
         let mut clocks = self.enable_clocks(true);
 
+        let wwdt = (!nfc_use.is_passive).then(|| {
+            let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
+            // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
+            const TIMER_COUNT: u32 =
+                (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
+            wwdt.set_timer(TIMER_COUNT).unwrap();
+            wwdt.set_warning(0b1_1111_1111).unwrap();
+            let wwdt = wwdt.set_resetting().set_enabled();
+            debug_now!("Wwdt tv: {:?}", wwdt.timer());
+            wwdt
+        });
+
         let mut i2c = self.setup_i2c(
             flexcomm5,
             &clocks,
@@ -351,18 +341,6 @@ impl Stage0 {
         } else {
             clocks = self.reconfigure_clocks(clocks, false);
         }
-
-        let wwdt = (!nfc_use.is_passive).then(|| {
-            let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
-            // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
-            const TIMER_COUNT: u32 =
-                (1_000_000 / (4 * 64) * boards::WATCHDOG_DURATION_SECONDS) as u32;
-            wwdt.set_timer(TIMER_COUNT).unwrap();
-            wwdt.set_warning(0b1_1111_1111).unwrap();
-            let wwdt = wwdt.set_resetting().set_enabled();
-            debug_now!("Wwdt tv: {:?}", wwdt.timer());
-            wwdt
-        });
 
         let clocks = Clocks {
             clocks,
@@ -506,14 +484,6 @@ impl Stage1 {
         perf_timer.start(60_000_000.microseconds());
 
         let mut rgb = self.init_rgb(ctimer3);
-
-        // self.nfc_use.refresh(&self.clocks.iocon);
-        // self.clocks.clocks = self.reconfigure_clocks(self.clocks.clocks, self.nfc_use.is_passive);
-
-        info!(
-            "After refresh: NFC USE: is_passive {}, is_old {}",
-            self.nfc_use.is_passive, self.nfc_use.using_old_nfc
-        );
 
         let mut three_buttons = if !self.nfc_use.is_passive {
             Some(self.init_buttons(ctimer1))
@@ -859,6 +829,7 @@ impl Stage2 {
         let (se050_i2c, nfc, spi) = if use_nfc {
             let nfc = if self.nfc_use.using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
+                se050_i2c.release();
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
             } else {
                 self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
