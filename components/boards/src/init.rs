@@ -147,8 +147,9 @@ pub fn init_usb_nfc<B: Board>(
 
     /* claim interchanges */
     let (mut ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    let (mut ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
     *ccid_rq.callback_mut() = nfc_callback;
+    *ctaphid_rq.callback_mut() = nfc_callback;
 
     /* initialize dispatchers */
     let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);
