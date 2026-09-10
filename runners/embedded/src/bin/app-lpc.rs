@@ -337,7 +337,9 @@ mod app {
             c.shared.wait_extender,
         )
             .lock(|contactless, perf_timer, wait_extender| {
-                let contactless = contactless.as_mut().unwrap();
+                let Some(contactless) = contactless.as_mut() else {
+                    return;
+                };
                 let _starttime = perf_timer.elapsed().0 / 100;
 
                 #[cfg(not(feature = "no-delog"))]
