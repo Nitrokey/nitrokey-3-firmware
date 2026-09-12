@@ -5,6 +5,7 @@ use nrf52840_hal::{
     wdt::{self, count::One, handles::Hdl0, Watchdog, WatchdogHandle},
 };
 use nrf52840_pac::{power::RESETREAS, Interrupt, SCB, WDT};
+use usb_device::bus::UsbBusAllocator;
 
 use super::{Soc, Uuid};
 use crate::WATCHDOG_DURATION_SECONDS;
@@ -107,13 +108,12 @@ pub type UsbClockType = Clocks<
     nrf52840_hal::clocks::Internal,
     nrf52840_hal::clocks::LfOscStarted,
 >;
-type UsbBusType = usb_device::bus::UsbBusAllocator<<Nrf52 as Soc>::UsbBus>;
 
 pub fn setup_usb_bus(
     static_usb_clock: &'static mut Option<UsbClockType>,
     clock: nrf52840_pac::CLOCK,
     usb_pac: nrf52840_pac::USBD,
-) -> UsbBusType {
+) -> UsbBusAllocator<<Nrf52 as Soc>::UsbBus> {
     let usb_clock = static_usb_clock.insert(Clocks::new(clock).start_lfclk().enable_ext_hfosc());
 
     usb_pac.intenset.write(|w| {
@@ -129,7 +129,7 @@ pub fn setup_usb_bus(
             .set_bit()
     });
 
-    Usbd::new(UsbPeripheral::new(usb_pac, usb_clock))
+    UsbBusAllocator::new(Usbd::new(UsbPeripheral::new(usb_pac, usb_clock)))
 }
 
 #[derive(Debug)]
@@ -151,15 +151,15 @@ pub fn reset_reason(reset_reason: &RESETREAS) -> ResetReason {
     debug_now!("Reset Reason: {:b}", reset_reason.read().bits());
     let read = reset_reason.read();
     let res = ResetReason {
-        resetpin: read.resetpin().bits(),
-        dog: read.dog().bits(),
-        sreq: read.sreq().bits(),
-        lockup: read.lockup().bits(),
-        off: read.off().bits(),
-        lpcomp: read.lpcomp().bits(),
-        dif: read.dif().bits(),
-        nfc: read.nfc().bits(),
-        vbus: read.vbus().bits(),
+        resetpin: read.resetpin().bit(),
+        dog: read.dog().bit(),
+        sreq: read.sreq().bit(),
+        lockup: read.lockup().bit(),
+        off: read.off().bit(),
+        lpcomp: read.lpcomp().bit(),
+        dif: read.dif().bit(),
+        nfc: read.nfc().bit(),
+        vbus: read.vbus().bit(),
     };
     reset_reason.write(|w| w);
     res

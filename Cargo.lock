@@ -168,7 +168,7 @@ dependencies = [
  "cbor-smol",
  "ctaphid-app",
  "delog",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "fido-authenticator",
  "heapless 0.9.1",
  "heapless-bytes",
@@ -373,7 +373,7 @@ dependencies = [
  "cortex-m-semihosting",
  "ctaphid-dispatch",
  "delog",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "embedded-storage",
  "embedded-time",
  "fm11nc08",
@@ -764,7 +764,7 @@ dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
  "critical-section",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "volatile-register",
 ]
 
@@ -1138,6 +1138,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-hal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
+
+[[package]]
+name = "embedded-io"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
+
+[[package]]
 name = "embedded-runner-lib"
 version = "1.9.0-rc.1"
 dependencies = [
@@ -1149,7 +1161,7 @@ dependencies = [
  "cortex-m-rtic",
  "delog",
  "embedded-alloc",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "interchange",
  "littlefs2-core",
  "littlefs2-sys",
@@ -1325,7 +1337,7 @@ name = "fm11nc08"
 version = "0.1.0"
 dependencies = [
  "delog",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "embedded-time",
  "nb 1.1.0",
  "nfc-device",
@@ -1599,6 +1611,16 @@ dependencies = [
  "rustc_version 0.4.1",
  "serde",
  "spin",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "heapless"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
+dependencies = [
+ "hash32 0.3.1",
  "stable_deref_trait",
 ]
 
@@ -2045,15 +2067,15 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5eeac224f2ed643cdd682ad20ed018af5c08963a5667906d658eb18f3b8c44"
+checksum = "8e651ffb6312614667ee2f95557d4420a1daaf33f5a57d4c38ce1a4a090b120b"
 dependencies = [
  "block-buffer",
  "cipher",
  "cortex-m",
  "digest",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "embedded-time",
  "generic-array 1.3.3",
  "littlefs2",
@@ -2170,15 +2192,17 @@ dependencies = [
 
 [[package]]
 name = "nrf-hal-common"
-version = "0.15.1"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "089242b8b729622099054dcb5518e9eac80bcf6a7e30091c7cfa043383e9998c"
+checksum = "0c134de1f2f0191aed3fc24d3831da8808d1e636b06edf81a5717103095f625d"
 dependencies = [
  "cast",
  "cfg-if",
  "cortex-m",
  "embedded-dma",
- "embedded-hal",
+ "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
+ "embedded-io",
  "embedded-storage",
  "fixed",
  "nb 1.1.0",
@@ -2190,31 +2214,31 @@ dependencies = [
 
 [[package]]
 name = "nrf-usbd"
-version = "0.1.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "945a178131ac5f69941dadb0d51c8e17cbe34cc09a0e2d51c099160a463751b8"
+checksum = "aedf862f941154442271ae9914777bd1c93f6d2e0dc9db4cafa160e55ffb9085"
 dependencies = [
  "cortex-m",
+ "critical-section",
  "usb-device",
  "vcell",
 ]
 
 [[package]]
 name = "nrf52840-hal"
-version = "0.15.1"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c090616930ef132c1f7e9f9a964f6c8c5aa8962e402cc5abbbde7ce16ce9a0"
+checksum = "433cfd866da18dfc58376880bdebd092c130444837debc513f44edcd0d6a6558"
 dependencies = [
- "embedded-hal",
  "nrf-hal-common",
  "nrf52840-pac",
 ]
 
 [[package]]
 name = "nrf52840-pac"
-version = "0.11.0"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9efa9d1e910e3b825fd7e28f369363a8e036b386b77e21035b9f0e510de199cf"
+checksum = "30713f36f1be02e5bc9abefa30eae4a1f943d810f199d4923d3ad062d1be1b3d"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
@@ -2511,6 +2535,12 @@ dependencies = [
  "opaque-debug",
  "universal-hash",
 ]
+
+[[package]]
+name = "portable-atomic"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05c8b63e8d9609db387f0324918f81d68fe27748f084ef092fb35954d0539a85"
 
 [[package]]
 name = "postcard"
@@ -2865,16 +2895,16 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "se05x"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d33abe6f15b9695e82eef4d45391dd476d1011b54914fa314e3d27c68a59e79a"
+checksum = "f162e79d801093f7767892639c0c385947a19889b8dfb2851c160881242a3fec"
 dependencies = [
  "aes",
  "bitflags 2.9.4",
  "cmac",
  "crc16",
  "delog",
- "embedded-hal",
+ "embedded-hal 0.2.7",
  "heapless 0.9.1",
  "hex-literal 0.4.1",
  "iso7816",
@@ -3196,7 +3226,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f94caf9e6bd5673e05be1a3f4113b85cdc7976a1ac8bc2763731ae5a4acee4a9"
 dependencies = [
  "bitflags 1.3.2",
- "embedded-hal",
+ "embedded-hal 0.2.7",
 ]
 
 [[package]]
@@ -3768,9 +3798,8 @@ dependencies = [
 
 [[package]]
 name = "trussed-usbip"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f097fde89905249b0530e502b90e3b83392eb6c909bb5b4a60b9718d1bda536a"
+version = "0.2.0"
+source = "git+https://github.com/trussed-dev/pc-usbip-runner.git?branch=usb-device-v0.3#82776c7e0a95f7d2c518ab11508d014b6916645c"
 dependencies = [
  "apdu-dispatch",
  "ctaphid-dispatch",
@@ -3888,15 +3917,19 @@ dependencies = [
 
 [[package]]
 name = "usb-device"
-version = "0.2.9"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
+checksum = "98816b1accafbb09085168b90f27e93d790b4bfa19d883466b5e53315b5f06a6"
+dependencies = [
+ "heapless 0.8.0",
+ "portable-atomic",
+]
 
 [[package]]
 name = "usbd-ccid"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8acbc8d41fe1b6dc92347f5988a44252fc9e2511f7cb312fa23e9eee186bfdd3"
+checksum = "58fb96f99caab23718dbb9ef7aaea53e5f890fafe0e4af802c78e7b91fc95c46"
 dependencies = [
  "delog",
  "embedded-time",
@@ -3907,9 +3940,9 @@ dependencies = [
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c527a4840bcb38299924c7a6b0c31f95a89172bdfb4577c515315ce9b097f15a"
+checksum = "35793a1b9c6ae908defdef01fab01a4192e5415ca0609b56c778e5751cf64adb"
 dependencies = [
  "ctaphid-dispatch",
  "delog",
@@ -3924,9 +3957,9 @@ dependencies = [
 
 [[package]]
 name = "usbip-device"
-version = "0.1.5"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
+checksum = "6b2d89f80e9ecc1c37503b9c67be21f5c16d5205b2a6134470f67668207140aa"
 dependencies = [
  "bitflags 1.3.2",
  "log",

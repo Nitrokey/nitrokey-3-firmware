@@ -1,4 +1,5 @@
-use nrf52840_hal::{gpio::Level, pac, prelude::InputPin, pwm, pwm::Pwm};
+use embedded_hal::digital::v2::InputPin;
+use nrf52840_hal::{gpio::Level, pac, pwm, pwm::Pwm};
 use trussed_core::types::consent;
 
 use super::OutPin;

@@ -378,6 +378,10 @@ version = "0.14.5"
 criteria = "safe-to-run"
 
 [[exemptions.heapless]]
+version = "0.8.0"
+criteria = "safe-to-run"
+
+[[exemptions.heapless]]
 version = "0.9.1"
 criteria = "safe-to-run"
 
@@ -457,16 +461,32 @@ criteria = "safe-to-run"
 version = "0.15.1"
 criteria = "safe-to-run"
 
+[[exemptions.nrf-hal-common]]
+version = "0.18.0"
+criteria = "safe-to-run"
+
 [[exemptions.nrf-usbd]]
 version = "0.1.0"
+criteria = "safe-to-run"
+
+[[exemptions.nrf-usbd]]
+version = "0.3.0"
 criteria = "safe-to-run"
 
 [[exemptions.nrf52840-hal]]
 version = "0.15.1"
 criteria = "safe-to-run"
 
+[[exemptions.nrf52840-hal]]
+version = "0.18.0"
+criteria = "safe-to-run"
+
 [[exemptions.nrf52840-pac]]
 version = "0.11.0"
+criteria = "safe-to-run"
+
+[[exemptions.nrf52840-pac]]
+version = "0.12.2"
 criteria = "safe-to-run"
 
 [[exemptions.num-bigint-dig]]
@@ -531,6 +551,10 @@ criteria = "safe-to-run"
 
 [[exemptions.polyval]]
 version = "0.6.2"
+criteria = "safe-to-run"
+
+[[exemptions.portable-atomic]]
+version = "1.15.0"
 criteria = "safe-to-run"
 
 [[exemptions.postcard]]
@@ -789,8 +813,8 @@ criteria = "safe-to-run"
 version = "0.2.9"
 criteria = "safe-to-run"
 
-[[exemptions.usbip-device]]
-version = "0.1.5"
+[[exemptions.usb-device]]
+version = "0.3.2"
 criteria = "safe-to-run"
 
 [[exemptions.valuable]]
