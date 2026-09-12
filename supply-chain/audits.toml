@@ -92,6 +92,13 @@ trusted-publisher = "github:Nitrokey/se05x"
 start = "2025-09-25"
 end = "2027-06-17"
 
+[[wildcard-audits.se05x]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:Nitrokey/se05x"
+start = "2025-09-25"
+end = "2027-09-12"
+
 [[wildcard-audits.trussed-auth]]
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
@@ -200,6 +207,11 @@ delta = "0.2.3 -> 0.2.4"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.1.8"
+
+[[audits.embedded-hal]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+version = "1.0.0"
 
 [[audits.flexiber]]
 who = "Robin Krahl <robin@nitrokey.com>"
@@ -322,6 +334,11 @@ version = "0.5.0-rc.1"
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.1.0-rc.1"
+
+[[audits.usbip-device]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.2.0"
 
 [[audits.version_check]]
 who = "Sosthène Guédon <sosthene@nitrokey.com>"

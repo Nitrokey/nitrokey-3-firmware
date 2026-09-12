@@ -39,7 +39,6 @@ secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "
 
 # patches
 trussed-usbip = { git = "https://github.com/trussed-dev/pc-usbip-runner.git", branch = "usb-device-v0.3" }
-se05x = { git = "https://github.com/Nitrokey/se05x.git", branch = "lpc-hal-v0.7" }
 
 [profile.release]
 codegen-units = 1

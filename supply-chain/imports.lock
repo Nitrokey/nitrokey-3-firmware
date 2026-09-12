@@ -76,13 +76,13 @@ when = "2026-06-22"
 trusted-publisher = "github:trussed-dev/littlefs2-sys"
 
 [[publisher.lpc55-hal]]
-version = "0.6.0"
-when = "2026-07-15"
+version = "0.7.0"
+when = "2026-08-24"
 trusted-publisher = "github:lpc55/lpc55-hal"
 
 [[publisher.se05x]]
-version = "0.4.1"
-when = "2026-07-23"
+version = "0.4.2"
+when = "2026-09-09"
 trusted-publisher = "github:Nitrokey/se05x"
 
 [[publisher.trussed]]
@@ -155,11 +155,6 @@ version = "0.5.0"
 when = "2026-07-23"
 trusted-publisher = "github:trussed-dev/trussed-staging"
 
-[[publisher.trussed-usbip]]
-version = "0.1.0"
-when = "2026-07-23"
-trusted-publisher = "github:trussed-dev/pc-usbip-runner"
-
 [[publisher.trussed-wrap-key-to-file]]
 version = "0.3.0"
 when = "2026-03-23"
@@ -187,13 +182,13 @@ user-login = "Manishearth"
 user-name = "Manish Goregaokar"
 
 [[publisher.usbd-ccid]]
-version = "0.4.0"
-when = "2026-03-25"
+version = "0.5.0"
+when = "2026-08-24"
 trusted-publisher = "github:trussed-dev/usbd-ccid"
 
 [[publisher.usbd-ctaphid]]
-version = "0.4.0"
-when = "2026-03-25"
+version = "0.5.0"
+when = "2026-08-24"
 trusted-publisher = "github:trussed-dev/usbd-ctaphid"
 
 [[publisher.utf8_iter]]
@@ -244,6 +239,18 @@ who = "Chris Fallin <chris@cfallin.org>"
 criteria = "safe-to-deploy"
 version = "0.7.10"
 notes = "No unsafe code aside from transmutes for transparent newtypes."
+
+[[audits.bytecode-alliance.audits.embedded-io]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+notes = "No `unsafe` code and only uses `std` in ways one would expect the crate to do so."
+
+[[audits.bytecode-alliance.audits.embedded-io]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.0 -> 0.6.1"
+notes = "Major updates, but almost all safe code. Lots of pruning/deletions, nothing out of the ordrinary."
 
 [[audits.bytecode-alliance.audits.futures]]
 who = "Joel Dice <joel.dice@gmail.com>"

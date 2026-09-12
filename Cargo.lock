@@ -2896,7 +2896,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "se05x"
 version = "0.4.2"
-source = "git+https://github.com/Nitrokey/se05x.git?branch=lpc-hal-v0.7#d409c0d602226d3ec1faf7aec92409481d04d8d4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f162e79d801093f7767892639c0c385947a19889b8dfb2851c160881242a3fec"
 dependencies = [
  "aes",
  "bitflags 2.9.4",
