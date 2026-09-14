@@ -31,8 +31,8 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.ctap-types]]
-version = "0.6.0-rc.4"
-when = "2026-06-01"
+version = "0.5.0"
+when = "2026-03-25"
 trusted-publisher = "github:trussed-dev/ctap-types"
 
 [[publisher.ctaphid-app]]
@@ -46,8 +46,8 @@ when = "2026-03-23"
 trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
 
 [[publisher.fido-authenticator]]
-version = "0.4.0-rc.3"
-when = "2026-06-01"
+version = "0.3.0"
+when = "2026-03-26"
 trusted-publisher = "github:trussed-dev/fido-authenticator"
 
 [[publisher.heapless-bytes]]
