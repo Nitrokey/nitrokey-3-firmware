@@ -317,28 +317,42 @@ impl Stage0 {
             wwdt
         });
 
-        let mut i2c = self.setup_i2c(
-            flexcomm5,
-            &clocks,
-            &mut iocon,
-            hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
-        );
-        if !nfc_use.using_old_nfc {
+        // FC5/I2C shared: SE050 + new (board) NFC chip (FM11NT08C), bring up:
+        // - new board: always (field detection now, FM11NT08C / SE050 later)
+        // - old board: only when USB-powered (SE050 check)
+        let i2c = if !nfc_use.using_old_nfc {
+            let mut i2c = self.setup_i2c(
+                flexcomm5,
+                &clocks,
+                &mut iocon,
+                hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
+            );
             nfc_use.is_passive = Self::nfc_field_present(&mut i2c);
-        }
+            if nfc_use.is_passive {
+                let (i2c_raw, pins) = i2c.release();
+                i2c = hal::I2cMaster::new(
+                    i2c_raw,
+                    pins,
+                    hal::time::Hertz::try_from(1_000u32.kHz()).unwrap(),
+                );
+            }
+            Some(i2c)
+        } else if !nfc_use.is_passive {
+            Some(self.setup_i2c(
+                flexcomm5,
+                &clocks,
+                &mut iocon,
+                hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
+            ))
+        } else {
+            None
+        };
         info!(
             "NFC USE: is_passive {}, is_old {}",
             nfc_use.is_passive, nfc_use.using_old_nfc
         );
 
-        if nfc_use.is_passive {
-            let (i2c_raw, pins) = i2c.release();
-            i2c = hal::I2cMaster::new(
-                i2c_raw,
-                pins,
-                hal::time::Hertz::try_from(1_000u32.kHz()).unwrap(),
-            );
-        } else {
+        if !nfc_use.is_passive {
             clocks = self.reconfigure_clocks(clocks, false);
         }
 
@@ -366,7 +380,8 @@ pub struct Stage1 {
     status: InitStatus,
     peripherals: Peripherals,
     clocks: Clocks,
-    i2c: I2C,
+    /// `None` only for an old board powered through NFC, see [`Stage0::next`].
+    i2c: Option<I2C>,
     wwdt: MaybeEnabledWwdt,
 }
 
@@ -522,7 +537,7 @@ impl Stage1 {
             peripherals: self.peripherals,
             clocks: self.clocks,
             se050_timer: Some(se050_timer),
-            i2c: Some(self.i2c),
+            i2c: self.i2c,
             basic,
             wwdt: self.wwdt,
         }
@@ -822,22 +837,31 @@ impl Stage2 {
         let (mut nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         *nfc_rq.callback_mut() = || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6);
 
-        let i2c = self.i2c.take().unwrap();
-        let se050_i2c = self.get_se050_i2c(i2c, self.nfc_use.is_passive);
+        let is_passive = self.nfc_use.is_passive;
+        // `None` only for an old board powered through NFC (see `Stage0::next`).
+        let se050_i2c = self
+            .i2c
+            .take()
+            .map(|i2c| self.get_se050_i2c(i2c, is_passive));
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
         let (se050_i2c, nfc, spi) = if use_nfc {
             let nfc = if self.nfc_use.using_old_nfc {
                 let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-                se050_i2c.release();
+                // Only `Some` when USB-powered with the `provisioner` feature.
+                if let Some(i2c) = se050_i2c {
+                    i2c.release();
+                }
                 self.setup_fm11nc08(spi, mux, pint, nfc_rq)
             } else {
-                self.setup_fm11nt08c(se050_i2c, mux, pint, nfc_rq)
+                let i2c = se050_i2c.expect("I2C is always set up on the new board");
+                self.setup_fm11nt08c(i2c, mux, pint, nfc_rq)
             };
             self = self.periherals_to_reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
+            let se050_i2c = se050_i2c.expect("I2C is always set up when USB-powered");
             let se050_i2c = if self.nfc_use.using_old_nfc {
                 let timer = self.se050_timer.take().unwrap();
                 (se050_i2c, timer)
