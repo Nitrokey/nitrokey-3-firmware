@@ -29,10 +29,6 @@ notes = "relaxed to reduce initial efforts"
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
-[policy.opcard]
-audit-as-crates-io = false
-notes = "pinned to a reviewed revision"
-
 [policy.p256-cortex-m4]
 audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
@@ -47,10 +43,6 @@ criteria = "safe-to-run"
 
 [[exemptions.aes]]
 version = "0.8.4"
-criteria = "safe-to-run"
-
-[[exemptions.aes-gcm]]
-version = "0.10.3"
 criteria = "safe-to-run"
 
 [[exemptions.anstream]]
@@ -233,10 +225,6 @@ criteria = "safe-to-run"
 version = "0.1.12"
 criteria = "safe-to-run"
 
-[[exemptions.ctr]]
-version = "0.9.2"
-criteria = "safe-to-run"
-
 [[exemptions.dashmap]]
 version = "5.5.3"
 criteria = "safe-to-run"
@@ -339,14 +327,6 @@ criteria = "safe-to-run"
 
 [[exemptions.getrandom]]
 version = "0.2.16"
-criteria = "safe-to-run"
-
-[[exemptions.ghash]]
-version = "0.5.1"
-criteria = "safe-to-run"
-
-[[exemptions.glob]]
-version = "0.3.3"
 criteria = "safe-to-run"
 
 [[exemptions.group]]
@@ -527,10 +507,6 @@ criteria = "safe-to-run"
 
 [[exemptions.poly1305]]
 version = "0.8.0"
-criteria = "safe-to-run"
-
-[[exemptions.polyval]]
-version = "0.6.2"
 criteria = "safe-to-run"
 
 [[exemptions.postcard]]
@@ -795,10 +771,6 @@ criteria = "safe-to-run"
 
 [[exemptions.valuable]]
 version = "0.1.1"
-criteria = "safe-to-run"
-
-[[exemptions.version_check]]
-version = "0.9.5"
 criteria = "safe-to-run"
 
 [[exemptions.volatile-register]]
