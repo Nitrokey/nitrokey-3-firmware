@@ -228,6 +228,7 @@ pub fn init_apps<B: Board>(
     let runner = Runner {
         uuid: *soc.uuid(),
         is_efs_available: !nfc_powered,
+        is_nfc_powered: nfc_powered,
         _marker: Default::default(),
     };
     let data = Data {
