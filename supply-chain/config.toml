@@ -49,10 +49,6 @@ criteria = "safe-to-run"
 version = "0.8.4"
 criteria = "safe-to-run"
 
-[[exemptions.aes-gcm]]
-version = "0.10.3"
-criteria = "safe-to-run"
-
 [[exemptions.anstream]]
 version = "0.6.20"
 criteria = "safe-to-run"
@@ -233,10 +229,6 @@ criteria = "safe-to-run"
 version = "0.1.12"
 criteria = "safe-to-run"
 
-[[exemptions.ctr]]
-version = "0.9.2"
-criteria = "safe-to-run"
-
 [[exemptions.dashmap]]
 version = "5.5.3"
 criteria = "safe-to-run"
@@ -341,13 +333,9 @@ criteria = "safe-to-run"
 version = "0.2.16"
 criteria = "safe-to-run"
 
-[[exemptions.ghash]]
-version = "0.5.1"
-criteria = "safe-to-run"
-
 [[exemptions.glob]]
 version = "0.3.3"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.group]]
 version = "0.13.0"
@@ -549,13 +537,9 @@ criteria = "safe-to-run"
 version = "0.8.0"
 criteria = "safe-to-run"
 
-[[exemptions.polyval]]
-version = "0.6.2"
-criteria = "safe-to-run"
-
 [[exemptions.portable-atomic]]
 version = "1.15.0"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.postcard]]
 version = "0.7.3"
