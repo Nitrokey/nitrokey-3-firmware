@@ -82,6 +82,7 @@ pub trait Board {
 pub struct Runner<B> {
     pub uuid: Uuid,
     pub is_efs_available: bool,
+    pub is_nfc_powered: bool,
     pub _marker: PhantomData<B>,
 }
 
@@ -98,6 +99,10 @@ impl<B: Board> apps::Runner for Runner<B> {
 
     fn is_efs_available(&self) -> bool {
         self.is_efs_available
+    }
+
+    fn is_nfc_powered(&self) -> bool {
+        self.is_nfc_powered
     }
 }
 

@@ -337,6 +337,7 @@ pub trait Runner {
 
     fn uuid(&self) -> [u8; 16];
     fn is_efs_available(&self) -> bool;
+    fn is_nfc_powered(&self) -> bool;
 }
 
 pub struct Data<R: Runner> {
@@ -549,6 +550,7 @@ impl<R: Runner> Apps<R> {
 
         let (admin, init_status) = Self::admin_app(runner, trussed_service, client_builder, admin);
 
+        let is_nfc_powered = runner.is_nfc_powered();
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
         let config_has_error = init_status.contains(InitStatus::CONFIG_ERROR);
@@ -557,17 +559,19 @@ impl<R: Runner> Apps<R> {
         // the backend to use (se050 or software).  Therefore we disable the app if a config
         // error occured.
         #[cfg(feature = "opcard")]
-        let opcard = (!config_has_error && migrated_successfully)
+        let opcard = (!is_nfc_powered && !config_has_error && migrated_successfully)
             .then(|| App::new(runner, client_builder, (), &admin.config().opcard));
         #[cfg(feature = "fido-authenticator")]
         let fido = migrated_successfully
             .then(|| App::new(runner, client_builder, fido, &admin.config().fido));
 
         #[cfg(feature = "secrets-app")]
-        let oath = migrated_successfully.then(|| App::new(runner, client_builder, (), &()));
+        let oath = (!is_nfc_powered && migrated_successfully)
+            .then(|| App::new(runner, client_builder, (), &()));
 
         #[cfg(feature = "piv-authenticator")]
-        let piv = migrated_successfully.then(|| App::new(runner, client_builder, (), &()));
+        let piv = (!is_nfc_powered && migrated_successfully)
+            .then(|| App::new(runner, client_builder, (), &()));
 
         #[cfg(feature = "provisioner-app")]
         let provisioner = App::new(runner, client_builder, provisioner, &());
