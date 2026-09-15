@@ -3,7 +3,7 @@ mod ui;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
-use apps::{AdminData, Apps, Dispatch, FidoData, Variant};
+use apps::{AdminData, Apps, Dispatch, FidoData, Model, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
@@ -190,7 +190,14 @@ fn exec(
     platform.user_interface().set_inner(ui);
 
     let data = apps::Data {
-        admin: AdminData::new(store, Variant::Usbip, VERSION, VERSION_STRING),
+        admin: AdminData::new(
+            store,
+            Variant::Usbip,
+            Model::NK3,
+            1,
+            VERSION,
+            VERSION_STRING,
+        ),
         fido: FidoData {
             has_nfc: false,
             max_message_size: DEFAULT_MESSAGE_SIZE,

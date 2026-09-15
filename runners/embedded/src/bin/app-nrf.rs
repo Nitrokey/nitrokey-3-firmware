@@ -73,6 +73,7 @@ mod app {
         }
 
         let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR);
+        let board = NK3AM::new(soc);
 
         let wdt_parts = nrf52::init_watchdog(ctx.device.WDT);
 
@@ -138,7 +139,7 @@ mod app {
         );
 
         let (apps, endpoints) = boards::init::init_apps(
-            &soc,
+            &board,
             &mut trussed,
             init_status,
             &store,

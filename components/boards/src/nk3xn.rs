@@ -1,3 +1,5 @@
+use apps::Model;
+use embedded_hal::digital::v2::InputPin as _;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
 #[cfg(feature = "se050")]
@@ -5,13 +7,14 @@ use embedded_time::duration::Microseconds;
 #[cfg(feature = "se050")]
 use lpc55_hal::drivers::Timer;
 use lpc55_hal::{
-    drivers::pins::{Pio0_9, Pio1_14},
+    drivers::pins::{Pio0_0, Pio0_9, Pio1_14},
     peripherals::{ctimer, flexcomm::I2c5},
     typestates::{
         init_state::Unknown,
         pin::{
             function::{FC5_CTS_SDA_SSEL0, FC5_TXD_SCL_MISO_WS},
-            state::Special,
+            gpio::direction,
+            state::{Gpio, Special},
         },
     },
     I2cMaster, Pin,
@@ -53,7 +56,19 @@ pub type I2C = I2cMaster<
     ),
 >;
 
-pub struct NK3xN;
+pub struct NK3xN {
+    lpc55: Lpc55,
+    revision: Revision,
+}
+
+impl NK3xN {
+    pub fn new(revision: Revision) -> Self {
+        Self {
+            lpc55: Lpc55::new(),
+            revision,
+        }
+    }
+}
 
 impl Board for NK3xN {
     type Soc = Lpc55;
@@ -77,7 +92,16 @@ impl Board for NK3xN {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "nk3xn";
+    const MODEL: Model = Model::NK3;
     const HAS_NFC: bool = true;
+
+    fn soc(&self) -> &Self::Soc {
+        &self.lpc55
+    }
+
+    fn revision(&self) -> u8 {
+        self.revision.into()
+    }
 }
 
 pub type InternalFlashStorage = InternalFilesystem;
@@ -94,5 +118,41 @@ where
     fn delay_us(&mut self, delay: u32) {
         self.0.start(Microseconds::new(delay));
         nb::block!(self.0.wait()).unwrap();
+    }
+}
+
+/// NK3xN hardware revision.
+///
+/// Differences between revisions:
+/// - R1:
+///   - NFC chip: FM11NC08 (SPI)
+///   - board identification (GPIO):
+///     - P0_0: floating
+/// - R2:
+///   - NFC chip: FM11NT082C (I2C)
+///   - board identification (PGIO):
+///     - P0_0: GND
+#[derive(Clone, Copy)]
+pub enum Revision {
+    R1,
+    R2,
+}
+
+impl Revision {
+    pub fn detect(p0_0: &Pin<Pio0_0, Gpio<direction::Input>>) -> Self {
+        if p0_0.is_high().unwrap() {
+            Self::R1
+        } else {
+            Self::R2
+        }
+    }
+}
+
+impl From<Revision> for u8 {
+    fn from(revision: Revision) -> Self {
+        match revision {
+            Revision::R1 => 1,
+            Revision::R2 => 2,
+        }
     }
 }

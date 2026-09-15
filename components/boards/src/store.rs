@@ -286,7 +286,7 @@ mod tests {
         soc::Soc,
         ui::{buttons::UserPresence, rgb_led::RgbLed, Clock},
     };
-    use apps::Reboot;
+    use apps::{Model, Reboot};
     use cortex_m::interrupt::InterruptNumber;
     use embedded_time::duration::Milliseconds;
     use littlefs2::{path, path::PathBuf};
@@ -294,6 +294,7 @@ mod tests {
     use usb_device::bus::UsbBus;
 
     struct TestBoard<EfsStorage> {
+        soc: TestSoc,
         __: PhantomData<EfsStorage>,
     }
     struct TestSoc;
@@ -500,7 +501,13 @@ mod tests {
 
         const BOARD_NAME: &'static str = "Dummy board";
 
+        const MODEL: Model = Model::NK3;
+
         const HAS_NFC: bool = false;
+
+        fn soc(&self) -> &Self::Soc {
+            &self.soc
+        }
     }
 
     #[test]

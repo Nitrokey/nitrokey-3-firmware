@@ -21,7 +21,7 @@ pub mod nkpk;
 
 use core::marker::PhantomData;
 
-use apps::Dispatch;
+use apps::{Dispatch, Model};
 use littlefs2::{
     driver::Storage,
     fs::{Allocation, Filesystem},
@@ -63,7 +63,14 @@ pub trait Board {
     type Twi: 'static;
 
     const BOARD_NAME: &'static str;
+    const MODEL: Model;
     const HAS_NFC: bool;
+
+    fn soc(&self) -> &Self::Soc;
+
+    fn revision(&self) -> u8 {
+        1
+    }
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         let _ = ifs;
