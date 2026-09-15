@@ -1,4 +1,7 @@
-use core::time::Duration;
+use core::{
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 
 use super::{Soc, Uuid};
 use crate::ui::Clock;
@@ -13,6 +16,8 @@ use lpc55_hal::{
 };
 
 pub mod monotonic;
+
+pub static BOOTLOADER_REQUESTED: AtomicBool = AtomicBool::new(false);
 
 type UsbPeripheral = lpc55_hal::peripherals::usbhs::EnabledUsbhsDevice;
 
@@ -55,8 +60,11 @@ impl apps::Reboot for Lpc55 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
-    fn reboot_to_firmware_update() -> ! {
-        lpc55_hal::boot_to_bootrom()
+    fn reboot_to_firmware_update() {
+        // lpc55_hal::boot_to_bootrom may not be called from an interrupt, so we have to set this
+        // flag that is checked by the idle task
+        info_now!("Reboot to bootloader requested");
+        BOOTLOADER_REQUESTED.store(true, Ordering::Relaxed);
     }
     fn reboot_to_firmware_update_destructive() -> ! {
         // Erasing the first flash page & rebooting will keep processor in bootrom persistently.

@@ -32,6 +32,7 @@ memory-regions = { path = "components/memory-regions" }
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
+admin-app = { git = "https://github.com/trussed-dev/admin-app.git", branch = "reboot" }
 interchange = { git = "https://github.com/sosthene-nitrokey/interchange.git", rev = "3dd20626c26627f58dbbf25dc0359a00916b7a0e" }
 lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal.git", rev = "4737305a0b5d36539403bf115a9eb377497e29b6" }
 
