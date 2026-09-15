@@ -97,6 +97,8 @@ mod app {
         wwdt: nk3xn::init::MaybeEnabledWwdt,
         /// The endpoints that are polled by the Trussed service.
         endpoints: Endpoints,
+        /// Keep polling the dispatchers from idle instead of sleeping.
+        busy_idle: bool,
     }
 
     // TODO: replace
@@ -118,6 +120,7 @@ mod app {
             endpoints,
             wwdt,
             sysclk_hz,
+            busy_idle,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
@@ -147,6 +150,7 @@ mod app {
         let local = LocalResources {
             wwdt,
             endpoints,
+            busy_idle,
             apdu_dispatch: usb_nfc.apdu_dispatch,
             ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
             apps,
@@ -154,10 +158,10 @@ mod app {
         (shared, local, init::Monotonics(systick.into()))
     }
 
-    #[idle(shared = [usb_classes], local = [wwdt])]
+    #[idle(shared = [usb_classes], local = [wwdt, busy_idle])]
     fn idle(c: idle::Context) -> ! {
         let idle::SharedResources { mut usb_classes } = c.shared;
-        let idle::LocalResources { wwdt } = c.local;
+        let idle::LocalResources { wwdt, busy_idle } = c.local;
 
         info_now!("inside IDLE, initial SP = {:08X}", super::msp());
         loop {
@@ -184,7 +188,12 @@ mod app {
             // dispatchers; nothing else needs to run between events.
             #[cfg(not(feature = "no-delog"))]
             boards::init::Delogger::flush();
-            cortex_m::asm::wfi();
+            if *busy_idle {
+                // Old chip on NFC power: poll the dispatchers continuously.
+                rtic::pend(Interrupt::PIN_INT6);
+            } else {
+                cortex_m::asm::wfi();
+            }
         }
     }
 

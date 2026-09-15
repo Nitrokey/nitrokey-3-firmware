@@ -1289,6 +1289,7 @@ impl Stage6 {
             usb_nfc,
             wwdt: self.wwdt,
             sysclk_hz: system_frequency_mhz(&self.nfc_use) * 1_000_000,
+            busy_idle: self.nfc_use.is_passive && self.nfc_use.using_old_nfc,
         }
     }
 }
@@ -1301,6 +1302,7 @@ pub struct All {
     pub endpoints: Endpoints,
     pub wwdt: MaybeEnabledWwdt,
     pub sysclk_hz: u32,
+    pub busy_idle: bool,
 }
 
 #[inline(never)]
