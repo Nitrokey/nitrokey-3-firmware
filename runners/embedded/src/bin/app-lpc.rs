@@ -111,7 +111,7 @@ mod app {
             endpoints,
             wwdt,
         } = nk3xn::init(c.device, c.core, c.local.resources, || {
-            let _ = poll_apps::spawn();
+            rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6);
         });
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
@@ -183,7 +183,7 @@ mod app {
         }
     }
 
-    #[task(local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
+    #[task(binds = PIN_INT6, local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
     fn poll_apps(mut c: poll_apps::Context) {
         let (usb_activity, nfc_activity) = runtime::poll_dispatchers(
             &mut c.local.apdu_dispatch,
