@@ -8,6 +8,7 @@ pub fn init(
     device_peripherals: lpc55_hal::raw::Peripherals,
     core_peripherals: rtic::export::Peripherals,
     resources: &'static mut Resources<NK3xN>,
+    nfc_task_callback: interchange::Callback,
 ) -> init::All {
     const SECURE_FIRMWARE_VERSION: u32 = VERSION.encode();
 
@@ -21,9 +22,8 @@ pub fn init(
     let boot_to_bootrom = true;
 
     init::start(hal.syscon, hal.pmc, hal.anactrl)
-        .next(hal.iocon, hal.gpio, hal.wwdt)
+        .next(hal.iocon, hal.gpio, hal.wwdt, hal.flexcomm.5)
         .next(
-            hal.adc,
             hal.ctimer.0,
             hal.ctimer.1,
             hal.ctimer.2,
@@ -34,15 +34,9 @@ pub fn init(
             require_prince,
             boot_to_bootrom,
         )
-        .next(
-            hal.flexcomm.0,
-            hal.flexcomm.5,
-            hal.inputmux,
-            hal.pint,
-            nfc_enabled,
-        )
+        .next(hal.flexcomm.0, hal.inputmux, hal.pint, nfc_enabled)
         .next(hal.rng, hal.prince, hal.flash)
         .next(&mut resources.store)
         .next(hal.rtc)
-        .next(&mut resources.usb, hal.usbhs)
+        .next(&mut resources.usb, hal.usbhs, nfc_task_callback)
 }

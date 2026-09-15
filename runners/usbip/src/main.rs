@@ -125,6 +125,10 @@ impl apps::Runner for Runner {
     fn is_efs_available(&self) -> bool {
         true
     }
+
+    fn is_nfc_powered(&self) -> bool {
+        false
+    }
 }
 
 fn main() {

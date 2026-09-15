@@ -4,6 +4,7 @@
 extern crate delog;
 generate_macros!();
 
+pub mod either;
 pub mod traits;
 pub mod types;
 

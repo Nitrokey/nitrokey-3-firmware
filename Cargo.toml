@@ -14,8 +14,16 @@ version = "1.9.0-rc.1"
 
 [workspace.dependencies]
 littlefs2 = "0.8"
+lpc55-hal = "0.7"
+lpc55-pac = "0.5"
+nrf52840-hal = "0.18"
+nrf52840-pac = "0.12"
 trussed = { version = "0.2", default-features = false }
 trussed-core = "0.2"
+trussed-usbip = { version = "0.2", default-features = false }
+usb-device = "0.3"
+usbd-ccid = "0.5"
+usbd-ctaphid = "0.5"
 
 [patch.crates-io]
 # components
@@ -24,10 +32,8 @@ memory-regions = { path = "components/memory-regions" }
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
 
-# applications
-opcard = { git = "https://github.com/Nitrokey/opcard-rs", tag = "v1.8.0" }
-piv-authenticator = { git = "https://github.com/trussed-dev/piv-authenticator.git", tag = "v0.6.0" }
-secrets-app = { git = "https://github.com/Nitrokey/trussed-secrets-app", tag = "v0.15.0" }
+interchange = { git = "https://github.com/sosthene-nitrokey/interchange.git", rev = "3dd20626c26627f58dbbf25dc0359a00916b7a0e" }
+lpc55-hal = { git = "https://github.com/lpc55/lpc55-hal.git", rev = "4737305a0b5d36539403bf115a9eb377497e29b6" }
 
 [profile.release]
 codegen-units = 1

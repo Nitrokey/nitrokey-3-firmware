@@ -18,7 +18,8 @@ use trussed::store::Store as _;
 use trussed_core::InterruptFlag;
 use usb_device::{
     bus::UsbBusAllocator,
-    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
+    descriptor::lang_id::LangID,
+    device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
@@ -133,6 +134,7 @@ const USB_VENDOR_ID: u16 = 0x20A0;
 
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
+    nfc_callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
@@ -145,8 +147,10 @@ pub fn init_usb_nfc<B: Board>(
     static CTAP_INTERRUPT: OptionRefSwap<'static, InterruptFlag> = OptionRefSwap::new(None);
 
     /* claim interchanges */
-    let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
-    let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    let (mut ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
+    let (mut ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
+    *ccid_rq.callback_mut() = nfc_callback;
+    *ctaphid_rq.callback_mut() = nfc_callback;
 
     /* initialize dispatchers */
     let apdu_dispatch = ApduDispatch::new(ccid_rp, nfc_rp);
@@ -166,11 +170,15 @@ pub fn init_usb_nfc<B: Board>(
             .implements_wink();
 
         let vidpid = UsbVidPid(USB_VENDOR_ID, usb_product_id);
-        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
+        let strings = StringDescriptors::new(LangID::EN)
             .product(usb_product)
-            .manufacturer(USB_MANUFACTURER)
+            .manufacturer(USB_MANUFACTURER);
+        let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
+            .strings(&[strings])
+            .expect("failed to set USB string descriptors")
             .device_release(version.usb_release())
             .max_packet_size_0(64)
+            .expect("invalid max packet size for EP0")
             .composite_with_iads()
             .build();
 
@@ -225,6 +233,7 @@ pub fn init_apps<B: Board>(
     let runner = Runner {
         uuid: *soc.uuid(),
         is_efs_available: !nfc_powered,
+        is_nfc_powered: nfc_powered,
         _marker: Default::default(),
     };
     let data = Data {
