@@ -39,7 +39,7 @@ impl apps::Reboot for Nrf52 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
-    fn reboot_to_firmware_update() -> ! {
+    fn reboot_to_firmware_update() {
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
         pac.POWER.gpregret.write(|w| unsafe { w.bits(0xb1_u32) });
 

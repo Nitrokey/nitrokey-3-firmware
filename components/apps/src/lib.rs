@@ -1192,7 +1192,7 @@ impl<R: Runner> App<R> for PivApp<R> {
 #[cfg(feature = "provisioner-app")]
 pub struct ProvisionerData<R: Runner> {
     pub store: R::Store,
-    pub rebooter: fn() -> !,
+    pub rebooter: fn(),
 }
 
 #[cfg(feature = "provisioner-app")]
