@@ -899,7 +899,10 @@ impl Stage2 {
                 let i2c = se050_i2c.expect("I2C is always set up on the new board");
                 self.setup_fm11nt08c(i2c, mux, pint, nfc_rq)
             };
-            self = self.periherals_to_reduce_power_draw();
+            // old board: skip clock gating
+            if !self.nfc_use.using_old_nfc {
+                self = self.periherals_to_reduce_power_draw();
+            }
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
