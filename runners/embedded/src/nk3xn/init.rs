@@ -203,6 +203,49 @@ fn nfc_pull_down(
     }
 }
 
+/// sys freq: usb-powered
+const USB_SYSTEM_FREQUENCY_MHZ: u32 = 96;
+
+/// sys freq: during fs mount in passive mode
+const MOUNT_SYSTEM_FREQUENCY_MHZ: u32 = 48;
+
+/// sys freq: while powered from the NFC field
+///
+/// old board: FM11NC08 24 MHz (FRO96M / 4)
+/// new board: FM11NT08C 48 MHz
+fn passive_system_frequency_mhz(using_old_nfc: bool) -> u32 {
+    if using_old_nfc {
+        24
+    } else {
+        48
+    }
+}
+/// sys freq: generic
+fn system_frequency_mhz(nfc_use: &NfcUse) -> u32 {
+    if nfc_use.is_passive {
+        passive_system_frequency_mhz(nfc_use.using_old_nfc)
+    } else {
+        USB_SYSTEM_FREQUENCY_MHZ
+    }
+}
+
+/// sys freq: set only for passive mode
+fn set_passive_system_frequency(
+    nfc_use: &NfcUse,
+    clocks: &mut Clocks,
+    peripherals: &mut Peripherals,
+    frequency_mhz: u32,
+) {
+    if !nfc_use.is_passive {
+        return;
+    }
+    clocks.clocks = unsafe {
+        hal::ClockRequirements::default()
+            .system_frequency(frequency_mhz.MHz())
+            .reconfigure(clocks.clocks, &mut peripherals.pmc, &mut peripherals.syscon)
+    };
+}
+
 pub struct Stage0 {
     status: InitStatus,
     peripherals: Peripherals,
@@ -228,12 +271,9 @@ impl Stage0 {
         nfc_use
     }
 
-    fn enable_clocks(&mut self, is_nfc_passive: bool) -> clocks::Clocks {
-        // Start out with slow clock if in passive mode;
-        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
-        // let frequency = 4.MHz();
+    fn enable_clocks(&mut self, frequency_mhz: u32) -> clocks::Clocks {
         hal::ClockRequirements::default()
-            .system_frequency(frequency)
+            .system_frequency(frequency_mhz.MHz())
             .configure(
                 &mut self.peripherals.anactrl,
                 &mut self.peripherals.pmc,
@@ -242,15 +282,10 @@ impl Stage0 {
             .expect("Clock configuration failed")
     }
 
-    fn reconfigure_clocks(
-        &mut self,
-        clocks: clocks::Clocks,
-        is_nfc_passive: bool,
-    ) -> clocks::Clocks {
-        let frequency = if is_nfc_passive { 48.MHz() } else { 96.MHz() };
+    fn reconfigure_clocks(&mut self, clocks: clocks::Clocks, frequency_mhz: u32) -> clocks::Clocks {
         unsafe {
             hal::ClockRequirements::default()
-                .system_frequency(frequency)
+                .system_frequency(frequency_mhz.MHz())
                 .reconfigure(
                     clocks,
                     &mut self.peripherals.pmc,
@@ -303,7 +338,11 @@ impl Stage0 {
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
         let mut nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
-        let mut clocks = self.enable_clocks(true);
+        let mut clocks = self.enable_clocks(if nfc_use.using_old_nfc {
+            system_frequency_mhz(&nfc_use)
+        } else {
+            passive_system_frequency_mhz(false)
+        });
 
         let wwdt = (!nfc_use.is_passive).then(|| {
             let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
@@ -353,7 +392,7 @@ impl Stage0 {
         );
 
         if !nfc_use.is_passive {
-            clocks = self.reconfigure_clocks(clocks, false);
+            clocks = self.reconfigure_clocks(clocks, USB_SYSTEM_FREQUENCY_MHZ);
         }
 
         let clocks = Clocks {
@@ -1004,6 +1043,12 @@ impl Stage4 {
 
         // TODO: poll iso14443
         let simulated_efs = external.is_ram();
+        set_passive_system_frequency(
+            &self.nfc_use,
+            &mut self.clocks,
+            &mut self.peripherals,
+            MOUNT_SYSTEM_FREQUENCY_MHZ,
+        );
         let store = store::init_store(
             resources,
             internal,
@@ -1014,17 +1059,12 @@ impl Stage4 {
         // info!("mount end {} ms", self.basic.perf_timer.elapsed().0 / 1000);
 
         // return to slow freq
-        if self.nfc_use.is_passive {
-            self.clocks.clocks = unsafe {
-                hal::ClockRequirements::default()
-                    .system_frequency(48.MHz())
-                    .reconfigure(
-                        self.clocks.clocks,
-                        &mut self.peripherals.pmc,
-                        &mut self.peripherals.syscon,
-                    )
-            };
-        }
+        set_passive_system_frequency(
+            &self.nfc_use,
+            &mut self.clocks,
+            &mut self.peripherals,
+            passive_system_frequency_mhz(self.nfc_use.using_old_nfc),
+        );
 
         Stage5 {
             nfc_use: self.nfc_use,
@@ -1238,6 +1278,7 @@ impl Stage6 {
             endpoints,
             usb_nfc,
             wwdt: self.wwdt,
+            sysclk_hz: system_frequency_mhz(&self.nfc_use) * 1_000_000,
         }
     }
 }
@@ -1249,6 +1290,7 @@ pub struct All {
     pub apps: Apps<NK3xN>,
     pub endpoints: Endpoints,
     pub wwdt: MaybeEnabledWwdt,
+    pub sysclk_hz: u32,
 }
 
 #[inline(never)]

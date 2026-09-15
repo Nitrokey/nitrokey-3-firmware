@@ -117,6 +117,7 @@ mod app {
             apps,
             endpoints,
             wwdt,
+            sysclk_hz,
         } = nk3xn::init(c.device, c.core, c.local.resources);
         let perf_timer = basic.perf_timer;
         let wait_extender = basic.delay_timer;
@@ -128,13 +129,7 @@ mod app {
         }
 
         let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
-        let sysclk_hz = if usb_nfc.usb_classes.is_some() {
-            // Match the actual system clock so `spawn_after` durations come out
-            // as real milliseconds: passive mode runs at 24 MHz, USB mode at 96 MHz.
-            96_000_000
-        } else {
-            48_000_000
-        };
+        // actual system clock
         let systick = Systick::new(systick, sysclk_hz);
 
         debug_now!("Reset from watchdog: {}", was_reset_from_wwdt);
