@@ -1,3 +1,4 @@
+use apps::Model;
 use littlefs2::{
     fs::{Allocation, Filesystem},
     io::Result as LfsResult,
@@ -37,7 +38,15 @@ type OutPin = Pin<Output<PushPull>>;
 
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NK3AM;
 
-pub struct NK3AM;
+pub struct NK3AM {
+    nrf52: Nrf52,
+}
+
+impl NK3AM {
+    pub fn new(nrf52: Nrf52) -> Self {
+        Self { nrf52 }
+    }
+}
 
 impl Board for NK3AM {
     type Soc = Nrf52;
@@ -61,7 +70,12 @@ impl Board for NK3AM {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NK3AM";
+    const MODEL: Model = Model::NK3;
     const HAS_NFC: bool = false;
+
+    fn soc(&self) -> &Self::Soc {
+        &self.nrf52
+    }
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         ifs.format_journal_blocks();

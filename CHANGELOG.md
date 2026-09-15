@@ -9,6 +9,7 @@
   - piv-authenticator v0.7.0
   - secrets-app v0.16.0
 - Revert fido-authenticator to v0.3.0
+- admin-app: Add model and board revision to status
 
 ## v1.9.0-rc.1 (2026-06-01)
 

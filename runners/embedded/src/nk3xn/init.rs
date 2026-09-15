@@ -11,7 +11,7 @@ use boards::{
         nfc::{self, NfcChip},
         prince,
         spi::{self, FlashCs, FlashCsPin, Spi, SpiConfig},
-        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, I2C,
+        ButtonsTimer, InternalFlashStorage, NK3xN, PwmTimer, Revision, I2C,
     },
     soc::{lpc55::Lpc55, Soc},
     store::{self, RunnerStore, StoreResources},
@@ -106,8 +106,7 @@ struct NfcUse {
     ///
     /// If yes, we assume we're being powered by it
     is_passive: bool,
-    using_old_nfc: bool,
-    nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
+    revision: Revision,
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
 }
 
@@ -192,7 +191,7 @@ fn nfc_board(
     // wait for gpio to settle
     cortex_m::asm::delay(2_000);
 
-    let using_old_nfc = nfc_id_pin.is_high().unwrap();
+    let revision = Revision::detect(&nfc_id_pin);
     iocon.set_gpio_pio0_0_mode(GpioMode::PullDown);
 
     // expected to work only with old NFC chip
@@ -200,8 +199,7 @@ fn nfc_board(
 
     NfcUse {
         is_passive,
-        using_old_nfc,
-        nfc_id_pin,
+        revision,
         nfc_irq: Some(nfc_irq),
     }
 }
@@ -214,19 +212,18 @@ const MOUNT_SYSTEM_FREQUENCY_MHZ: u32 = 48;
 
 /// sys freq: while powered from the NFC field
 ///
-/// old board: FM11NC08 24 MHz (FRO96M / 4)
-/// new board: FM11NT08C 48 MHz
-fn passive_system_frequency_mhz(using_old_nfc: bool) -> u32 {
-    if using_old_nfc {
-        24
-    } else {
-        48
+/// R1: FM11NC08 24 MHz (FRO96M / 4)
+/// R2: FM11NT08C 48 MHz
+fn passive_system_frequency_mhz(revision: Revision) -> u32 {
+    match revision {
+        Revision::R1 => 24,
+        Revision::R2 => 48,
     }
 }
 /// sys freq: generic
 fn system_frequency_mhz(nfc_use: &NfcUse) -> u32 {
     if nfc_use.is_passive {
-        passive_system_frequency_mhz(nfc_use.using_old_nfc)
+        passive_system_frequency_mhz(nfc_use.revision)
     } else {
         USB_SYSTEM_FREQUENCY_MHZ
     }
@@ -271,8 +268,8 @@ impl Stage0 {
 
         let nfc_use = nfc_board(nfc_id_pin, nfc_irq, iocon);
 
-        // old board: pull-downs break the FM11NC08 transmit path
-        if !nfc_use.using_old_nfc {
+        // R1: pull-downs break the FM11NC08 transmit path
+        if let Revision::R2 = nfc_use.revision {
             //pull_down_unused_pins(iocon);
         }
 
@@ -346,10 +343,9 @@ impl Stage0 {
         let mut gpio = gpio.enabled(&mut self.peripherals.syscon);
 
         let mut nfc_use = self.enable_low_speed_for_passive_nfc(&mut iocon, &mut gpio);
-        let mut clocks = self.enable_clocks(if nfc_use.using_old_nfc {
-            system_frequency_mhz(&nfc_use)
-        } else {
-            passive_system_frequency_mhz(false)
+        let mut clocks = self.enable_clocks(match nfc_use.revision {
+            Revision::R1 => system_frequency_mhz(&nfc_use),
+            Revision::R2 => passive_system_frequency_mhz(Revision::R2),
         });
 
         let wwdt = (!nfc_use.is_passive).then(|| {
@@ -364,39 +360,47 @@ impl Stage0 {
             wwdt
         });
 
-        // FC5/I2C shared: SE050 + new (board) NFC chip (FM11NT08C), bring up:
-        // - new board: always (field detection now, FM11NT08C / SE050 later)
-        // - old board: only when USB-powered (SE050 check)
-        let i2c = if !nfc_use.using_old_nfc {
-            let mut i2c = self.setup_i2c(
-                flexcomm5,
-                &clocks,
-                &mut iocon,
-                hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
-            );
-            nfc_use.is_passive = Self::nfc_field_present(&mut i2c);
-            if nfc_use.is_passive {
-                let (i2c_raw, pins) = i2c.release();
-                i2c = hal::I2cMaster::new(
-                    i2c_raw,
-                    pins,
-                    hal::time::Hertz::try_from(1_000u32.kHz()).unwrap(),
-                );
+        // FC5/I2C shared: SE050 + R2 NFC chip (FM11NT08C), bring up:
+        // - R2: always (field detection now, FM11NT08C / SE050 later)
+        // - R1: only when USB-powered (SE050 check)
+        let i2c = match nfc_use.revision {
+            // In R1, we can detect the field using the NFC IRQ pin.
+            Revision::R1 => {
+                if nfc_use.is_passive {
+                    None
+                } else {
+                    Some(self.setup_i2c(
+                        flexcomm5,
+                        &clocks,
+                        &mut iocon,
+                        hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
+                    ))
+                }
             }
-            Some(i2c)
-        } else if !nfc_use.is_passive {
-            Some(self.setup_i2c(
-                flexcomm5,
-                &clocks,
-                &mut iocon,
-                hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
-            ))
-        } else {
-            None
+            // In R2, we need to query the field status from the chip.
+            Revision::R2 => {
+                let mut i2c = self.setup_i2c(
+                    flexcomm5,
+                    &clocks,
+                    &mut iocon,
+                    hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
+                );
+                nfc_use.is_passive = Self::nfc_field_present(&mut i2c);
+                if nfc_use.is_passive {
+                    let (i2c_raw, pins) = i2c.release();
+                    i2c = hal::I2cMaster::new(
+                        i2c_raw,
+                        pins,
+                        hal::time::Hertz::try_from(1_000u32.kHz()).unwrap(),
+                    );
+                }
+                Some(i2c)
+            }
         };
         info!(
-            "NFC USE: is_passive {}, is_old {}",
-            nfc_use.is_passive, nfc_use.using_old_nfc
+            "NFC USE: is_passive {}, revision {}",
+            nfc_use.is_passive,
+            u8::from(nfc_use.revision)
         );
 
         if !nfc_use.is_passive {
@@ -893,27 +897,31 @@ impl Stage2 {
 
         let use_nfc = nfc_enabled && (cfg!(feature = "provisioner") || self.nfc_use.is_passive);
         let (se050_i2c, nfc, spi) = if use_nfc {
-            let nfc = if self.nfc_use.using_old_nfc {
-                let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
-                // Only `Some` when USB-powered with the `provisioner` feature.
-                if let Some(i2c) = se050_i2c {
-                    i2c.release();
+            let nfc = match self.nfc_use.revision {
+                Revision::R1 => {
+                    let spi = self.setup_spi(flexcomm0, SpiConfig::Nfc);
+                    // Only `Some` when USB-powered with the `provisioner` feature.
+                    if let Some(i2c) = se050_i2c {
+                        i2c.release();
+                    }
+                    self.setup_fm11nc08(spi, mux, pint, nfc_rq)
                 }
-                self.setup_fm11nc08(spi, mux, pint, nfc_rq)
-            } else {
-                let i2c = se050_i2c.expect("I2C is always set up on the new board");
-                self.setup_fm11nt08c(i2c, mux, pint, nfc_rq)
+                Revision::R2 => {
+                    let i2c = se050_i2c.expect("I2C is always set up on R2");
+                    self.setup_fm11nt08c(i2c, mux, pint, nfc_rq)
+                }
             };
             self = self.periherals_to_reduce_power_draw();
             (None, nfc, None)
         } else {
             let spi = self.setup_spi(flexcomm0, SpiConfig::ExternalFlash);
             let se050_i2c = se050_i2c.expect("I2C is always set up when USB-powered");
-            let se050_i2c = if self.nfc_use.using_old_nfc {
-                let timer = self.se050_timer.take().unwrap();
-                (se050_i2c, timer)
-            } else {
-                self.configure_fm11nt08c(se050_i2c)
+            let se050_i2c = match self.nfc_use.revision {
+                Revision::R1 => {
+                    let timer = self.se050_timer.take().unwrap();
+                    (se050_i2c, timer)
+                }
+                Revision::R2 => self.configure_fm11nt08c(se050_i2c),
             };
             (Some(se050_i2c), None, Some(spi))
         };
@@ -1071,7 +1079,7 @@ impl Stage4 {
             &self.nfc_use,
             &mut self.clocks,
             &mut self.peripherals,
-            passive_system_frequency_mhz(self.nfc_use.using_old_nfc),
+            passive_system_frequency_mhz(self.nfc_use.revision),
         );
 
         Stage5 {
@@ -1247,7 +1255,7 @@ impl Stage6 {
     ) -> All {
         self.perform_data_migrations();
         let (apps, endpoints) = init::init_apps(
-            &Lpc55::new(),
+            &NK3xN::new(self.nfc_use.revision),
             &mut self.trussed,
             self.status,
             &self.store,
