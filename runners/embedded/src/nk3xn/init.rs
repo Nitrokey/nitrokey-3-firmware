@@ -629,7 +629,10 @@ impl Stage2 {
             &mut self.status,
         )?;
 
-        let iso14443 = Iso14443::new(nfc_device::either::Either::A(nfc), nfc_rq);
+        let mut iso14443 = Iso14443::new(nfc_device::either::Either::A(nfc), nfc_rq);
+        // Drain whatever the reader sent while we were booting; the chip's
+        // FIFO is only 32 bytes and interrupts are not enabled yet.
+        iso14443.poll();
         // Give a small delay to charge up capacitors
         // basic_stage.delay_timer.start(5_000.microseconds()); nb::block!(basic_stage.delay_timer.wait()).ok();
         Some(iso14443)
@@ -1065,6 +1068,13 @@ impl Stage4 {
             &mut self.peripherals,
             passive_system_frequency_mhz(self.nfc_use.using_old_nfc),
         );
+
+        // Same as after chip setup: service the old chip's FIFO after the mount.
+        if self.nfc_use.using_old_nfc {
+            if let Some(iso14443) = &mut self.nfc {
+                iso14443.poll();
+            }
+        }
 
         Stage5 {
             nfc_use: self.nfc_use,
