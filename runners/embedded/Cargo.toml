@@ -92,6 +92,12 @@ se050 = ["apps/se050", "boards/se050", "dep:se05x"]
 
 lpc55-hardware-checks = []
 
+nfc-debug = [
+    "log-infoP",
+    "boards/log-info", "boards/log-warn", "boards/log-error",
+    "nfc-device/log-debug", "nfc-device/log-info", "nfc-device/log-warn", "nfc-device/log-error",
+]
+
 log-all = ["boards/log-all"]
 log-trace = []
 log-debug = []

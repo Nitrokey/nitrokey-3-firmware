@@ -60,7 +60,7 @@ pub fn try_setup_old_chip(
         // info_now!("{:?}", fm.dump_eeprom() );
         // info_now!("{:?}", fm.dump_registers() );
 
-        info!("writing EEPROM");
+        info_now!("writing EEPROM");
 
         let r = fm.configure(
             Configuration {
@@ -90,7 +90,7 @@ pub fn try_setup_old_chip(
             return None;
         }
     } else {
-        info!("EEPROM already initialized.");
+        info_now!("EEPROM already initialized (reconfig {}).", reconfig);
     }
 
     // disable all interrupts except RxStart

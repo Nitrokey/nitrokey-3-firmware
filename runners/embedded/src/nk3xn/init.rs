@@ -269,7 +269,8 @@ impl Stage0 {
             .into_gpio_pin(iocon, gpio)
             .into_input();
 
-        let nfc_use = nfc_board(nfc_id_pin, nfc_irq, iocon);
+        let mut nfc_use = nfc_board(nfc_id_pin, nfc_irq, iocon);
+        nfc_use.is_passive = true;
 
         // old board: pull-downs break the FM11NC08 transmit path
         if !nfc_use.using_old_nfc {
