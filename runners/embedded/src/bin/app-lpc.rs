@@ -21,6 +21,8 @@ static NFC_IRQ_QUEUE: Queue<bool, 64> = Queue::new();
 
 #[rtic::app(device = lpc55_hal::raw, peripherals = true, dispatchers = [PLU, PIN_INT5, PIN_INT7])]
 mod app {
+    use core::sync::atomic::Ordering;
+
     #[cfg(not(feature = "no-delog"))]
     use super::NFC_IRQ_QUEUE;
     use apdu_dispatch::dispatch::ApduDispatch;
@@ -29,7 +31,7 @@ mod app {
         init::{CtaphidDispatch, Resources, UsbClasses},
         nk3xn::{nfc::NfcChip, NK3xN},
         runtime,
-        soc::lpc55::{self, monotonic::SystickMonotonic},
+        soc::lpc55::{self, monotonic::SystickMonotonic, BOOTLOADER_REQUESTED},
         Apps, Trussed,
     };
     use embedded_runner_lib::nk3xn;
@@ -167,6 +169,11 @@ mod app {
         loop {
             if let Some(wwdt) = wwdt {
                 wwdt.feed();
+            }
+
+            if BOOTLOADER_REQUESTED.load(Ordering::Relaxed) {
+                info_now!("Rebooting to bootloader");
+                lpc55_hal::boot_to_bootrom();
             }
 
             usb_classes.lock(|usb_classes| {

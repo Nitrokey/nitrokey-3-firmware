@@ -5,8 +5,7 @@ version = 4
 [[package]]
 name = "admin-app"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7fa8ae98cea36429dd011988bb249a89885d8756916e001693efaae449db49d"
+source = "git+https://github.com/trussed-dev/admin-app.git?branch=reboot#19773258d75c85e14c319ed57affe73fdf467643"
 dependencies = [
  "apdu-app",
  "cbor-smol",
