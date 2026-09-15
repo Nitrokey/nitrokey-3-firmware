@@ -61,6 +61,7 @@ mod app {
         boards::init::init_logger::<Board>(VERSION_STRING);
 
         let soc = nrf52::init_bootup(&ctx.device.FICR, &ctx.device.UICR);
+        let board = NKPK::new(soc);
 
         let reset_reason = nrf52::reset_reason(&ctx.device.POWER.resetreas);
         debug_now!("Reset Reason: {reset_reason:?}");
@@ -122,7 +123,7 @@ mod app {
             boards::init::init_trussed(&mut dev_rng, store, user_interface, &mut init_status);
 
         let (apps, endpoints) = boards::init::init_apps(
-            &soc,
+            &board,
             &mut trussed,
             init_status,
             &store,

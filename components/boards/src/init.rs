@@ -198,7 +198,7 @@ pub fn init_usb_nfc<B: Board>(
 }
 
 pub fn init_apps<B: Board>(
-    soc: &B::Soc,
+    board: &B,
     trussed: &mut Trussed<B>,
     init_status: InitStatus,
     store: &RunnerStore<B>,
@@ -206,7 +206,14 @@ pub fn init_apps<B: Board>(
     version: Version,
     version_string: &'static str,
 ) -> (Apps<B>, Endpoints) {
-    let mut admin = AdminData::new(*store, B::Soc::VARIANT, version, version_string);
+    let mut admin = AdminData::new(
+        *store,
+        B::Soc::VARIANT,
+        B::MODEL,
+        board.revision(),
+        version,
+        version_string,
+    );
     admin.init_status = init_status;
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
@@ -231,7 +238,7 @@ pub fn init_apps<B: Board>(
     };
 
     let runner = Runner {
-        uuid: *soc.uuid(),
+        uuid: *board.soc().uuid(),
         is_efs_available: !nfc_powered,
         is_nfc_powered: nfc_powered,
         _marker: Default::default(),
