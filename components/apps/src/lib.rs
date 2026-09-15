@@ -867,6 +867,21 @@ impl From<Variant> for u8 {
     }
 }
 
+#[derive(Copy, Clone)]
+pub enum Model {
+    NK3,
+    NKPK,
+}
+
+impl From<Model> for u8 {
+    fn from(model: Model) -> Self {
+        match model {
+            Model::NK3 => 0,
+            Model::NKPK => 1,
+        }
+    }
+}
+
 bitflags! {
     #[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
     pub struct InitStatus: u8 {
@@ -887,6 +902,8 @@ pub struct AdminData<R: Runner> {
     pub ifs_blocks: u8,
     pub efs_blocks: u16,
     pub variant: Variant,
+    pub model: Model,
+    pub revision: u8,
     pub version: Version,
     pub version_string: &'static str,
 }
@@ -895,6 +912,8 @@ impl<R: Runner> AdminData<R> {
     pub fn new(
         store: R::Store,
         variant: Variant,
+        model: Model,
+        revision: u8,
         version: Version,
         version_string: &'static str,
     ) -> Self {
@@ -904,6 +923,8 @@ impl<R: Runner> AdminData<R> {
             ifs_blocks: u8::MAX,
             efs_blocks: u16::MAX,
             variant,
+            model,
+            revision,
             version,
             version_string,
         }
@@ -915,18 +936,22 @@ pub struct AdminStatus {
     ifs_blocks: u8,
     efs_blocks: u16,
     variant: Variant,
+    model: Model,
+    revision: u8,
 }
 
 impl admin_app::StatusBytes for AdminStatus {
-    type Serialized = [u8; 5];
+    type Serialized = [u8; 7];
+
     fn set_random_error(&mut self, value: bool) {
         self.init_status.set(InitStatus::RNG_ERROR, value);
     }
+
     fn get_random_error(&self) -> bool {
         self.init_status.contains(InitStatus::RNG_ERROR)
     }
 
-    fn serialize(&self) -> [u8; 5] {
+    fn serialize(&self) -> [u8; 7] {
         let efs_blocks = self.efs_blocks.to_be_bytes();
         [
             self.init_status.bits(),
@@ -934,6 +959,8 @@ impl admin_app::StatusBytes for AdminStatus {
             efs_blocks[0],
             efs_blocks[1],
             self.variant.into(),
+            self.model.into(),
+            self.revision,
         ]
     }
 }
@@ -945,6 +972,8 @@ impl<R: Runner> AdminData<R> {
             ifs_blocks: self.ifs_blocks,
             efs_blocks: self.efs_blocks,
             variant: self.variant,
+            model: self.model,
+            revision: self.revision,
         }
     }
 }

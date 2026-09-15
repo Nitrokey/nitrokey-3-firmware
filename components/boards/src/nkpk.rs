@@ -1,3 +1,4 @@
+use apps::Model;
 use littlefs2::{fs::Allocation, io::Result as LfsResult};
 use memory_regions::MemoryRegions;
 use utils::RamStorage;
@@ -16,7 +17,15 @@ pub use nk3am::{init_pins, init_ui, power_handler};
 
 const MEMORY_REGIONS: &MemoryRegions = &MemoryRegions::NKPK;
 
-pub struct NKPK;
+pub struct NKPK {
+    nrf52: Nrf52,
+}
+
+impl NKPK {
+    pub fn new(nrf52: Nrf52) -> Self {
+        Self { nrf52 }
+    }
+}
 
 impl Board for NKPK {
     type Soc = Nrf52;
@@ -34,7 +43,12 @@ impl Board for NKPK {
     type Se050Timer = ();
 
     const BOARD_NAME: &'static str = "NKPK";
+    const MODEL: Model = Model::NKPK;
     const HAS_NFC: bool = false;
+
+    fn soc(&self) -> &Self::Soc {
+        &self.nrf52
+    }
 
     fn prepare_ifs(ifs: &mut Self::InternalStorage) {
         ifs.format_journal_blocks();
