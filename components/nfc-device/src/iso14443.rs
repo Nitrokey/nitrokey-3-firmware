@@ -423,7 +423,7 @@ where
         match self.interchange.state() {
             interchange::State::Responded => {
                 info!("could-send-from-wtx!");
-                self.poll()
+                Iso14443Status::ReceivedData(Milliseconds(WTX_CYCLE_MS))
             }
             interchange::State::Requested | interchange::State::BuildingResponse => {
                 self.send_wtx();

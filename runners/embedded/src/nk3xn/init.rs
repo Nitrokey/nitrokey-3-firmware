@@ -111,18 +111,8 @@ struct NfcUse {
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
 }
 
-/// Reuce power draw pulling down all gpios
-///
-/// This function also reads the board ID pin (pio0_0) to detect
-/// which nfc chip is in use
-fn nfc_pull_down(
-    nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
-    nfc_irq: Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
-    iocon: &hal::Iocon<Enabled>,
-) -> NfcUse {
-    // Put all unused pins in pulldown so that they're not drawing power by floating
-    iocon.set_gpio_pio0_0_mode(GpioMode::PullUp); // We use it later to determine the nfc chip version, it is then set to pull-down again
-    iocon.set_gpio_pio0_19_mode(GpioMode::PullUp); // We use it later to determine whether we're in an NFC field
+/// pull unused pins down
+fn pull_down_unused_pins(iocon: &hal::Iocon<Enabled>) {
     iocon.set_gpio_pio0_1_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_2_mode(GpioMode::PullDown);
     iocon.set_gpio_pio0_3_mode(GpioMode::PullDown);
@@ -188,6 +178,19 @@ fn nfc_pull_down(
     iocon.set_gpio_pio1_29_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_30_mode(GpioMode::PullDown);
     iocon.set_gpio_pio1_31_mode(GpioMode::PullDown);
+}
+
+/// setup and read nfc-irq and board-id
+fn nfc_board(
+    nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
+    nfc_irq: Pin<nfc::NfcIrqPin, Gpio<direction::Input>>,
+    iocon: &hal::Iocon<Enabled>,
+) -> NfcUse {
+    iocon.set_gpio_pio0_0_mode(GpioMode::PullUp);
+    iocon.set_gpio_pio0_19_mode(GpioMode::PullUp);
+
+    // wait for gpio to settle
+    cortex_m::asm::delay(2_000);
 
     let using_old_nfc = nfc_id_pin.is_high().unwrap();
     iocon.set_gpio_pio0_0_mode(GpioMode::PullDown);
@@ -265,8 +268,13 @@ impl Stage0 {
             .unwrap()
             .into_gpio_pin(iocon, gpio)
             .into_input();
-        // Need to enable pullup for NFC IRQ input.
-        let nfc_use = nfc_pull_down(nfc_id_pin, nfc_irq, iocon);
+
+        let nfc_use = nfc_board(nfc_id_pin, nfc_irq, iocon);
+
+        // old board: pull-downs break the FM11NC08 transmit path
+        if !nfc_use.using_old_nfc {
+            //pull_down_unused_pins(iocon);
+        }
 
         nfc_use
     }
