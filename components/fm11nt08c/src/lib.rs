@@ -134,10 +134,52 @@ fn addr_to_bytes(addr: u16) -> [u8; 2] {
     [b1, b2]
 }
 
-impl<I2C, IRQ: InputPin, Timer> Fm11nt082c<I2C, IRQ, Timer>
+pub fn is_field_present<I2C: I2CBus>(i2c: &mut I2C) -> bool {
+    struct I2CWrapper<'a, I2C>(&'a mut I2C);
+    impl<'a, I2C: I2CBus> Write for I2CWrapper<'a, I2C> {
+        type Error = <I2C as I2CBus>::BusError;
+        fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+            self.0.write(address, bytes)
+        }
+    }
+    impl<'a, I2C: I2CBus> Read for I2CWrapper<'a, I2C> {
+        type Error = <I2C as I2CBus>::BusError;
+        fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+            self.0.read(address, buffer)
+        }
+    }
+    impl<'a, I2C: I2CBus> WriteRead for I2CWrapper<'a, I2C> {
+        type Error = <I2C as I2CBus>::BusError;
+        fn write_read(
+            &mut self,
+            address: u8,
+            bytes: &[u8],
+            buffer: &mut [u8],
+        ) -> Result<(), Self::Error> {
+            self.0.write_read(address, bytes, buffer)
+        }
+    }
+
+    let mut device = Fm11nt082c {
+        i2c: I2CWrapper(i2c),
+        timer: (),
+        irq: (),
+        current_frame_size: 0,
+        offset: 0,
+        packet: [0; 256],
+    };
+    for _ in 0..3 {
+        let Ok(status) = device.read_register::<NfcStatus>() else {
+            continue;
+        };
+        return status.nfc_rx();
+    }
+    false
+}
+
+impl<I2C, IRQ, Timer> Fm11nt082c<I2C, IRQ, Timer>
 where
     I2C: I2CBus,
-    IRQ::Error: Debug,
 {
     pub fn new(i2c: I2C, irq: IRQ, timer: Timer) -> Self {
         Self {
@@ -148,10 +190,6 @@ where
             offset: 0,
             packet: [0; 256],
         }
-    }
-
-    pub fn irq_is_high(&self) -> bool {
-        self.irq.is_high().unwrap()
     }
 
     pub fn close(self) -> (I2C, IRQ, Timer) {
@@ -392,6 +430,15 @@ impl<I2C, IRQ: InputPin, Timer> Fm11nt082c<I2C, IRQ, Timer>
 where
     I2C: I2CBus,
     IRQ::Error: Debug,
+{
+    pub fn irq_is_high(&self) -> bool {
+        self.irq.is_high().unwrap()
+    }
+}
+
+impl<I2C, IRQ, Timer> Fm11nt082c<I2C, IRQ, Timer>
+where
+    I2C: I2CBus,
     Timer: CountDown<Time = Microseconds>,
 {
     /// Initialize the chip.

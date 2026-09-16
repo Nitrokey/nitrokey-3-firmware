@@ -23,7 +23,7 @@ use boards::{
     Apps, Trussed,
 };
 use embedded_hal::{
-    blocking::i2c::{Read, Write, WriteRead},
+    blocking::i2c::{Read, Write},
     timer::{Cancel, CountDown},
 };
 use hal::{
@@ -237,20 +237,6 @@ impl Stage0 {
         hal::I2cMaster::new(i2c, (scl, sda), freq)
     }
 
-    /// Ask the FM11NT082C whether it currently sees an RF field.
-    fn nfc_field_present(i2c: &mut I2C) -> bool {
-        const I2C_ADDR: u8 = 0x57;
-        const NFC_STATUS: [u8; 2] = 0xFFF3u16.to_be_bytes();
-        const NFC_RX: u8 = 1 << 1;
-        for _ in 0..3 {
-            let mut status = [0u8];
-            if i2c.write_read(I2C_ADDR, &NFC_STATUS, &mut status).is_ok() {
-                return status[0] & NFC_RX != 0;
-            }
-        }
-        false
-    }
-
     #[inline(never)]
     pub fn next(
         mut self,
@@ -308,7 +294,7 @@ impl Stage0 {
                     &mut iocon,
                     hal::time::Hertz::try_from(100u32.kHz()).unwrap(),
                 );
-                nfc_use.is_passive = Self::nfc_field_present(&mut i2c);
+                nfc_use.is_passive = nfc::detect_field_with_new_chip(&mut i2c);
                 if nfc_use.is_passive {
                     let (i2c_raw, pins) = i2c.release();
                     i2c = hal::I2cMaster::new(

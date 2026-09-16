@@ -134,3 +134,7 @@ pub fn try_setup_new(
 }
 
 pub type NfcChip = nfc_device::either::Either<OldNfcChip, NewNfcChip>;
+
+pub fn detect_field_with_new_chip(i2c: &mut crate::nk3xn::I2C) -> bool {
+    fm11nt08c::is_field_present(i2c)
+}
