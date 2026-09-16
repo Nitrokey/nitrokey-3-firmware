@@ -621,7 +621,7 @@ impl<R: Runner> Apps<R> {
             migrations: valid_migrators,
             reboot: data.reboot,
             reboot_to_firmware_update: data.reboot_to_firmware_update,
-            reboot_to_firmware_update_destructive: data.reboot_to_firmware_update_destructive,
+            reboot_to_firmware_update_destructive: None,
             locked: data.locked,
         };
 
@@ -907,7 +907,6 @@ pub struct AdminData<R: Runner> {
     pub version_string: &'static str,
     pub reboot: fn() -> !,
     pub reboot_to_firmware_update: fn(),
-    pub reboot_to_firmware_update_destructive: Option<fn() -> !>,
     pub locked: fn() -> bool,
 }
 

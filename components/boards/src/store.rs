@@ -433,10 +433,6 @@ mod tests {
             unimplemented!()
         }
 
-        fn reboot_to_firmware_update_destructive() -> ! {
-            unimplemented!()
-        }
-
         fn locked() -> bool {
             unimplemented!()
         }

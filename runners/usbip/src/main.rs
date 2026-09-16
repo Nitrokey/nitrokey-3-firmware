@@ -180,7 +180,6 @@ fn exec(
             version_string: VERSION_STRING,
             reboot: || unimplemented!(),
             reboot_to_firmware_update: || unimplemented!(),
-            reboot_to_firmware_update_destructive: Some(|| unimplemented!()),
             locked: || false,
         },
         fido: FidoData {

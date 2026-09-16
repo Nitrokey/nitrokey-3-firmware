@@ -219,7 +219,6 @@ pub fn init_apps<B: Board>(
         version_string,
         reboot: B::Soc::reboot,
         reboot_to_firmware_update: B::Soc::reboot_to_firmware_update,
-        reboot_to_firmware_update_destructive: Some(B::Soc::reboot_to_firmware_update_destructive),
         locked: B::Soc::locked,
     };
     if !nfc_powered {

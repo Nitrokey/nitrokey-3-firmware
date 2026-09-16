@@ -31,7 +31,5 @@ pub trait Soc: 'static {
 
     fn reboot_to_firmware_update();
 
-    fn reboot_to_firmware_update_destructive() -> !;
-
     fn locked() -> bool;
 }

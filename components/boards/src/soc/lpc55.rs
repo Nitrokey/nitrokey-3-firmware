@@ -9,9 +9,8 @@ use apps::Variant;
 use embedded_time::duration::Milliseconds;
 use lpc55_hal::{
     drivers::timer::Timer,
-    peripherals::{ctimer, flash, rtc::Rtc, syscon},
+    peripherals::{ctimer, rtc::Rtc},
     raw::{Interrupt, SCB},
-    traits::flash::WriteErase,
     typestates::init_state::Enabled,
 };
 
@@ -58,22 +57,14 @@ impl Soc for Lpc55 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
+
     fn reboot_to_firmware_update() {
         // lpc55_hal::boot_to_bootrom may not be called from an interrupt, so we have to set this
         // flag that is checked by the idle task
         info_now!("Reboot to bootloader requested");
         BOOTLOADER_REQUESTED.store(true, Ordering::Relaxed);
     }
-    fn reboot_to_firmware_update_destructive() -> ! {
-        // Erasing the first flash page & rebooting will keep processor in bootrom persistently.
-        // This is however destructive, as a valid firmware will need to be flashed.
-        let flash =
-            unsafe { flash::Flash::steal() }.enabled(&mut unsafe { syscon::Syscon::steal() });
-        lpc55_hal::drivers::flash::FlashGordon::new(flash)
-            .erase_page(0)
-            .ok();
-        SCB::sys_reset()
-    }
+
     fn locked() -> bool {
         let seal = &unsafe { lpc55_hal::raw::Peripherals::steal() }
             .FLASH_CMPA
