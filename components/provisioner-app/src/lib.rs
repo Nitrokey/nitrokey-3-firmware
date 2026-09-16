@@ -115,7 +115,7 @@ where
 
     store: S,
     uuid: Uuid,
-    rebooter: fn() -> !,
+    rebooter: fn(),
 }
 
 impl<S, T> Provisioner<S, T>
@@ -123,7 +123,7 @@ where
     S: Store,
     T: CryptoClient,
 {
-    pub fn new(trussed: T, store: S, uuid: Uuid, rebooter: fn() -> !) -> Provisioner<S, T> {
+    pub fn new(trussed: T, store: S, uuid: Uuid, rebooter: fn()) -> Provisioner<S, T> {
         Self {
             trussed,
             selected_buffer: SelectedBuffer::Filename,
@@ -349,6 +349,7 @@ where
             }
             Instruction::BootToBootrom => {
                 (self.rebooter)();
+                Ok(())
             }
         }
     }

@@ -80,7 +80,7 @@ impl apps::Reboot for Reboot {
         unimplemented!();
     }
 
-    fn reboot_to_firmware_update() -> ! {
+    fn reboot_to_firmware_update() {
         unimplemented!();
     }
 
