@@ -50,6 +50,13 @@ trusted-publisher = "github:trussed-dev/heapless-bytes"
 start = "2025-09-18"
 end = "2027-06-17"
 
+[[wildcard-audits.interchange]]
+who = "Robin Krahl <robin@nitrokey.com>"
+criteria = "safe-to-deploy"
+trusted-publisher = "github:trussed-dev/interchange"
+start = "2026-09-15"
+end = "2027-09-16"
+
 [[wildcard-audits.iso7816]]
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"

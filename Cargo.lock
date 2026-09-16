@@ -1870,8 +1870,9 @@ dependencies = [
 
 [[package]]
 name = "interchange"
-version = "0.3.2"
-source = "git+https://github.com/sosthene-nitrokey/interchange.git?rev=3dd20626c26627f58dbbf25dc0359a00916b7a0e#3dd20626c26627f58dbbf25dc0359a00916b7a0e"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "634507a34bf3bfcc64d375e947113c1fd6a1f346a04aff8a24094fcc8ff99dd8"
 dependencies = [
  "loom",
 ]
@@ -2062,8 +2063,9 @@ dependencies = [
 
 [[package]]
 name = "lpc55-hal"
-version = "0.7.0"
-source = "git+https://github.com/lpc55/lpc55-hal.git?rev=4737305a0b5d36539403bf115a9eb377497e29b6#4737305a0b5d36539403bf115a9eb377497e29b6"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed93a226cd2b96017261869c652a3e175f7fb1c86461448b3fa666ff50e7ee4e"
 dependencies = [
  "block-buffer",
  "cipher",

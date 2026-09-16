@@ -1,11 +1,6 @@
 
 # cargo-vet imports lock
 
-[[publisher.admin-app]]
-version = "0.3.0"
-when = "2026-08-18"
-trusted-publisher = "github:trussed-dev/admin-app"
-
 [[publisher.apdu-app]]
 version = "0.2.0"
 when = "2026-03-25"
@@ -55,6 +50,11 @@ version = "0.5.0"
 when = "2025-09-18"
 trusted-publisher = "github:trussed-dev/heapless-bytes"
 
+[[publisher.interchange]]
+version = "0.3.3"
+when = "2026-09-15"
+trusted-publisher = "github:trussed-dev/interchange"
+
 [[publisher.iso7816]]
 version = "0.2.0"
 when = "2025-09-25"
@@ -76,8 +76,8 @@ when = "2026-06-22"
 trusted-publisher = "github:trussed-dev/littlefs2-sys"
 
 [[publisher.lpc55-hal]]
-version = "0.7.0"
-when = "2026-08-24"
+version = "0.7.1"
+when = "2026-09-15"
 trusted-publisher = "github:lpc55/lpc55-hal"
 
 [[publisher.opcard]]

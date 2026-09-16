@@ -13,7 +13,7 @@ cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 ctaphid-dispatch = "0.4"
 delog = "0.1"
-interchange = "0.3"
+interchange.workspace = true
 littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
 nrf52840-hal.workspace = true
 nrf52840-pac.workspace = true

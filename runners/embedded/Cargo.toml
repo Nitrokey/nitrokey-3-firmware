@@ -29,7 +29,7 @@ apdu-dispatch = "0.4"
 ### trussed core
 trussed.workspace = true
 trussed-core.workspace = true
-interchange = "0.3"
+interchange.workspace = true
 
 ### usb machinery
 usb-device.workspace = true

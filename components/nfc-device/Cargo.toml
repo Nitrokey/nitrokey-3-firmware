@@ -12,7 +12,7 @@ nb = "1"
 
 apdu-dispatch = "0.4"
 iso7816 = "0.2"
-interchange = "0.3.0"
+interchange.workspace = true
 
 [features]
 default = []
