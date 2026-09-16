@@ -24,6 +24,7 @@ macro_rules! enum_u8 {
         impl TryFrom<u8> for $name {
             type Error = TryFromU8Error;
             fn try_from(val: u8) -> ::core::result::Result<Self, TryFromU8Error> {
+                #[allow(clippy::manual_range_patterns)]
                 match val {
                     $(
                         $num $(| $more_num)* => Ok($name::$var),

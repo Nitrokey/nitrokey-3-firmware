@@ -54,9 +54,9 @@ pub fn try_setup_old_chip(
 
     let reconfig = (current_regu_config != REGU_CONFIG) || (is_select_int_masked);
 
-    const force_eeprom: bool = false;
+    const ENABLE_EEPROM_WRITES: bool = false;
 
-    if reconfig && force_eeprom {
+    if reconfig && ENABLE_EEPROM_WRITES {
         // info_now!("{:?}", fm.dump_eeprom() );
         // info_now!("{:?}", fm.dump_registers() );
 

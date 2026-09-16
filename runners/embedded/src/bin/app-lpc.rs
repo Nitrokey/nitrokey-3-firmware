@@ -6,6 +6,7 @@ delog::generate_macros!();
 use core::arch::asm;
 
 use cortex_m_rt::{exception, ExceptionFrame};
+#[cfg(not(feature = "no-delog"))]
 use heapless::mpmc::Queue;
 
 #[inline]
@@ -196,11 +197,11 @@ mod app {
     }
 
     #[task(binds =  PIN_INT6, local=[apdu_dispatch, ctaphid_dispatch, apps], priority = 1)]
-    fn poll_apps(mut c: poll_apps::Context) {
+    fn poll_apps(c: poll_apps::Context) {
         let (usb_activity, nfc_activity) = runtime::poll_dispatchers(
-            &mut c.local.apdu_dispatch,
-            &mut c.local.ctaphid_dispatch,
-            &mut c.local.apps,
+            c.local.apdu_dispatch,
+            c.local.ctaphid_dispatch,
+            c.local.apps,
         );
         if usb_activity {
             rtic::pend(USB_INTERRUPT);
@@ -303,7 +304,7 @@ mod app {
     #[task(binds = CTIMER0, shared = [contactless, perf_timer, wait_extender], priority = 7)]
     fn nfc_wait_extension(mut c: nfc_wait_extension::Context) {
         (c.shared.contactless, c.shared.perf_timer).lock(|contactless, _perf_timer| {
-            let Some(mut contactless) = contactless.as_mut() else {
+            let Some(contactless) = contactless.as_mut() else {
                 return;
             };
             c.shared.wait_extender.lock(|wait_extender| {

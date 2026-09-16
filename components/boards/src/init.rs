@@ -132,6 +132,7 @@ const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
 const USB_MANUFACTURER: &str = "Nitrokey";
 const USB_VENDOR_ID: u16 = 0x20A0;
 
+#[expect(clippy::too_many_arguments)]
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
     nfc_callback: interchange::Callback,

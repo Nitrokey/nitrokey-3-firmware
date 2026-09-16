@@ -110,75 +110,6 @@ struct NfcUse {
     nfc_irq: Option<Pin<nfc::NfcIrqPin, Gpio<direction::Input>>>,
 }
 
-/// pull unused pins down
-fn pull_down_unused_pins(iocon: &hal::Iocon<Enabled>) {
-    iocon.set_gpio_pio0_1_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_2_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_3_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_4_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_6_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_7_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_8_mode(GpioMode::PullDown);
-    // SE050 I2C
-    // iocon.set_gpio_pio0_9_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_10_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_11_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_12_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio0_13_mode(GpioMode::PullDown);
-    // SE050 I2C
-    iocon.set_gpio_pio0_14_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_15_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_16_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_17_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_18_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_20_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_21_mode(GpioMode::PullDown); // ext. flash power
-
-    // iocon.set_gpio_pio0_22_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_23_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio0_24_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio0_25_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_26_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_27_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio0_28_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_29_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_30_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio0_31_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_0_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_1_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_2_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_3_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_4_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_5_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_6_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_7_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_8_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_9_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_10_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_11_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_12_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_13_mode(GpioMode::PullDown);
-    // SE050 I2C
-    // iocon.set_gpio_pio1_14_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_15_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_16_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_17_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio1_18_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio1_19_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio1_20_mode(GpioMode::PullDown);
-    // iocon.set_gpio_pio1_21_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_22_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_23_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_24_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_25_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_26_mode(GpioMode::PullDown); //  se050 enable
-    iocon.set_gpio_pio1_27_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_28_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_29_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_30_mode(GpioMode::PullDown);
-    iocon.set_gpio_pio1_31_mode(GpioMode::PullDown);
-}
-
 /// setup and read nfc-irq and board-id
 fn nfc_board(
     nfc_id_pin: Pin<pins::Pio0_0, Gpio<direction::Input>>,
@@ -318,15 +249,11 @@ impl Stage0 {
         const I2C_ADDR: u8 = 0x57;
         const NFC_STATUS: [u8; 2] = 0xFFF3u16.to_be_bytes();
         const NFC_RX: u8 = 1 << 1;
-        const NFC_ACTIVE: u8 = 1 << 4;
         for _ in 0..3 {
             let mut status = [0u8];
             if i2c.write_read(I2C_ADDR, &NFC_STATUS, &mut status).is_ok() {
                 return status[0] & NFC_RX != 0;
             }
-            //if i2c.write_read(I2C_ADDR, &NFC_STATUS, &mut status).is_ok() {
-            //    return status[0] & NFC_ACTIVE != 0;
-            //}
         }
         false
     }

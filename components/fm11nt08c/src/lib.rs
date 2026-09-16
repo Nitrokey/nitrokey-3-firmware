@@ -381,13 +381,13 @@ where
             }
             fifo_irq = self.read_register::<FifoIrq>()?;
         }
-        return Ok(false);
+        Ok(false)
     }
 
     fn send_packet(&mut self, buf: &[u8]) -> Result<Result<(), NfcError>, I2C::BusError> {
         // FIFO size is 32 bytes, but wait_for_transmissions waits for the waterlevel to trigger, which is at 8 bytes
         // So we only send 24 bytes at a time after the first transmission
-        let (first_chunk, rem) = buf.split_at_checked(32).unwrap_or((&buf, &[]));
+        let (first_chunk, rem) = buf.split_at_checked(32).unwrap_or((buf, &[]));
         self.write_fifo(first_chunk)?;
         self.write_register(NfcTxen::new(NfcTxenValue::SendBackData))?;
         let chunks = rem.chunks(24);

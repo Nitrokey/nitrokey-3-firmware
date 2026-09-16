@@ -431,7 +431,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn reboot_to_firmware_update() -> ! {
+        fn reboot_to_firmware_update() {
             unimplemented!()
         }
 

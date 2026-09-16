@@ -550,6 +550,11 @@ impl<R: Runner> Apps<R> {
 
         let (admin, init_status) = Self::admin_app(runner, trussed_service, client_builder, admin);
 
+        #[cfg(any(
+            feature = "opcard",
+            feature = "secrets-app",
+            feature = "piv-authenticator"
+        ))]
         let is_nfc_powered = runner.is_nfc_powered();
         let migrated_successfully = !init_status.contains(InitStatus::MIGRATION_ERROR);
         #[cfg(feature = "opcard")]
