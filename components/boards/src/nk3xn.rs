@@ -139,6 +139,7 @@ pub enum Revision {
 }
 
 impl Revision {
+    /// This detection mechanism requires `p0_0` to be configured with a pull-up resistor enabled.
     pub fn detect(p0_0: &Pin<Pio0_0, Gpio<direction::Input>>) -> Self {
         if p0_0.is_high().unwrap() {
             Self::R1

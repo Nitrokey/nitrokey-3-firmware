@@ -160,6 +160,7 @@ mod app {
                 wwdt.feed();
             }
 
+            // boot_to_bootrom does not work from interrupt handlers and must run in the idle task.
             if BOOTLOADER_REQUESTED.load(Ordering::Relaxed) {
                 info_now!("Rebooting to bootloader");
                 lpc55_hal::boot_to_bootrom();

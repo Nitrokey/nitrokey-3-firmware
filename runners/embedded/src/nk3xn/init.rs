@@ -197,14 +197,7 @@ impl Stage0 {
             .into_gpio_pin(iocon, gpio)
             .into_input();
 
-        let nfc_use = nfc_board(nfc_id_pin, nfc_irq, iocon);
-
-        // R1: pull-downs break the FM11NC08 transmit path
-        if let Revision::R2 = nfc_use.revision {
-            //pull_down_unused_pins(iocon);
-        }
-
-        nfc_use
+        nfc_board(nfc_id_pin, nfc_irq, iocon)
     }
 
     fn enable_clocks(&mut self, frequency_mhz: u32) -> clocks::Clocks {
@@ -275,7 +268,10 @@ impl Stage0 {
             Revision::R2 => passive_system_frequency_mhz(Revision::R2),
         });
 
-        let wwdt = (!nfc_use.is_passive).then(|| {
+        // Don't run the wwdt over nfc to conserve power.
+        // However we must run the wwdt for the new chip anyways because of the I2C
+        // communication used to detect field.
+        let wwdt = (!nfc_use.is_passive || matches!(nfc_use.revision, Revision::R2)).then(|| {
             let mut wwdt = Wwdt::try_new(wwdt, &self.peripherals.syscon, 63).unwrap();
             // Frequency is 1/(4*64) MHz, there is a built-in 4x multiplier
             const TIMER_COUNT: u32 =
