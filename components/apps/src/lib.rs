@@ -42,7 +42,6 @@ use trussed_core::{
 
 use utils::Version;
 
-pub use admin_app::Reboot;
 use admin_app::{ConfigValueMut, ResetSignalAllocation};
 
 mod dispatch;
@@ -324,7 +323,6 @@ pub struct PivConfig {
 pub trait Runner {
     type Syscall: Syscall + Clone + 'static;
 
-    type Reboot: Reboot;
     type Store: trussed::store::Store + Clone;
     #[cfg(feature = "se050")]
     type Twi: se05x::t1::I2CForT1 + 'static;
@@ -355,7 +353,7 @@ type Client<R> = ClientImplementation<
     Dispatch<<R as Runner>::Twi, <R as Runner>::Se050Timer>,
 >;
 
-type AdminApp<R> = admin_app::App<Client<R>, <R as Runner>::Reboot, AdminStatus, Config>;
+type AdminApp<R> = admin_app::App<Client<R>, AdminStatus, Config>;
 #[cfg(feature = "fido-authenticator")]
 type FidoApp<R> = fido_authenticator::Authenticator<fido_authenticator::Conforming, Client<R>>;
 #[cfg(feature = "ndef-app")]
@@ -616,29 +614,24 @@ impl<R: Runner> Apps<R> {
         // No migrations if the config failed to load. In that case applications are disabled anyways
         let config_error_migrators = &[];
 
-        let mut used_migrators = valid_migrators;
-
-        let mut app = AdminApp::<R>::load_config(
-            trussed,
-            &mut filestore,
-            runner.uuid(),
+        let mut admin_data = admin_app::Data {
+            uuid: runner.uuid(),
             version,
-            data.version_string,
-            data.status(),
-            valid_migrators,
-        )
-        .unwrap_or_else(|(trussed, _err)| {
-            data.init_status.insert(InitStatus::CONFIG_ERROR);
-            used_migrators = config_error_migrators;
-            AdminApp::<R>::with_default_config(
-                trussed,
-                runner.uuid(),
-                version,
-                data.version_string,
-                data.status(),
-                config_error_migrators,
-            )
-        });
+            full_version: data.version_string,
+            migrations: valid_migrators,
+            reboot: data.reboot,
+            reboot_to_firmware_update: data.reboot_to_firmware_update,
+            reboot_to_firmware_update_destructive: data.reboot_to_firmware_update_destructive,
+            locked: data.locked,
+        };
+
+        let mut app =
+            AdminApp::<R>::load_config(trussed, &mut filestore, admin_data, data.status())
+                .unwrap_or_else(|(trussed, _err)| {
+                    data.init_status.insert(InitStatus::CONFIG_ERROR);
+                    admin_data.migrations = config_error_migrators;
+                    AdminApp::<R>::with_default_config(trussed, admin_data, data.status())
+                });
 
         #[cfg(all(feature = "opcard", feature = "se050"))]
         if !data.init_status.contains(InitStatus::CONFIG_ERROR)
@@ -701,7 +694,8 @@ impl<R: Runner> Apps<R> {
                     .ok();
             }
         }
-        let migration_version = used_migrators
+        let migration_version = admin_data
+            .migrations
             .iter()
             .map(|m| m.version)
             .max()
@@ -911,29 +905,10 @@ pub struct AdminData<R: Runner> {
     pub revision: u8,
     pub version: Version,
     pub version_string: &'static str,
-}
-
-impl<R: Runner> AdminData<R> {
-    pub fn new(
-        store: R::Store,
-        variant: Variant,
-        model: Model,
-        revision: u8,
-        version: Version,
-        version_string: &'static str,
-    ) -> Self {
-        Self {
-            store,
-            init_status: InitStatus::empty(),
-            ifs_blocks: u8::MAX,
-            efs_blocks: u16::MAX,
-            variant,
-            model,
-            revision,
-            version,
-            version_string,
-        }
-    }
+    pub reboot: fn() -> !,
+    pub reboot_to_firmware_update: fn(),
+    pub reboot_to_firmware_update_destructive: Option<fn() -> !>,
+    pub locked: fn() -> bool,
 }
 
 pub struct AdminStatus {

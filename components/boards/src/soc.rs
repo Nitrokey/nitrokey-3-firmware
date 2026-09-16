@@ -2,7 +2,7 @@ use cortex_m::interrupt::InterruptNumber;
 use embedded_time::duration::Milliseconds;
 use usb_device::bus::UsbBus;
 
-use apps::{Reboot, Variant};
+use apps::Variant;
 
 use crate::ui::Clock;
 
@@ -13,7 +13,7 @@ pub mod nrf52;
 
 pub type Uuid = [u8; 16];
 
-pub trait Soc: Reboot + 'static {
+pub trait Soc: 'static {
     type UsbBus: UsbBus + 'static;
     type Clock: Clock;
 
@@ -26,4 +26,12 @@ pub trait Soc: Reboot + 'static {
     const VARIANT: Variant;
 
     fn uuid(&self) -> &Uuid;
+
+    fn reboot() -> !;
+
+    fn reboot_to_firmware_update();
+
+    fn reboot_to_firmware_update_destructive() -> !;
+
+    fn locked() -> bool;
 }

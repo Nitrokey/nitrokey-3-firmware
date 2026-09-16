@@ -95,7 +95,6 @@ pub struct Runner<B> {
 
 impl<B: Board> apps::Runner for Runner<B> {
     type Syscall = RunnerSyscall<B::Soc>;
-    type Reboot = B::Soc;
     type Store = RunnerStore<B>;
     type Twi = B::Twi;
     type Se050Timer = B::Se050Timer;

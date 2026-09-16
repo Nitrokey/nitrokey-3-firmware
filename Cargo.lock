@@ -4,8 +4,9 @@ version = 4
 
 [[package]]
 name = "admin-app"
-version = "0.3.0"
-source = "git+https://github.com/trussed-dev/admin-app.git?branch=reboot#19773258d75c85e14c319ed57affe73fdf467643"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bbf4c2f59ae58fdec9e77fb4c7ea601f94463829e4410a9c6797c18ea0e505e"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -2349,9 +2350,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "opcard"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6dd55bc09fed4f6725bbde9bcde888eb5c820c4b743828b1e889e7ffcc1a265"
+checksum = "4cfc3d1278425145a0b0b575dd374e042fa242300d853aecd4efa5fc257d765a"
 dependencies = [
  "admin-app",
  "apdu-app",

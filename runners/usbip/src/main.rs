@@ -3,7 +3,7 @@ mod ui;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
-use apps::{AdminData, Apps, Dispatch, FidoData, Model, Variant};
+use apps::{AdminData, Apps, Dispatch, FidoData, InitStatus, Model, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
@@ -73,26 +73,6 @@ impl From<UserPresenceMechanism> for UserPresence {
     }
 }
 
-struct Reboot;
-
-impl apps::Reboot for Reboot {
-    fn reboot() -> ! {
-        unimplemented!();
-    }
-
-    fn reboot_to_firmware_update() {
-        unimplemented!();
-    }
-
-    fn reboot_to_firmware_update_destructive() -> ! {
-        unimplemented!();
-    }
-
-    fn locked() -> bool {
-        false
-    }
-}
-
 struct Runner {
     serial: [u8; 16],
 }
@@ -110,8 +90,6 @@ impl Runner {
 
 impl apps::Runner for Runner {
     type Syscall = Syscall;
-
-    type Reboot = Reboot;
 
     type Store = Store;
 
@@ -190,14 +168,21 @@ fn exec(
     platform.user_interface().set_inner(ui);
 
     let data = apps::Data {
-        admin: AdminData::new(
+        admin: AdminData {
             store,
-            Variant::Usbip,
-            Model::NK3,
-            1,
-            VERSION,
-            VERSION_STRING,
-        ),
+            init_status: InitStatus::empty(),
+            ifs_blocks: u8::MAX,
+            efs_blocks: u16::MAX,
+            variant: Variant::Usbip,
+            model: Model::NK3,
+            revision: 1,
+            version: VERSION,
+            version_string: VERSION_STRING,
+            reboot: || unimplemented!(),
+            reboot_to_firmware_update: || unimplemented!(),
+            reboot_to_firmware_update_destructive: Some(|| unimplemented!()),
+            locked: || false,
+        },
         fido: FidoData {
             has_nfc: false,
             max_message_size: DEFAULT_MESSAGE_SIZE,

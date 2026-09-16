@@ -207,15 +207,21 @@ pub fn init_apps<B: Board>(
     version: Version,
     version_string: &'static str,
 ) -> (Apps<B>, Endpoints) {
-    let mut admin = AdminData::new(
-        *store,
-        B::Soc::VARIANT,
-        B::MODEL,
-        board.revision(),
+    let mut admin = AdminData {
+        store: *store,
+        init_status,
+        ifs_blocks: u8::MAX,
+        efs_blocks: u16::MAX,
+        variant: B::Soc::VARIANT,
+        model: B::MODEL,
+        revision: board.revision(),
         version,
         version_string,
-    );
-    admin.init_status = init_status;
+        reboot: B::Soc::reboot,
+        reboot_to_firmware_update: B::Soc::reboot_to_firmware_update,
+        reboot_to_firmware_update_destructive: Some(B::Soc::reboot_to_firmware_update_destructive),
+        locked: B::Soc::locked,
+    };
     if !nfc_powered {
         if let Ok(ifs_blocks) = store.ifs().available_blocks() {
             if let Ok(ifs_blocks) = u8::try_from(ifs_blocks) {
@@ -231,7 +237,6 @@ pub fn init_apps<B: Board>(
 
     #[cfg(feature = "provisioner")]
     let provisioner = {
-        use apps::Reboot as _;
         let store = store.clone();
         let rebooter: fn() = B::Soc::reboot_to_firmware_update;
 

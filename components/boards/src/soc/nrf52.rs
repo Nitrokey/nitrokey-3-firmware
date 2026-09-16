@@ -33,23 +33,24 @@ impl Soc for Nrf52 {
     fn uuid(&self) -> &Uuid {
         &self.uuid
     }
-}
 
-impl apps::Reboot for Nrf52 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }
+
     fn reboot_to_firmware_update() {
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
         pac.POWER.gpregret.write(|w| unsafe { w.bits(0xb1_u32) });
 
         SCB::sys_reset()
     }
+
     fn reboot_to_firmware_update_destructive() -> ! {
         // @TODO: come up with an idea how to
         // factory reset, and apply!
         SCB::sys_reset()
     }
+
     fn locked() -> bool {
         let pac = unsafe { nrf52840_pac::Peripherals::steal() };
         pac.UICR.approtect.read().pall().is_enabled()

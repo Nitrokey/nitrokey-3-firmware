@@ -286,7 +286,7 @@ mod tests {
         soc::Soc,
         ui::{buttons::UserPresence, rgb_led::RgbLed, Clock},
     };
-    use apps::{Model, Reboot};
+    use apps::Model;
     use cortex_m::interrupt::InterruptNumber;
     use embedded_time::duration::Milliseconds;
     use littlefs2::{path, path::PathBuf};
@@ -424,9 +424,7 @@ mod tests {
         fn uuid(&self) -> &crate::soc::Uuid {
             todo!()
         }
-    }
 
-    impl Reboot for TestSoc {
         fn reboot() -> ! {
             unimplemented!()
         }

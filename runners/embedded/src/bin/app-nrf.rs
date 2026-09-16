@@ -8,12 +8,15 @@ use cortex_m_rt::{exception, ExceptionFrame};
 #[rtic::app(device = nrf52840_hal::pac, peripherals = true, dispatchers = [SWI3_EGU3, SWI4_EGU4, SWI5_EGU5])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
-    use apps::{Endpoints, Reboot};
+    use apps::Endpoints;
     use boards::{
         init::{CtaphidDispatch, Resources, UsbClasses},
         nk3am::{self, InternalFlashStorage, NK3AM},
         runtime,
-        soc::nrf52::{self, rtic_monotonic::RtcDuration, Nrf52},
+        soc::{
+            nrf52::{self, rtic_monotonic::RtcDuration, Nrf52},
+            Soc as _,
+        },
         store, Apps, Trussed,
     };
     use interchange::Channel;

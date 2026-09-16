@@ -54,9 +54,7 @@ impl Soc for Lpc55 {
     fn uuid(&self) -> &Uuid {
         &self.uuid
     }
-}
 
-impl apps::Reboot for Lpc55 {
     fn reboot() -> ! {
         SCB::sys_reset()
     }

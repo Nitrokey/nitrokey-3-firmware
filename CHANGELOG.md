@@ -4,8 +4,8 @@
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
 - Update applications (maintenance only):
-  - admin-app v0.3.0
-  - opcard v1.9.0
+  - admin-app v0.4.0
+  - opcard v1.10.0
   - piv-authenticator v0.7.0
   - secrets-app v0.16.0
 - Revert fido-authenticator to v0.3.0
