@@ -575,16 +575,10 @@ impl Stage2 {
     /// Then disables it again.
     fn configure_fm11nt08c(&mut self, i2c: I2C) -> (I2C, Timer<ctimer::Ctimer2<Enabled>>) {
         let nfc_irq = self.nfc_use.nfc_irq.take().unwrap();
-        let mut nfc = nfc::try_setup_new(
-            i2c,
-            &mut self.clocks.gpio,
-            &mut self.clocks.iocon,
-            nfc_irq,
-            self.se050_timer.take().unwrap(),
-        );
+        let mut nfc = nfc::try_setup_new(i2c, nfc_irq, self.se050_timer.take().unwrap());
         nfc.init(true).unwrap();
 
-        let (i2c, _csn, irq, timer) = nfc.close();
+        let (i2c, irq, timer) = nfc.close();
         self.nfc_use.nfc_irq = Some(irq);
         (i2c, timer)
     }
@@ -608,13 +602,7 @@ impl Stage2 {
         );
         mux.disabled(&mut self.peripherals.syscon);
 
-        let mut nfc = nfc::try_setup_new(
-            i2c,
-            &mut self.clocks.gpio,
-            &mut self.clocks.iocon,
-            nfc_irq,
-            self.se050_timer.take().unwrap(),
-        );
+        let mut nfc = nfc::try_setup_new(i2c, nfc_irq, self.se050_timer.take().unwrap());
 
         // Only run EEPROM configuration on USB power; energy-harvested boots
         // must never write the chip's NV memory.

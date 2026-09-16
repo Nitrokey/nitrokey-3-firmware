@@ -121,25 +121,16 @@ pub fn try_setup_old_chip(
 
 pub type NewNfcChip = fm11nt08c::Fm11nt082c<
     crate::nk3xn::I2C,
-    Pin<NfcCsPin, pin::state::Gpio<pin::gpio::direction::Output>>,
     Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
     Timer<lpc55_hal::peripherals::ctimer::Ctimer2<Enabled>>,
 >;
 
 pub fn try_setup_new(
     i2c: crate::nk3xn::I2C,
-    gpio: &mut lpc55_hal::Gpio<Enabled>,
-    iocon: &mut lpc55_hal::Iocon<Enabled>,
     nfc_irq: Pin<NfcIrqPin, pin::state::Gpio<pin::gpio::direction::Input>>,
     timer: Timer<lpc55_hal::peripherals::ctimer::Ctimer2<Enabled>>,
 ) -> NewNfcChip {
-    // Start unselected.
-    let nfc_cs = NfcCsPin::take()
-        .unwrap()
-        .into_gpio_pin(iocon, gpio)
-        .into_output_high();
-
-    NewNfcChip::new(i2c, nfc_cs, nfc_irq, timer)
+    NewNfcChip::new(i2c, nfc_irq, timer)
 }
 
 pub type NfcChip = nfc_device::either::Either<OldNfcChip, NewNfcChip>;
