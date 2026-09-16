@@ -8,7 +8,8 @@ The Nitrokey 3 firmware is developed for this hardware:
 |                  | NK3xN        | NXP          | LPC55S69      | [Data Sheet][lpc55s69-ds]            |
 | External flash   | all          | GigaDevice   | GD25Q16C      | [Data Sheet][gd25q16c-ds]            |
 | Secure element   | all          | NXP          | SE050C1       | [Data Sheet][se050-ds]               |
-| NFC chip         | NK3xN        | Fudan Micro  | FM11NC08      | [Data Sheet][fm11nc08-ds]            |
+| NFC chip         | NK3xN R1     | Fudan Micro  | FM11NC08      | [Data Sheet][fm11nc08-ds]            |
+|                  | NK3xN R2     | Fudan Micro  | FM11NT082C    | [Data Sheet][fm11nt082c-ds]          |
 | RGB LED          | NK3CN        | Everlight    | EAST1616RGBB4 | [Data Sheet][east1616rgbb4-ds]       |
 |                  | NK3AM, NK3AN | Würth        | 150066M153000 | [Data Sheet][150066m153000-ds]       |
 | Proximity sensor | NK3xN        | Microchip    | MTCH101       | [Data Sheet][mtch101-ds]             |
@@ -18,6 +19,7 @@ The Nitrokey 3 firmware is developed for this hardware:
 [gd25q16c-ds]: https://www.elm-tech.com/en/products/spi-flash-memory/gd25q16/gd25q16.pdf
 [se050-ds]: https://www.nxp.com/docs/en/data-sheet/SE050-DATASHEET.pdf
 [fm11nc08-ds]: https://eng.fmsh.com/AjaxFile/DownLoadFile.aspx?FilePath=/UpLoadFile/20140904/FM11NC08_ps_eng.pdf&fileExt=file
+[fm11nt082c-ds]: https://resourcewebsite.singoo.cc/15307900505930426/en/pdf/1670211879113/FM11NT082C_ps_eng.pdf
 [east1616rgbb4-ds]: https://everlightamericas.com/index.php?controller=attachment&id_attachment=2827
 [150066m153000-ds]: https://www.we-online.com/components/products/datasheet/150066M153000.pdf
 [mtch101-ds]: https://ww1.microchip.com/downloads/en/DeviceDoc/40001664B.pdf

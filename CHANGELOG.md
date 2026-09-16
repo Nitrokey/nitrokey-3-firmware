@@ -3,6 +3,9 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+
+## v1.9.0-rc.2 (2026-09-16)
+
 - Update applications (maintenance only):
   - admin-app v0.4.0
   - opcard v1.10.0
@@ -12,6 +15,7 @@
 - admin-app:
   - Add model and board revision to status
   - Disable destructive reboot to bootloader
+- Add support for revision R2 of the NK3xN using the FM11NT082C NFC chip.
 
 ## v1.9.0-rc.1 (2026-06-01)
 
