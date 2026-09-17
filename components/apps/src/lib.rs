@@ -42,7 +42,8 @@ use trussed_core::{
 
 use utils::Version;
 
-use admin_app::{ConfigValueMut, ResetSignalAllocation};
+use admin_app::ConfigValueMut;
+use trussed_core::reset_signal::ResetSignalAllocation;
 
 mod dispatch;
 pub use dispatch::{Backend, Dispatch, DispatchContext};
