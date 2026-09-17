@@ -32,6 +32,9 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
+trussed-core = { git = "https://github.com/trussed-dev/trussed.git", rev = "bc01fd6728f3b1efef2eb12adcce5acff558f6bb"}
+admin-app = { git = "https://github.com/trussed-dev/admin-app.git", rev = "6661d7d708cd1855ac2ad558878be3b147177258"}
+opcard = { git = "https://github.com/nitrokey/opcard-rs.git", rev = "d6cea6aa4cb2fda28b69089d516b28ff13472958"}
 
 [profile.release]
 codegen-units = 1
