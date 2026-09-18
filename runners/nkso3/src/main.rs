@@ -74,7 +74,7 @@ mod app {
         let gpioe = GpioE::new(cx.device.GPIOE_S, &rcc);
         info!("Before pins");
         let pins = (
-            gpioa.a0.into_sdmmc2_cmd(),
+            gpioc.c3.into_sdmmc2_cmd(),
             gpioc.c2.into_sdmmc2_ck(),
             gpioc.c4.into_sdmmc2_d0(),
             // gpioc.c5.into_sdmmc2_d1(),
