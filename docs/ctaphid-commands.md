@@ -13,8 +13,10 @@ This document provides an overview of the [CTAPHID vendor commands][vendor] used
 | 0x70    | [secrets-app][]         |
 | 0x71    | [provisioner-app][]     |
 | 0x72    | [admin-app][]           |
+| 0x73    | [storage-app][]         |
 
 [vendor]: https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#usb-vendor-specific-commands
 [admin-app]: https://github.com/Nitrokey/admin-app
 [provisioner-app]: https://github.com/Nitrokey/nitrokey-3-firmware/tree/main/components/provisioner-app
 [secrets-app]: https://github.com/Nitrokey/trussed-secrets-app
+[storage-app]: https://github.com/Nitrokey/nitrokey-3-firmware/tree/main/components/storage-app

@@ -10,7 +10,7 @@ cortex-m = "0.7"
 cortex-m-rtic = "1.0"
 cortex-m-rt = "0.7.5"
 ctaphid-dispatch = "0.4"
-delog = "0.1"
+delog.workspace = true
 embedded-hal = "0.2.3"
 embedded-time = "0.12"
 generic-array = "0.14"
@@ -64,7 +64,7 @@ se05x = { version = "0.4.1", optional = true }
 trussed-manage = "0.3.0"
 
 [dev-dependencies]
-littlefs2-core = { version = "0.1", features = ["debug-error"] }
+littlefs2-core = { workspace = true, features = ["debug-error"] }
 
 [features]
 board-nk3am = ["soc-nrf52", "lfs-backup", "se05x/embedded-hal-v0.2.7"]

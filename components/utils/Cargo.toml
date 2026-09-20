@@ -4,7 +4,7 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
-delog = "0.1"
+delog.workspace = true
 littlefs2 = { workspace = true, optional = true }
 
 # build

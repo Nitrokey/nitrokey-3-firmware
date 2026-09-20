@@ -11,15 +11,16 @@ interchange = "0.3"
 clap = { version = "4.0.0", features = ["cargo", "derive"] }
 clap-num = "1.0.0"
 ctaphid-dispatch = "0.4"
-delog = { version = "0.1.6", features = ["std-log"] }
+delog = { workspace = true, features = ["std-log"] }
 dialoguer = { version = "0.10.4", default-features = false }
 littlefs2.workspace = true
-littlefs2-core = "0.1"
+littlefs2-core.workspace = true
 log = { version = "0.4.14", default-features = false }
 pretty_env_logger = "0.5.0"
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 ref-swap = "0.1.0"
 signal-hook = { version = "0.3.17", default-features = false }
+storage-app = { path = "../../components/storage-app", optional = true }
 trussed.workspace = true
 trussed-core.workspace = true
 # `ccid` is needed for the keepalive helper; the CCID interface itself is
@@ -42,4 +43,4 @@ provisioner = ["apps/nk3-provisioner"]
 ccid = ["apps/trussed-usbip-ccid"]
 
 # SCSI block device over USB/IP
-usb-storage = ["usb-classes/storage", "dep:aes", "dep:xts-mode"]
+usb-storage = ["apps/storage-app", "usb-classes/storage", "dep:aes", "dep:storage-app", "dep:xts-mode"]

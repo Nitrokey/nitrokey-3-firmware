@@ -183,6 +183,7 @@ dependencies = [
  "se05x",
  "secrets-app",
  "serde",
+ "storage-app",
  "trussed",
  "trussed-auth",
  "trussed-auth-backend",
@@ -3310,6 +3311,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "storage-app"
+version = "0.1.0"
+dependencies = [
+ "cbor-smol",
+ "ctaphid-app",
+ "delog",
+ "heapless-bytes",
+ "littlefs2-core",
+ "serde",
+ "trussed-auth",
+ "trussed-core",
+ "zeroize",
+]
+
+[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4086,6 +4102,7 @@ dependencies = [
  "rand_core",
  "ref-swap",
  "signal-hook",
+ "storage-app",
  "trussed",
  "trussed-core",
  "trussed-usbip",

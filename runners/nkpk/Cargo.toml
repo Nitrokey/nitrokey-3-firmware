@@ -12,7 +12,7 @@ boards = { path = "../../components/boards", features = ["board-nkpk"] }
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.0"
 ctaphid-dispatch = "0.4"
-delog = "0.1"
+delog.workspace = true
 interchange = "0.3"
 littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
 nrf52840-hal = "0.15.1"

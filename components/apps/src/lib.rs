@@ -335,6 +335,9 @@ pub trait Runner {
     #[cfg(not(feature = "se050"))]
     type Se050Timer: 'static;
 
+    #[cfg(feature = "storage-app")]
+    type Storage: storage_app::Storage;
+
     fn uuid(&self) -> [u8; 16];
     fn is_efs_available(&self) -> bool;
 }
@@ -345,6 +348,8 @@ pub struct Data<R: Runner> {
     pub fido: FidoData,
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
+    #[cfg(feature = "storage-app")]
+    pub storage: StorageData<R>,
     pub _marker: PhantomData<R>,
 }
 
@@ -367,6 +372,8 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type PivApp<R> = piv_authenticator::Authenticator<Client<R>>;
 #[cfg(feature = "provisioner-app")]
 type ProvisionerApp<R> = provisioner_app::Provisioner<<R as Runner>::Store, Client<R>>;
+#[cfg(feature = "storage-app")]
+type StorageApp<R> = storage_app::StorageApp<Client<R>, <R as Runner>::Storage>;
 
 #[repr(u8)]
 pub enum CustomStatus {
@@ -409,6 +416,8 @@ pub struct Apps<R: Runner> {
     piv: Option<PivApp<R>>,
     #[cfg(feature = "provisioner-app")]
     provisioner: ProvisionerApp<R>,
+    #[cfg(feature = "storage-app")]
+    storage: Option<StorageApp<R>>,
 }
 
 const CLIENT_COUNT: usize = const {
@@ -419,6 +428,7 @@ const CLIENT_COUNT: usize = const {
         cfg!(feature = "piv-authenticator"),
         cfg!(feature = "provisioner-app"),
         cfg!(feature = "secrets-app"),
+        cfg!(feature = "storage-app"),
     ];
 
     let mut n = 0;
@@ -544,6 +554,8 @@ impl<R: Runner> Apps<R> {
             fido,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            #[cfg(feature = "storage-app")]
+            storage,
             ..
         } = data;
 
@@ -572,6 +584,9 @@ impl<R: Runner> Apps<R> {
         #[cfg(feature = "provisioner-app")]
         let provisioner = App::new(runner, client_builder, provisioner, &());
 
+        #[cfg(feature = "storage-app")]
+        let storage = migrated_successfully.then(|| App::new(runner, client_builder, storage, &()));
+
         Self {
             #[cfg(feature = "fido-authenticator")]
             fido,
@@ -585,6 +600,8 @@ impl<R: Runner> Apps<R> {
             piv,
             #[cfg(feature = "provisioner-app")]
             provisioner,
+            #[cfg(feature = "storage-app")]
+            storage,
             admin,
         }
     }
@@ -756,7 +773,7 @@ impl<R: Runner> Apps<R> {
     where
         F: FnOnce(&mut [&mut dyn CtaphidApp<'static>]) -> T,
     {
-        let mut apps: Vec<&mut dyn CtaphidApp<'static>, 4> = Default::default();
+        let mut apps: Vec<&mut dyn CtaphidApp<'static>, 5> = Default::default();
 
         #[cfg(feature = "fido-authenticator")]
         if let Some(fido) = self.fido.as_mut() {
@@ -772,7 +789,13 @@ impl<R: Runner> Apps<R> {
             apps.push(oath).ok().unwrap();
         }
 
-        // App 4: provisioner
+        // App 4: storage
+        #[cfg(feature = "storage-app")]
+        if let Some(storage) = self.storage.as_mut() {
+            apps.push(storage).ok().unwrap();
+        }
+
+        // App 5: provisioner
         #[cfg(feature = "provisioner-app")]
         apps.push(&mut self.provisioner).ok().unwrap();
 
@@ -1219,6 +1242,45 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
+    }
+}
+
+#[cfg(feature = "storage-app")]
+pub struct StorageData<R: Runner> {
+    pub storage: R::Storage,
+}
+
+#[cfg(feature = "storage-app")]
+impl<R: Runner> App<R> for StorageApp<R> {
+    const CLIENT_ID: &'static Path = path!("storage");
+
+    type Data = StorageData<R>;
+    type Config = ();
+
+    fn with_client(_runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
+        Self::new(trussed, data.storage)
+    }
+
+    fn channel() -> &'static TrussedChannel {
+        static CHANNEL: TrussedChannel = TrussedChannel::new();
+        &CHANNEL
+    }
+
+    fn interrupt() -> Option<&'static InterruptFlag> {
+        static INTERRUPT: InterruptFlag = InterruptFlag::new();
+        Some(&INTERRUPT)
+    }
+
+    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
+        const BACKENDS_STORAGE: &[BackendId<Backend>] = &[
+            #[cfg(feature = "se050")]
+            BackendId::Custom(Backend::Se050),
+            #[cfg(not(feature = "se050"))]
+            BackendId::Custom(Backend::Auth),
+            BackendId::Core,
+        ];
+        let _ = runner;
+        BACKENDS_STORAGE
     }
 }
 

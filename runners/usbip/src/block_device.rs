@@ -10,8 +10,28 @@ use aes::{
     cipher::{generic_array::GenericArray, KeyInit},
     Aes128,
 };
+use log::info;
 use usb_classes::storage::{BlockDevice, BLOCK_SIZE};
 use xts_mode::{get_tweak_default, Xts128};
+
+pub struct Storage;
+
+impl storage_app::Storage for Storage {
+    fn init(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
+        info!("Storage::init called with key = {key:?}");
+        Ok(())
+    }
+
+    fn unlock(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
+        info!("Storage::unlock called with key = {key:?}");
+        Ok(())
+    }
+
+    fn lock(&mut self) -> Result<(), storage_app::Error> {
+        info!("Storage::lock called");
+        Ok(())
+    }
+}
 
 enum Backing {
     File(std::fs::File),

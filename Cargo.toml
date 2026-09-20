@@ -13,8 +13,15 @@ resolver = "2"
 version = "1.9.0-rc.1"
 
 [workspace.dependencies]
+cbor-smol = "0.5"
+ctaphid-app = "0.2"
+delog = "0.1.6"
+heapless-bytes = "0.5"
 littlefs2 = "0.8"
+littlefs2-core = "0.1"
+serde = { version = "1", default-features = false }
 trussed = { version = "0.2", default-features = false }
+trussed-auth = "0.5"
 trussed-core = "0.2"
 
 [patch.crates-io]

@@ -125,6 +125,9 @@ impl apps::Runner for Runner {
     type Twi = ();
     type Se050Timer = ();
 
+    #[cfg(feature = "usb-storage")]
+    type Storage = block_device::Storage;
+
     fn uuid(&self) -> [u8; 16] {
         self.serial
     }
@@ -215,6 +218,10 @@ fn exec(
         provisioner: apps::ProvisionerData {
             store,
             rebooter: || unimplemented!(),
+        },
+        #[cfg(feature = "usb-storage")]
+        storage: apps::StorageData {
+            storage: block_device::Storage,
         },
         _marker: Default::default(),
     };

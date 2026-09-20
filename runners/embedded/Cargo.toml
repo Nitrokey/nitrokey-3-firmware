@@ -12,12 +12,12 @@ license = "MIT"
 ### base dependencies
 apps = { path = "../../components/apps" }
 boards = { path = "../../components/boards", features = ["trussed-auth"] }
-delog = "0.1"
+delog.workspace = true
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rt = "0.7.5"
 cortex-m-rtic = "1.0"
 embedded-hal = "0.2.3"
-littlefs2-core = "0.1"
+littlefs2-core.workspace = true
 nfc-device = { path = "../../components/nfc-device" }
 utils = { path = "../../components/utils", features = ["storage"] }
 se05x = { version = "0.4", optional = true }
@@ -56,7 +56,7 @@ littlefs2-sys = { version = "0.4", features = ["tinyrlibc"] }
 
 [build-dependencies]
 memory-regions = "1"
-serde = { version = "1", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 utils = { path = "../../components/utils", features = ["build"] }
 
 [features]

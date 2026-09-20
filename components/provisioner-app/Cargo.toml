@@ -8,12 +8,12 @@ edition = "2018"
 
 [dependencies]
 apdu-app = "0.2"
-ctaphid-app = "0.2"
-delog = "0.1"
+ctaphid-app.workspace = true
+delog.workspace = true
 heapless = "0.9"
-heapless-bytes = "0.5"
+heapless-bytes.workspace = true
 iso7816 = "0.2"
-littlefs2-core = "0.1"
+littlefs2-core.workspace = true
 salty = "0.3"
 trussed.workspace = true
 trussed-core = { workspace = true, features = ["crypto-client"] }

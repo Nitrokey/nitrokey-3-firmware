@@ -5,7 +5,7 @@ authors = ["Conor Patrick <conor@solokeys.com>"]
 edition = "2018"
 
 [dependencies]
-delog = "0.1.0"
+delog.workspace = true
 embedded-time = "0.12"
 heapless = "0.9"
 nb = "1"

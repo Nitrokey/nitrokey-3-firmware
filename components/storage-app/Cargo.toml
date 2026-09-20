@@ -1,0 +1,24 @@
+[package]
+name = "storage-app"
+edition = "2024"
+version = "0.1.0"
+
+[dependencies]
+cbor-smol.workspace = true
+ctaphid-app.workspace = true
+delog.workspace = true
+heapless-bytes.workspace = true
+littlefs2-core.workspace = true
+trussed-auth.workspace = true
+trussed-core = { workspace = true, features = ["chacha8-poly1305", "crypto-client", "filesystem-client"] }
+serde = { workspace = true, features = ["derive"] }
+zeroize = "1.8"
+
+[features]
+log-all = []
+log-trace = []
+log-none = []
+log-info = []
+log-debug = []
+log-warn = []
+log-error = []

@@ -17,5 +17,5 @@ attach:
 	lsmod | grep vhci-hcd || sudo modprobe vhci-hcd
 	sudo usbip list -r "localhost"
 	sudo usbip attach -r "localhost" -b "1-1"
-	sudo usbip attach -r "localhost" -b "1-1"
-	sleep 5
+	# sudo usbip attach -r "localhost" -b "1-1"
+	# sleep 5
