@@ -14,6 +14,7 @@ check-components:
 	cargo check --manifest-path components/nfc-device/Cargo.toml
 	cargo check --manifest-path components/stm32n657-hal/Cargo.toml
 	cargo check --manifest-path components/provisioner-app/Cargo.toml
+	cargo check --manifest-path components/storage-app/Cargo.toml --all-features
 
 	cargo check --manifest-path components/apps/Cargo.toml
 	for feature in nk3 nk3-test nk3-provisioner nkpk nkpk-provisioner nkso3 ; do \
@@ -83,5 +84,6 @@ software-tests:
 	cd components/boards && cargo test
 	cd components/usb-classes && cargo test --all-features
 	cd components/stm32n657-hal && cargo test
+	cd components/storage-app && cargo test --all-features
 	cd components/utils && cargo test
 	cd runners/usbip && cargo test --features usb-storage

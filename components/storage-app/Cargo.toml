@@ -14,6 +14,12 @@ trussed-core = { workspace = true, features = ["chacha8-poly1305", "crypto-clien
 serde = { workspace = true, features = ["derive"] }
 zeroize = "1.8"
 
+[dev-dependencies]
+ciborium = "0.2"
+trussed = { workspace = true, features = ["chacha8-poly1305", "crypto-client", "filesystem-client", "virt"] }
+trussed-auth-backend = "0.2"
+trussed-derive = { git = "https://github.com/trussed-dev/trussed.git" }
+
 [features]
 log-all = []
 log-trace = []

@@ -1,3 +1,5 @@
+#![no_std]
+
 mod commands;
 mod ctaphid;
 
@@ -14,6 +16,7 @@ pub use commands::{Command, UnsupportedCommandError};
 delog::generate_macros!();
 
 #[non_exhaustive]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     InvalidRequest,
     SerializationFailed,
