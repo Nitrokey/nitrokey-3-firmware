@@ -24,32 +24,42 @@ impl SdMmc for SDMMC2_S {
 }
 
 /// Specifies the SDMMC_CCK clock transition on which Data and Command change.g
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum ClockEdge {
-    Rising = 0x0,
+    Rising,
     #[doc(alias = "SDMMC_CLKCR_NEGEDGE")]
-    Falling = 0x00010000,
+    Falling,
+}
+
+impl ClockEdge {
+    fn bit(&self) -> bool {
+        matches!(self, Self::Falling)
+    }
 }
 
 /// Specifies whether SDMMC Clock output is enabled or disabled when the bus is idle
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum ClockPowerSave {
-    Disable = 0,
+    Disable,
     #[doc(alias = "SDMMC_CLKCR_PWRSAV")]
-    Enable = 0x00001000,
+    Enable,
+}
+
+impl ClockPowerSave {
+    fn bit(&self) -> bool {
+        matches!(self, Self::Enable)
+    }
 }
 
 /// Specifies the SDMMC bus width
-#[repr(u32)]
+#[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub enum BusWidth {
-    OneBit = 0,
+    OneBit = 0b00,
     #[doc(alias = "SDMMC_CLKCR_WIDBUS_0")]
-    FourBit = 0x00004000,
+    FourBit = 0b01,
     #[doc(alias = "SDMMC_CLKCR_WIDBUS_1")]
-    EightBit = 0x00008000,
+    EightBit = 0b10,
 }
 
 impl BusWidth {
@@ -59,12 +69,17 @@ impl BusWidth {
 }
 
 /// Specifies whether the SDMMC hardware flow control is enabled or disabled
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum HardwareFlowControl {
-    Disable = 0,
+    Disable,
     #[doc(alias = "SDMMC_CLKCR_HWFC_EN")]
-    Enable = 0x00020000,
+    Enable,
+}
+
+impl HardwareFlowControl {
+    fn bit(&self) -> bool {
+        matches!(self, Self::Enable)
+    }
 }
 
 /// Specifies whether there is a transceiver present
@@ -87,52 +102,68 @@ pub struct SdMMCInit {
     pub is_transceiver_present: u32,
 }
 
-#[repr(u32)]
+#[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub enum Response {
-    No = 0,
+    No = 0b00,
+    /// Short response, expect CMDREND or CRCFAIL
     #[doc(alias = "SDMMC_CMD_WAITRESP_0")]
-    Short = 0x00000100,
+    Short = 0b01,
+    /// Short response, expect CMDREND (no CRC)
+    ShortNotCrc = 0b10,
     #[doc(alias = "SDMMC_CMD_WAITRESP")]
-    Long = 0x00000300,
+    Long = 0b11,
 }
 
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum WaitForInterrupt {
-    No = 0,
+    No,
     #[doc(alias = "SDMMC_CMD_WAITINT")]
-    It = 0x00000400,
+    It,
     #[doc(alias = "SDMMC_CMD_WAITPEND")]
-    Pend = 0x00000800,
+    Pend,
 }
 
-#[repr(u32)]
+impl WaitForInterrupt {
+    fn pend_bit(&self) -> bool {
+        matches!(self, Self::Pend)
+    }
+    fn interrupt_bit(&self) -> bool {
+        matches!(self, Self::It)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum Cpsm {
-    Disable = 0,
+    Disable,
     #[doc(alias = "SDMMC_CMD_CPSMEN")]
-    Enable = 0x00001000,
+    Enable,
 }
 
-pub trait CommandIndex: Into<u32> + Copy {}
+impl Cpsm {
+    fn bit(&self) -> bool {
+        matches!(self, Self::Enable)
+    }
+}
+
+pub trait CommandIndex: Into<u8> + Copy {}
 
 impl CommandIndex for CmdIndex {}
-impl From<CmdIndex> for u32 {
+impl From<CmdIndex> for u8 {
     fn from(val: CmdIndex) -> Self {
         val as _
     }
 }
 
 impl CommandIndex for SdCardCommand {}
-impl From<SdCardCommand> for u32 {
+impl From<SdCardCommand> for u8 {
     fn from(val: SdCardCommand) -> Self {
         val as _
     }
 }
 
 impl CommandIndex for MmcCommand {}
-impl From<MmcCommand> for u32 {
+impl From<MmcCommand> for u8 {
     fn from(val: MmcCommand) -> Self {
         val as _
     }
@@ -395,7 +426,7 @@ pub enum CmdIndex {
 
 /// SD Card Specific security commands.
 /// [`CmdIndex::AppCmd`][] should be sent before sending these commands.
-#[repr(u32)]
+#[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub enum SdCardCommand {
     ///  (ACMD6) Defines the data bus width to be used for data transfer. The allowed data bus widths are given in SCR register.                                                   
@@ -417,7 +448,7 @@ pub enum SdCardCommand {
 }
 
 /// MMC Specific commands.
-#[repr(u32)]
+#[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub enum MmcCommand {
     MmcSleepAwake = 5,
@@ -468,12 +499,25 @@ pub struct SdMmcMaster<P, S> {
 
 impl<P: SdMmc, C> SdMmcMaster<P, C> {
     pub fn init(&mut self, init: SdMMCInit) {
-        let tmpreg = init.clock_edge as u32
-            | init.clock_power_save as u32
-            | init.bus_wide as u32
-            | init.hardware_flow_control as u32
-            | init.clock_div as u32;
-        self.peripheral.clkcr().write(|w| unsafe { w.bits(tmpreg) });
+        self.peripheral.clkcr().modify(|_, w| unsafe {
+            w.clkdiv()
+                .bits(init.clock_div)
+                .pwrsav()
+                .bit(init.clock_power_save.bit())
+                .widbus()
+                .bits(init.bus_wide as u8)
+                .negedge()
+                .bit(init.clock_edge.bit())
+                .hwfc_en()
+                .bit(init.hardware_flow_control.bit())
+                .ddr()
+                .bit(false)
+                // TODO: check (true is requried for higher bus speed)
+                .busspeed()
+                .bit(false)
+                .selclkrx()
+                .bits(0)
+        });
     }
 }
 
@@ -646,15 +690,23 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
     }
 
     pub fn send_command<C: CommandIndex>(&mut self, command: Command<C>) {
-        let tmpreg = command.cmd_index.into()
-            | command.response as u32
-            | command.wait_for_interrupt as u32
-            | command.cpsm as u32;
-
         self.peripheral
             .argr()
             .write(|w| unsafe { w.bits(command.argument) });
-        self.peripheral.cmdr().write(|w| unsafe { w.bits(tmpreg) });
+        self.peripheral.cmdr().modify(|_, w| unsafe {
+            w.cmdindex()
+                .bits(command.cmd_index.into())
+                .waitresp()
+                .bits(command.response as u8)
+                .waitint()
+                .bit(command.wait_for_interrupt.interrupt_bit())
+                .waitpend()
+                .bit(command.wait_for_interrupt.pend_bit())
+                .cpsmen()
+                .bit(command.cpsm.bit())
+                .cmdsuspend()
+                .bit(false)
+        });
     }
 
     pub fn command_response(&mut self) -> u8 {
@@ -722,7 +774,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         }
 
         self.clear_static_flags();
-        if self.get_cmd_resp() != cmd.into() as _ {
+        if self.get_cmd_resp() != cmd.into() {
             return Err(Error::CMD_CRC_FAIL);
         }
 
@@ -895,7 +947,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             return Err(Error::CMD_CRC_FAIL);
         }
 
-        if self.get_cmd_resp() != cmd.into() as _ {
+        if self.get_cmd_resp() != cmd.into() {
             return Err(Error::CMD_CRC_FAIL);
         }
 
@@ -952,7 +1004,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             return Err(Error::CMD_CRC_FAIL);
         }
 
-        if self.get_cmd_resp() != cmd as _ {
+        if self.get_cmd_resp() != cmd.into() {
             return Err(Error::CMD_CRC_FAIL);
         }
 
@@ -964,7 +1016,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
                 | ResponseBits::R6_COM_CRC_FAILED))
             .is_empty()
         {
-            return Ok((response_r1.bits() >> 16) as _);
+            return Ok((response_r1.bits() >> 16) as u16);
         }
 
         if response_r1.contains(ResponseBits::R6_ILLEGAL_CMD) {
