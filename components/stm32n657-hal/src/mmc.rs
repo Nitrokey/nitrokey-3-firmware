@@ -107,7 +107,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             pins: self.pins,
             _state: PhantomData,
         };
-        this.sdmmc.power_on();
+        this.sdmmc.power_state_on();
 
         this.power_on()?;
 
@@ -559,7 +559,7 @@ const BLOCK_SIZE: u32 = 512;
 
 impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     pub fn free(mut self) -> SdMmcMaster<P, Enabled> {
-        self.sdmmc.power_off();
+        self.sdmmc.power_state_off();
         self.sdmmc
     }
 

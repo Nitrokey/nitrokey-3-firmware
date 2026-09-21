@@ -147,55 +147,82 @@ pub struct Command<C = CmdIndex> {
     pub cpsm: Cpsm,
 }
 
-const SDMMC_DCTRL_DBLOCKSIZE_0: u32 = 0x00000010;
-const SDMMC_DCTRL_DBLOCKSIZE_1: u32 = 0x00000020;
-const SDMMC_DCTRL_DBLOCKSIZE_2: u32 = 0x00000040;
-const SDMMC_DCTRL_DBLOCKSIZE_3: u32 = 0x00000080;
-
 const CHECK_PATTERN: u32 = 0x000001AA;
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum DataBlockSize {
-    B1 = 0,
-    B2 = SDMMC_DCTRL_DBLOCKSIZE_0,
-    B4 = SDMMC_DCTRL_DBLOCKSIZE_1,
-    B8 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_1),
-    B16 = SDMMC_DCTRL_DBLOCKSIZE_2,
-    B32 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_2),
-    B64 = (SDMMC_DCTRL_DBLOCKSIZE_1 | SDMMC_DCTRL_DBLOCKSIZE_2),
-    B128 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_1 | SDMMC_DCTRL_DBLOCKSIZE_2),
-    B256 = SDMMC_DCTRL_DBLOCKSIZE_3,
-    B512 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_3),
-    B1024 = (SDMMC_DCTRL_DBLOCKSIZE_1 | SDMMC_DCTRL_DBLOCKSIZE_3),
-    B2048 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_1 | SDMMC_DCTRL_DBLOCKSIZE_3),
-    B4096 = (SDMMC_DCTRL_DBLOCKSIZE_2 | SDMMC_DCTRL_DBLOCKSIZE_3),
-    B8192 = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_2 | SDMMC_DCTRL_DBLOCKSIZE_3),
-    B16384 = (SDMMC_DCTRL_DBLOCKSIZE_1 | SDMMC_DCTRL_DBLOCKSIZE_2 | SDMMC_DCTRL_DBLOCKSIZE_3),
+    /// Block size of 1 bytes
+    B1 = 0b0000,
+    /// Block size of 2 bytes
+    B2 = 0b0001,
+    /// Block size of 4 bytes
+    B4 = 0b0010,
+    /// Block size of 8 bytes
+    B8 = 0b0011,
+    /// Block size of 16 bytes
+    B16 = 0b0100,
+    /// Block size of 32 bytes
+    B32 = 0b0101,
+    /// Block size of 64 bytes
+    B64 = 0b0110,
+    /// Block size of 128 bytes
+    B128 = 0b0111,
+    /// Block size of 256 bytes
+    B256 = 0b1000,
+    /// Block size of 512 bytes
+    B512 = 0b1001,
+    /// Block size of 1024 bytes
+    B1024 = 0b1010,
+    /// Block size of 2048 bytes
+    B2048 = 0b1011,
+    /// Block size of 4096 bytes
+    B4096 = 0b1100,
+    /// Block size of 8192 bytes
+    B8192 = 0b1101,
+    /// Block size of 16384 bytes
+    B16384 = 0b1110,
+    Reserved = 0b1111,
 }
 
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum TransferDir {
-    ToCard = 0,
+    ToCard,
     #[doc(alias = "SDMMC_DCTRL_DTDIR")]
-    ToSdMmc = 0x00000002,
+    ToSdMmc,
 }
 
-#[repr(u32)]
+impl TransferDir {
+    fn bit(&self) -> bool {
+        matches!(self, Self::ToSdMmc)
+    }
+}
+
+#[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub enum TransferMode {
-    Block = 0,
+    /// Block  data transfer ending on block count
+    Block = 0b00,
+    /// SDIO multibyte transfer
+    Sdio = 0b01,
+    /// eMMC stream data transfer
     #[doc(alias = "SDMMC_DCTRL_DTMODE_1")]
-    Stream = 0x00000008,
+    Stream = 0b10,
+    /// Block data transfer ending with STOP_TRANSMISSION
+    UntilStop = 0b11,
 }
 
-#[repr(u32)]
 #[derive(Clone, Copy, Debug)]
 pub enum DpsmState {
     Disable = 0,
     #[doc(alias = "SDMMC_DCTRL_DTEN")]
-    Enable = 0x00000001,
+    Enable,
+}
+
+impl DpsmState {
+    fn bit(&self) -> bool {
+        matches!(self, Self::Enable)
+    }
 }
 
 pub struct ConfigData {
@@ -472,8 +499,10 @@ enum_u!(
     #[derive(Clone, Copy, Debug)]
     pub enum PowerCtrl {
         Off = 0x0,
-        On = 0x3,
-        Cycle = 0x2,
+        Reserved = 01,
+        On = 0b11,
+        /// Disalbe the SDMMC and stops the clock card
+        Cycle = 0b10,
     }
 );
 
@@ -590,17 +619,17 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         self.peripheral.fifor0().write(|w| unsafe { w.bits(value) });
     }
 
-    pub fn power_on(&mut self) {
+    pub fn power_state_on(&mut self) {
         self.peripheral
             .power()
             .modify(|_, w| unsafe { w.pwrctrl().bits(PowerCtrl::On as _) });
     }
-    pub fn power_off(&mut self) {
+    pub fn power_state_off(&mut self) {
         self.peripheral
             .power()
             .modify(|_, w| unsafe { w.pwrctrl().bits(PowerCtrl::Off as _) });
     }
-    pub fn power_cycle(&mut self) {
+    pub fn power_state_cycle(&mut self) {
         self.peripheral
             .power()
             .modify(|_, w| unsafe { w.pwrctrl().bits(PowerCtrl::Cycle as _) });
@@ -622,6 +651,9 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             | command.wait_for_interrupt as u32
             | command.cpsm as u32;
 
+        self.peripheral
+            .argr()
+            .write(|w| unsafe { w.bits(command.argument) });
         self.peripheral.cmdr().write(|w| unsafe { w.bits(tmpreg) });
     }
 
@@ -1284,11 +1316,11 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             w.dblocksize()
                 .bits(config.data_block_size as u8 >> 4)
                 .dtdir()
-                .bit(matches!(config.transfer_dir, TransferDir::ToSdMmc))
+                .bit(config.transfer_dir.bit())
                 .dtmode()
-                .bits((config.transfer_mode as u8) >> 2)
+                .bits(config.transfer_mode as u8)
                 .dten()
-                .bit(matches!(config.dpsm, DpsmState::Enable))
+                .bit(config.dpsm.bit())
         });
     }
 
