@@ -29,12 +29,17 @@ const START_STOP_UNIT: u8 = 0x1B;
 const PREVENT_ALLOW_MEDIUM_REMOVAL: u8 = 0x1E;
 const SYNCHRONIZE_CACHE_10: u8 = 0x35;
 
+const SENSE_NOT_READY: u8 = 0x02;
 const SENSE_MEDIUM_ERROR: u8 = 0x03;
 const SENSE_ILLEGAL_REQUEST: u8 = 0x05;
+const SENSE_UNIT_ATTENTION: u8 = 0x06;
 const ASC_UNRECOVERED_READ_ERROR: u8 = 0x11;
 const ASC_WRITE_FAULT: u8 = 0x03;
 const ASC_INVALID_COMMAND: u8 = 0x20;
 const ASC_LBA_OUT_OF_RANGE: u8 = 0x21;
+const ASC_NOT_READY_TO_READY: u8 = 0x28;
+const ASC_RESET: u8 = 0x29;
+const ASC_MEDIUM_NOT_PRESENT: u8 = 0x3A;
 
 pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
 
@@ -47,6 +52,14 @@ pub trait BlockDevice {
 
     fn read_block(&mut self, lba: u32, buf: &mut [u8]) -> Result<(), Self::Error>;
     fn write_block(&mut self, lba: u32, buf: &[u8]) -> Result<(), Self::Error>;
+
+    fn is_ready(&self) -> bool;
+}
+
+#[derive(Debug)]
+enum UnitAttentionCondition {
+    NotReadyToReady,
+    Reset,
 }
 
 /// Per-transfer state. A single SCSI read or write is spread across several
@@ -59,6 +72,8 @@ pub struct State {
     sense_key: Option<u8>,
     sense_key_code: Option<u8>,
     sense_qualifier: Option<u8>,
+    is_ready: bool,
+    unit_attention_condition: Option<UnitAttentionCondition>,
 }
 
 impl Default for State {
@@ -69,6 +84,8 @@ impl Default for State {
             sense_key: None,
             sense_key_code: None,
             sense_qualifier: None,
+            is_ready: false,
+            unit_attention_condition: None,
         }
     }
 }
@@ -170,12 +187,22 @@ where
         return Ok(());
     }
 
-    let blocks = device.blocks();
+    // trigger unit attention conditions if ready state changed
+    let is_ready = device.is_ready();
+    if is_ready != state.is_ready {
+        state.is_ready = is_ready;
+        let uac = if is_ready {
+            UnitAttentionCondition::NotReadyToReady
+        } else {
+            UnitAttentionCondition::Reset
+        };
+        debug!("triggering unit attention condition {uac:?}");
+        state.unit_attention_condition = Some(uac);
+    }
 
+    // First handle those commands that are always available (even if the device is not ready or a
+    // unit attention condition is set)
     match command.kind {
-        ScsiCommand::TestUnitReady => {
-            command.pass(0);
-        }
         ScsiCommand::Inquiry { .. } => {
             let mut data = [0u8; 36];
             data[0] = 0x00; // direct access block device
@@ -188,16 +215,59 @@ where
             data[32..36].copy_from_slice(PRODUCT_REVISION);
             command.try_write_data_all(&data)?;
             command.pass(data.len() as u32);
+            return Ok(());
         }
         ScsiCommand::RequestSense { .. } => {
             let mut data = [0u8; 18];
             data[0] = 0x70; // current errors
-            data[2] = state.sense_key.unwrap_or(0);
-            data[12] = state.sense_key_code.unwrap_or(0);
-            data[13] = state.sense_qualifier.unwrap_or(0);
+            if let Some(unit_attention_condition) = state.unit_attention_condition.take() {
+                data[2] = SENSE_UNIT_ATTENTION;
+                let (asc, ascq) = match unit_attention_condition {
+                    UnitAttentionCondition::NotReadyToReady => (ASC_NOT_READY_TO_READY, 0x00),
+                    UnitAttentionCondition::Reset => (ASC_RESET, 0x00),
+                };
+                data[12] = asc;
+                data[13] = ascq;
+                debug!(
+                    "RequestSense returns unit attention condition {unit_attention_condition:?}"
+                );
+            } else {
+                data[2] = state.sense_key.unwrap_or(0);
+                data[12] = state.sense_key_code.unwrap_or(0);
+                data[13] = state.sense_qualifier.unwrap_or(0);
+                debug!(
+                    "RequestSense returns error {:02x}/{:02x}/{:02x}",
+                    data[2], data[12], data[13]
+                );
+            }
             command.try_write_data_all(&data)?;
             state.reset();
             command.pass(data.len() as u32);
+            return Ok(());
+        }
+        _ => {}
+    }
+
+    // if a unit attention condition is set, it must be cleared first
+    if state.unit_attention_condition.is_some() {
+        command.fail(0);
+        return Ok(());
+    }
+
+    // if the device is not ready, return an error
+    if !state.is_ready {
+        state.fail_with(SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
+        command.fail(0);
+        return Ok(());
+    }
+
+    let blocks = device.blocks();
+
+    match command.kind {
+        // These commands have already been handled above
+        ScsiCommand::Inquiry { .. } | ScsiCommand::RequestSense { .. } => unreachable!(),
+        ScsiCommand::TestUnitReady => {
+            command.pass(0);
         }
         ScsiCommand::ReadCapacity10 => {
             let mut data = [0u8; 8];

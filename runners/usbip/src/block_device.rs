@@ -4,6 +4,7 @@ use std::{
     fs::OpenOptions,
     io::{self, Read, Seek, SeekFrom, Write},
     path::Path,
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use aes::{
@@ -13,6 +14,8 @@ use aes::{
 use log::info;
 use usb_classes::storage::{BlockDevice, BLOCK_SIZE};
 use xts_mode::{get_tweak_default, Xts128};
+
+static STORAGE_READY: AtomicBool = AtomicBool::new(false);
 
 pub struct Storage;
 
@@ -24,11 +27,13 @@ impl storage_app::Storage for Storage {
 
     fn unlock(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
         info!("Storage::unlock called with key = {key:?}");
+        STORAGE_READY.store(true, Ordering::SeqCst);
         Ok(())
     }
 
     fn lock(&mut self) -> Result<(), storage_app::Error> {
         info!("Storage::lock called");
+        STORAGE_READY.store(false, Ordering::SeqCst);
         Ok(())
     }
 }
@@ -94,6 +99,10 @@ impl HostBlockDevice {
 
 impl BlockDevice for HostBlockDevice {
     type Error = io::Error;
+
+    fn is_ready(&self) -> bool {
+        STORAGE_READY.load(Ordering::SeqCst)
+    }
 
     fn blocks(&self) -> u32 {
         self.blocks
