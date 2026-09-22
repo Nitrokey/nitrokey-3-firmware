@@ -45,7 +45,7 @@ pub fn init_usb_nfc<B: Board>(
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
     #[cfg(feature = "board-nkso3")] storage_rp: apps::storage::StorageResponder<'static>,
-    #[cfg(feature = "board-nkso3")] mmc: boards::nkso3::Mmc,
+    #[cfg(feature = "board-nkso3")] mmc: Option<boards::nkso3::Mmc>,
     #[cfg(feature = "board-nkso3")] cryp: stm32n657_hal::cryp::Cryp,
 ) -> UsbNfc<B> {
     const USB_PRODUCT: &str = if cfg!(feature = "board-nkso3") {

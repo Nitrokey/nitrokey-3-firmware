@@ -5,9 +5,12 @@ OUTPUT_ELF ?= $(RUNNER)/artifacts/runner-stm32n6-nkso3.elf
 build:
 	$(MAKE) -C "$(RUNNER)" build-nkso3 FEATURES=$(FEATURES)
 
+PYOCD_TARGET ?= stm32n657l0hxq
+PYOCD_OPTS ?= -O reset_type=sw_sysresetreq
+
 .PHONY: gdbserver
 gdbserver:
-	pyocd gdbserver --target stm32n657x0hxq --semihosting --persist -O semihost_console_type=console
+	pyocd gdbserver --target $(PYOCD_TARGET) $(PYOCD_OPTS) --semihosting --persist -O semihost_console_type=console
 
 .PHONY: run
 run: build

@@ -1,8 +1,8 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use embedded_hal::digital::v2::{InputPin as _, OutputPin as _, PinState};
+use embedded_hal::digital::v2::{OutputPin as _, PinState};
 use stm32n6::stm32n657::GPIOG_S;
-use stm32n657_hal::gpio::{Input, Output, PinC13, PinG0, PinG10, PinG8, PullDown, PushPull};
+use stm32n657_hal::gpio::{Output, PinB10, PinG1, PinG10, PushPull};
 use trussed_core::types::consent;
 
 use crate::ui::{
@@ -13,10 +13,10 @@ use crate::ui::{
 static PANIC_LED_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 pub type RedLedPin<M = Output<PushPull>> = PinG10<M>;
-pub type GreenLedPin<M = Output<PushPull>> = PinG0<M>;
-pub type BlueLedPin<M = Output<PushPull>> = PinG8<M>;
+pub type GreenLedPin<M = Output<PushPull>> = PinG1<M>;
+pub type BlueLedPin<M = Output<PushPull>> = PinB10<M>;
 
-/// Nucleo LD5/LD6/LD7, active low, no PWM: any non-zero intensity turns the LED on.
+/// RGB LED D1, active low: any non-zero intensity turns the LED on.
 pub struct Led {
     red: RedLedPin,
     green: GreenLedPin,
@@ -71,27 +71,10 @@ fn led_pin_state(intensity: u8) -> PinState {
     PinState::from(intensity == 0)
 }
 
-pub type ButtonPin<M = Input<PullDown>> = PinC13<M>;
+pub struct DummyButton;
 
-/// Nucleo user button B1, high while pressed.
-pub struct Button(ButtonPin);
-
-impl Button {
-    pub fn new(pin: ButtonPin) -> Self {
-        Self(pin)
-    }
-
-    pub fn init<M>(pin: ButtonPin<M>) -> Self {
-        Self::new(pin.into_pull_down_input())
-    }
-}
-
-impl UserPresence for Button {
+impl UserPresence for DummyButton {
     fn check_user_presence(&mut self) -> consent::Level {
-        if self.0.is_high().unwrap_or(false) {
-            consent::Level::Normal
-        } else {
-            consent::Level::None
-        }
+        consent::Level::Normal
     }
 }

@@ -38,11 +38,12 @@ pub struct Otg1 {
 
 impl Otg1 {
     /// Brings up OTG1 and its PHY following the reset sequence of Section 72.2.2.
+    ///
+    /// HSE @48 MHz (crystal) to 24 MHz PHY clock
     pub fn new(otg1: OTG1_S, rcc: &Rcc, pwr: &Pwr, clock_config: ClockConfig) -> Self {
         let one_ms = clock_config.sys_bus_ck().to_Hz() / 1_000;
 
         pwr.enable_usb_supply();
-        rcc.enable_hse_bypass_digital();
 
         rcc.assert_reset_otg1_phy_ctl();
         rcc.assert_reset(Peripheral::Otg1);

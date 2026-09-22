@@ -8,9 +8,9 @@ use littlefs2::{
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOC_S, GPIOE_S, GPIOG_S, SDMMC2_S, TIM7_S};
+use stm32n6::stm32n657::{GPIOB_S, GPIOC_S, GPIOE_S, GPIOG_S, SDMMC2_S, TIM7_S};
 use stm32n657_hal::{
-    gpio::{GpioC, GpioE, GpioG},
+    gpio::{GpioB, GpioC, GpioE, GpioG},
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
     timer::Tim7,
@@ -25,7 +25,7 @@ use crate::{
 
 pub use crate::soc::stm32n6::mmc::{self, Mmc};
 
-use ui::{Button, Led};
+use ui::{DummyButton, Led};
 
 pub use storage::{xts_bench_cycles, UsbStorage, BUFFER_LEN};
 
@@ -37,7 +37,7 @@ impl Board for NKSO3 {
     type Resources = EpMemory;
 
     type NfcDevice = DummyNfc;
-    type Buttons = Button;
+    type Buttons = DummyButton;
     type Led = Led;
 
     type InternalStorage = InternalStorage;
@@ -146,24 +146,24 @@ ram_storage!(
 );
 
 pub struct BoardGPIO {
-    pub button: Button,
     pub led: Led,
 }
 
 pub fn init_pins(
+    gpiob: GPIOB_S,
     gpioc: GPIOC_S,
     gpioe: GPIOE_S,
     gpiog: GPIOG_S,
     sdmmc: SDMMC2_S,
     rcc: &Rcc,
 ) -> (BoardGPIO, Mmc<Disabled>) {
+    let gpiob = GpioB::new(gpiob, rcc);
     let gpioc = GpioC::new(gpioc, rcc);
     let gpioe = GpioE::new(gpioe, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     (
         BoardGPIO {
-            button: Button::init(gpioc.c13),
-            led: Led::init(gpiog.g10, gpiog.g0, gpiog.g8),
+            led: Led::init(gpiog.g10, gpiog.g1, gpiob.b10),
         },
         Mmc::new(
             sdmmc,
@@ -184,9 +184,9 @@ pub fn init_ui(
     tim7: TIM7_S,
     rcc: &Rcc,
     clock_config: ClockConfig,
-) -> UserInterface<TimerClock, Button, Led> {
+) -> UserInterface<TimerClock, DummyButton, Led> {
     let clock = TimerClock::new(Tim7::new(tim7, rcc), clock_config);
-    UserInterface::new(clock, Some(gpio.button), Some(gpio.led))
+    UserInterface::new(clock, Some(DummyButton), Some(gpio.led))
 }
 
 /// Both filesystems are volatile, formatting here keeps the init status clean.
