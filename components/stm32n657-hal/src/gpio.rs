@@ -3,7 +3,7 @@
 use core::{convert::Infallible, marker::PhantomData};
 
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use stm32n6::stm32n657::{GPIOC_S, GPIOG_S};
+use stm32n6::stm32n657::{GPIOB_S, GPIOG_S};
 
 use crate::rcc::{Peripheral, Rcc};
 
@@ -129,11 +129,10 @@ macro_rules! impl_pin {
     };
 }
 
-impl_gpio!(GpioC, GPIOC_S, [
-    c13: PinC13 = (mode13, ot13, pupd13, id13, bs13, br13),
+impl_gpio!(GpioB, GPIOB_S, [
+    b10: PinB10 = (mode10, ot10, pupd10, id10, bs10, br10),
 ]);
 impl_gpio!(GpioG, GPIOG_S, [
-    g0: PinG0 = (mode0, ot0, pupd0, id0, bs0, br0),
-    g8: PinG8 = (mode8, ot8, pupd8, id8, bs8, br8),
+    g1: PinG1 = (mode1, ot1, pupd1, id1, bs1, br1),
     g10: PinG10 = (mode10, ot10, pupd10, id10, bs10, br10),
 ]);

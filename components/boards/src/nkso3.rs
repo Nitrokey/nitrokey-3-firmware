@@ -6,9 +6,9 @@ use littlefs2::{
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOC_S, GPIOG_S, TIM7_S};
+use stm32n6::stm32n657::{GPIOB_S, GPIOG_S, TIM7_S};
 use stm32n657_hal::{
-    gpio::{GpioC, GpioG},
+    gpio::{GpioB, GpioG},
     rcc::{ClockConfig, Rcc},
     timer::Tim7,
 };
@@ -20,7 +20,7 @@ use crate::{
     Board,
 };
 
-use ui::{Button, Led};
+use ui::{DummyButton, Led};
 
 pub mod ui;
 
@@ -32,7 +32,7 @@ impl Board for NKSO3 {
     type Resources = EpMemory;
 
     type NfcDevice = DummyNfc;
-    type Buttons = Button;
+    type Buttons = DummyButton;
     type Led = Led;
 
     type InternalStorage = InternalStorage;
@@ -141,16 +141,14 @@ ram_storage!(
 );
 
 pub struct BoardGPIO {
-    pub button: Button,
     pub led: Led,
 }
 
-pub fn init_pins(gpioc: GPIOC_S, gpiog: GPIOG_S, rcc: &Rcc) -> BoardGPIO {
-    let gpioc = GpioC::new(gpioc, rcc);
+pub fn init_pins(gpiob: GPIOB_S, gpiog: GPIOG_S, rcc: &Rcc) -> BoardGPIO {
+    let gpiob = GpioB::new(gpiob, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     BoardGPIO {
-        button: Button::init(gpioc.c13),
-        led: Led::init(gpiog.g10, gpiog.g0, gpiog.g8),
+        led: Led::init(gpiog.g10, gpiog.g1, gpiob.b10),
     }
 }
 
@@ -159,9 +157,9 @@ pub fn init_ui(
     tim7: TIM7_S,
     rcc: &Rcc,
     clock_config: ClockConfig,
-) -> UserInterface<TimerClock, Button, Led> {
+) -> UserInterface<TimerClock, DummyButton, Led> {
     let clock = TimerClock::new(Tim7::new(tim7, rcc), clock_config);
-    UserInterface::new(clock, Some(gpio.button), Some(gpio.led))
+    UserInterface::new(clock, Some(DummyButton), Some(gpio.led))
 }
 
 /// Both filesystems are volatile, formatting here keeps the init status clean.

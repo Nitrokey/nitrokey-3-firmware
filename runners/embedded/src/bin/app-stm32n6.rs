@@ -69,8 +69,10 @@ mod app {
         let soc = stm32n6::init_bootup(ctx.device.BSEC);
         let rcc = Rcc::new(ctx.device.RCC);
         let clock_config = rcc.clock_config();
+        // Y1, 48 MHz crystal on PH0/PH1, feeds the USB PHY.
+        rcc.enable_hse();
 
-        let board_gpio = nkso3::init_pins(ctx.device.GPIOC_S, ctx.device.GPIOG_S, &rcc);
+        let board_gpio = nkso3::init_pins(ctx.device.GPIOB_S, ctx.device.GPIOG_S, &rcc);
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,

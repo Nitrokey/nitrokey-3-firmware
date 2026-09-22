@@ -51,21 +51,20 @@ impl Rcc {
         peripheral.release_reset(&self.0);
     }
 
-    /// Starts the HSE in digital bypass mode (external oscillator) and waits until it is ready.
-    pub fn enable_hse_bypass_digital(&self) {
+    /// Enable HSE crystal on OSC_IN/OSC_OUT and waits until it's ready
+    pub fn enable_hse(&self) {
         self.0.cr().modify(|_, w| w.hseon().clear_bit());
         self.0
             .hsecfgr()
-            .modify(|_, w| w.hsebyp().set_bit().hseext().set_bit());
+            .modify(|_, w| w.hsebyp().clear_bit().hseext().clear_bit());
         self.0.cr().modify(|_, w| w.hseon().set_bit());
         while self.0.sr().read().hserdy().bit_is_clear() {}
     }
 
-    /// Feeds the OTGPHY1 reference input with the HSE divided by two (see Section 14.7).
-    ///
+    /// Feeds the OTGPHY1 clock with 48 MHz HSE divided by two (see Section 14.7).
     /// Must be called while the OTGPHY1 clock is disabled.
     pub fn select_otgphy1_hse_div2(&self) {
-        // The PAC names HSEDIV2SEL hsediv2byp.
+        // HSEDIV2SEL (hsediv2byp in the PAC): 1 = hse_div2_osc_ck is hse_osc_ck / 2
         self.0.hsecfgr().modify(|_, w| w.hsediv2byp().set_bit());
         self.0.ccipr6().modify(|_, w| {
             // SAFETY: 0b00 selects hse_div2_ck for the kernel clock mux.
@@ -135,7 +134,7 @@ impl_peripheral!(
         (Rng, rngens, rngrsts, rngrstc),
     ],
     (ahb4ensr, ahb4rstsr, ahb4rstcr) => [
-        (GpioC, gpiocens, gpiocrsts, gpiocrstc),
+        (GpioB, gpiobens, gpiobrsts, gpiobrstc),
         (GpioG, gpiogens, gpiogrsts, gpiogrstc),
     ],
     (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
