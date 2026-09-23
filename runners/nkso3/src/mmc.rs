@@ -1,4 +1,4 @@
-use stm32n6::stm32n657::SDMMC2;
+use stm32n6::stm32n657::SDMMC2_S;
 use stm32n657_hal::gpio::{
     Alternate, PinC0, PinC2, PinC3, PinC4, PinC5, PinE4, PullUp, ALTERNATE_FUNCTION_11,
 };
@@ -14,4 +14,4 @@ type Pins = (
     PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>,
 );
 
-pub type Mmc = MmcMaster<SDMMC2, Pins, Enabled>;
+pub type Mmc = MmcMaster<SDMMC2_S, Pins, Enabled>;

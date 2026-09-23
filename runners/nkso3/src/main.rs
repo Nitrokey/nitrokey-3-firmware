@@ -26,6 +26,7 @@ mod app {
         bsec::Bsec,
         gpio::{GpioA, GpioC, GpioE, GpioG},
         mmc::MmcMaster,
+        pwr::Pwr,
         rcc::{ClockConfig, Rcc},
         timer::{MillisecondsCounter, Tim6, Tim7, Timer},
         Rate,
@@ -48,7 +49,8 @@ mod app {
         button: Button,
         timer: Timer<Tim6>,
         counter: MillisecondsCounter<Tim7>,
-        // mmc: Mmc,
+        #[allow(unused)]
+        mmc: Mmc,
     }
 
     #[init]
@@ -65,29 +67,32 @@ mod app {
 
         let monotonic = Systick::new(cx.core.SYST, clock_config.sys_bus_ck().to_Hz());
 
+        let pwr = Pwr::new(cx.device.PWR_S);
+        pwr.enable_mmc_vddio();
+
         let gpiog = GpioG::new(cx.device.GPIOG_S, &rcc);
+        let gpioc = GpioC::new(cx.device.GPIOC_S, &rcc);
         let led = Led::init(gpiog.g10, gpiog.g0, gpiog.g8);
 
-        let gpioc = GpioC::new(cx.device.GPIOC_S, &rcc);
         let button = Button::init(gpioc.c13);
 
-        let gpioa = GpioA::new(cx.device.GPIOA_S, &rcc);
+        let _gpioa = GpioA::new(cx.device.GPIOA_S, &rcc);
         let gpioe = GpioE::new(cx.device.GPIOE_S, &rcc);
-        info!("Before pins");
+        info_now!("Before pins");
         let pins = (
             gpioc.c3.into_sdmmc2_cmd(),
             gpioc.c2.into_sdmmc2_ck(),
             gpioc.c4.into_sdmmc2_d0(),
-            // gpioc.c5.into_sdmmc2_d1(),
-            // gpioc.c0.into_sdmmc2_d2(),
-            // gpioe.e4.into_sdmmc2_d3(),
+            gpioc.c5.into_sdmmc2_d1(),
+            gpioc.c0.into_sdmmc2_d2(),
+            gpioe.e4.into_sdmmc2_d3(),
         );
-        info!("after pins");
+        info_now!("after pins");
         let mmc = MmcMaster::new(cx.device.SDMMC2_S, pins);
 
-        info!("before enable");
+        info_now!("before enable");
         let mmc = mmc.enable(&rcc).expect("Enabling mmc");
-        info!("after enable");
+        info_now!("after enable");
 
         let tim7 = Tim7::new(cx.device.TIM7_S, &rcc);
         let counter = MillisecondsCounter::new(tim7, clock_config);
@@ -103,7 +108,7 @@ mod app {
                 led,
                 button,
                 timer,
-                // mmc,
+                mmc,
             },
             init::Monotonics(monotonic),
         )
@@ -121,27 +126,27 @@ mod app {
         let start = counter.now();
         let mut cycle_start = start;
         loop {
-            info!("idle");
+            info_now!("idle");
             let user_presence = button.check_user_presence();
             let is_user_present = user_presence != consent::Level::None;
 
             let now = counter.now();
+            info_now!("got now");
             let elapsed = now.checked_duration_since(cycle_start).unwrap().to_millis();
+            info_now!("got elapsed");
             if elapsed >= 1_000 {
+                info_now!("Restart");
                 cycle_start = now;
 
                 let _total_elapsed = now.checked_duration_since(start).unwrap();
-                info!("{}", _total_elapsed);
-            }
-
-            if elapsed >= 100 {
-                Delogger::flush();
+                info_now!("{}", _total_elapsed);
             }
 
             let mut intensities = Intensities::from(0);
             if elapsed < 500 {
                 intensities.green = u8::MAX;
             }
+            info_now!("After set");
             if is_user_present {
                 intensities.blue = u8::MAX;
             }
