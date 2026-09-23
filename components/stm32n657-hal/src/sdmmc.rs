@@ -753,12 +753,11 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             }
 
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
+            let flags = star.ccrcfail().bit()
                 | star.cmdrend().bit()
                 | star.ctimeout().bit()
-                | star.busyd0end().bit()
-                | !star.cpsmact().bit())
-            {
+                | star.busyd0end().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
         }
@@ -830,11 +829,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -862,11 +858,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -890,11 +883,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -924,11 +914,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -981,11 +968,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -1036,11 +1020,8 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         let mut star;
         loop {
             star = self.peripheral.star().read();
-            if !(star.ccrcfail().bit()
-                | star.cmdrend().bit()
-                | star.ctimeout().bit()
-                | !star.cpsmact().bit())
-            {
+            let flags = star.ccrcfail().bit() | star.cmdrend().bit() | star.ctimeout().bit();
+            if flags && !star.cpsmact().bit() {
                 break;
             }
             count -= 1;
@@ -1064,10 +1045,13 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         loop {
             count -= 1;
             if count == 0 {
+                error_now!("Count timeout");
                 return Err(Error::TIMEOUT);
             }
 
-            if self.peripheral.star().read().cmdsent().bit() {
+            let star = self.peripheral.star().read();
+
+            if star.cmdsent().bit() {
                 break;
             }
         }
@@ -1283,10 +1267,9 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
     /// Sends host capacity support information and activates the card's
     /// initialization process. Send SDMMC_CMD_SEND_OP_COND command
     pub fn cmd_op_condition(&mut self, argument: u32) -> Result<(), Error> {
-        let command = CmdIndex::SendOpCond;
         self.send_command(Command {
             argument,
-            cmd_index: command,
+            cmd_index: CmdIndex::SendOpCond,
             response: Response::Short,
             wait_for_interrupt: WaitForInterrupt::No,
             cpsm: Cpsm::Enable,
