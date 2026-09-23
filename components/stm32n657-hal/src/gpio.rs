@@ -225,6 +225,8 @@ impl_gpio!(GpioE, GPIOE_S, [
 ]);
 impl_gpio!(GpioG, GPIOG_S, [
     g0: PinG0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    g1: PinG1 = (mode1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
+    g7: PinG7 = (mode7, ot7, pupd7, id7, bs7, br7, afrl,afsel7),
     g8: PinG8 = (mode8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
     g10: PinG10 = (mode10, ot10, pupd10, id10, bs10, br10, afrh,afsel10),
 ]);
