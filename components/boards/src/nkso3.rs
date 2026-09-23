@@ -1,8 +1,10 @@
+pub mod storage;
+pub mod ui;
+
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use littlefs2::{
     consts,
-    driver::Storage,
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
@@ -22,7 +24,7 @@ use crate::{
 
 use ui::{Button, Led};
 
-pub mod ui;
+pub use storage::{Storage, UsbStorage, BUFFER_LEN};
 
 pub struct NKSO3;
 
@@ -80,7 +82,7 @@ macro_rules! ram_storage {
             }
         }
 
-        impl Storage for $Name {
+        impl littlefs2::driver::Storage for $Name {
             const READ_SIZE: usize = $read_size;
             const WRITE_SIZE: usize = $write_size;
             const BLOCK_SIZE: usize = $block_size;

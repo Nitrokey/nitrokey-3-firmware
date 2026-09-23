@@ -57,6 +57,8 @@ impl<B: Board> Resources<B> {
 
 pub struct UsbResources<B: Board> {
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    #[cfg(feature = "board-nkso3")]
+    buffer: [u8; crate::nkso3::BUFFER_LEN],
 }
 
 impl<B: Board> Default for UsbResources<B> {
@@ -67,7 +69,11 @@ impl<B: Board> Default for UsbResources<B> {
 
 impl<B: Board> UsbResources<B> {
     pub const fn new() -> Self {
-        Self { usb_bus: None }
+        Self {
+            usb_bus: None,
+            #[cfg(feature = "board-nkso3")]
+            buffer: [0; _],
+        }
     }
 }
 
@@ -108,6 +114,8 @@ pub struct UsbNfc<B: Board> {
     pub apdu_dispatch: ApduDispatch<'static>,
     pub ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
     pub iso14443: Option<Iso14443<B::NfcDevice>>,
+    #[cfg(feature = "board-nkso3")]
+    pub usb_storage: Option<crate::nkso3::UsbStorage<'static, <B::Soc as Soc>::UsbBus>>,
 }
 
 const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
@@ -136,9 +144,11 @@ pub fn init_usb_nfc<B: Board>(
     let ctaphid_dispatch = CtaphidDispatch::with_interrupt(ctaphid_rp, Some(&CTAP_INTERRUPT));
 
     /* populate requesters (if bus options are provided) */
-    let usb_classes = usb_bus.map(|usb_bus| {
+    if let Some(usb_bus) = usb_bus {
         let usb_bus = resources.usb_bus.insert(usb_bus);
-        usb_classes::build(
+        #[cfg(feature = "board-nkso3")]
+        let storage = crate::nkso3::UsbStorage::new(usb_bus, &mut resources.buffer);
+        let usb_classes = usb_classes::build(
             usb_bus,
             Some(usb_classes::CcidConfig {
                 requester: ccid_rq,
@@ -153,14 +163,24 @@ pub fn init_usb_nfc<B: Board>(
                 pid: usb_product_id,
                 device_release: version.usb_release(),
             },
-        )
-    });
-
-    UsbNfc {
-        usb_classes,
-        apdu_dispatch,
-        ctaphid_dispatch,
-        iso14443: nfc,
+        );
+        UsbNfc {
+            usb_classes: Some(usb_classes),
+            apdu_dispatch,
+            ctaphid_dispatch,
+            iso14443: nfc,
+            #[cfg(feature = "board-nkso3")]
+            usb_storage: Some(storage),
+        }
+    } else {
+        UsbNfc {
+            usb_classes: None,
+            apdu_dispatch,
+            ctaphid_dispatch,
+            iso14443: nfc,
+            #[cfg(feature = "board-nkso3")]
+            usb_storage: None,
+        }
     }
 }
 
@@ -188,6 +208,11 @@ pub fn init_apps<B: Board>(
         }
     }
 
+    #[cfg(feature = "board-nkso3")]
+    let storage = apps::StorageData {
+        storage: crate::nkso3::Storage,
+    };
+
     #[cfg(feature = "provisioner")]
     let provisioner = {
         use apps::Reboot as _;
@@ -208,6 +233,8 @@ pub fn init_apps<B: Board>(
             has_nfc: B::HAS_NFC,
             max_message_size: CTAPHID_MESSAGE_SIZE,
         },
+        #[cfg(feature = "board-nkso3")]
+        storage,
         #[cfg(feature = "provisioner")]
         provisioner,
         _marker: Default::default(),

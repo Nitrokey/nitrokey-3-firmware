@@ -94,6 +94,8 @@ impl<B: Board> apps::Runner for Runner<B> {
     type Store = RunnerStore<B>;
     type Twi = B::Twi;
     type Se050Timer = B::Se050Timer;
+    #[cfg(feature = "board-nkso3")]
+    type Storage = nkso3::Storage;
 
     fn uuid(&self) -> [u8; 16] {
         self.uuid

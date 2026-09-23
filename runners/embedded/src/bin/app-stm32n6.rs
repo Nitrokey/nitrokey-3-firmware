@@ -24,9 +24,9 @@ mod app {
     use apps::Endpoints;
     use boards::{
         init::{CtaphidDispatch, Resources, UsbClasses},
-        nkso3::{self, NKSO3},
+        nkso3::{self, UsbStorage, NKSO3},
         runtime,
-        soc::{monotonic::SystickMonotonic, stm32n6},
+        soc::{self, monotonic::SystickMonotonic, stm32n6},
         store, Apps, Trussed,
     };
     use embedded_runner_lib::{VERSION, VERSION_STRING};
@@ -47,6 +47,7 @@ mod app {
         apdu_dispatch: ApduDispatch<'static>,
         ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
         usb_classes: Option<UsbClasses<Soc>>,
+        usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
     }
 
     #[local]
@@ -132,19 +133,21 @@ mod app {
                 apdu_dispatch: usb_nfc.apdu_dispatch,
                 ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
                 usb_classes: usb_nfc.usb_classes,
+                usb_storage: usb_nfc.usb_storage,
             },
             LocalResources { endpoints },
             init::Monotonics(systick.into()),
         )
     }
 
-    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes])]
+    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes, usb_storage])]
     fn idle(ctx: idle::Context) -> ! {
         let idle::SharedResources {
             mut apps,
             mut apdu_dispatch,
             mut ctaphid_dispatch,
             mut usb_classes,
+            mut usb_storage,
         } = ctx.shared;
 
         trace!("idle");
@@ -161,12 +164,15 @@ mod app {
             }
 
             usb_classes.lock(|usb_classes| {
-                runtime::poll_usb(
-                    usb_classes,
-                    ccid_keepalive::spawn_after,
-                    ctaphid_keepalive::spawn_after,
-                    monotonics::now(),
-                );
+                usb_storage.lock(|usb_storage| {
+                    runtime::poll_usb(
+                        usb_classes,
+                        usb_storage,
+                        ccid_keepalive::spawn_after,
+                        ctaphid_keepalive::spawn_after,
+                        monotonics::now(),
+                    );
+                });
             });
         }
     }
@@ -180,17 +186,21 @@ mod app {
         });
     }
 
-    #[task(priority = 3, binds = OTG1, shared = [usb_classes])]
+    #[task(priority = 3, binds = OTG1, shared = [usb_classes, usb_storage])]
     fn task_usb(ctx: task_usb::Context) {
         let mut usb_classes = ctx.shared.usb_classes;
+        let mut usb_storage = ctx.shared.usb_storage;
 
         usb_classes.lock(|usb_classes| {
-            runtime::poll_usb(
-                usb_classes,
-                ccid_keepalive::spawn_after,
-                ctaphid_keepalive::spawn_after,
-                monotonics::now(),
-            );
+            usb_storage.lock(|usb_storage| {
+                runtime::poll_usb(
+                    usb_classes,
+                    usb_storage,
+                    ccid_keepalive::spawn_after,
+                    ctaphid_keepalive::spawn_after,
+                    monotonics::now(),
+                );
+            });
         });
     }
 
