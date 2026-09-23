@@ -55,6 +55,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let bsec = Bsec::new(cx.device.BSEC);
         let uid = bsec.uid();
+        Delogger::init_default(delog::LevelFilter::Debug, &boards::init::DELOG_FLUSHER).ok();
 
         info!("nkso3 firmware is running on {:x?}", uid);
 

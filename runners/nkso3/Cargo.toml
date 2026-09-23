@@ -22,7 +22,7 @@ trussed = { version = "0.1", default-features = false }
 default = []
 log-semihosting = ["boards/log-semihosting"]
 
-log-all = []
+log-all = ["stm32n657-hal/log-all"]
 log-none = []
 log-trace = []
 log-info = []
