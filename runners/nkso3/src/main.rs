@@ -125,8 +125,8 @@ mod app {
             mmc,
         } = cx.local;
 
-        let mut block = [0u8; 512];
-        let mut block_read = [[0; 512]];
+        let mut block = [[0u8; 512]; 2];
+        let mut block_read = [[0; 512]; 2];
 
         let start = counter.now();
         let mut cycle_start = start;
@@ -161,11 +161,11 @@ mod app {
             // mmc.read_blocks(&mut block_read, 0).unwrap();
             // assert_eq!(block, block_read[0]);
             debug_now!("Write blocks");
-            mmc.write_blocks(&[block], 0).unwrap();
+            mmc.write_blocks(&block, 0).unwrap();
             debug_now!("read blocks");
             mmc.read_blocks(&mut block_read, 0).unwrap();
-            assert_eq!(block, block_read[0]);
-            block[0] = block[0].wrapping_add(1);
+            assert_eq!(block, block_read);
+            block[0][0] = block[0][0].wrapping_add(1);
             nb::block!(timer.wait()).unwrap();
         }
     }
