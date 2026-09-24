@@ -85,5 +85,6 @@ software-tests:
 	cd components/usb-classes && cargo test --all-features
 	cd components/stm32n657-hal && cargo test
 	cd components/storage-app && cargo test --all-features
+	cd components/usb-classes && cargo test --all-features
 	cd components/utils && cargo test
 	cd runners/usbip && cargo test --features usb-storage

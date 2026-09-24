@@ -4046,6 +4046,7 @@ dependencies = [
 name = "usb-classes"
 version = "1.9.0-rc.1"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "cipher",
  "ctaphid-dispatch",

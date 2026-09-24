@@ -183,40 +183,6 @@ fn in_bounds<D: BlockDevice>(device: &D, lba: u32, count: u32) -> bool {
         .is_some_and(|end| end <= device.blocks())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    struct Dummy(u32);
-
-    impl BlockDevice for Dummy {
-        type Error = ();
-
-        fn blocks(&self) -> u32 {
-            self.0
-        }
-
-        fn read_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
-            Ok(())
-        }
-
-        fn write_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
-            Ok(())
-        }
-    }
-
-    #[test]
-    fn bounds() {
-        let device = Dummy(8);
-        assert!(in_bounds(&device, 0, 8));
-        assert!(in_bounds(&device, 7, 1));
-        assert!(in_bounds(&device, 8, 0));
-        assert!(!in_bounds(&device, 7, 2));
-        assert!(!in_bounds(&device, 9, 1));
-        assert!(!in_bounds(&device, u32::MAX, 1));
-    }
-}
-
 /// Handles one SCSI command against `device`.
 pub fn process_command<B, Buf, D>(
     mut command: Command<ScsiCommand, StorageClass<'_, B, Buf>>,
@@ -254,7 +220,7 @@ where
             let mut data = [0u8; 36];
             data[0] = 0x00; // direct access block device
             if device.is_none() {
-                data[0] = data[0] | 0b0010_0000; // device currently not available
+                data[0] |= 0b0010_0000; // device currently not available
             }
             data[1] = 0x80; // removable
             data[2] = 0x04; // SPC-2
@@ -447,4 +413,128 @@ where
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use aes::{cipher::KeyInit as _, Aes128};
+
+    use super::*;
+
+    const BLOCKS: usize = 4;
+    const BUFFER_LEN: usize = BLOCKS * BLOCK_SIZE;
+    const KEY1: &[u8; 32] = b"0123456789abcdef0123456789abcdef";
+    const KEY2: &[u8; 32] = b"deadbeefdeadbeefdeadbeefdeadbeef";
+
+    struct Dummy(u32);
+
+    impl BlockDevice for Dummy {
+        type Error = ();
+
+        fn blocks(&self) -> u32 {
+            self.0
+        }
+
+        fn read_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
+            Ok(())
+        }
+
+        fn write_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
+            Ok(())
+        }
+    }
+
+    fn block(fill: u8) -> [u8; BLOCK_SIZE] {
+        [fill; _]
+    }
+
+    fn raw_block(buffer: &[u8], lba: usize) -> [u8; BLOCK_SIZE] {
+        let offset = lba * BLOCK_SIZE;
+        *buffer[offset..].first_chunk().unwrap()
+    }
+
+    fn setup_xts(key: &[u8; 32]) -> Xts128<Aes128> {
+        let cipher1 = Aes128::new_from_slice(&key[..16]).unwrap();
+        let cipher2 = Aes128::new_from_slice(&key[16..]).unwrap();
+        Xts128::new(cipher1, cipher2)
+    }
+
+    #[test]
+    fn bounds() {
+        let device = Dummy(8);
+        assert!(in_bounds(&device, 0, 8));
+        assert!(in_bounds(&device, 7, 1));
+        assert!(in_bounds(&device, 8, 0));
+        assert!(!in_bounds(&device, 7, 2));
+        assert!(!in_bounds(&device, 9, 1));
+        assert!(!in_bounds(&device, u32::MAX, 1));
+    }
+
+    #[test]
+    fn memory_round_trip() {
+        let mut buffer = [0; BUFFER_LEN];
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        assert_eq!(device.blocks(), u32::try_from(BLOCKS).unwrap());
+
+        device.write_block(2, &mut block(0xA5)).unwrap();
+
+        let mut buf = block(0);
+        device.read_block(2, &mut buf).unwrap();
+        assert_eq!(buf, block(0xA5));
+
+        device.read_block(1, &mut buf).unwrap();
+        assert_eq!(buf, block(0));
+    }
+
+    #[test]
+    fn encrypted_round_trip() {
+        let xts = setup_xts(KEY1);
+        let mut buffer = [0; BUFFER_LEN];
+
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        encrypted_device.write_block(1, &mut block(0xC3)).unwrap();
+
+        assert_ne!(raw_block(&buffer, 1), block(0xC3));
+
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut buf = block(0);
+        encrypted_device.read_block(1, &mut buf).unwrap();
+        assert_eq!(buf, block(0xC3));
+    }
+
+    #[test]
+    fn tweak_differs_per_block() {
+        let xts = setup_xts(KEY1);
+        let mut buffer = [0; BUFFER_LEN];
+
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+
+        encrypted_device.write_block(0, &mut block(0xFF)).unwrap();
+        encrypted_device.write_block(1, &mut block(0xFF)).unwrap();
+
+        assert_ne!(raw_block(&buffer, 0), raw_block(&buffer, 1));
+    }
+
+    #[test]
+    fn encrypted_different_keys() {
+        let mut buffer = [0; BUFFER_LEN];
+
+        let xts = setup_xts(KEY1);
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+
+        encrypted_device.write_block(0, &mut block(0xFF)).unwrap();
+
+        let xts = setup_xts(KEY2);
+        let mut device = MemoryBlockDevice::new(&mut buffer);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+
+        let mut buf = block(0);
+        encrypted_device.read_block(0, &mut buf).unwrap();
+        assert_ne!(buf, block(0x0));
+        assert_ne!(buf, block(0xFF));
+    }
 }

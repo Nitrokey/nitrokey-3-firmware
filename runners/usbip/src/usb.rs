@@ -33,6 +33,7 @@ struct Storage {
     scsi: usb_classes::storage::StorageClass<'static, UsbIpBus, Vec<u8>>,
     device: crate::block_device::HostBlockDevice,
     state: usb_classes::storage::State,
+    xts: Option<xts_mode::Xts128<aes::Aes128>>,
 }
 
 pub struct NkSetup {
@@ -95,10 +96,21 @@ impl Setup<Dispatch> for NkSetup {
             device: crate::block_device::HostBlockDevice::open(
                 self.block_device.as_deref(),
                 BLOCKS,
-                self.block_device_key,
             )
             .expect("failed to open block device"),
             state: Default::default(),
+            xts: self.block_device_key.map(|key| {
+                use aes::{
+                    cipher::{generic_array::GenericArray, KeyInit as _},
+                    Aes128,
+                };
+                use xts_mode::Xts128;
+
+                log::info!("storage encryption: AES-128 XTS");
+                let data_key = Aes128::new(GenericArray::from_slice(&key[..16]));
+                let tweak_key = Aes128::new(GenericArray::from_slice(&key[16..]));
+                Xts128::new(data_key, tweak_key)
+            }),
         };
 
         let classes = usb_classes::build(
@@ -142,6 +154,7 @@ impl Classes for NkClasses {
     #[cfg(feature = "usb-storage")]
     fn poll(&mut self) {
         use trussed_usbip::usb_device::device::UsbDeviceState;
+        use usb_classes::storage::EncryptedBlockDevice;
 
         let storage = &mut self.storage;
         self.classes.poll_with(&mut [&mut storage.scsi]);
@@ -155,11 +168,19 @@ impl Classes for NkClasses {
         // too: a from-host phase ending strands undrained data in the buffer.
         for _ in 0..2 {
             let result = storage.scsi.poll_command(|command| {
-                usb_classes::storage::process_command(
-                    command,
-                    Some(&mut storage.device),
-                    &mut storage.state,
-                )
+                if let Some(xts) = storage.xts.as_ref() {
+                    usb_classes::storage::process_command(
+                        command,
+                        Some(&mut EncryptedBlockDevice::new(&mut storage.device, xts)),
+                        &mut storage.state,
+                    )
+                } else {
+                    usb_classes::storage::process_command(
+                        command,
+                        Some(&mut storage.device),
+                        &mut storage.state,
+                    )
+                }
             });
             if let Err(err) = result {
                 log::warn!("storage: {err:?}");
