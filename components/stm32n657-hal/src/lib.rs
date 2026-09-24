@@ -6,14 +6,19 @@
 //!
 //! [rm0486]: https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
 
+delog::generate_macros!();
+
 pub mod bsec;
 pub mod gpio;
+pub mod mmc;
 #[cfg(feature = "otg")]
 pub mod otg;
 pub mod pac;
 pub mod pwr;
 pub mod rcc;
 pub mod rng;
+pub mod sdmmc;
 pub mod timer;
+mod utils;
 
 pub type Rate = fugit::HertzU32;

@@ -11,8 +11,18 @@ nb = "0.1"
 rand_core = "0.6"
 stm32n6 = { version = "0.16", default-features = false, features = ["stm32n657"] }
 synopsys-usb-otg = { version = "0.5", optional = true, features = ["hs"] }
+delog.workspace = true
+bitflags.workspace = true
 
 [features]
 default = ["otg"]
 
 otg = ["synopsys-usb-otg"]
+
+log-all = []
+log-none = []
+log-trace = []
+log-debug = []
+log-info = []
+log-warn = []
+log-error = []

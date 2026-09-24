@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 delog.workspace = true
 apdu-app = "0.2"
-bitflags = "2"
+bitflags.workspace = true
 ctaphid-app.workspace = true
 embedded-hal = "0.2.7"
 heapless = "0.9"

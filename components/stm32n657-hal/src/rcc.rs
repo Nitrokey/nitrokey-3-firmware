@@ -135,12 +135,20 @@ impl_peripheral!(
         (Rng, rngens, rngrsts, rngrstc),
     ],
     (ahb4ensr, ahb4rstsr, ahb4rstcr) => [
+        (GpioA, gpioaens, gpioarsts, gpioarstc),
+        (GpioB, gpiobens, gpiobrsts, gpiobrstc),
         (GpioC, gpiocens, gpiocrsts, gpiocrstc),
+        (GpioD, gpiodens, gpiodrsts, gpiodrstc),
+        (GpioE, gpioeens, gpioersts, gpioerstc),
+        (GpioF, gpiofens, gpiofrsts, gpiofrstc),
         (GpioG, gpiogens, gpiogrsts, gpiogrstc),
+        (GpioH, gpiohens, gpiohrsts, gpiohrstc),
     ],
     (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
         (Otg1, otg1ens, otg1rsts, otg1rstc),
         (OtgPhy1, otgphy1ens, otgphy1rsts, otgphy1rstc),
+        (Sdmmc1, sdmmc1ens, sdmmc1rsts, sdmmc1rstc),
+        (Sdmmc2, sdmmc2ens, sdmmc2rsts, sdmmc2rstc),
     ],
     (apb1lensr, apb1lrstsr, apb1lrstcr) => [
         (Tim6, tim6ens, tim6rsts, tim6rstc),
