@@ -50,14 +50,67 @@ const START_STOP_UNIT: u8 = 0x1B;
 const PREVENT_ALLOW_MEDIUM_REMOVAL: u8 = 0x1E;
 const SYNCHRONIZE_CACHE_10: u8 = 0x35;
 
-const SENSE_NOT_READY: u8 = 0x02;
-const SENSE_MEDIUM_ERROR: u8 = 0x03;
-const SENSE_ILLEGAL_REQUEST: u8 = 0x05;
-const ASC_UNRECOVERED_READ_ERROR: u8 = 0x11;
-const ASC_WRITE_FAULT: u8 = 0x03;
-const ASC_INVALID_COMMAND: u8 = 0x20;
-const ASC_LBA_OUT_OF_RANGE: u8 = 0x21;
-const ASC_MEDIUM_NOT_PRESENT: u8 = 0x3A;
+// See https://www.t10.org/lists/2sensekey.htm.
+#[derive(Clone, Copy, Debug, Default)]
+enum SenseKey {
+    #[default]
+    NoSense,
+    NotReady,
+    MediumError,
+    IllegalRequest,
+}
+
+impl SenseKey {
+    const fn value(&self) -> u8 {
+        match self {
+            Self::NoSense => 0x00,
+            Self::NotReady => 0x02,
+            Self::MediumError => 0x03,
+            Self::IllegalRequest => 0x05,
+        }
+    }
+}
+
+impl From<SenseKey> for u8 {
+    fn from(sense_key: SenseKey) -> Self {
+        sense_key.value()
+    }
+}
+
+// See https://www.t10.org/lists/asc-num.htm.
+#[derive(Clone, Copy, Debug, Default)]
+enum AdditionalSenseData {
+    #[default]
+    NoInformation,
+    WriteFault,
+    UnrecoveredReadError,
+    InvalidCommand,
+    LbaOutOfRange,
+    MediumNotPresent,
+}
+
+impl AdditionalSenseData {
+    const fn asc(&self) -> u8 {
+        match self {
+            Self::NoInformation => 0x00,
+            Self::WriteFault => 0x03,
+            Self::UnrecoveredReadError => 0x11,
+            Self::InvalidCommand => 0x20,
+            Self::LbaOutOfRange => 0x21,
+            Self::MediumNotPresent => 0x3A,
+        }
+    }
+
+    const fn ascq(&self) -> u8 {
+        0x00
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct SenseData {
+    key: SenseKey,
+    additional_data: AdditionalSenseData,
+}
 
 pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
 
@@ -165,9 +218,7 @@ pub struct State {
     offset: usize,
     /// The block currently being streamed.
     buffer: [[u8; BLOCK_SIZE]; BUFFER_BLOCK_COUNT],
-    sense_key: Option<u8>,
-    sense_key_code: Option<u8>,
-    sense_qualifier: Option<u8>,
+    sense_data: Option<SenseData>,
 }
 
 impl Default for State {
@@ -175,9 +226,7 @@ impl Default for State {
         Self {
             offset: 0,
             buffer: [[0; BLOCK_SIZE]; BUFFER_BLOCK_COUNT],
-            sense_key: None,
-            sense_key_code: None,
-            sense_qualifier: None,
+            sense_data: None,
         }
     }
 }
@@ -185,15 +234,14 @@ impl Default for State {
 impl State {
     pub fn reset(&mut self) {
         self.offset = 0;
-        self.sense_key = None;
-        self.sense_key_code = None;
-        self.sense_qualifier = None;
+        self.sense_data = None;
     }
 
-    fn fail_with(&mut self, sense_key: u8, asc: u8) {
-        self.sense_key = Some(sense_key);
-        self.sense_key_code = Some(asc);
-        self.sense_qualifier = Some(0x00);
+    fn fail_with(&mut self, key: SenseKey, additional_data: AdditionalSenseData) {
+        self.sense_data = Some(SenseData {
+            key,
+            additional_data,
+        });
     }
 }
 
@@ -238,7 +286,7 @@ where
                 command.pass(data.len() as u32);
             }
             _ => {
-                state.fail_with(SENSE_ILLEGAL_REQUEST, ASC_LBA_OUT_OF_RANGE);
+                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
                 command.fail(0);
             }
         }
@@ -265,14 +313,14 @@ where
             return Ok(());
         }
         ScsiCommand::RequestSense { .. } => {
+            let sense_data = state.sense_data.take().unwrap_or_default();
             let mut data = [0u8; 18];
             data[0] = 0x70; // current errors
-            data[2] = state.sense_key.unwrap_or(0);
+            data[2] = sense_data.key.value();
             data[7] = 0x0A; // additional length, else hosts never parse ASC/ASCQ
-            data[12] = state.sense_key_code.unwrap_or(0);
-            data[13] = state.sense_qualifier.unwrap_or(0);
+            data[12] = sense_data.additional_data.asc();
+            data[13] = sense_data.additional_data.ascq();
             command.try_write_data_all(&data)?;
-            state.reset();
             command.pass(data.len() as u32);
             return Ok(());
         }
@@ -281,7 +329,7 @@ where
 
     // all other commands fail if the device is not unlocked
     let Some(device) = device else {
-        state.fail_with(SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
+        state.fail_with(SenseKey::NotReady, AdditionalSenseData::MediumNotPresent);
         command.fail(0);
         return Ok(());
     };
@@ -329,7 +377,7 @@ where
 
             if !in_bounds(device, lba, len as u32) {
                 warn!("storage: read past end of device at lba {}", lba);
-                state.fail_with(SENSE_ILLEGAL_REQUEST, ASC_LBA_OUT_OF_RANGE);
+                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
                 command.fail(0);
                 state.offset = 0;
                 return Ok(());
@@ -349,7 +397,10 @@ where
                     debug!("Reading {} blocks at address {block}", state_buffer.len());
                     if let Err(_err) = device.read_blocks(block, state_buffer) {
                         warn!("storage: read failed at block {} with {_err:?}", block);
-                        state.fail_with(SENSE_MEDIUM_ERROR, ASC_UNRECOVERED_READ_ERROR);
+                        state.fail_with(
+                            SenseKey::MediumError,
+                            AdditionalSenseData::UnrecoveredReadError,
+                        );
                         command.fail(0);
                         state.offset = 0;
                         return Ok(());
@@ -379,7 +430,7 @@ where
 
             if !in_bounds(device, lba, len as u32) {
                 warn!("storage: write past end of device at lba {}", lba);
-                state.fail_with(SENSE_ILLEGAL_REQUEST, ASC_LBA_OUT_OF_RANGE);
+                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
                 command.fail(0);
                 state.offset = 0;
                 return Ok(());
@@ -405,7 +456,7 @@ where
                     debug!("Writing {} blocks at address {block}", state_buffer.len());
                     if device.write_blocks(block, state_buffer).is_err() {
                         warn!("storage: write failed at block {}", block);
-                        state.fail_with(SENSE_MEDIUM_ERROR, ASC_WRITE_FAULT);
+                        state.fail_with(SenseKey::MediumError, AdditionalSenseData::WriteFault);
                         command.fail(0);
                         state.offset = 0;
                         return Ok(());
@@ -444,7 +495,10 @@ where
         }
         ref _unknown => {
             warn!("storage: unhandled SCSI command: {:?}", _unknown);
-            state.fail_with(SENSE_ILLEGAL_REQUEST, ASC_INVALID_COMMAND);
+            state.fail_with(
+                SenseKey::IllegalRequest,
+                AdditionalSenseData::InvalidCommand,
+            );
             command.fail(0);
         }
     }
