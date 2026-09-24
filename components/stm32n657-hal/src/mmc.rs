@@ -40,6 +40,10 @@ pub enum CardKind {
 
 const POWER_UP_DELAY_CYCLES: u32 = 64_000;
 const DATA_POLL_LIMIT: u32 = sdmmc::calc_timeout(5000);
+/// polls after write/erase
+const CARD_READY_POLL_LIMIT: u32 = 100_000;
+/// R1 CURRENT_STATE [12:9] = transfer state
+const CARD_STATE_TRANSFER: u32 = 4;
 
 pub struct MmcMaster<P, Pins, S> {
     sdmmc: SdMmcMaster<P, S>,
@@ -519,6 +523,25 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         Ok(csd)
     }
 
+    /// properly poll CMD13 to wait for a finished write/erase
+    fn wait_card_ready(&mut self) -> Result<(), Error> {
+        let mut polls = CARD_READY_POLL_LIMIT;
+        loop {
+            self.sdmmc
+                .cmd_send_status((self.card_info.rca as u32) << 16)?;
+            let state = (self.sdmmc.get_response(Resp::Resp1).bits() >> 9) & 0xF;
+            if state == CARD_STATE_TRANSFER {
+                return Ok(());
+            }
+            polls -= 1;
+            if polls == 0 {
+                info_now!("card stuck in state {state}");
+                self.errorstate |= Error::TIMEOUT;
+                return Err(Error::TIMEOUT);
+            }
+        }
+    }
+
     /// report stalled transfer
     fn transfer_stalled(&mut self, op: &str) -> Error {
         let star = self.sdmmc.peripheral.star().read();
@@ -945,8 +968,9 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         }
 
         self.sdmmc.clear_static_flags();
+        let ready = self.wait_card_ready();
         self.state = State::Ready;
-        Ok(())
+        ready
     }
 
     pub fn erase(&mut self, blocks_addr: Range<u32>) -> Result<(), Error> {
@@ -1002,8 +1026,9 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.state = State::Ready;
             return Err(err);
         }
+        let ready = self.wait_card_ready();
         self.state = State::Ready;
-        Ok(())
+        ready
     }
 }
 
