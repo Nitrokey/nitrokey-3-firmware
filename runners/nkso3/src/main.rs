@@ -49,7 +49,6 @@ mod app {
         button: Button,
         timer: Timer<Tim6>,
         counter: MillisecondsCounter<Tim7>,
-        #[allow(unused)]
         mmc: Mmc,
     }
 
@@ -77,18 +76,21 @@ mod app {
         let button = Button::init(gpioc.c13);
 
         let _gpioa = GpioA::new(cx.device.GPIOA_S, &rcc);
-        let gpioe = GpioE::new(cx.device.GPIOE_S, &rcc);
+        let _gpioe = GpioE::new(cx.device.GPIOE_S, &rcc);
         info_now!("Before pins");
         let pins = (
             gpioc.c3.into_sdmmc2_cmd(),
             gpioc.c2.into_sdmmc2_ck(),
             gpioc.c4.into_sdmmc2_d0(),
-            gpioc.c5.into_sdmmc2_d1(),
-            gpioc.c0.into_sdmmc2_d2(),
-            gpioe.e4.into_sdmmc2_d3(),
+            // gpioc.c5.into_sdmmc2_d1(),
+            // gpioc.c0.into_sdmmc2_d2(),
+            // gpioe.e4.into_sdmmc2_d3(),
         );
         info_now!("after pins");
         let mmc = MmcMaster::new(cx.device.SDMMC2_S, pins);
+
+        let tim6 = Tim6::new(cx.device.TIM6_S, &rcc);
+        let mut timer = Timer::new(tim6, clock_config);
 
         info_now!("before enable");
         let mmc = mmc.enable(&rcc, CardKind::Sd).expect("Enabling mmc");
@@ -97,8 +99,6 @@ mod app {
         let tim7 = Tim7::new(cx.device.TIM7_S, &rcc);
         let counter = MillisecondsCounter::new(tim7, clock_config);
 
-        let tim6 = Tim6::new(cx.device.TIM6_S, &rcc);
-        let mut timer = Timer::new(tim6, clock_config);
         timer.start(Rate::Hz(100));
 
         (
@@ -114,13 +114,15 @@ mod app {
         )
     }
 
-    #[idle(local = [led, button, timer, counter])]
+    #[idle(local = [led, button, timer, counter, mmc])]
     fn idle(cx: idle::Context) -> ! {
         let idle::LocalResources {
             led,
             button,
             timer,
             counter,
+            #[allow(unused)]
+            mmc,
         } = cx.local;
 
         let start = counter.now();
