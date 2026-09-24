@@ -3,6 +3,7 @@ target = "thumbv8m.main-none-eabi"
 
 [target.thumbv8m.main-none-eabi]
 rustflags = [
+	"-C", "linker=flip-link",
 	"-C", "link-arg=-Tlink.x",
 	"-C", "link-arg=-error-limit=0",
 	"-Cllvm-args=--inline-threshold=0",
