@@ -29,17 +29,19 @@ pub fn poll_dispatchers<B: Board>(
     )
 }
 
-pub fn poll_usb<B, D, FA, FB, TA, TB, E>(
+pub fn poll_usb<B, D, FA, FB, TA, TB, E, R>(
     usb_classes: &mut Option<UsbClasses<B>>,
     #[cfg(feature = "board-nkso3")] usb_storage: &mut Option<crate::nkso3::UsbStorage<B>>,
     ccid_spawner: FA,
     ctaphid_spawner: FB,
     t_now: Milliseconds,
+    _force_reset: R,
 ) where
     B: UsbBus + 'static,
     D: From<Milliseconds>,
     FA: Fn(D) -> Result<TA, E>,
     FB: Fn(D) -> Result<TB, E>,
+    R: FnOnce(&mut usb_device::device::UsbDevice<'_, B>) -> usb_device::Result<()>,
 {
     let Some(usb_classes) = usb_classes.as_mut() else {
         return;
@@ -57,7 +59,7 @@ pub fn poll_usb<B, D, FA, FB, TA, TB, E>(
     #[cfg(feature = "board-nkso3")]
     usb_classes.poll_with(&mut [&mut usb_storage.scsi]);
     #[cfg(feature = "board-nkso3")]
-    usb_storage.poll(&mut usb_classes.usbd);
+    usb_storage.poll(&mut usb_classes.usbd, _force_reset);
 
     if let Some(ccid) = &mut usb_classes.ccid {
         maybe_spawn_ccid(ccid.did_start_processing(), ccid_spawner);

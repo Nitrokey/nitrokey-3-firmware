@@ -39,6 +39,7 @@ pub fn init_usb_nfc<B: Board>(
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
+    #[cfg(feature = "board-nkso3")] storage_rp: boards::nkso3::StorageResponder<'static>,
 ) -> UsbNfc<B> {
     const USB_PRODUCT: &str = if cfg!(feature = "board-nkso3") {
         "Nitrokey Storage 3"
@@ -54,5 +55,7 @@ pub fn init_usb_nfc<B: Board>(
         USB_PRODUCT,
         USB_PRODUCT_ID,
         VERSION,
+        #[cfg(feature = "board-nkso3")]
+        storage_rp,
     )
 }

@@ -130,6 +130,7 @@ pub fn init_usb_nfc<B: Board>(
     usb_product: &'static str,
     usb_product_id: u16,
     version: Version,
+    #[cfg(feature = "board-nkso3")] storage_rp: crate::nkso3::StorageResponder<'static>,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
@@ -147,7 +148,7 @@ pub fn init_usb_nfc<B: Board>(
     if let Some(usb_bus) = usb_bus {
         let usb_bus = resources.usb_bus.insert(usb_bus);
         #[cfg(feature = "board-nkso3")]
-        let storage = crate::nkso3::UsbStorage::new(usb_bus, &mut resources.buffer);
+        let storage = crate::nkso3::UsbStorage::new(usb_bus, &mut resources.buffer, storage_rp);
         let usb_classes = usb_classes::build(
             usb_bus,
             Some(usb_classes::CcidConfig {
@@ -192,6 +193,7 @@ pub fn init_apps<B: Board>(
     nfc_powered: bool,
     version: Version,
     version_string: &'static str,
+    #[cfg(feature = "board-nkso3")] storage: crate::nkso3::Storage,
 ) -> (Apps<B>, Endpoints) {
     let mut admin = AdminData::new(*store, B::Soc::VARIANT, version, version_string);
     admin.init_status = init_status;
@@ -209,9 +211,7 @@ pub fn init_apps<B: Board>(
     }
 
     #[cfg(feature = "board-nkso3")]
-    let storage = apps::StorageData {
-        storage: crate::nkso3::Storage,
-    };
+    let storage = apps::StorageData { storage };
 
     #[cfg(feature = "provisioner")]
     let provisioner = {

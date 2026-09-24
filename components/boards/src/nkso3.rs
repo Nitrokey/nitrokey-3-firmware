@@ -24,7 +24,10 @@ use crate::{
 
 use ui::{Button, Led};
 
-pub use storage::{Storage, UsbStorage, BUFFER_LEN};
+pub use storage::{
+    Storage, StorageAction, StorageChannel, StorageRequester, StorageResponder, UsbStorage,
+    BUFFER_LEN,
+};
 
 pub struct NKSO3;
 

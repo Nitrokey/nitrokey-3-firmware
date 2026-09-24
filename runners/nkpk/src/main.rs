@@ -190,6 +190,7 @@ mod app {
                     ccid_keepalive::spawn_after,
                     ctaphid_keepalive::spawn_after,
                     monotonics::now().into(),
+                    |_| unimplemented!(),
                 );
             });
         }
@@ -221,6 +222,7 @@ mod app {
                 ccid_keepalive::spawn_after,
                 ctaphid_keepalive::spawn_after,
                 monotonics::now().into(),
+                |_| unimplemented!(),
             );
         });
     }

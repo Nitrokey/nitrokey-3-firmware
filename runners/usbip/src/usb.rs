@@ -157,7 +157,7 @@ impl Classes for NkClasses {
             let result = storage.scsi.poll_command(|command| {
                 usb_classes::storage::process_command(
                     command,
-                    &mut storage.device,
+                    Some(&mut storage.device),
                     &mut storage.state,
                 )
             });

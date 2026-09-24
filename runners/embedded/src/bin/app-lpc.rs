@@ -194,6 +194,7 @@ mod app {
                     ccid_wait_extension::spawn_after,
                     ctaphid_keepalive::spawn_after,
                     monotonics::now(),
+                    |_| unimplemented!(),
                 );
             });
 
@@ -227,6 +228,7 @@ mod app {
                 ccid_wait_extension::spawn_after,
                 ctaphid_keepalive::spawn_after,
                 monotonics::now(),
+                |_| unimplemented!(),
             );
         });
 

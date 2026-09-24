@@ -29,12 +29,14 @@ const START_STOP_UNIT: u8 = 0x1B;
 const PREVENT_ALLOW_MEDIUM_REMOVAL: u8 = 0x1E;
 const SYNCHRONIZE_CACHE_10: u8 = 0x35;
 
+const SENSE_NOT_READY: u8 = 0x02;
 const SENSE_MEDIUM_ERROR: u8 = 0x03;
 const SENSE_ILLEGAL_REQUEST: u8 = 0x05;
 const ASC_UNRECOVERED_READ_ERROR: u8 = 0x11;
 const ASC_WRITE_FAULT: u8 = 0x03;
 const ASC_INVALID_COMMAND: u8 = 0x20;
 const ASC_LBA_OUT_OF_RANGE: u8 = 0x21;
+const ASC_MEDIUM_NOT_PRESENT: u8 = 0x3A;
 
 pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
 
@@ -142,7 +144,7 @@ mod tests {
 /// Handles one SCSI command against `device`.
 pub fn process_command<B, Buf, D>(
     mut command: Command<ScsiCommand, StorageClass<'_, B, Buf>>,
-    device: &mut D,
+    device: Option<&mut D>,
     state: &mut State,
 ) -> Result<(), TransportError<BulkOnlyError>>
 where
@@ -170,15 +172,14 @@ where
         return Ok(());
     }
 
-    let blocks = device.blocks();
-
+    // Inquery and RequestSense are always executed even if the device is not available
     match command.kind {
-        ScsiCommand::TestUnitReady => {
-            command.pass(0);
-        }
         ScsiCommand::Inquiry { .. } => {
             let mut data = [0u8; 36];
             data[0] = 0x00; // direct access block device
+            if device.is_none() {
+                data[0] = data[0] | 0b0010_0000; // device currently not available
+            }
             data[1] = 0x80; // removable
             data[2] = 0x04; // SPC-2
             data[3] = 0x02; // response data format
@@ -188,6 +189,7 @@ where
             data[32..36].copy_from_slice(PRODUCT_REVISION);
             command.try_write_data_all(&data)?;
             command.pass(data.len() as u32);
+            return Ok(());
         }
         ScsiCommand::RequestSense { .. } => {
             let mut data = [0u8; 18];
@@ -198,6 +200,25 @@ where
             command.try_write_data_all(&data)?;
             state.reset();
             command.pass(data.len() as u32);
+            return Ok(());
+        }
+        _ => {}
+    }
+
+    // all other commands fail if the device is not unlocked
+    let Some(device) = device else {
+        state.fail_with(SENSE_NOT_READY, ASC_MEDIUM_NOT_PRESENT);
+        command.fail(0);
+        return Ok(());
+    };
+
+    let blocks = device.blocks();
+
+    match command.kind {
+        // these commands are handled above
+        ScsiCommand::Inquiry { .. } | ScsiCommand::RequestSense { .. } => unreachable!(),
+        ScsiCommand::TestUnitReady => {
+            command.pass(0);
         }
         ScsiCommand::ReadCapacity10 => {
             let mut data = [0u8; 8];

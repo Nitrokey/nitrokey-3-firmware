@@ -24,7 +24,7 @@ mod app {
     use apps::Endpoints;
     use boards::{
         init::{CtaphidDispatch, Resources, UsbClasses},
-        nkso3::{self, UsbStorage, NKSO3},
+        nkso3::{self, Storage, StorageChannel, UsbStorage, NKSO3},
         runtime,
         soc::{self, monotonic::SystickMonotonic, stm32n6},
         store, Apps, Trussed,
@@ -32,7 +32,12 @@ mod app {
     use embedded_runner_lib::{VERSION, VERSION_STRING};
     use embedded_time::duration::Milliseconds;
     use interchange::Channel;
-    use stm32n657_hal::{pac::Interrupt, rcc::Rcc, rng::Rng};
+    use stm32n657_hal::{
+        pac::Interrupt,
+        rcc::Rcc,
+        rng::Rng,
+        timer::{MillisecondsCounter, Tim6},
+    };
     use systick_monotonic::Systick;
 
     type Board = NKSO3;
@@ -48,6 +53,7 @@ mod app {
         ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
         usb_classes: Option<UsbClasses<Soc>>,
         usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
+        usb_timer: Option<MillisecondsCounter<Tim6>>,
     }
 
     #[local]
@@ -90,13 +96,16 @@ mod app {
             &mut init_status,
         );
 
+        static STORAGE_CHANNEL: StorageChannel = Channel::new();
         static NFC_CHANNEL: CcidChannel = Channel::new();
+        let (storage_rq, storage_rp) = STORAGE_CHANNEL.split().unwrap();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usb_nfc = embedded_runner_lib::init_usb_nfc(
             &mut ctx.local.resources.usb,
             Some(usb_bus),
             None,
             nfc_rp,
+            storage_rp,
         );
 
         let user_interface = nkso3::init_ui(board_gpio, ctx.device.TIM7_S, &rcc, clock_config);
@@ -120,8 +129,15 @@ mod app {
             false,
             VERSION,
             VERSION_STRING,
+            Storage::new(storage_rq),
         );
 
+        let usb_timer = if usb_nfc.usb_storage.is_some() {
+            let tim6 = Tim6::new(ctx.device.TIM6_S, &rcc);
+            Some(MillisecondsCounter::new(tim6, clock_config))
+        } else {
+            None
+        };
         let systick = Systick::new(ctx.core.SYST, clock_config.sys_bus_ck().to_Hz());
 
         ui::spawn_after(Milliseconds(2500)).ok();
@@ -134,13 +150,14 @@ mod app {
                 ctaphid_dispatch: usb_nfc.ctaphid_dispatch,
                 usb_classes: usb_nfc.usb_classes,
                 usb_storage: usb_nfc.usb_storage,
+                usb_timer,
             },
             LocalResources { endpoints },
             init::Monotonics(systick.into()),
         )
     }
 
-    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes, usb_storage])]
+    #[idle(shared = [apps, apdu_dispatch, ctaphid_dispatch, usb_classes, usb_storage, usb_timer])]
     fn idle(ctx: idle::Context) -> ! {
         let idle::SharedResources {
             mut apps,
@@ -148,6 +165,7 @@ mod app {
             mut ctaphid_dispatch,
             mut usb_classes,
             mut usb_storage,
+            mut usb_timer,
         } = ctx.shared;
 
         trace!("idle");
@@ -165,13 +183,16 @@ mod app {
 
             usb_classes.lock(|usb_classes| {
                 usb_storage.lock(|usb_storage| {
-                    runtime::poll_usb(
-                        usb_classes,
-                        usb_storage,
-                        ccid_keepalive::spawn_after,
-                        ctaphid_keepalive::spawn_after,
-                        monotonics::now(),
-                    );
+                    usb_timer.lock(|usb_timer| {
+                        runtime::poll_usb(
+                            usb_classes,
+                            usb_storage,
+                            ccid_keepalive::spawn_after,
+                            ctaphid_keepalive::spawn_after,
+                            monotonics::now(),
+                            move |device| device.bus().force_reset(usb_timer.as_mut().unwrap()),
+                        );
+                    });
                 });
             });
         }
@@ -186,20 +207,24 @@ mod app {
         });
     }
 
-    #[task(priority = 3, binds = OTG1, shared = [usb_classes, usb_storage])]
+    #[task(priority = 3, binds = OTG1, shared = [usb_classes, usb_storage, usb_timer])]
     fn task_usb(ctx: task_usb::Context) {
         let mut usb_classes = ctx.shared.usb_classes;
         let mut usb_storage = ctx.shared.usb_storage;
+        let mut usb_timer = ctx.shared.usb_timer;
 
         usb_classes.lock(|usb_classes| {
             usb_storage.lock(|usb_storage| {
-                runtime::poll_usb(
-                    usb_classes,
-                    usb_storage,
-                    ccid_keepalive::spawn_after,
-                    ctaphid_keepalive::spawn_after,
-                    monotonics::now(),
-                );
+                usb_timer.lock(|usb_timer| {
+                    runtime::poll_usb(
+                        usb_classes,
+                        usb_storage,
+                        ccid_keepalive::spawn_after,
+                        ctaphid_keepalive::spawn_after,
+                        monotonics::now(),
+                        move |device| device.bus().force_reset(usb_timer.as_mut().unwrap()),
+                    );
+                });
             });
         });
     }

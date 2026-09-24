@@ -2,6 +2,7 @@
 
 use core::convert::Infallible;
 
+use embedded_hal::blocking::delay::DelayMs;
 use fugit::TimerInstantU32;
 use stm32n6::stm32n657::{TIM6_S, TIM7_S};
 
@@ -90,6 +91,20 @@ impl<const F: u32, T: Tim> Counter<F, T> {
 }
 
 pub type MillisecondsCounter<T> = Counter<1_000, T>;
+
+impl<T: Tim> DelayMs<u32> for MillisecondsCounter<T> {
+    fn delay_ms(&mut self, ms: u32) {
+        let start = self.now();
+        loop {
+            let Some(elapsed) = self.now().checked_duration_since(start) else {
+                break;
+            };
+            if elapsed.to_millis() >= ms {
+                break;
+            }
+        }
+    }
+}
 
 pub struct Timer<T> {
     tim: T,
