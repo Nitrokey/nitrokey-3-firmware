@@ -1,9 +1,16 @@
+use aes::{
+    cipher::{Key, KeyInit as _},
+    Aes128,
+};
 use interchange::{Channel, Requester, Responder};
-use usb_classes::storage::{BlockDevice, State, StorageClass, BLOCK_SIZE};
+use usb_classes::storage::{
+    EncryptedBlockDevice, MemoryBlockDevice, State, StorageClass, BLOCK_SIZE,
+};
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
     device::{UsbDevice, UsbDeviceState},
 };
+use xts_mode::Xts128;
 
 pub type StorageChannel = Channel<StorageAction, ()>;
 pub type StorageRequester<'a> = Requester<'a, StorageAction, ()>;
@@ -49,49 +56,14 @@ impl storage_app::Storage for Storage {
     }
 }
 
-const BLOCK_COUNT: u32 = 2;
-pub const BUFFER_LEN: usize = (BLOCK_COUNT as usize) * (BLOCK_SIZE as usize);
-
-struct RamBlockDevice<'a> {
-    backing: &'a mut [u8; BUFFER_LEN],
-}
-
-impl<'a> RamBlockDevice<'a> {
-    fn new(buffer: &'a mut [u8; BUFFER_LEN]) -> Self {
-        Self { backing: buffer }
-    }
-}
-
-fn offset(lba: u32) -> usize {
-    lba as usize * BLOCK_SIZE as usize
-}
-
-impl BlockDevice for RamBlockDevice<'_> {
-    type Error = ();
-
-    fn blocks(&self) -> u32 {
-        BLOCK_COUNT
-    }
-
-    fn read_block(&mut self, lba: u32, buf: &mut [u8]) -> Result<(), Self::Error> {
-        let offset = offset(lba);
-        buf.copy_from_slice(&self.backing[offset..offset + buf.len()]);
-        Ok(())
-    }
-
-    fn write_block(&mut self, lba: u32, buf: &[u8]) -> Result<(), Self::Error> {
-        let offset = offset(lba);
-        self.backing[offset..offset + buf.len()].copy_from_slice(buf);
-        Ok(())
-    }
-}
+pub const BUFFER_LEN: usize = 2 * BLOCK_SIZE;
 
 pub struct UsbStorage<'a, B: UsbBus> {
     pub scsi: StorageClass<'a, B, [u8; 512]>,
     state: State,
-    block_device: RamBlockDevice<'a>,
+    block_device: MemoryBlockDevice<'a, BUFFER_LEN>,
     responder: StorageResponder<'a>,
-    encryption_key: Option<[u8; 32]>,
+    xts: Option<Xts128<Aes128>>,
 }
 
 impl<'a, B: UsbBus> UsbStorage<'a, B> {
@@ -103,9 +75,9 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
         Self {
             scsi: usb_classes::storage::setup(usb_bus, 512, [0; 512]),
             state: State::default(),
-            block_device: RamBlockDevice::new(buffer),
+            block_device: MemoryBlockDevice::new(buffer),
             responder,
-            encryption_key: None,
+            xts: None,
         }
     }
 
@@ -115,9 +87,13 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
     {
         if let Some(action) = self.responder.take_request() {
             self.responder.respond(()).ok();
-            self.encryption_key = match action {
+            self.xts = match action {
                 StorageAction::Lock => None,
-                StorageAction::Unlock(key) => Some(key),
+                StorageAction::Unlock(key) => {
+                    let cipher1 = Aes128::new(Key::<Aes128>::from_slice(&key[..16]));
+                    let cipher2 = Aes128::new(Key::<Aes128>::from_slice(&key[16..]));
+                    Some(Xts128::new(cipher1, cipher2))
+                }
             };
             if let Err(_err) = (force_reset)(device) {
                 warn!("Failed to trigger USB force reset: {_err:?}");
@@ -132,9 +108,13 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
         // too: a from-host phase ending strands undrained data in the buffer.
         for _ in 0..2 {
             let result = self.scsi.poll_command(|command| {
+                let mut block_device = self
+                    .xts
+                    .as_ref()
+                    .map(|xts| EncryptedBlockDevice::new(&mut self.block_device, xts));
                 usb_classes::storage::process_command(
                     command,
-                    self.encryption_key.map(|_| &mut self.block_device),
+                    block_device.as_mut(),
                     &mut self.state,
                 )
             });

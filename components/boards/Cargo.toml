@@ -53,7 +53,11 @@ lfs-backup = { path = "../lfs-backup", optional = true }
 
 # board-nk3xn
 fm11nc08 = { path = "../fm11nc08", optional = true }
+
+# board-nkso3
+aes = { version = "0.8", optional = true }
 storage-app = { path = "../storage-app", optional = true }
+xts-mode = { version = "0.5", optional = true, default-features = false }
 
 # logging
 cortex-m-semihosting = { version = "0.3.5", optional = true }
@@ -71,7 +75,7 @@ littlefs2-core = { workspace = true, features = ["debug-error"] }
 board-nk3am = ["soc-nrf52", "lfs-backup", "se05x/embedded-hal-v0.2.7"]
 board-nk3xn = ["soc-lpc55", "fm11nc08", "utils/storage", "se05x/embedded-hal-v0.2.7"]
 board-nkpk = ["board-nk3am", "utils/storage"]
-board-nkso3 = ["soc-stm32n6", "storage-app", "usb-classes/storage"]
+board-nkso3 = ["dep:aes", "soc-stm32n6", "dep:storage-app", "usb-classes/storage", "dep:xts-mode"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf-usbd", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]

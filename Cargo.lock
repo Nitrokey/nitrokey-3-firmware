@@ -366,6 +366,7 @@ dependencies = [
 name = "boards"
 version = "1.9.0-rc.1"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "apps",
  "cortex-m",
@@ -410,6 +411,7 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "utils",
+ "xts-mode",
 ]
 
 [[package]]
@@ -4045,6 +4047,7 @@ name = "usb-classes"
 version = "1.9.0-rc.1"
 dependencies = [
  "apdu-dispatch",
+ "cipher",
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
@@ -4055,6 +4058,7 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "usbd-storage",
+ "xts-mode",
 ]
 
 [[package]]

@@ -16,7 +16,9 @@ usbd-ccid = "0.5"
 usbd-ctaphid = "0.5"
 
 # storage
+cipher = { version = "0.4", optional = true }
 usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
+xts-mode = { version = "0.5", optional = true, default-features = false }
 
 [features]
 default = []
@@ -26,7 +28,7 @@ highspeed-usb = ["usbd-ccid/highspeed-usb"]
 
 # SCSI mass storage over Bulk Only Transport. The block device backing it is
 # provided by the runner.
-storage = ["dep:usbd-storage"]
+storage = ["dep:cipher", "dep:usbd-storage", "dep:xts-mode"]
 
 log-all = []
 log-none = []

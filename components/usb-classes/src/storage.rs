@@ -1,7 +1,8 @@
 //! USB mass storage, exposed as a SCSI block device over Bulk Only Transport.
 
-use core::borrow::BorrowMut;
+use core::{borrow::BorrowMut, convert::Infallible};
 
+use cipher::{BlockCipher, BlockDecrypt, BlockEncrypt};
 use usb_device::bus::{UsbBus, UsbBusAllocator};
 use usbd_storage::{
     subclass::{
@@ -13,9 +14,12 @@ use usbd_storage::{
         TransportError,
     },
 };
+use xts_mode::Xts128;
 
 /// Bytes per logical block. 512 is mostly assumed.
-pub const BLOCK_SIZE: u32 = 512;
+const BLOCK_SIZE_U16: u16 = 512;
+pub const BLOCK_SIZE: usize = BLOCK_SIZE_U16 as _;
+pub const BLOCK_SIZE_U32: u32 = BLOCK_SIZE_U16 as _;
 
 const MAX_LUN: u8 = 0;
 
@@ -47,8 +51,80 @@ pub trait BlockDevice {
     /// Number of addressable blocks of [`BLOCK_SIZE`] bytes.
     fn blocks(&self) -> u32;
 
-    fn read_block(&mut self, lba: u32, buf: &mut [u8]) -> Result<(), Self::Error>;
-    fn write_block(&mut self, lba: u32, buf: &[u8]) -> Result<(), Self::Error>;
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error>;
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error>;
+}
+
+pub struct MemoryBlockDevice<'a, const N: usize>(&'a mut [u8; N]);
+
+impl<'a, const N: usize> MemoryBlockDevice<'a, N> {
+    pub fn new(buffer: &'a mut [u8; N]) -> Self {
+        const {
+            assert!(N.is_multiple_of(BLOCK_SIZE));
+            let block_count = N / BLOCK_SIZE;
+            assert!(block_count <= (u32::MAX as usize));
+            assert!((block_count as u32) <= u32::MAX);
+        }
+        Self(buffer)
+    }
+}
+
+impl<const N: usize> BlockDevice for MemoryBlockDevice<'_, N> {
+    type Error = Infallible;
+
+    fn blocks(&self) -> u32 {
+        const { (N / BLOCK_SIZE) as _ }
+    }
+
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        let offset = lba as usize * BLOCK_SIZE;
+        buf.copy_from_slice(&self.0[offset..][..BLOCK_SIZE]);
+        Ok(())
+    }
+
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        let offset = lba as usize * BLOCK_SIZE;
+        self.0[offset..][..BLOCK_SIZE].copy_from_slice(buf);
+        Ok(())
+    }
+}
+
+pub struct EncryptedBlockDevice<'a, B, C: BlockCipher + BlockEncrypt + BlockDecrypt> {
+    block_device: &'a mut B,
+    xts: &'a Xts128<C>,
+}
+
+impl<'a, B: BlockDevice, C: BlockCipher + BlockEncrypt + BlockDecrypt>
+    EncryptedBlockDevice<'a, B, C>
+{
+    pub fn new(block_device: &'a mut B, xts: &'a Xts128<C>) -> Self {
+        Self { block_device, xts }
+    }
+}
+
+impl<'a, B, C> BlockDevice for EncryptedBlockDevice<'a, B, C>
+where
+    B: BlockDevice,
+    C: BlockCipher + BlockEncrypt + BlockDecrypt,
+{
+    type Error = B::Error;
+
+    fn blocks(&self) -> u32 {
+        self.block_device.blocks()
+    }
+
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        self.block_device.read_block(lba, buf)?;
+        let tweak = xts_mode::get_tweak_default(lba.into());
+        self.xts.decrypt_sector(buf, tweak);
+        Ok(())
+    }
+
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        let tweak = xts_mode::get_tweak_default(lba.into());
+        self.xts.encrypt_sector(buf, tweak);
+        self.block_device.write_block(lba, buf)
+    }
 }
 
 /// Per-transfer state. A single SCSI read or write is spread across several
@@ -57,7 +133,7 @@ pub struct State {
     /// Bytes transferred so far within the current command.
     offset: usize,
     /// The block currently being streamed.
-    block: [u8; BLOCK_SIZE as usize],
+    block: [u8; BLOCK_SIZE],
     sense_key: Option<u8>,
     sense_key_code: Option<u8>,
     sense_qualifier: Option<u8>,
@@ -67,7 +143,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             offset: 0,
-            block: [0; BLOCK_SIZE as usize],
+            block: [0; BLOCK_SIZE],
             sense_key: None,
             sense_key_code: None,
             sense_qualifier: None,
@@ -120,11 +196,11 @@ mod tests {
             self.0
         }
 
-        fn read_block(&mut self, _lba: u32, _buf: &mut [u8]) -> Result<(), ()> {
+        fn read_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
             Ok(())
         }
 
-        fn write_block(&mut self, _lba: u32, _buf: &[u8]) -> Result<(), ()> {
+        fn write_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
             Ok(())
         }
     }
@@ -224,14 +300,14 @@ where
             let mut data = [0u8; 8];
             // Last addressable block, not the count.
             data[0..4].copy_from_slice(&u32::to_be_bytes(blocks - 1));
-            data[4..8].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE));
+            data[4..8].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE_U32));
             command.try_write_data_all(&data)?;
             command.pass(data.len() as u32);
         }
         ScsiCommand::ReadCapacity16 { .. } => {
             let mut data = [0u8; 16];
             data[0..8].copy_from_slice(&u64::to_be_bytes((blocks - 1) as u64));
-            data[8..12].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE));
+            data[8..12].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE_U32));
             command.try_write_data_all(&data)?;
             command.pass(data.len() as u32);
         }
@@ -240,12 +316,12 @@ where
             data[3] = 0x08; // capacity list length
             data[4..8].copy_from_slice(&u32::to_be_bytes(blocks));
             data[8] = 0x02; // formatted media
-            data[9..12].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE)[1..]);
+            data[9..12].copy_from_slice(&u32::to_be_bytes(BLOCK_SIZE_U32)[1..]);
             command.try_write_data_all(&data)?;
             command.pass(data.len() as u32);
         }
         ScsiCommand::Read { lba, len } => {
-            let total = len as usize * BLOCK_SIZE as usize;
+            let total = len as usize * BLOCK_SIZE;
 
             if state.offset == total {
                 command.pass(state.offset as u32);
@@ -268,9 +344,9 @@ where
                     break;
                 }
 
-                let block_offset = state.offset % BLOCK_SIZE as usize;
+                let block_offset = state.offset % BLOCK_SIZE;
                 if block_offset == 0 {
-                    let block = lba + (state.offset / BLOCK_SIZE as usize) as u32;
+                    let block = lba + (state.offset / BLOCK_SIZE) as u32;
                     if device.read_block(block, &mut state.block).is_err() {
                         warn!("storage: read failed at block {}", block);
                         state.fail_with(SENSE_MEDIUM_ERROR, ASC_UNRECOVERED_READ_ERROR);
@@ -293,7 +369,7 @@ where
             }
         }
         ScsiCommand::Write { lba, len } => {
-            let total = len as usize * BLOCK_SIZE as usize;
+            let total = len as usize * BLOCK_SIZE;
 
             if state.offset == total {
                 command.pass(state.offset as u32);
@@ -318,13 +394,13 @@ where
                     break;
                 }
 
-                let block_offset = state.offset % BLOCK_SIZE as usize;
+                let block_offset = state.offset % BLOCK_SIZE;
                 let count = command.read_data(&mut state.block[block_offset..])?;
                 state.offset += count;
 
-                if count > 0 && state.offset.is_multiple_of(BLOCK_SIZE as usize) {
-                    let block = lba + (state.offset / BLOCK_SIZE as usize) as u32 - 1;
-                    if device.write_block(block, &state.block).is_err() {
+                if count > 0 && state.offset.is_multiple_of(BLOCK_SIZE) {
+                    let block = lba + (state.offset / BLOCK_SIZE) as u32 - 1;
+                    if device.write_block(block, &mut state.block).is_err() {
                         warn!("storage: write failed at block {}", block);
                         state.fail_with(SENSE_MEDIUM_ERROR, ASC_WRITE_FAULT);
                         command.fail(0);

@@ -99,7 +99,7 @@ impl BlockDevice for HostBlockDevice {
         self.blocks
     }
 
-    fn read_block(&mut self, lba: u32, buf: &mut [u8]) -> io::Result<()> {
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
         let offset = Self::offset(lba);
         match &mut self.backing {
             Backing::File(file) => {
@@ -108,7 +108,7 @@ impl BlockDevice for HostBlockDevice {
             }
             Backing::Memory(mem) => {
                 let offset = offset as usize;
-                buf.copy_from_slice(&mem[offset..offset + buf.len()]);
+                buf.copy_from_slice(&mem[offset..][..BLOCK_SIZE]);
             }
         }
 
@@ -118,7 +118,7 @@ impl BlockDevice for HostBlockDevice {
         Ok(())
     }
 
-    fn write_block(&mut self, lba: u32, buf: &[u8]) -> io::Result<()> {
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
         let mut staging;
         let buf = match &self.cipher {
             Some(cipher) => {
