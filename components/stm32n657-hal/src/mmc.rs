@@ -31,8 +31,9 @@ pub struct CardInfo {
     log_block_size: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum CardKind {
+    #[default]
     Mmc,
     Sd,
 }
@@ -42,6 +43,7 @@ const POWER_UP_DELAY_CYCLES: u32 = 64_000;
 pub struct MmcMaster<P, Pins, S> {
     sdmmc: SdMmcMaster<P, S>,
     state: State,
+    kind: CardKind,
     card_info: CardInfo,
     cid: [u32; 4],
     csd: [u32; 4],
@@ -51,7 +53,7 @@ pub struct MmcMaster<P, Pins, S> {
     _state: PhantomData<S>,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 enum CardType {
     #[default]
     LowCapacity,
@@ -83,6 +85,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             errorstate: Error::empty(),
             sdmmc: SdMmcMaster::new(peripheral),
             state: State::Reset,
+            kind: CardKind::default(),
             card_info: CardInfo::default(),
             cid: [0; 4],
             csd: [0; 4],
@@ -108,6 +111,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             errorstate: Error::empty(),
             sdmmc,
             state: State::Ready,
+            kind,
             card_info: CardInfo::default(),
             cid: [0; 4],
             csd: [0; 4],
@@ -135,6 +139,13 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             this.state = State::Ready;
             return Err(err);
         }
+        info_now!(
+            "{:?} card enabled: {:?} bus, {} blocks of {} bytes",
+            this.kind,
+            Pins::WIDTH,
+            this.card_info.log_block_number,
+            this.card_info.log_block_size
+        );
         Ok(this)
     }
 }
@@ -239,6 +250,12 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         } else {
             self.card_info.card_type = CardType::LowCapacity;
         }
+        info_now!(
+            "CMD1 OCR {:#010x} - {} tries, {:?}",
+            response.bits(),
+            count,
+            self.card_info.card_type
+        );
         Ok(())
     }
 
@@ -337,13 +354,16 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.cid[1] = self.sdmmc.get_response(Resp::Resp2).bits();
         self.cid[2] = self.sdmmc.get_response(Resp::Resp3).bits();
         self.cid[3] = self.sdmmc.get_response(Resp::Resp4).bits();
+        info_now!("CID {:08x?}", self.cid);
         self.card_info.rca = self.sdmmc.cmd_set_rel_add()?;
+        info_now!("RCA {:#06x}", self.card_info.rca);
 
         self.sdmmc.cmd_send_csd((self.card_info.rca as u32) << 16)?;
         self.csd[0] = self.sdmmc.get_response(Resp::Resp1).bits();
         self.csd[1] = self.sdmmc.get_response(Resp::Resp2).bits();
         self.csd[2] = self.sdmmc.get_response(Resp::Resp3).bits();
         self.csd[3] = self.sdmmc.get_response(Resp::Resp4).bits();
+        info_now!("CSD {:08x?}", self.csd);
 
         self.card_info.class =
             Class::from_bits_retain(self.sdmmc.get_response(Resp::Resp2).bits() >> 20);
@@ -489,6 +509,12 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 self.card_info.log_block_size = BLOCK_SIZE;
             }
         }
+        info_now!(
+            "mmc card: {} blocks of {} bytes (SEC_COUNT {})",
+            self.card_info.log_block_number,
+            self.card_info.log_block_size,
+            block_number
+        );
         Ok(csd)
     }
 
@@ -656,12 +682,26 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     }
 }
 
-const BLOCK_SIZE: u32 = 512;
+/// Logic block size
+pub const BLOCK_SIZE: u32 = 512;
 
 impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     pub fn free(mut self) -> SdMmcMaster<P, Enabled> {
         self.sdmmc.power_state_off();
         self.sdmmc
+    }
+
+    pub fn card_kind(&self) -> CardKind {
+        self.kind
+    }
+
+    /// Number of logic blocks addressable by `read_blocks`/`write_blocks`.
+    pub fn block_count(&self) -> u32 {
+        self.card_info.log_block_number
+    }
+
+    pub fn log_block_size(&self) -> u32 {
+        self.card_info.log_block_size
     }
 
     pub fn read_blocks(
