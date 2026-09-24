@@ -39,6 +39,7 @@ pub enum CardKind {
 }
 
 const POWER_UP_DELAY_CYCLES: u32 = 64_000;
+const DATA_POLL_LIMIT: u32 = sdmmc::calc_timeout(5000);
 
 pub struct MmcMaster<P, Pins, S> {
     sdmmc: SdMmcMaster<P, S>,
@@ -518,6 +519,21 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         Ok(csd)
     }
 
+    /// report stalled transfer
+    fn transfer_stalled(&mut self, op: &str) -> Error {
+        let star = self.sdmmc.peripheral.star().read();
+        info_now!(
+            "{op} stalled: STA {:#010x}, {} bytes not transferred",
+            star.bits(),
+            self.sdmmc.data_counter()
+        );
+        self.sdmmc.cmd_trans_disable();
+        self.sdmmc.clear_static_flags();
+        self.errorstate |= Error::TIMEOUT;
+        self.state = State::Ready;
+        Error::TIMEOUT
+    }
+
     fn enable_dctrl(&mut self) {
         self.sdmmc
             .peripheral
@@ -760,6 +776,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut dataremaining = buffer.len() * BLOCK_SIZE as usize;
         let mut offset = 0;
         let buf = buffer.as_flattened_mut();
+        let mut polls = DATA_POLL_LIMIT;
         debug_now!("Looping");
         while {
             star = self.sdmmc.peripheral.star().read();
@@ -780,7 +797,10 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 dataremaining -= FIFO_SIZE;
             }
 
-            // TODO: timeout
+            polls -= 1;
+            if polls == 0 {
+                return Err(self.transfer_stalled("read"));
+            }
         }
         debug_now!("Finished loop");
 
@@ -871,6 +891,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut dataremaining = buffer.len() * BLOCK_SIZE as usize;
         let mut offset = 0;
         let buf = buffer.as_flattened();
+        let mut polls = DATA_POLL_LIMIT;
         debug_now!("Loop");
         while {
             star = self.sdmmc.peripheral.star().read();
@@ -889,7 +910,10 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 dataremaining -= FIFO_SIZE;
             }
 
-            // TODO: timeout
+            polls -= 1;
+            if polls == 0 {
+                return Err(self.transfer_stalled("write"));
+            }
         }
         debug_now!("end loop");
 

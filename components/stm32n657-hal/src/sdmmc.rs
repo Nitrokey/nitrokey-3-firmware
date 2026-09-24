@@ -562,7 +562,7 @@ enum_u!(
     }
 );
 
-const fn calc_timeout(timeout_seconds: u32) -> u32 {
+pub(crate) const fn calc_timeout(timeout_seconds: u32) -> u32 {
     // TODO: get real system freq
     let system_freq = 64_000_000;
 

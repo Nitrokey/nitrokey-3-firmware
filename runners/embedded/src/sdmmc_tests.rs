@@ -190,6 +190,8 @@ fn round_trip<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
     seed: u32,
 ) -> Result<(), Failure> {
     for seed in [seed, !seed] {
+        // No logging between write and read: the read must cope with a card still busy.
+        info_now!("  round trip {} blocks at {}", n, addr);
         fill_blocks(&mut bufs.write[..n], addr, seed);
         write(mmc, &bufs.write[..n], addr)?;
         read(mmc, &mut bufs.read[..n], addr)?;
