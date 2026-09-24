@@ -87,10 +87,44 @@ impl AdditionalSenseData {
     }
 }
 
+enum ProtocolError {
+    WriteError,
+    ReadError,
+    InvalidCommand,
+    LbaOutOfRange,
+}
+
+impl ProtocolError {
+    const fn sense_key(&self) -> SenseKey {
+        match self {
+            Self::WriteError | Self::ReadError => SenseKey::MediumError,
+            Self::InvalidCommand | Self::LbaOutOfRange => SenseKey::IllegalRequest,
+        }
+    }
+
+    const fn additional_sense_data(&self) -> AdditionalSenseData {
+        match self {
+            Self::WriteError => AdditionalSenseData::WriteFault,
+            Self::ReadError => AdditionalSenseData::UnrecoveredReadError,
+            Self::InvalidCommand => AdditionalSenseData::InvalidCommand,
+            Self::LbaOutOfRange => AdditionalSenseData::LbaOutOfRange,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 struct SenseData {
     key: SenseKey,
     additional_data: AdditionalSenseData,
+}
+
+impl From<ProtocolError> for SenseData {
+    fn from(error: ProtocolError) -> Self {
+        Self {
+            key: error.sense_key(),
+            additional_data: error.additional_sense_data(),
+        }
+    }
 }
 
 pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
@@ -229,11 +263,8 @@ impl State {
         self.sense_data = None;
     }
 
-    fn fail_with(&mut self, key: SenseKey, additional_data: AdditionalSenseData) {
-        self.sense_data = Some(SenseData {
-            key,
-            additional_data,
-        });
+    fn fail_with(&mut self, error: ProtocolError) {
+        self.sense_data = Some(error.into());
     }
 }
 
@@ -278,7 +309,7 @@ where
                 command.pass(data.len() as u32);
             }
             _ => {
-                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
+                state.fail_with(ProtocolError::LbaOutOfRange);
                 command.fail(0);
             }
         }
@@ -350,7 +381,7 @@ where
 
             if !in_bounds(device, lba, len as u32) {
                 warn!("storage: read past end of device at lba {}", lba);
-                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
+                state.fail_with(ProtocolError::LbaOutOfRange);
                 command.fail(0);
                 state.offset = 0;
                 return Ok(());
@@ -370,10 +401,7 @@ where
                     debug!("Reading {} blocks at address {block}", state_buffer.len());
                     if let Err(_err) = device.read_blocks(block, state_buffer) {
                         warn!("storage: read failed at block {} with {_err:?}", block);
-                        state.fail_with(
-                            SenseKey::MediumError,
-                            AdditionalSenseData::UnrecoveredReadError,
-                        );
+                        state.fail_with(ProtocolError::ReadError);
                         command.fail(0);
                         state.offset = 0;
                         return Ok(());
@@ -403,7 +431,7 @@ where
 
             if !in_bounds(device, lba, len as u32) {
                 warn!("storage: write past end of device at lba {}", lba);
-                state.fail_with(SenseKey::IllegalRequest, AdditionalSenseData::LbaOutOfRange);
+                state.fail_with(ProtocolError::LbaOutOfRange);
                 command.fail(0);
                 state.offset = 0;
                 return Ok(());
@@ -429,7 +457,7 @@ where
                     debug!("Writing {} blocks at address {block}", state_buffer.len());
                     if device.write_blocks(block, state_buffer).is_err() {
                         warn!("storage: write failed at block {}", block);
-                        state.fail_with(SenseKey::MediumError, AdditionalSenseData::WriteFault);
+                        state.fail_with(ProtocolError::WriteError);
                         command.fail(0);
                         state.offset = 0;
                         return Ok(());
@@ -468,10 +496,7 @@ where
         }
         ref _unknown => {
             warn!("storage: unhandled SCSI command: {:?}", _unknown);
-            state.fail_with(
-                SenseKey::IllegalRequest,
-                AdditionalSenseData::InvalidCommand,
-            );
+            state.fail_with(ProtocolError::InvalidCommand);
             command.fail(0);
         }
     }
