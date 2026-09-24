@@ -8,16 +8,17 @@ use littlefs2::{
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOC_S, GPIOG_S, TIM7_S};
+use stm32n6::stm32n657::{GPIOC_S, GPIOG_S, SDMMC2_S, TIM7_S};
 use stm32n657_hal::{
     gpio::{GpioC, GpioG},
     rcc::{ClockConfig, Rcc},
+    sdmmc::Disabled,
     timer::Tim7,
 };
 
 use crate::{
     nfc::DummyNfc,
-    soc::stm32n6::{EpMemory, Stm32n6, TimerClock},
+    soc::stm32n6::{mmc::Mmc, EpMemory, Stm32n6, TimerClock},
     ui::UserInterface,
     Board,
 };
@@ -150,13 +151,28 @@ pub struct BoardGPIO {
     pub led: Led,
 }
 
-pub fn init_pins(gpioc: GPIOC_S, gpiog: GPIOG_S, rcc: &Rcc) -> BoardGPIO {
+pub fn init_pins(
+    gpioc: GPIOC_S,
+    gpiog: GPIOG_S,
+    sdmmc: SDMMC2_S,
+    rcc: &Rcc,
+) -> (BoardGPIO, Mmc<Disabled>) {
     let gpioc = GpioC::new(gpioc, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
-    BoardGPIO {
-        button: Button::init(gpioc.c13),
-        led: Led::init(gpiog.g10, gpiog.g0, gpiog.g8),
-    }
+    (
+        BoardGPIO {
+            button: Button::init(gpioc.c13),
+            led: Led::init(gpiog.g10, gpiog.g0, gpiog.g8),
+        },
+        Mmc::new(
+            sdmmc,
+            (
+                gpioc.c3.into_sdmmc2_cmd(),
+                gpioc.c2.into_sdmmc2_ck(),
+                gpioc.c4.into_sdmmc2_d0(),
+            ),
+        ),
+    )
 }
 
 pub fn init_ui(

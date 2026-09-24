@@ -26,14 +26,20 @@ mod app {
         init::{CtaphidDispatch, Resources, UsbClasses},
         nkso3::{self, Storage, StorageChannel, UsbStorage, NKSO3},
         runtime,
-        soc::{self, monotonic::SystickMonotonic, stm32n6},
+        soc::{
+            self,
+            monotonic::SystickMonotonic,
+            stm32n6::{self, mmc::Mmc},
+        },
         store, Apps, Trussed,
     };
     use embedded_runner_lib::{VERSION, VERSION_STRING};
     use embedded_time::duration::Milliseconds;
     use interchange::Channel;
     use stm32n657_hal::{
+        mmc::CardKind,
         pac::Interrupt,
+        pwr::Pwr,
         rcc::Rcc,
         rng::Rng,
         timer::{MillisecondsCounter, Tim6},
@@ -54,6 +60,7 @@ mod app {
         usb_classes: Option<UsbClasses<Soc>>,
         usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
         usb_timer: Option<MillisecondsCounter<Tim6>>,
+        mmc: Mmc,
     }
 
     #[local]
@@ -77,12 +84,22 @@ mod app {
         let rcc = Rcc::new(ctx.device.RCC);
         let clock_config = rcc.clock_config();
 
-        let board_gpio = nkso3::init_pins(ctx.device.GPIOC_S, ctx.device.GPIOG_S, &rcc);
+        let (board_gpio, mmc) = nkso3::init_pins(
+            ctx.device.GPIOC_S,
+            ctx.device.GPIOG_S,
+            ctx.device.SDMMC2_S,
+            &rcc,
+        );
+
+        let pwr = Pwr::new(ctx.device.PWR_S);
+        pwr.enable_mmc_vddio();
+
+        let mmc = mmc.enable(&rcc, CardKind::Sd).unwrap();
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,
             ctx.device.OTG1_S,
-            ctx.device.PWR_S,
+            &pwr,
             &rcc,
             clock_config,
         );
@@ -151,6 +168,7 @@ mod app {
                 usb_classes: usb_nfc.usb_classes,
                 usb_storage: usb_nfc.usb_storage,
                 usb_timer,
+                mmc,
             },
             LocalResources { endpoints },
             init::Monotonics(systick.into()),

@@ -3,7 +3,7 @@ use core::time::Duration;
 use apps::Variant;
 use cortex_m::peripheral::SCB;
 use embedded_time::duration::Milliseconds;
-use stm32n6::stm32n657::{Interrupt, BSEC, OTG1_S, PWR_S};
+use stm32n6::stm32n657::{Interrupt, BSEC, OTG1_S};
 use stm32n657_hal::{
     bsec::Bsec,
     otg::{Otg1, UsbBus1},
@@ -47,7 +47,7 @@ pub mod mmc {
         // PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>,
     );
 
-    pub type Mmc = MmcMaster<SDMMC2_S, Pins, Enabled>;
+    pub type Mmc<S = Enabled> = MmcMaster<SDMMC2_S, Pins, S>;
 }
 
 impl Soc for Stm32n6 {
@@ -101,12 +101,11 @@ pub type EpMemory = [u32; 1024];
 pub fn setup_usb_bus(
     ep_memory: &'static mut Option<EpMemory>,
     otg1: OTG1_S,
-    pwr: PWR_S,
+    pwr: &Pwr,
     rcc: &Rcc,
     clock_config: ClockConfig,
 ) -> UsbBusAllocator<UsbBus1> {
     let ep_memory = ep_memory.insert([0; 1024]);
-    let pwr = Pwr::new(pwr);
     let otg1 = Otg1::new(otg1, rcc, &pwr, clock_config);
     UsbBus1::new(otg1, ep_memory)
 }
