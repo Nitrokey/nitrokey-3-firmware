@@ -16,6 +16,9 @@ delog::generate_macros!();
 #[cfg(feature = "board-nk3xn")]
 pub mod nk3xn;
 
+#[cfg(all(feature = "soc-stm32n6", feature = "sdmmc-tests"))]
+pub mod sdmmc_tests;
+
 #[cfg(not(any(feature = "soc-lpc55", feature = "soc-nrf52", feature = "soc-stm32n6")))]
 compile_error!("No SoC chosen!");
 

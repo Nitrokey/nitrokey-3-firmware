@@ -94,16 +94,12 @@ mod app {
         let pwr = Pwr::new(ctx.device.PWR_S);
         pwr.enable_mmc_vddio();
 
-        let mut mmc = mmc.enable(&rcc, CardKind::Sd).unwrap();
+        const CARD_KIND: CardKind = CardKind::Sd;
+        #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]
+        let mut mmc = mmc.enable(&rcc, CARD_KIND).unwrap();
 
         #[cfg(feature = "sdmmc-tests")]
-        {
-            let mut block_read = [[1u8; 512]; 1];
-            let block = [[2u8; 512]; 1];
-            mmc.write_blocks(&block, 0).unwrap();
-            mmc.read_blocks(&mut block_read, 0).unwrap();
-            assert_eq!(block_read, block);
-        }
+        embedded_runner_lib::sdmmc_tests::run(&mut mmc);
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,
