@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bitflags = "2.13.0"
+cortex-m = "0.7"
 delog = "0.1.8"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 fugit = "0.3"

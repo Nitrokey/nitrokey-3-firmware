@@ -25,7 +25,7 @@ mod app {
     use stm32n657_hal::{
         bsec::Bsec,
         gpio::{GpioA, GpioC, GpioE, GpioG},
-        mmc::MmcMaster,
+        mmc::{CardKind, MmcMaster},
         pwr::Pwr,
         rcc::{ClockConfig, Rcc},
         timer::{MillisecondsCounter, Tim6, Tim7, Timer},
@@ -91,7 +91,7 @@ mod app {
         let mmc = MmcMaster::new(cx.device.SDMMC2_S, pins);
 
         info_now!("before enable");
-        let mmc = mmc.enable(&rcc).expect("Enabling mmc");
+        let mmc = mmc.enable(&rcc, CardKind::Sd).expect("Enabling mmc");
         info_now!("after enable");
 
         let tim7 = Tim7::new(cx.device.TIM7_S, &rcc);

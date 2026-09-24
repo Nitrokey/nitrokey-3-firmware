@@ -31,6 +31,14 @@ pub struct CardInfo {
     log_block_size: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CardKind {
+    Mmc,
+    Sd,
+}
+
+const POWER_UP_DELAY_CYCLES: u32 = 64_000;
+
 pub struct MmcMaster<P, Pins, S> {
     sdmmc: SdMmcMaster<P, S>,
     state: State,
@@ -84,13 +92,13 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         }
     }
 
-    pub fn enable(self, rcc: &Rcc) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
+    pub fn enable(self, rcc: &Rcc, kind: CardKind) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
         let init = sdmmc::SdMMCInit {
             clock_edge: sdmmc::ClockEdge::Rising,
             clock_power_save: sdmmc::ClockPowerSave::Disable,
             bus_wide: Pins::WIDTH,
             hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
-            clock_div: 41, // TODO get proper clock divider
+            clock_div: 81, // TODO get proper clock divider
             is_transceiver_present: 0,
         };
 
@@ -108,10 +116,18 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             _state: PhantomData,
         };
         this.sdmmc.power_state_on();
+        cortex_m::asm::delay(POWER_UP_DELAY_CYCLES);
 
-        this.power_on()?;
-
-        this.init_card()?;
+        match kind {
+            CardKind::Mmc => {
+                this.power_on()?;
+                this.init_card()?;
+            }
+            CardKind::Sd => {
+                this.power_on_sd()?;
+                this.init_card_sd()?;
+            }
+        }
 
         if let Err(err) = this.sdmmc.cmd_block_len(BLOCK_SIZE) {
             this.sdmmc.clear_static_flags();
@@ -226,6 +242,91 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         Ok(())
     }
 
+    /// sd power on
+    fn power_on_sd(&mut self) -> Result<(), Error> {
+        self.sdmmc.cmd_go_idle_state()?;
+
+        self.sdmmc.cmd_oper_cond()?;
+
+        self.sdmmc
+            .cmd_add_command(0)
+            .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
+
+        // ACMD41: from c
+        const ACMD41_ARG: u32 = 0x8010_0000 | 0x4000_0000 | 0x0100_0000;
+        let mut count = 0u32;
+        let mut response = 0u32;
+        while count < 0xFFFF && response >> 31 == 0 {
+            self.sdmmc.cmd_add_command(0)?;
+            self.sdmmc
+                .cmd_app_oper_command(ACMD41_ARG)
+                .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
+            response = self.sdmmc.get_response(Resp::Resp1).bits();
+            count += 1;
+        }
+        if count >= 0xFFFF {
+            return Err(Error::INVALID_VOLTRANGE);
+        }
+        info_now!("ACMD41 {:#010x} - {} tries", response, count);
+
+        // high capa only (todo?)
+        self.card_info.card_type = CardType::HighCapacity;
+        Ok(())
+    }
+
+    /// SD card init
+    fn init_card_sd(&mut self) -> Result<(), Error> {
+        if self.sdmmc.power() == PowerCtrl::Off {
+            return Err(Error::REQUEST_NOT_APPLICABLE);
+        }
+
+        // cid
+        self.sdmmc.cmd_send_cid()?;
+        self.cid[0] = self.sdmmc.get_response(Resp::Resp1).bits();
+        self.cid[1] = self.sdmmc.get_response(Resp::Resp2).bits();
+        self.cid[2] = self.sdmmc.get_response(Resp::Resp3).bits();
+        self.cid[3] = self.sdmmc.get_response(Resp::Resp4).bits();
+        info_now!("CID {:08x?}", self.cid);
+
+        // rca
+        let mut rca = 0;
+        let mut tries = 0;
+        while rca == 0 {
+            rca = self.sdmmc.cmd_set_rel_add()?;
+            tries += 1;
+            if tries > 1000 {
+                return Err(Error::TIMEOUT);
+            }
+        }
+        self.card_info.rca = rca;
+        info_now!("RCA {:#06x}", rca);
+
+        // csd
+        self.sdmmc.cmd_send_csd((rca as u32) << 16)?;
+        self.csd[0] = self.sdmmc.get_response(Resp::Resp1).bits();
+        self.csd[1] = self.sdmmc.get_response(Resp::Resp2).bits();
+        self.csd[2] = self.sdmmc.get_response(Resp::Resp3).bits();
+        self.csd[3] = self.sdmmc.get_response(Resp::Resp4).bits();
+        info_now!("CSD {:08x?}", self.csd);
+        self.card_info.class = Class::from_bits_retain(self.csd[1] >> 20);
+
+        // csd v2
+        let c_size = ((self.csd[1] & 0x0000003F) << 16) | ((self.csd[2] & 0xFFFF0000) >> 16);
+        self.card_info.block_number = (c_size + 1) * 1024;
+        self.card_info.block_size = BLOCK_SIZE;
+        self.card_info.log_block_number = self.card_info.block_number;
+        self.card_info.log_block_size = BLOCK_SIZE;
+        info_now!(
+            "sd card: {} blocks of {} bytes",
+            self.card_info.log_block_number,
+            self.card_info.log_block_size
+        );
+
+        self.sdmmc
+            .cmd_select_deselect((self.card_info.rca as u32) << 16)?;
+        Ok(())
+    }
+
     fn init_card(&mut self) -> Result<(), Error> {
         if self.sdmmc.power() == PowerCtrl::Off {
             return Err(Error::REQUEST_NOT_APPLICABLE);
@@ -238,7 +339,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.cid[3] = self.sdmmc.get_response(Resp::Resp4).bits();
         self.card_info.rca = self.sdmmc.cmd_set_rel_add()?;
 
-        self.sdmmc.cmd_send_csd()?;
+        self.sdmmc.cmd_send_csd((self.card_info.rca as u32) << 16)?;
         self.csd[0] = self.sdmmc.get_response(Resp::Resp1).bits();
         self.csd[1] = self.sdmmc.get_response(Resp::Resp2).bits();
         self.csd[2] = self.sdmmc.get_response(Resp::Resp3).bits();

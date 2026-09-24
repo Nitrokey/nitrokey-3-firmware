@@ -1032,6 +1032,11 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
 
         if star.ctimeout().bit() {
             self.peripheral.icr().modify(|_, w| w.ctimeoutc().bit(true));
+            return Err(Error::CMD_RSP_TIMEOUT);
+        }
+        if star.ccrcfail().bit() {
+            self.peripheral.icr().modify(|_, w| w.ccrcfailc().bit(true));
+            return Err(Error::CMD_CRC_FAIL);
         }
         if star.cmdrend().bit() {
             self.peripheral.icr().modify(|_, w| w.cmdrendc().bit(true));
@@ -1219,10 +1224,11 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         self.get_cmd_resp2()
     }
 
-    pub fn cmd_send_csd(&mut self) -> Result<(), Error> {
+    /// `argument` is the card RCA shifted by 16
+    pub fn cmd_send_csd(&mut self, argument: u32) -> Result<(), Error> {
         let command = CmdIndex::SendCsd;
         self.send_command(Command {
-            argument: 0,
+            argument,
             cmd_index: command,
             response: Response::Long,
             wait_for_interrupt: WaitForInterrupt::No,
