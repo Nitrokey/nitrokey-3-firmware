@@ -60,7 +60,7 @@ mod app {
         usb_classes: Option<UsbClasses<Soc>>,
         usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
         usb_timer: Option<MillisecondsCounter<Tim6>>,
-        mmc: Mmc,
+        _mmc: Mmc,
     }
 
     #[local]
@@ -94,7 +94,16 @@ mod app {
         let pwr = Pwr::new(ctx.device.PWR_S);
         pwr.enable_mmc_vddio();
 
-        let mmc = mmc.enable(&rcc, CardKind::Sd).unwrap();
+        let mut mmc = mmc.enable(&rcc, CardKind::Sd).unwrap();
+
+        #[cfg(feature = "sdmmc-tests")]
+        {
+            let mut block_read = [[1u8; 512]; 1];
+            let block = [[2u8; 512]; 1];
+            mmc.write_blocks(&block, 0).unwrap();
+            mmc.read_blocks(&mut block_read, 0).unwrap();
+            assert_eq!(block_read, block);
+        }
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,
@@ -168,7 +177,7 @@ mod app {
                 usb_classes: usb_nfc.usb_classes,
                 usb_storage: usb_nfc.usb_storage,
                 usb_timer,
-                mmc,
+                _mmc: mmc,
             },
             LocalResources { endpoints },
             init::Monotonics(systick.into()),

@@ -840,15 +840,10 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            debug_now!("inner");
             if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
-                debug_now!("running");
                 for _i in 0..FIFO_SIZE / 4 {
-                    debug_now!("running {_i}");
-                    if core::hint::black_box(false) {
-                        self.sdmmc
-                            .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
-                    }
+                    self.sdmmc
+                        .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
                     offset += 4;
                 }
                 dataremaining -= FIFO_SIZE;
