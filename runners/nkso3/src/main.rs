@@ -125,6 +125,9 @@ mod app {
             mmc,
         } = cx.local;
 
+        let mut block = [0u8; 512];
+        let mut block_read = [[0; 512]];
+
         let start = counter.now();
         let mut cycle_start = start;
         loop {
@@ -154,7 +157,16 @@ mod app {
             }
             led.set(intensities);
 
-            nb::block!(timer.wait()).ok();
+            // debug_now!("First read blocks");
+            // mmc.read_blocks(&mut block_read, 0).unwrap();
+            // assert_eq!(block, block_read[0]);
+            debug_now!("Write blocks");
+            mmc.write_blocks(&[block], 0).unwrap();
+            debug_now!("read blocks");
+            mmc.read_blocks(&mut block_read, 0).unwrap();
+            assert_eq!(block, block_read[0]);
+            block[0] = block[0].wrapping_add(1);
+            nb::block!(timer.wait()).unwrap();
         }
     }
 }
@@ -162,6 +174,7 @@ mod app {
 #[inline(never)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    boards::init::Delogger::flush();
     Led::set_panic_led();
     error_now!("{}", info);
     loop {
@@ -171,6 +184,7 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[exception]
 unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
+    boards::init::Delogger::flush();
     error_now!("HardFault: {:?}", ef);
     loop {
         cortex_m::asm::wfi();

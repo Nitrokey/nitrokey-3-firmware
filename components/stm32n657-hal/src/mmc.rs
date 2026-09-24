@@ -669,6 +669,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         buffer: &mut [[u8; BLOCK_SIZE as _]],
         raw_address: u32,
     ) -> Result<(), Error> {
+        debug_now!("Read blocks");
         if !self.state.is_ready() {
             return Err(Error::BUSY);
         }
@@ -708,6 +709,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         };
 
         if let Err(err) = cmd_res {
+            debug_now!("Got cmd err for config_data: {err:?}");
             self.sdmmc.clear_static_flags();
             self.state = State::Ready;
             self.errorstate |= err;
@@ -718,14 +720,18 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut dataremaining = buffer.len() * BLOCK_SIZE as usize;
         let mut offset = 0;
         let buf = buffer.as_flattened_mut();
+        debug_now!("Looping");
         while {
             star = self.sdmmc.peripheral.star().read();
+            debug_now!("condition: {star:?}");
             !(star.rxoverr().bit()
                 | star.dcrcfail().bit()
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
+            debug_now!("loop");
             if star.rxfifohf().bit() && dataremaining > FIFO_SIZE {
+                debug_now!("loop");
                 for _ in 0..FIFO_SIZE / 4 {
                     let data = self.sdmmc.read_fifo();
                     buf[offset..][..4].copy_from_slice(&data.to_le_bytes());
@@ -736,6 +742,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
             // TODO: timeout
         }
+        debug_now!("Finished loop");
 
         self.sdmmc.cmd_trans_disable();
 
@@ -753,6 +760,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.state = State::Ready;
             return Err(Error::TIMEOUT);
         } else if star.dcrcfail().bit() {
+            debug_now!("CRC FAIL after end");
             self.sdmmc.clear_static_flags();
             self.errorstate |= Error::DATA_CRC_FAIL;
             self.state = State::Ready;
@@ -823,17 +831,24 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut dataremaining = buffer.len() * BLOCK_SIZE as usize;
         let mut offset = 0;
         let buf = buffer.as_flattened();
+        debug_now!("Loop");
         while {
             star = self.sdmmc.peripheral.star().read();
+            debug_now!("Condition {star:?}");
             !(star.rxoverr().bit()
                 | star.dcrcfail().bit()
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            if star.rxfifohf().bit() && dataremaining > FIFO_SIZE {
-                for _ in 0..FIFO_SIZE / 4 {
-                    self.sdmmc
-                        .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
+            debug_now!("inner");
+            if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
+                debug_now!("running");
+                for _i in 0..FIFO_SIZE / 4 {
+                    debug_now!("running {_i}");
+                    if core::hint::black_box(false) {
+                        self.sdmmc
+                            .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
+                    }
                     offset += 4;
                 }
                 dataremaining -= FIFO_SIZE;
@@ -841,6 +856,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
             // TODO: timeout
         }
+        debug_now!("end loop");
 
         self.sdmmc.cmd_trans_disable();
 
