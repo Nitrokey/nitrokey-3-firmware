@@ -1355,7 +1355,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
             .write(|w| unsafe { w.bits(config.data_len) });
         self.peripheral.dctrl().modify(|_, w| unsafe {
             w.dblocksize()
-                .bits(config.data_block_size as u8 >> 4)
+                .bits(config.data_block_size as u8)
                 .dtdir()
                 .bit(config.transfer_dir.bit())
                 .dtmode()

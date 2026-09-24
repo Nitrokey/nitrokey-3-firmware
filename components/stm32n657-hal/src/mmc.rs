@@ -726,10 +726,10 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.state = State::Busy;
         self.enable_dctrl();
 
-        let address = if self.card_info.card_type == CardType::HighCapacity {
-            raw_address * BLOCK_SIZE
-        } else {
-            raw_address
+        // high-capa: block idx, low-capa: byte idx
+        let address = match self.card_info.card_type {
+            CardType::HighCapacity => raw_address,
+            CardType::LowCapacity => raw_address * BLOCK_SIZE,
         };
 
         self.sdmmc.config_data(sdmmc::ConfigData {
@@ -770,7 +770,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dataend().bit())
         } {
             debug_now!("loop");
-            if star.rxfifohf().bit() && dataremaining > FIFO_SIZE {
+            if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
                 debug_now!("loop");
                 for _ in 0..FIFO_SIZE / 4 {
                     let data = self.sdmmc.read_fifo();
@@ -838,10 +838,10 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.state = State::Busy;
         self.enable_dctrl();
 
-        let address = if self.card_info.card_type == CardType::HighCapacity {
-            raw_address * BLOCK_SIZE
-        } else {
-            raw_address
+        // high-capa: block idx, low-capa: byte idx
+        let address = match self.card_info.card_type {
+            CardType::HighCapacity => raw_address,
+            CardType::LowCapacity => raw_address * BLOCK_SIZE,
         };
 
         self.sdmmc.config_data(sdmmc::ConfigData {
@@ -875,12 +875,12 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         while {
             star = self.sdmmc.peripheral.star().read();
             debug_now!("Condition {star:?}");
-            !(star.rxoverr().bit()
+            !(star.txunderr().bit()
                 | star.dcrcfail().bit()
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
+            if star.txfifohe().bit() && dataremaining >= FIFO_SIZE {
                 for _i in 0..FIFO_SIZE / 4 {
                     self.sdmmc
                         .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
@@ -913,11 +913,11 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.errorstate |= Error::DATA_CRC_FAIL;
             self.state = State::Ready;
             return Err(Error::DATA_CRC_FAIL);
-        } else if star.rxoverr().bit() {
+        } else if star.txunderr().bit() {
             self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::RX_OVERRUN;
+            self.errorstate |= Error::TX_UNDERRUN;
             self.state = State::Ready;
-            return Err(Error::RX_OVERRUN);
+            return Err(Error::TX_UNDERRUN);
         }
 
         self.sdmmc.clear_static_flags();
