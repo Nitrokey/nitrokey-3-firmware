@@ -3937,7 +3937,9 @@ dependencies = [
 name = "usb-classes"
 version = "0.1.0"
 dependencies = [
+ "aes",
  "apdu-dispatch",
+ "cipher",
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
@@ -3948,6 +3950,7 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "usbd-storage",
+ "xts-mode",
 ]
 
 [[package]]
