@@ -16,6 +16,9 @@ use usbd_storage::{
 };
 use xts_mode::Xts128;
 
+#[cfg(feature = "stm32n657")]
+pub mod stm32n657_sdmmc;
+
 /// Bytes per logical block. 512 is mostly assumed.
 const BLOCK_SIZE_U16: u16 = 512;
 pub const BLOCK_SIZE: usize = BLOCK_SIZE_U16 as _;

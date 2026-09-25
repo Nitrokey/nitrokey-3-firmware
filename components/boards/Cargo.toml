@@ -75,7 +75,7 @@ littlefs2-core = { workspace = true, features = ["debug-error"] }
 board-nk3am = ["soc-nrf52", "lfs-backup", "se05x/embedded-hal-v0.2.7"]
 board-nk3xn = ["soc-lpc55", "fm11nc08", "utils/storage", "se05x/embedded-hal-v0.2.7"]
 board-nkpk = ["board-nk3am", "utils/storage"]
-board-nkso3 = ["dep:aes", "soc-stm32n6", "dep:storage-app", "usb-classes/storage", "dep:xts-mode"]
+board-nkso3 = ["dep:aes", "soc-stm32n6", "dep:storage-app", "usb-classes/storage", "usb-classes/stm32n657", "dep:xts-mode"]
 
 soc-lpc55 = ["lpc55-hal", "lpc55-pac", "systick-monotonic"]
 soc-nrf52 = ["embedded-storage", "nrf-usbd", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf"]

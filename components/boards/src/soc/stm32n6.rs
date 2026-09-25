@@ -36,8 +36,9 @@ pub mod mmc {
     pub type D3Pin = PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
 
     pub type Pins = (CmdPin, CkPin, D0Pin, D1Pin, D2Pin, D3Pin);
+    pub type Peripheral = SDMMC2_S;
 
-    pub type Mmc<S = Enabled> = MmcMaster<SDMMC2_S, Pins, S>;
+    pub type Mmc<S = Enabled> = MmcMaster<Peripheral, Pins, S>;
 }
 
 impl Soc for Stm32n6 {

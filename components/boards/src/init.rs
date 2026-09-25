@@ -57,8 +57,6 @@ impl<B: Board> Resources<B> {
 
 pub struct UsbResources<B: Board> {
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
-    #[cfg(feature = "board-nkso3")]
-    buffer: [u8; crate::nkso3::BUFFER_LEN],
 }
 
 impl<B: Board> Default for UsbResources<B> {
@@ -69,11 +67,7 @@ impl<B: Board> Default for UsbResources<B> {
 
 impl<B: Board> UsbResources<B> {
     pub const fn new() -> Self {
-        Self {
-            usb_bus: None,
-            #[cfg(feature = "board-nkso3")]
-            buffer: [0; _],
-        }
+        Self { usb_bus: None }
     }
 }
 
@@ -131,6 +125,7 @@ pub fn init_usb_nfc<B: Board>(
     usb_product_id: u16,
     version: Version,
     #[cfg(feature = "board-nkso3")] storage_rp: crate::nkso3::StorageResponder<'static>,
+    #[cfg(feature = "board-nkso3")] mmc: crate::nkso3::Mmc,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
@@ -148,7 +143,7 @@ pub fn init_usb_nfc<B: Board>(
     if let Some(usb_bus) = usb_bus {
         let usb_bus = resources.usb_bus.insert(usb_bus);
         #[cfg(feature = "board-nkso3")]
-        let storage = crate::nkso3::UsbStorage::new(usb_bus, &mut resources.buffer, storage_rp);
+        let storage = crate::nkso3::UsbStorage::new(usb_bus, mmc, storage_rp);
         let usb_classes = usb_classes::build(
             usb_bus,
             Some(usb_classes::CcidConfig {

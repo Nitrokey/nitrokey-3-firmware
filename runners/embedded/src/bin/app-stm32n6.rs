@@ -26,11 +26,7 @@ mod app {
         init::{CtaphidDispatch, Resources, UsbClasses},
         nkso3::{self, Storage, StorageChannel, UsbStorage, NKSO3},
         runtime,
-        soc::{
-            self,
-            monotonic::SystickMonotonic,
-            stm32n6::{self, mmc::Mmc},
-        },
+        soc::{self, monotonic::SystickMonotonic, stm32n6},
         store, Apps, Trussed,
     };
     use embedded_runner_lib::{VERSION, VERSION_STRING};
@@ -60,7 +56,6 @@ mod app {
         usb_classes: Option<UsbClasses<Soc>>,
         usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
         usb_timer: Option<MillisecondsCounter<Tim6>>,
-        _mmc: Mmc,
     }
 
     #[local]
@@ -129,6 +124,7 @@ mod app {
             None,
             nfc_rp,
             storage_rp,
+            mmc,
         );
 
         let user_interface = nkso3::init_ui(board_gpio, ctx.device.TIM7_S, &rcc, clock_config);
@@ -174,7 +170,6 @@ mod app {
                 usb_classes: usb_nfc.usb_classes,
                 usb_storage: usb_nfc.usb_storage,
                 usb_timer,
-                _mmc: mmc,
             },
             LocalResources { endpoints },
             init::Monotonics(systick.into()),

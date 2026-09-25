@@ -1,10 +1,12 @@
+use crate::soc::stm32n6::mmc::{self, Mmc};
+
 use aes::{
     cipher::{Key, KeyInit as _},
     Aes128,
 };
 use interchange::{Channel, Requester, Responder};
 use usb_classes::storage::{
-    EncryptedBlockDevice, MemoryBlockDevice, State, StorageClass, BLOCK_SIZE,
+    stm32n657_sdmmc::MmcStorage, EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
 };
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
@@ -61,21 +63,17 @@ pub const BUFFER_LEN: usize = 2 * BLOCK_SIZE;
 pub struct UsbStorage<'a, B: UsbBus> {
     pub scsi: StorageClass<'a, B, [u8; 512]>,
     state: State,
-    block_device: MemoryBlockDevice<'a, BUFFER_LEN>,
+    block_device: MmcStorage<mmc::Peripheral, mmc::Pins>,
     responder: StorageResponder<'a>,
     xts: Option<Xts128<Aes128>>,
 }
 
 impl<'a, B: UsbBus> UsbStorage<'a, B> {
-    pub fn new(
-        usb_bus: &'a UsbBusAllocator<B>,
-        buffer: &'a mut [u8; BUFFER_LEN],
-        responder: StorageResponder<'a>,
-    ) -> Self {
+    pub fn new(usb_bus: &'a UsbBusAllocator<B>, mmc: Mmc, responder: StorageResponder<'a>) -> Self {
         Self {
             scsi: usb_classes::storage::setup(usb_bus, 512, [0; 512]),
             state: State::default(),
-            block_device: MemoryBlockDevice::new(buffer),
+            block_device: MmcStorage::new(mmc),
             responder,
             xts: None,
         }

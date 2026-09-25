@@ -18,10 +18,12 @@ use stm32n657_hal::{
 
 use crate::{
     nfc::DummyNfc,
-    soc::stm32n6::{mmc::Mmc, EpMemory, Stm32n6, TimerClock},
+    soc::stm32n6::{EpMemory, Stm32n6, TimerClock},
     ui::UserInterface,
     Board,
 };
+
+pub use crate::soc::stm32n6::mmc::{self, Mmc};
 
 use ui::{Button, Led};
 
