@@ -543,11 +543,11 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     }
 
     /// report stalled transfer
-    fn transfer_stalled(&mut self, op: &str) -> Error {
-        let star = self.sdmmc.peripheral.star().read();
+    fn transfer_stalled(&mut self, _op: &str) -> Error {
+        let _star = self.sdmmc.peripheral.star().read();
         info_now!(
-            "{op} stalled: STA {:#010x}, {} bytes not transferred",
-            star.bits(),
+            "{_op} stalled: STA {:#010x}, {} bytes not transferred",
+            _star.bits(),
             self.sdmmc.data_counter()
         );
         self.sdmmc.cmd_trans_disable();
