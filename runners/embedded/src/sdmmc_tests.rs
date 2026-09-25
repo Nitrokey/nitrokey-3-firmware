@@ -66,7 +66,7 @@ type Case<P, Pins> = fn(Mmc<'_, P, Pins>, &mut Buffers) -> Result<(), Failure>;
 
 /// run all
 pub fn run<P: SdMmc, Pins: MmcPins<Peripheral = P>>(mmc: Mmc<'_, P, Pins>) {
-    let cases: [(&str, Case<P, Pins>); 8] = [
+    let cases: &[(&str, Case<P, Pins>)] = &[
         ("card_info", card_info),
         ("single_block", single_block),
         ("multi_block", multi_block),
@@ -74,7 +74,6 @@ pub fn run<P: SdMmc, Pins: MmcPins<Peripheral = P>>(mmc: Mmc<'_, P, Pins>) {
         ("neighbour_isolation", neighbour_isolation),
         ("last_block", last_block),
         ("out_of_range", out_of_range),
-        ("misaligned", misaligned),
     ];
     let mut bufs = Buffers {
         write: [[0; BLOCK]; MAX_BLOCKS],
@@ -322,22 +321,4 @@ fn out_of_range<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
         Error::ADDR_OUTOF_RANGE,
     )?;
     round_trip(mmc, bufs, SINGLE_ADDR, 1, 0x000A)
-}
-
-/// block addresses must be multiples of 8
-fn misaligned<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
-    mmc: Mmc<'_, P, Pins>,
-    bufs: &mut Buffers,
-) -> Result<(), Failure> {
-    expect_err(
-        "read at unaligned block",
-        mmc.read_blocks(&mut bufs.read[..1], SINGLE_ADDR + 1),
-        Error::ADDR_MISALIGNED,
-    )?;
-    expect_err(
-        "write at unaligned block",
-        mmc.write_blocks(&bufs.write[..1], SINGLE_ADDR + 1),
-        Error::ADDR_MISALIGNED,
-    )?;
-    round_trip(mmc, bufs, SINGLE_ADDR, 1, 0x000B)
 }

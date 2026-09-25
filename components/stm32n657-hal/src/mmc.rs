@@ -430,10 +430,8 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             "SD card only support up to 4 bits"
         );
 
-        debug_now!("Get scr");
         let scr = self.get_card_scr_sd()?;
         if !scr.wide_bus_support() {
-            debug_now!("set bus width");
             self.sdmmc
                 .cmd_app_command((self.card_info.rca as u32) << 16)?;
             self.sdmmc.cmd_bus_width(match self.pins.width() {
@@ -861,22 +859,21 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         }
         self.errorstate.clear();
 
-        if raw_address + buffer.len() as u32 > self.card_info.log_block_number {
+        if raw_address as u64 + buffer.len() as u64 > self.card_info.block_number as u64 {
             return Err(Error::ADDR_OUTOF_RANGE);
         }
-
-        if !raw_address.is_multiple_of(8) {
-            return Err(Error::ADDR_MISALIGNED);
-        }
-
-        self.state = State::Busy;
-        self.enable_dctrl();
 
         // high-capa: block idx, low-capa: byte idx
         let address = match self.card_info.card_type {
             CardType::HighCapacity => raw_address,
             CardType::LowCapacity => raw_address * BLOCK_SIZE,
         };
+        debug_now!(
+            "Reading blocks at {raw_address:02X} block {address:02X}, for type {:?}",
+            self.card_info.card_type
+        );
+        self.state = State::Busy;
+        self.enable_dctrl();
 
         self.sdmmc.config_data(sdmmc::ConfigData {
             data_time_out: 0xFFFFFFFF,
@@ -907,18 +904,14 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut offset = 0;
         let buf = buffer.as_flattened_mut();
         let mut polls = DATA_POLL_LIMIT;
-        debug_now!("Looping");
         while {
             star = self.sdmmc.peripheral.star().read();
-            debug_now!("condition: {star:?}");
             !(star.rxoverr().bit()
                 | star.dcrcfail().bit()
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            debug_now!("loop");
             if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
-                debug_now!("loop");
                 for _ in 0..FIFO_SIZE / 4 {
                     let data = self.sdmmc.read_fifo();
                     buf[offset..][..4].copy_from_slice(&data.to_le_bytes());
@@ -932,7 +925,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 return Err(self.transfer_stalled("read"));
             }
         }
-        debug_now!("Finished loop");
 
         self.sdmmc.cmd_trans_disable();
 
@@ -950,7 +942,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.state = State::Ready;
             return Err(Error::TIMEOUT);
         } else if star.dcrcfail().bit() {
-            debug_now!("CRC FAIL after end");
             self.sdmmc.clear_static_flags();
             self.errorstate |= Error::DATA_CRC_FAIL;
             self.state = State::Ready;
@@ -977,22 +968,23 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         }
         self.errorstate.clear();
 
-        if raw_address + buffer.len() as u32 > self.card_info.log_block_number {
+        if raw_address as u64 + buffer.len() as u64 > self.card_info.block_number as u64 {
             return Err(Error::ADDR_OUTOF_RANGE);
         }
-
-        if !raw_address.is_multiple_of(8) {
-            return Err(Error::ADDR_MISALIGNED);
-        }
-
-        self.state = State::Busy;
-        self.enable_dctrl();
 
         // high-capa: block idx, low-capa: byte idx
         let address = match self.card_info.card_type {
             CardType::HighCapacity => raw_address,
             CardType::LowCapacity => raw_address * BLOCK_SIZE,
         };
+
+        debug_now!(
+            "Writing blocks at {raw_address:02X} block {address:02X}, for type {:?}",
+            self.card_info.card_type
+        );
+
+        self.state = State::Busy;
+        self.enable_dctrl();
 
         self.sdmmc.config_data(sdmmc::ConfigData {
             data_time_out: 0xFFFFFFFF,
@@ -1022,10 +1014,8 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut offset = 0;
         let buf = buffer.as_flattened();
         let mut polls = DATA_POLL_LIMIT;
-        debug_now!("Loop");
         while {
             star = self.sdmmc.peripheral.star().read();
-            debug_now!("Condition {star:?}");
             !(star.txunderr().bit()
                 | star.dcrcfail().bit()
                 | star.dtimeout().bit()
@@ -1045,7 +1035,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 return Err(self.transfer_stalled("write"));
             }
         }
-        debug_now!("end loop");
 
         self.sdmmc.cmd_trans_disable();
 
