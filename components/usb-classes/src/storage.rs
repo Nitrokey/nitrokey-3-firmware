@@ -49,7 +49,7 @@ pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
 
 /// A fixed-size block device backing the SCSI logical unit.
 pub trait BlockDevice {
-    type Error;
+    type Error: core::fmt::Debug;
 
     /// Number of addressable blocks of [`BLOCK_SIZE`] bytes.
     fn blocks(&self) -> u32;
@@ -316,8 +316,8 @@ where
                 let block_offset = state.offset % BLOCK_SIZE;
                 if block_offset == 0 {
                     let block = lba + (state.offset / BLOCK_SIZE) as u32;
-                    if device.read_block(block, &mut state.block).is_err() {
-                        warn!("storage: read failed at block {}", block);
+                    if let Err(_err) = device.read_block(block, &mut state.block) {
+                        warn!("storage: read failed at block {} with {_err:?}", block);
                         state.fail_with(SENSE_MEDIUM_ERROR, ASC_UNRECOVERED_READ_ERROR);
                         command.fail(0);
                         state.offset = 0;
