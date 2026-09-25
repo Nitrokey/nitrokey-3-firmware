@@ -18,6 +18,9 @@ const NEIGHBOUR_A_ADDR: u32 = 32;
 const NEIGHBOUR_B_ADDR: u32 = 40;
 const TEST_REGION_END: u32 = 48;
 
+const SWEEP_BLOCKS: u32 = 1024;
+const REPEAT_READS: u32 = 64;
+
 pub struct Buffers {
     pub write: [Block; MAX_BLOCKS],
     pub read: [Block; MAX_BLOCKS],
@@ -68,6 +71,9 @@ type Case<P, Pins> = fn(Mmc<'_, P, Pins>, &mut Buffers) -> Result<(), Failure>;
 pub fn run<P: SdMmc, Pins: MmcPins<Peripheral = P>>(mmc: Mmc<'_, P, Pins>) {
     let cases: &[(&str, Case<P, Pins>)] = &[
         ("card_info", card_info),
+        ("cold_read", cold_read),
+        ("read_sweep", read_sweep),
+        ("read_scatter", read_scatter),
         ("single_block", single_block),
         ("multi_block", multi_block),
         ("cross_paths", cross_paths),
@@ -224,6 +230,103 @@ fn card_info<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
     }
     if blocks < TEST_REGION_END + MAX_BLOCKS as u32 {
         return Err(Failure::Check("card too small for the test region"));
+    }
+    Ok(())
+}
+
+/// reads `addr` twice into both buffers; must be stable
+fn read_stable<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
+    mmc: Mmc<'_, P, Pins>,
+    bufs: &mut Buffers,
+    addr: u32,
+    n: usize,
+) -> Result<(), Failure> {
+    read(mmc, &mut bufs.read[..n], addr)?;
+    read(mmc, &mut bufs.write[..n], addr)?;
+    compare(&bufs.read[..n], &bufs.write[..n], addr)
+}
+
+fn compare(a: &[Block], b: &[Block], addr: u32) -> Result<(), Failure> {
+    for (i, (x, y)) in a.iter().zip(b.iter()).enumerate() {
+        if let Some(offset) = x.iter().zip(y.iter()).position(|(p, q)| p != q) {
+            return Err(Failure::Mismatch {
+                block: addr + i as u32,
+                offset,
+                expected: x[offset],
+                got: y[offset],
+            });
+        }
+    }
+    Ok(())
+}
+
+/// first accesses after power-up, no write before: mount-like single reads
+fn cold_read<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
+    mmc: Mmc<'_, P, Pins>,
+    bufs: &mut Buffers,
+) -> Result<(), Failure> {
+    let blocks = mmc.block_count();
+    // some often used addresses: MBR, boot sector candidates, FAT start, mid card, last block
+    let addrs = [0, 1, 2, 8, 63, 64, 2048, 8192, blocks / 2, blocks - 1];
+    for addr in addrs {
+        if addr >= blocks {
+            continue;
+        }
+        info_now!("  cold single read at {}", addr);
+        read_stable(mmc, bufs, addr, 1)?;
+    }
+    info_now!("  cold multi read at 0");
+    read_stable(mmc, bufs, 0, MAX_BLOCKS)?;
+    // multi read must agree with the single
+    for i in 0..MAX_BLOCKS {
+        read(mmc, &mut bufs.write[..1], i as u32)?;
+        compare(&bufs.read[i..=i], &bufs.write[..1], i as u32)?;
+    }
+    Ok(())
+}
+
+/// many single reads + same range as multi reads
+fn read_sweep<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
+    mmc: Mmc<'_, P, Pins>,
+    bufs: &mut Buffers,
+) -> Result<(), Failure> {
+    let end = SWEEP_BLOCKS.min(mmc.block_count());
+    for addr in 0..end {
+        if addr % 256 == 0 {
+            info_now!("  single sweep at {}/{}", addr, end);
+        }
+        read(mmc, &mut bufs.read[..1], addr)?;
+    }
+    let mut addr = 0;
+    while addr + MAX_BLOCKS as u32 <= end {
+        if addr % 256 == 0 {
+            info_now!("  multi sweep at {}/{}", addr, end);
+        }
+        read(mmc, &mut bufs.read, addr)?;
+        addr += MAX_BLOCKS as u32;
+    }
+    // block 0 must still read the same after the whole sweep
+    read_stable(mmc, bufs, 0, 1)
+}
+
+/// far-apart addresses and re-read many times
+fn read_scatter<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
+    mmc: Mmc<'_, P, Pins>,
+    bufs: &mut Buffers,
+) -> Result<(), Failure> {
+    let blocks = mmc.block_count();
+    let far = [0, blocks - 1, blocks / 2, 1, blocks - MAX_BLOCKS as u32, 2];
+    info_now!("  {} rounds over {:?}", REPEAT_READS / 8, far);
+    for _ in 0..REPEAT_READS / 8 {
+        for addr in far {
+            read(mmc, &mut bufs.read[..1], addr)?;
+        }
+    }
+    info_now!("  {} re-reads of block 0", REPEAT_READS);
+    read(mmc, &mut bufs.write[..1], 0)?;
+    for _ in 0..REPEAT_READS {
+        read(mmc, &mut bufs.read[..1], 0)?;
+        compare(&bufs.read[..1], &bufs.write[..1], 0)?;
     }
     Ok(())
 }
