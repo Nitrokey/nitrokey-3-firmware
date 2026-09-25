@@ -31,21 +31,11 @@ pub mod mmc {
     pub type CmdPin = PinC3<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
     pub type CkPin = PinC2<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
     pub type D0Pin = PinC4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    #[allow(unused)]
     pub type D1Pin = PinC5<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    #[allow(unused)]
     pub type D2Pin = PinC0<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    #[allow(unused)]
     pub type D3Pin = PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
 
-    pub type Pins = (
-        CmdPin,
-        CkPin,
-        D0Pin,
-        // PinC5<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>,
-        // PinC0<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>,
-        // PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>,
-    );
+    pub type Pins = (CmdPin, CkPin, D0Pin, D1Pin, D2Pin, D3Pin);
 
     pub type Mmc<S = Enabled> = MmcMaster<SDMMC2_S, Pins, S>;
 }

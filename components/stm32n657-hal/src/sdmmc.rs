@@ -1215,7 +1215,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
     /// Send the Application command to verify that that the next command
     /// is an application specific com-mand rather than a standard command
     /// and check the response.
-    pub fn cmd_add_command(&mut self, argument: u32) -> Result<(), Error> {
+    pub fn cmd_app_command(&mut self, argument: u32) -> Result<(), Error> {
         self.cmd_short1_nowfi_cpsm(CmdIndex::AppCmd, argument)
     }
 
@@ -1235,7 +1235,7 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
 
     /// SD Card Specific security command.
     /// [`CmdIndex::AppCmd`][] should be sent before sending this command.
-    pub fn cmd_bus_wdith(&mut self, bus_width: u32) -> Result<(), Error> {
+    pub fn cmd_bus_width(&mut self, bus_width: u32) -> Result<(), Error> {
         self.cmd_short1_nowfi_cpsm(SdCardCommand::AppSdSetBuswidth, bus_width)
     }
 

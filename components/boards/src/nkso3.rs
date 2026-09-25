@@ -8,9 +8,9 @@ use littlefs2::{
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOC_S, GPIOG_S, SDMMC2_S, TIM7_S};
+use stm32n6::stm32n657::{GPIOC_S, GPIOE_S, GPIOG_S, SDMMC2_S, TIM7_S};
 use stm32n657_hal::{
-    gpio::{GpioC, GpioG},
+    gpio::{GpioC, GpioE, GpioG},
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
     timer::Tim7,
@@ -153,11 +153,13 @@ pub struct BoardGPIO {
 
 pub fn init_pins(
     gpioc: GPIOC_S,
+    gpioe: GPIOE_S,
     gpiog: GPIOG_S,
     sdmmc: SDMMC2_S,
     rcc: &Rcc,
 ) -> (BoardGPIO, Mmc<Disabled>) {
     let gpioc = GpioC::new(gpioc, rcc);
+    let gpioe = GpioE::new(gpioe, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     (
         BoardGPIO {
@@ -170,6 +172,9 @@ pub fn init_pins(
                 gpioc.c3.into_sdmmc2_cmd(),
                 gpioc.c2.into_sdmmc2_ck(),
                 gpioc.c4.into_sdmmc2_d0(),
+                gpioc.c5.into_sdmmc2_d1(),
+                gpioc.c0.into_sdmmc2_d2(),
+                gpioe.e4.into_sdmmc2_d3(),
             ),
         ),
     )

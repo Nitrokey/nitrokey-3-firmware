@@ -104,7 +104,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         let init = sdmmc::SdMMCInit {
             clock_edge: sdmmc::ClockEdge::Rising,
             clock_power_save: sdmmc::ClockPowerSave::Disable,
-            bus_wide: Pins::WIDTH,
+            bus_wide: BusWidth::OneBit,
             hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
             clock_div: 81, // TODO get proper clock divider
             is_transceiver_present: 0,
@@ -131,10 +131,21 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             CardKind::Mmc => {
                 this.power_on()?;
                 this.init_card()?;
+                this.enable_wide_bus()?;
             }
             CardKind::Sd => {
                 this.power_on_sd()?;
                 this.init_card_sd()?;
+                this.enable_wide_bus_sd()?;
+                let init = sdmmc::SdMMCInit {
+                    clock_edge: sdmmc::ClockEdge::Rising,
+                    clock_power_save: sdmmc::ClockPowerSave::Disable,
+                    bus_wide: this.pins.width(),
+                    hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
+                    clock_div: 81, // TODO get proper clock divider
+                    is_transceiver_present: 0,
+                };
+                this.sdmmc.init(init);
             }
         }
 
@@ -147,11 +158,22 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         info_now!(
             "{:?} card enabled: {:?} bus, {} blocks of {} bytes",
             this.kind,
-            Pins::WIDTH,
+            this.pins.width(),
             this.card_info.log_block_number,
             this.card_info.log_block_size
         );
         Ok(this)
+    }
+}
+
+#[derive(Default)]
+struct Scr {
+    value: [u32; 2],
+}
+
+impl Scr {
+    fn wide_bus_support(&self) -> bool {
+        self.value[1] & 0x00010000 != 0
     }
 }
 
@@ -271,7 +293,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.sdmmc.cmd_oper_cond()?;
 
         self.sdmmc
-            .cmd_add_command(0)
+            .cmd_app_command(0)
             .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
 
         // ACMD41: from c
@@ -279,7 +301,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         let mut count = 0u32;
         let mut response = 0u32;
         while count < 0xFFFF && response >> 31 == 0 {
-            self.sdmmc.cmd_add_command(0)?;
+            self.sdmmc.cmd_app_command(0)?;
             self.sdmmc
                 .cmd_app_oper_command(ACMD41_ARG)
                 .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
@@ -395,6 +417,91 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         }
 
         Ok(())
+    }
+
+    fn enable_wide_bus(&mut self) -> Result<(), Error> {
+        todo!();
+    }
+
+    fn enable_wide_bus_sd(&mut self) -> Result<(), Error> {
+        core::assert_matches!(
+            self.pins.width(),
+            BusWidth::OneBit | BusWidth::FourBit,
+            "SD card only support up to 4 bits"
+        );
+
+        debug_now!("Get scr");
+        let scr = self.get_card_scr_sd()?;
+        if !scr.wide_bus_support() {
+            debug_now!("set bus width");
+            self.sdmmc
+                .cmd_app_command((self.card_info.rca as u32) << 16)?;
+            self.sdmmc.cmd_bus_width(match self.pins.width() {
+                BusWidth::OneBit => 0,
+                BusWidth::FourBit => 2,
+                BusWidth::EightBit => unreachable!(),
+            })?;
+        }
+
+        Ok(())
+    }
+
+    fn get_card_scr_sd(&mut self) -> Result<Scr, Error> {
+        self.sdmmc
+            .cmd_app_command((self.card_info.rca as u32) << 16)?;
+        self.sdmmc.config_data(sdmmc::ConfigData {
+            data_time_out: 0xFFFFFFFF,
+            data_len: 8,
+            data_block_size: sdmmc::DataBlockSize::B8,
+            transfer_dir: TransferDir::ToSdMmc,
+            transfer_mode: TransferMode::Block,
+            dpsm: DpsmState::Enable,
+        });
+        self.sdmmc.cmd_send_scr()?;
+
+        let mut scr = Scr { value: [0; 2] };
+        let mut read_scr = false;
+        let mut star;
+        while {
+            star = self.sdmmc.peripheral.star().read();
+            !(star.rxoverr().bit()
+                | star.dcrcfail().bit()
+                | star.dtimeout().bit()
+                | star.dbckend().bit()
+                | star.dataend().bit())
+        } {
+            if !star.rxfifoe().bit() && !read_scr {
+                scr.value[0] = self.sdmmc.read_fifo();
+                scr.value[1] = self.sdmmc.read_fifo();
+                read_scr = true;
+            }
+        }
+
+        if star.dtimeout().bit() {
+            self.sdmmc.clear_static_flags();
+            return Err(Error::DATA_TIMEOUT);
+        }
+
+        if star.dtimeout().bit() {
+            self.sdmmc.clear_static_flags();
+            return Err(Error::DATA_TIMEOUT);
+        }
+
+        if star.dcrcfail().bit() {
+            self.sdmmc.clear_static_flags();
+            return Err(Error::DATA_CRC_FAIL);
+        }
+
+        if star.rxoverr().bit() {
+            self.sdmmc.clear_static_flags();
+            return Err(Error::RX_OVERRUN);
+        }
+        self.sdmmc.clear_static_flags();
+
+        scr.value[1] = scr.value[1].swap_bytes();
+        scr.value[0] = scr.value[0].swap_bytes();
+
+        Ok(scr)
     }
 
     fn get_card_csd(&mut self) -> Result<Csd, Error> {
@@ -1110,7 +1217,7 @@ pins! {
 
 pub trait MmcPins {
     type Peripheral;
-    const WIDTH: BusWidth;
+    fn width(&self) -> BusWidth;
 }
 
 impl<P, P1, P2, P3> MmcPins for (P1, P2, P3)
@@ -1120,7 +1227,9 @@ where
     P3: D0<Peripheral = P>,
 {
     type Peripheral = P;
-    const WIDTH: BusWidth = BusWidth::OneBit;
+    fn width(&self) -> BusWidth {
+        BusWidth::OneBit
+    }
 }
 
 impl<P, P1, P2, P3, P4, P5, P6> MmcPins for (P1, P2, P3, P4, P5, P6)
@@ -1133,7 +1242,9 @@ where
     P6: D3<Peripheral = P>,
 {
     type Peripheral = P;
-    const WIDTH: BusWidth = BusWidth::FourBit;
+    fn width(&self) -> BusWidth {
+        BusWidth::FourBit
+    }
 }
 
 impl<P, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> MmcPins
@@ -1151,5 +1262,7 @@ where
     P10: D7<Peripheral = P>,
 {
     type Peripheral = P;
-    const WIDTH: BusWidth = BusWidth::EightBit;
+    fn width(&self) -> BusWidth {
+        BusWidth::EightBit
+    }
 }
