@@ -28,7 +28,7 @@ bitflags = "2"
 [patch.crates-io]
 # components
 memory-regions = { path = "components/memory-regions" }
-synopsys-usb-otg = { git = "https://github.com/daringer/synopsys-usb-otg", rev = "d4c4b4b535348dab14c253d0ad1974e644249768" }
+synopsys-usb-otg = { git = "https://github.com/daringer/synopsys-usb-otg", rev = "20f6e665ff1d9f1466f385b7affea1e9aeb9f115" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }

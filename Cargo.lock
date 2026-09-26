@@ -3424,7 +3424,7 @@ dependencies = [
 [[package]]
 name = "synopsys-usb-otg"
 version = "0.5.0"
-source = "git+https://github.com/daringer/synopsys-usb-otg?rev=d4c4b4b535348dab14c253d0ad1974e644249768#d4c4b4b535348dab14c253d0ad1974e644249768"
+source = "git+https://github.com/daringer/synopsys-usb-otg?rev=20f6e665ff1d9f1466f385b7affea1e9aeb9f115#20f6e665ff1d9f1466f385b7affea1e9aeb9f115"
 dependencies = [
  "critical-section",
  "embedded-hal",
