@@ -240,6 +240,7 @@ where
             let mut data = [0u8; 18];
             data[0] = 0x70; // current errors
             data[2] = state.sense_key.unwrap_or(0);
+            data[7] = 0x0A; // additional length, else hosts never parse ASC/ASCQ
             data[12] = state.sense_key_code.unwrap_or(0);
             data[13] = state.sense_qualifier.unwrap_or(0);
             command.try_write_data_all(&data)?;
