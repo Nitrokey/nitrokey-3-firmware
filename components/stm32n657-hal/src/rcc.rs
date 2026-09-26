@@ -154,6 +154,9 @@ impl_peripheral!(
         (Tim6, tim6ens, tim6rsts, tim6rstc),
         (Tim7, tim7ens, tim7rsts, tim7rstc),
     ],
+    (apb4hensr, apb4hrstsr, apb4hrstcr) => [
+        (Syscfg, syscfgens, syscfgrsts, syscfgrstc),
+    ],
 );
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

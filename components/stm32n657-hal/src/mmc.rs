@@ -142,7 +142,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
                     clock_power_save: sdmmc::ClockPowerSave::Disable,
                     bus_wide: this.pins.width(),
                     hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
-                    clock_div: 81, // TODO get proper clock divider
+                    clock_div: 41, // TODO get proper clock divider
                     is_transceiver_present: 0,
                 };
                 this.sdmmc.init(init);

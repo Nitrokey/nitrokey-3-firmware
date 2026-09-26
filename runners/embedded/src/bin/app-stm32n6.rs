@@ -38,6 +38,7 @@ mod app {
         pwr::Pwr,
         rcc::Rcc,
         rng::Rng,
+        syscfg::Syscfg,
         timer::{MillisecondsCounter, Tim6},
     };
     use systick_monotonic::Systick;
@@ -89,6 +90,7 @@ mod app {
 
         let pwr = Pwr::new(ctx.device.PWR_S);
         pwr.enable_mmc_vddio();
+        Syscfg::new(ctx.device.SYSCFG_S, &rcc).apply_io_compensation_workaround();
 
         const CARD_KIND: CardKind = CardKind::Sd;
         #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]

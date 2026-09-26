@@ -43,7 +43,7 @@ pub struct PushPull;
 
 macro_rules! impl_gpio {
     ($gpio:ident, $GPIO:ident, [
-        $($pin:ident: $Pin:ident = ($mode:ident, $ot:ident, $pupd:ident, $id:ident, $bs:ident, $br:ident, $afr:ident, $afsel:ident),)*
+        $($pin:ident: $Pin:ident = ($mode:ident, $ospeed:ident, $ot:ident, $pupd:ident, $id:ident, $bs:ident, $br:ident, $afr:ident, $afsel:ident),)*
     ]) => {
         pub struct $gpio {
             $(
@@ -66,13 +66,13 @@ macro_rules! impl_gpio {
         }
 
         $(
-            impl_pin!($GPIO, $Pin, $mode, $ot, $pupd, $id, $bs, $br, $afr, $afsel);
+            impl_pin!($GPIO, $Pin, $mode, $ospeed, $ot, $pupd, $id, $bs, $br, $afr, $afsel);
         )*
     }
 }
 
 macro_rules! impl_pin {
-    ($GPIO:ident, $pin:ident, $mode:ident, $ot:ident, $pupd:ident, $id:ident, $bs:ident, $br:ident, $afr:ident, $afsel:ident) => {
+    ($GPIO:ident, $pin:ident, $mode:ident, $ospeed:ident, $ot:ident, $pupd:ident, $id:ident, $bs:ident, $br:ident, $afr:ident, $afsel:ident) => {
         pub struct $pin<M> {
             _marker: PhantomData<M>,
         }
@@ -137,6 +137,10 @@ macro_rules! impl_pin {
                 self.gpio()
                     .moder()
                     .modify(|_, w| unsafe { w.$mode().bits(0b10) });
+                // ospeed: 10 = high; peripheral buses (SDMMC CK/CMD/DAT) need fast edges
+                self.gpio()
+                    .ospeedr()
+                    .modify(|_, w| unsafe { w.$ospeed().bits(0b10) });
                 self.gpio()
                     .pupdr()
                     .modify(|_, w| unsafe { w.$pupd().bits(R::VALUE) });
@@ -185,57 +189,57 @@ macro_rules! impl_pin {
 }
 
 impl_gpio!(GpioA, GPIOA_S, [
-    a0: PinA0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    a4: PinA4 = (mode4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    a0: PinA0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    a4: PinA4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
 ]);
 impl_gpio!(GpioB, GPIOB_S, [
-    b4: PinB4 = (mode4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
-    b5: PinB5 = (mode5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
-    b8: PinB8 = (mode8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
-    b9: PinB9 = (mode9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
-    b13: PinB13 = (mode13, ot13, pupd13, id13, bs13, br13, afrh,afsel13),
+    b4: PinB4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    b5: PinB5 = (mode5, ospeed5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
+    b8: PinB8 = (mode8, ospeed8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
+    b9: PinB9 = (mode9, ospeed9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
+    b13: PinB13 = (mode13, ospeed13, ot13, pupd13, id13, bs13, br13, afrh,afsel13),
 ]);
 impl_gpio!(GpioC, GPIOC_S, [
-    c0: PinC0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    c1: PinC1 = (mode1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
-    c2: PinC2 = (mode2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
-    c3: PinC3 = (mode3, ot3, pupd3, id3, bs3, br3, afrl,afsel3),
-    c4: PinC4 = (mode4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
-    c5: PinC5 = (mode5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
-    c6: PinC6 = (mode6, ot6, pupd6, id6, bs6, br6, afrl,afsel6),
-    c7: PinC7 = (mode7, ot7, pupd7, id7, bs7, br7, afrl,afsel7),
-    c8: PinC8 = (mode8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
-    c9: PinC9 = (mode9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
-    c10: PinC10 = (mode10, ot10, pupd10, id10, bs10, br10, afrh,afsel10),
-    c11: PinC11 = (mode11, ot11, pupd11, id11, bs11, br11, afrh,afsel11),
-    c12: PinC12 = (mode12, ot12, pupd12, id12, bs12, br12, afrh,afsel12),
-    c13: PinC13 = (mode13, ot13, pupd13, id13, bs13, br13, afrh,afsel13),
+    c0: PinC0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    c1: PinC1 = (mode1, ospeed1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
+    c2: PinC2 = (mode2, ospeed2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
+    c3: PinC3 = (mode3, ospeed3, ot3, pupd3, id3, bs3, br3, afrl,afsel3),
+    c4: PinC4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    c5: PinC5 = (mode5, ospeed5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
+    c6: PinC6 = (mode6, ospeed6, ot6, pupd6, id6, bs6, br6, afrl,afsel6),
+    c7: PinC7 = (mode7, ospeed7, ot7, pupd7, id7, bs7, br7, afrl,afsel7),
+    c8: PinC8 = (mode8, ospeed8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
+    c9: PinC9 = (mode9, ospeed9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
+    c10: PinC10 = (mode10, ospeed10, ot10, pupd10, id10, bs10, br10, afrh,afsel10),
+    c11: PinC11 = (mode11, ospeed11, ot11, pupd11, id11, bs11, br11, afrh,afsel11),
+    c12: PinC12 = (mode12, ospeed12, ot12, pupd12, id12, bs12, br12, afrh,afsel12),
+    c13: PinC13 = (mode13, ospeed13, ot13, pupd13, id13, bs13, br13, afrh,afsel13),
 ]);
 impl_gpio!(GpioD, GPIOD_S, [
-    d0: PinD0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    d2: PinD2 = (mode2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
-    d4: PinD4 = (mode4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
-    d5: PinD5 = (mode5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
-    d11: PinD11 = (mode11, ot11, pupd11, id11, bs11, br11, afrh,afsel11),
-    d15: PinD15 = (mode15, ot15, pupd15, id15, bs15, br15, afrh,afsel15),
+    d0: PinD0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    d2: PinD2 = (mode2, ospeed2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
+    d4: PinD4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    d5: PinD5 = (mode5, ospeed5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
+    d11: PinD11 = (mode11, ospeed11, ot11, pupd11, id11, bs11, br11, afrh,afsel11),
+    d15: PinD15 = (mode15, ospeed15, ot15, pupd15, id15, bs15, br15, afrh,afsel15),
 ]);
 impl_gpio!(GpioE, GPIOE_S, [
-    e0: PinE0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    e4: PinE4 = (mode4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
-    e15: PinE15 = (mode15, ot15, pupd15, id15, bs15, br15, afrh,afsel15),
+    e0: PinE0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    e4: PinE4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    e15: PinE15 = (mode15, ospeed15, ot15, pupd15, id15, bs15, br15, afrh,afsel15),
 ]);
 impl_gpio!(GpioG, GPIOG_S, [
-    g0: PinG0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    g1: PinG1 = (mode1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
-    g7: PinG7 = (mode7, ot7, pupd7, id7, bs7, br7, afrl,afsel7),
-    g8: PinG8 = (mode8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
-    g10: PinG10 = (mode10, ot10, pupd10, id10, bs10, br10, afrh,afsel10),
+    g0: PinG0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    g1: PinG1 = (mode1, ospeed1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
+    g7: PinG7 = (mode7, ospeed7, ot7, pupd7, id7, bs7, br7, afrl,afsel7),
+    g8: PinG8 = (mode8, ospeed8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
+    g10: PinG10 = (mode10, ospeed10, ot10, pupd10, id10, bs10, br10, afrh,afsel10),
 ]);
 impl_gpio!(GpioH, GPIOH_S, [
-    h0: PinH0 = (mode0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
-    h2: PinH2 = (mode2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
-    h8: PinH8 = (mode8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
-    h9: PinH9 = (mode9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
+    h0: PinH0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    h2: PinH2 = (mode2, ospeed2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
+    h8: PinH8 = (mode8, ospeed8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
+    h9: PinH9 = (mode9, ospeed9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
 ]);
 
 pub const ALTERNATE_FUNCTION_0: u8 = 0x0000000;

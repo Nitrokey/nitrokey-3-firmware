@@ -18,6 +18,7 @@ pub mod pwr;
 pub mod rcc;
 pub mod rng;
 pub mod sdmmc;
+pub mod syscfg;
 pub mod timer;
 mod utils;
 
