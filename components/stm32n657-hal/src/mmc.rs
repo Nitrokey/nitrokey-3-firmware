@@ -648,18 +648,32 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     }
 
     /// report stalled transfer
-    fn transfer_stalled(&mut self, _op: &str) -> Error {
+    fn transfer_stalled(&mut self, _op: &str, multi: bool) -> Error {
         let _star = self.sdmmc.peripheral.star().read();
         info_now!(
             "{_op} stalled: STA {:#010x}, {} bytes not transferred",
             _star.bits(),
             self.sdmmc.data_counter()
         );
+        self.abort_transfer(multi, Error::TIMEOUT)
+    }
+
+    /// data error: stop the card (multi), reset data FIFO
+    /// -> RM0486 data FIFO rules: clear flags, wait for transfer state
+    fn abort_transfer(&mut self, multi: bool, err: Error) -> Error {
         self.sdmmc.cmd_trans_disable();
+        if multi {
+            let _ = self.sdmmc.cmd_stop_transfer();
+        }
+        self.sdmmc
+            .peripheral
+            .dctrl()
+            .modify(|_, w| w.fiforst().bit(true));
         self.sdmmc.clear_static_flags();
-        self.errorstate |= Error::TIMEOUT;
+        let _ = self.wait_card_ready();
+        self.errorstate |= err;
         self.state = State::Ready;
-        Error::TIMEOUT
+        err
     }
 
     fn enable_dctrl(&mut self) {
@@ -893,10 +907,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
         if let Err(err) = cmd_res {
             debug_now!("Got cmd err for config_data: {err:?}");
-            self.sdmmc.clear_static_flags();
-            self.state = State::Ready;
-            self.errorstate |= err;
-            return Err(err);
+            return Err(self.abort_transfer(buffer.len() > 1, err));
         }
 
         let mut star;
@@ -922,7 +933,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
             polls -= 1;
             if polls == 0 {
-                return Err(self.transfer_stalled("read"));
+                return Err(self.transfer_stalled("read", buffer.len() > 1));
             }
         }
 
@@ -930,27 +941,20 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
         if star.dataend().bit() && buffer.len() > 1 {
             if let Err(err) = self.sdmmc.cmd_stop_transfer() {
-                self.sdmmc.clear_static_flags();
-                self.state = State::Ready;
-                self.errorstate |= err;
-                return Err(err);
+                return Err(self.abort_transfer(false, err));
             }
         }
-        if star.dtimeout().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::TIMEOUT;
-            self.state = State::Ready;
-            return Err(Error::TIMEOUT);
+        let data_err = if star.dtimeout().bit() {
+            Some(Error::TIMEOUT)
         } else if star.dcrcfail().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::DATA_CRC_FAIL;
-            self.state = State::Ready;
-            return Err(Error::DATA_CRC_FAIL);
+            Some(Error::DATA_CRC_FAIL)
         } else if star.rxoverr().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::RX_OVERRUN;
-            self.state = State::Ready;
-            return Err(Error::RX_OVERRUN);
+            Some(Error::RX_OVERRUN)
+        } else {
+            None
+        };
+        if let Some(err) = data_err {
+            return Err(self.abort_transfer(buffer.len() > 1, err));
         }
 
         self.sdmmc.clear_static_flags();
@@ -1003,10 +1007,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         };
 
         if let Err(err) = cmd_res {
-            self.sdmmc.clear_static_flags();
-            self.state = State::Ready;
-            self.errorstate |= err;
-            return Err(err);
+            return Err(self.abort_transfer(buffer.len() > 1, err));
         }
 
         let mut star;
@@ -1032,7 +1033,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
             polls -= 1;
             if polls == 0 {
-                return Err(self.transfer_stalled("write"));
+                return Err(self.transfer_stalled("write", buffer.len() > 1));
             }
         }
 
@@ -1040,27 +1041,20 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
 
         if star.dataend().bit() && buffer.len() > 1 {
             if let Err(err) = self.sdmmc.cmd_stop_transfer() {
-                self.sdmmc.clear_static_flags();
-                self.state = State::Ready;
-                self.errorstate |= err;
-                return Err(err);
+                return Err(self.abort_transfer(false, err));
             }
         }
-        if star.dtimeout().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::TIMEOUT;
-            self.state = State::Ready;
-            return Err(Error::TIMEOUT);
+        let data_err = if star.dtimeout().bit() {
+            Some(Error::TIMEOUT)
         } else if star.dcrcfail().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::DATA_CRC_FAIL;
-            self.state = State::Ready;
-            return Err(Error::DATA_CRC_FAIL);
+            Some(Error::DATA_CRC_FAIL)
         } else if star.txunderr().bit() {
-            self.sdmmc.clear_static_flags();
-            self.errorstate |= Error::TX_UNDERRUN;
-            self.state = State::Ready;
-            return Err(Error::TX_UNDERRUN);
+            Some(Error::TX_UNDERRUN)
+        } else {
+            None
+        };
+        if let Some(err) = data_err {
+            return Err(self.abort_transfer(buffer.len() > 1, err));
         }
 
         self.sdmmc.clear_static_flags();
