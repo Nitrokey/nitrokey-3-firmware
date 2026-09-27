@@ -38,6 +38,22 @@ impl Rcc {
         peripheral.enable(&self.0);
     }
 
+    pub fn sdmmc1_kernel_clock(&self) -> Rate {
+        self.sdmmc_kernel_clock(self.0.ccipr8().read().sdmmc1sel().bits())
+    }
+
+    pub fn sdmmc2_kernel_clock(&self) -> Rate {
+        self.sdmmc_kernel_clock(self.0.ccipr8().read().sdmmc2sel().bits())
+    }
+
+    /// SDMMCxSEL: 0 = hclku (the AHB clock)
+    fn sdmmc_kernel_clock(&self, sel: u8) -> Rate {
+        match sel {
+            0 => self.clock_config().sys_bus2_ck(),
+            _ => unimplemented!(),
+        }
+    }
+
     pub fn reset(&self, peripheral: Peripheral) {
         self.assert_reset(peripheral);
         self.release_reset(peripheral);

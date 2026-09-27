@@ -4,22 +4,30 @@ use bitflags::bitflags;
 use stm32n6::stm32n657::{SDMMC1_S, SDMMC2_S, sdmmc1};
 
 use crate::{
+    Rate,
     rcc::{Peripheral, Rcc},
     utils::enum_u,
 };
 
 pub trait SdMmc: Deref<Target = sdmmc1::RegisterBlock> {
     fn enable_clk(&self, rcc: &Rcc);
+    fn kernel_clock(&self, rcc: &Rcc) -> Rate;
 }
 
 impl SdMmc for SDMMC1_S {
     fn enable_clk(&self, rcc: &Rcc) {
         rcc.enable(Peripheral::Sdmmc1);
     }
+    fn kernel_clock(&self, rcc: &Rcc) -> Rate {
+        rcc.sdmmc1_kernel_clock()
+    }
 }
 impl SdMmc for SDMMC2_S {
     fn enable_clk(&self, rcc: &Rcc) {
         rcc.enable(Peripheral::Sdmmc2);
+    }
+    fn kernel_clock(&self, rcc: &Rcc) -> Rate {
+        rcc.sdmmc2_kernel_clock()
     }
 }
 

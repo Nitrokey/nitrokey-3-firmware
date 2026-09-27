@@ -3,6 +3,7 @@ use core::{marker::PhantomData, ops::Range};
 use bitflags::{Flags, bitflags};
 
 use crate::{
+    Rate,
     gpio::*,
     rcc::Rcc,
     sdmmc::{
@@ -42,6 +43,15 @@ const POWER_UP_DELAY_CYCLES: u32 = 64_000;
 const DATA_POLL_LIMIT: u32 = sdmmc::calc_timeout(5000);
 /// polls after write/erase
 const CARD_READY_POLL_LIMIT: u32 = 100_000;
+/// identification clock limit
+const INIT_CLOCK: Rate = Rate::kHz(400);
+/// default speed data clock limit
+const DATA_CLOCK: Rate = Rate::MHz(25);
+
+/// CLKDIV so that SDMMC_CK = sdmmc_ker_ck / (2 * CLKDIV) <= target; 0 = bypass
+fn clock_div(kernel: Rate, target: Rate) -> u16 {
+    kernel.to_Hz().div_ceil(2 * target.to_Hz()).clamp(1, 0x3FF) as u16
+}
 /// R1 CURRENT_STATE [12:9] = transfer state
 const CARD_STATE_TRANSFER: u32 = 4;
 
@@ -100,13 +110,30 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         }
     }
 
-    pub fn enable(self, rcc: &Rcc, kind: CardKind) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
+    /// `max_clock` caps the data clock
+    pub fn enable(
+        self,
+        rcc: &Rcc,
+        kind: CardKind,
+        max_clock: Rate,
+    ) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
+        let kernel = self.sdmmc.peripheral.kernel_clock(rcc);
+        let init_div = clock_div(kernel, INIT_CLOCK);
+        let data_div = clock_div(kernel, max_clock.min(DATA_CLOCK));
+        info_now!(
+            "sdmmc: kernel {}, init CLKDIV {} ({}), data CLKDIV {} ({})",
+            kernel,
+            init_div,
+            kernel / (2 * init_div as u32),
+            data_div,
+            kernel / (2 * data_div as u32)
+        );
         let init = sdmmc::SdMMCInit {
             clock_edge: sdmmc::ClockEdge::Rising,
             clock_power_save: sdmmc::ClockPowerSave::Disable,
             bus_wide: BusWidth::OneBit,
             hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
-            clock_div: 81, // TODO get proper clock divider
+            clock_div: init_div,
             is_transceiver_present: 0,
         };
 
@@ -142,7 +169,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
                     clock_power_save: sdmmc::ClockPowerSave::Disable,
                     bus_wide: this.pins.width(),
                     hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
-                    clock_div: 41, // TODO get proper clock divider
+                    clock_div: data_div,
                     is_transceiver_present: 0,
                 };
                 this.sdmmc.init(init);

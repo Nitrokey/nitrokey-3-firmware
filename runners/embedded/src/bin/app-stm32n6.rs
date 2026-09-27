@@ -40,6 +40,7 @@ mod app {
         rng::Rng,
         syscfg::Syscfg,
         timer::{MillisecondsCounter, Tim6},
+        Rate,
     };
     use systick_monotonic::Systick;
 
@@ -97,8 +98,9 @@ mod app {
         Syscfg::new(ctx.device.SYSCFG_S, &rcc).apply_io_compensation_workaround();
 
         const CARD_KIND: CardKind = CardKind::Sd;
+        const SD_MAX_CLOCK: Rate = Rate::MHz(8);
         #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]
-        let mut mmc = mmc.enable(&rcc, CARD_KIND).unwrap();
+        let mut mmc = mmc.enable(&rcc, CARD_KIND, SD_MAX_CLOCK).unwrap();
 
         #[cfg(feature = "sdmmc-tests")]
         {
