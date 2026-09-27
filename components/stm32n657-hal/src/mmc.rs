@@ -132,7 +132,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             clock_edge: sdmmc::ClockEdge::Rising,
             clock_power_save: sdmmc::ClockPowerSave::Disable,
             bus_wide: BusWidth::OneBit,
-            hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
+            hardware_flow_control: sdmmc::HardwareFlowControl::Enable,
             clock_div: init_div,
             is_transceiver_present: 0,
         };
@@ -168,7 +168,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
                     clock_edge: sdmmc::ClockEdge::Rising,
                     clock_power_save: sdmmc::ClockPowerSave::Disable,
                     bus_wide: this.pins.width(),
-                    hardware_flow_control: sdmmc::HardwareFlowControl::Disable,
+                    hardware_flow_control: sdmmc::HardwareFlowControl::Enable,
                     clock_div: data_div,
                     is_transceiver_present: 0,
                 };
@@ -949,13 +949,14 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
-                for _ in 0..FIFO_SIZE / 4 {
-                    let data = self.sdmmc.read_fifo();
-                    buf[offset..][..4].copy_from_slice(&data.to_le_bytes());
+            // RM0486: on RXFIFOHF read until the FIFO is empty
+            if star.rxfifohf().bit() {
+                while dataremaining > 0 && !self.sdmmc.peripheral.star().read().rxfifoe().bit() {
+                    let word: &mut [u8; 4] = (&mut buf[offset..offset + 4]).try_into().unwrap();
+                    *word = self.sdmmc.read_fifo().to_le_bytes();
                     offset += 4;
+                    dataremaining -= 4;
                 }
-                dataremaining -= FIFO_SIZE;
             }
 
             polls -= 1;
@@ -1049,13 +1050,14 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            if star.txfifohe().bit() && dataremaining >= FIFO_SIZE {
-                for _i in 0..FIFO_SIZE / 4 {
-                    self.sdmmc
-                        .write_fifo(u32::from_le_bytes(buf[offset..][..4].try_into().unwrap()));
+            if star.txfifohe().bit() && dataremaining > 0 {
+                let chunk = dataremaining.min(FIFO_SIZE);
+                for _ in 0..chunk / 4 {
+                    let word: &[u8; 4] = buf[offset..offset + 4].try_into().unwrap();
+                    self.sdmmc.write_fifo(u32::from_le_bytes(*word));
                     offset += 4;
                 }
-                dataremaining -= FIFO_SIZE;
+                dataremaining -= chunk;
             }
 
             polls -= 1;
