@@ -60,6 +60,19 @@ impl storage_app::Storage for Storage {
 
 pub const BUFFER_LEN: usize = 2 * BLOCK_SIZE;
 
+/// DWT cycles for one XTS-AES-128 sector encryption, averaged over 16
+pub fn xts_bench_cycles() -> u32 {
+    let cipher1 = Aes128::new(Key::<Aes128>::from_slice(&[1; 16]));
+    let cipher2 = Aes128::new(Key::<Aes128>::from_slice(&[2; 16]));
+    let xts = Xts128::new(cipher1, cipher2);
+    let mut block = [0x5au8; BLOCK_SIZE];
+    let start = cortex_m::peripheral::DWT::cycle_count();
+    for i in 0..16u32 {
+        xts.encrypt_sector(&mut block, xts_mode::get_tweak_default(i.into()));
+    }
+    cortex_m::peripheral::DWT::cycle_count().wrapping_sub(start) / 16
+}
+
 pub struct UsbStorage<'a, B: UsbBus> {
     pub scsi: StorageClass<'a, B, [u8; 512]>,
     state: State,

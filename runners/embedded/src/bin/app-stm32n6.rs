@@ -68,11 +68,15 @@ mod app {
     type Monotonic = SystickMonotonic;
 
     #[init(local = [resources: Resources<NKSO3> = Resources::new()])]
-    fn init(ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
+    fn init(mut ctx: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
         let mut init_status = apps::InitStatus::default();
 
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
+
+        // free-running core cycle counter
+        ctx.core.DCB.enable_trace();
+        ctx.core.DWT.enable_cycle_counter();
 
         boards::init::init_logger::<Board>(VERSION_STRING);
 
@@ -97,7 +101,13 @@ mod app {
         let mut mmc = mmc.enable(&rcc, CARD_KIND).unwrap();
 
         #[cfg(feature = "sdmmc-tests")]
-        embedded_runner_lib::sdmmc_tests::run(&mut mmc);
+        {
+            use embedded_runner_lib::sdmmc_tests;
+            // no PLL: the core runs on the system bus clock
+            let core_clock = clock_config.sys_bus_ck();
+            sdmmc_tests::run(&mut mmc, core_clock);
+            sdmmc_tests::report("xts encrypt", 1, nkso3::xts_bench_cycles(), core_clock);
+        }
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,

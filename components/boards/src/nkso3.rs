@@ -28,8 +28,8 @@ pub use crate::soc::stm32n6::mmc::{self, Mmc};
 use ui::{Button, Led};
 
 pub use storage::{
-    Storage, StorageAction, StorageChannel, StorageRequester, StorageResponder, UsbStorage,
-    BUFFER_LEN,
+    xts_bench_cycles, Storage, StorageAction, StorageChannel, StorageRequester, StorageResponder,
+    UsbStorage, BUFFER_LEN,
 };
 
 pub struct NKSO3;
