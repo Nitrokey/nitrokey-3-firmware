@@ -75,6 +75,8 @@ mod app {
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
 
+        ctx.core.SCB.enable_icache();
+        ctx.core.SCB.enable_dcache(&mut ctx.core.CPUID);
         // free-running core cycle counter
         ctx.core.DCB.enable_trace();
         ctx.core.DWT.enable_cycle_counter();
