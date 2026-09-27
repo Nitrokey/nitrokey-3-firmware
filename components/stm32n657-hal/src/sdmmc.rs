@@ -768,12 +768,6 @@ impl<P: SdMmc> SdMmcMaster<P, Enabled> {
         self.peripheral.dcntr().read().bits()
     }
 
-    /// Why is this the same as read_fifo?
-    pub fn fifo_count(&mut self) -> u32 {
-        // The C hal only reads/writes the 0x80 register for FIFO
-        self.peripheral.fifor0().read().bits()
-    }
-
     pub fn set_read_wait_mode(&mut self, read_wait_mode: ReadWaitMode) {
         self.peripheral
             .dctrl()

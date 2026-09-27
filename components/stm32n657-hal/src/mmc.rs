@@ -685,9 +685,37 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.abort_transfer(multi, Error::TIMEOUT)
     }
 
+    /// FIFORST only acts on a transfer error; a stalled receive must be read out
+    fn drain_fifo(&mut self) {
+        let mut words = 0;
+        while words < 2 * FIFO_SIZE / 4 && !self.sdmmc.peripheral.star().read().rxfifoe().bit() {
+            self.sdmmc.read_fifo();
+            words += 1;
+        }
+        if words > 0 {
+            info_now!("drained {words} stale words from the FIFO");
+        }
+    }
+
+    /// diagnostic: a DPSM left active (FIFO not drained) blocks the next data command
+    fn log_dpsm_active(&mut self, _op: &str) {
+        let _star = self.sdmmc.peripheral.star().read().bits();
+        if _star & (1 << 12) != 0 {
+            info_now!(
+                "{_op}: DPSM still active, STA {_star:#010x}, DCNT {}",
+                self.sdmmc.data_counter()
+            );
+        }
+    }
+
     /// data error: stop the card (multi), reset data FIFO
     /// -> RM0486 data FIFO rules: clear flags, wait for transfer state
     fn abort_transfer(&mut self, multi: bool, err: Error) -> Error {
+        info_now!(
+            "abort after {err:?}: STA {:#010x}, DCNT {}",
+            self.sdmmc.peripheral.star().read().bits(),
+            self.sdmmc.data_counter()
+        );
         self.sdmmc.cmd_trans_disable();
         if multi {
             let _ = self.sdmmc.cmd_stop_transfer();
@@ -697,7 +725,9 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             .dctrl()
             .modify(|_, w| w.fiforst().bit(true));
         self.sdmmc.clear_static_flags();
-        let _ = self.wait_card_ready();
+        if let Err(_e) = self.wait_card_ready() {
+            info_now!("abort: card not ready: {_e:?}");
+        }
         self.errorstate |= err;
         self.state = State::Ready;
         err
@@ -914,6 +944,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.card_info.card_type
         );
         self.state = State::Busy;
+        self.log_dpsm_active("read");
         self.enable_dctrl();
 
         self.sdmmc.config_data(sdmmc::ConfigData {
@@ -949,20 +980,28 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            // RM0486: on RXFIFOHF read until the FIFO is empty
-            if star.rxfifohf().bit() {
-                while dataremaining > 0 && !self.sdmmc.peripheral.star().read().rxfifoe().bit() {
+            // RXFIFOHF guarantees half the FIFO: read exactly that, never poll for empty
+            // DATAEND only once FIFO is drained -> partial read deadlocks
+            if star.rxfifohf().bit() && dataremaining >= FIFO_SIZE {
+                for _ in 0..FIFO_SIZE / 4 {
                     let word: &mut [u8; 4] = (&mut buf[offset..offset + 4]).try_into().unwrap();
                     *word = self.sdmmc.read_fifo().to_le_bytes();
                     offset += 4;
-                    dataremaining -= 4;
                 }
+                dataremaining -= FIFO_SIZE;
             }
 
             polls -= 1;
             if polls == 0 {
+                self.drain_fifo();
                 return Err(self.transfer_stalled("read", buffer.len() > 1));
             }
+        }
+        if dataremaining != 0 {
+            info_now!(
+                "read: {dataremaining} bytes not read at DATAEND, STA {:#010x}",
+                star.bits()
+            );
         }
 
         self.sdmmc.cmd_trans_disable();
@@ -1016,6 +1055,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         );
 
         self.state = State::Busy;
+        self.log_dpsm_active("write");
         self.enable_dctrl();
 
         self.sdmmc.config_data(sdmmc::ConfigData {
@@ -1050,14 +1090,13 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
                 | star.dtimeout().bit()
                 | star.dataend().bit())
         } {
-            if star.txfifohe().bit() && dataremaining > 0 {
-                let chunk = dataremaining.min(FIFO_SIZE);
-                for _ in 0..chunk / 4 {
+            if star.txfifohe().bit() && dataremaining >= FIFO_SIZE {
+                for _ in 0..FIFO_SIZE / 4 {
                     let word: &[u8; 4] = buf[offset..offset + 4].try_into().unwrap();
                     self.sdmmc.write_fifo(u32::from_le_bytes(*word));
                     offset += 4;
                 }
-                dataremaining -= chunk;
+                dataremaining -= FIFO_SIZE;
             }
 
             polls -= 1;
