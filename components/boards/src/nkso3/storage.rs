@@ -11,6 +11,7 @@ use usb_classes::storage::{
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
     device::{UsbDevice, UsbDeviceState},
+    UsbError,
 };
 use xts_mode::Xts128;
 
@@ -129,8 +130,14 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
                     &mut self.state,
                 )
             });
+            // WouldBlock is routine here: the transport polls the endpoint after the callback
             if let Err(_err) = result {
-                warn!("storage: {_err:?}");
+                if !matches!(
+                    _err,
+                    usb_classes::storage::StorageTransportError::Usb(UsbError::WouldBlock)
+                ) {
+                    warn_now!("storage: transport {_err:?}");
+                }
             }
         }
     }

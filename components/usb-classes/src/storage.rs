@@ -14,6 +14,8 @@ use usbd_storage::{
         TransportError,
     },
 };
+
+pub use usbd_storage::transport::TransportError as StorageTransportError;
 use xts_mode::Xts128;
 
 #[cfg(feature = "stm32n657")]
