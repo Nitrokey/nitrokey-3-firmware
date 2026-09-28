@@ -411,7 +411,6 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "utils",
- "xts-mode",
 ]
 
 [[package]]

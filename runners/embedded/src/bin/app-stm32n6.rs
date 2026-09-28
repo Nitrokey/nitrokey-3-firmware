@@ -132,6 +132,18 @@ mod app {
             &mut init_status,
         );
 
+        let cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
+        let _saes = Saes::new(ctx.device.SAES_S, &rcc);
+        let mut dev_rng = Rng::new(ctx.device.RNG_S, &rcc);
+        #[cfg(feature = "aes-tests")]
+        let cryp = {
+            use embedded_runner_lib::aes_tests;
+            let mut cryp = cryp;
+            let mut saes = _saes;
+            aes_tests::run(&mut cryp, &mut saes, &mut dev_rng);
+            cryp
+        };
+
         static STORAGE_CHANNEL: StorageChannel = Channel::new();
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (storage_rq, storage_rp) = STORAGE_CHANNEL.split().unwrap();
@@ -143,11 +155,11 @@ mod app {
             nfc_rp,
             storage_rp,
             mmc,
+            cryp,
         );
 
         let user_interface = nkso3::init_ui(board_gpio, ctx.device.TIM7_S, &rcc, clock_config);
 
-        let mut dev_rng = Rng::new(ctx.device.RNG_S, &rcc);
         let mut trussed = boards::init::init_trussed(
             &mut dev_rng,
             store,
@@ -168,16 +180,6 @@ mod app {
             VERSION_STRING,
             Storage::new(storage_rq),
         );
-
-        let _cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
-        let _saes = Saes::new(ctx.device.SAES_S, &rcc);
-        #[cfg(feature = "aes-tests")]
-        {
-            use embedded_runner_lib::aes_tests;
-            let mut cryp = _cryp;
-            let mut saes = _saes;
-            aes_tests::run(&mut cryp, &mut saes, &mut dev_rng);
-        }
 
         let usb_timer = if usb_nfc.usb_storage.is_some() {
             let tim6 = Tim6::new(ctx.device.TIM6_S, &rcc);

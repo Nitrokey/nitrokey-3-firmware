@@ -5,15 +5,17 @@ use aes::{
     Aes128,
 };
 use interchange::{Channel, Requester, Responder};
+use stm32n657_hal::cryp::{self, Cryp};
 use usb_classes::storage::{
-    stm32n657_sdmmc::MmcStorage, EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
+    stm32n657_sdmmc::MmcStorage,
+    xts::{Ciphers, Xts128},
+    EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
 };
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
     device::{UsbDevice, UsbDeviceState},
     UsbError,
 };
-use xts_mode::Xts128;
 
 pub type StorageChannel = Channel<StorageAction, ()>;
 pub type StorageRequester<'a> = Requester<'a, StorageAction, ()>;
@@ -65,13 +67,96 @@ pub const BUFFER_LEN: usize = 2 * BLOCK_SIZE;
 pub fn xts_bench_cycles() -> u32 {
     let cipher1 = Aes128::new(Key::<Aes128>::from_slice(&[1; 16]));
     let cipher2 = Aes128::new(Key::<Aes128>::from_slice(&[2; 16]));
-    let xts = Xts128::new(cipher1, cipher2);
+    let mut xts = Ciphers { cipher1, cipher2 };
     let mut block = [0x5au8; BLOCK_SIZE];
     let start = cortex_m::peripheral::DWT::cycle_count();
     for i in 0..16u32 {
-        xts.encrypt_sector(&mut block, xts_mode::get_tweak_default(i.into()));
+        xts.encrypt_sector(&mut block, i.into());
     }
     cortex_m::peripheral::DWT::cycle_count().wrapping_sub(start) / 16
+}
+
+struct XtsCiphers {
+    cryp: Cryp,
+    key1: [u8; 16],
+    cipher2: Aes128,
+}
+
+impl XtsCiphers {
+    fn new(cryp: Cryp, key: [u8; 32]) -> Self {
+        let (key1, key2) = key.split_first_chunk().unwrap();
+        let cipher2 = Aes128::new_from_slice(key2).unwrap();
+        Self {
+            cryp,
+            key1: *key1,
+            cipher2,
+        }
+    }
+
+    fn lock(self) -> Cryp {
+        self.cryp
+    }
+}
+
+impl Xts128 for XtsCiphers {
+    type C1Dec<'a> = cryp::AesDec<'a>;
+    type C1Enc<'a> = cryp::AesEnc<'a>;
+    type C2<'a> = Aes128;
+
+    fn with_dec<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut Self::C1Dec<'_>, &mut Self::C2<'_>),
+    {
+        let mut cipher1 = cryp::AesDec::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
+        f(&mut cipher1, &mut self.cipher2)
+    }
+
+    fn with_enc<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut Self::C1Enc<'_>, &mut Self::C2<'_>),
+    {
+        let mut cipher1 = cryp::AesEnc::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
+        f(&mut cipher1, &mut self.cipher2)
+    }
+}
+
+// This should be an enum:
+// ```
+// enum EncryptionState {
+//     Locked(Cryp),
+//     Unlocked(XtsCiphers),
+// }
+// ```
+// But this is not possible due to ownership limitations. As a workaround, each field represents
+// a variant, so exactly one field must be non-null at any point.
+struct EncryptionState {
+    locked: Option<Cryp>,
+    unlocked: Option<XtsCiphers>,
+}
+
+impl EncryptionState {
+    fn new(cryp: Cryp) -> Self {
+        Self {
+            locked: Some(cryp),
+            unlocked: None,
+        }
+    }
+
+    fn lock(&mut self) {
+        if let Some(xts) = self.unlocked.take() {
+            self.locked = Some(xts.lock());
+        }
+    }
+
+    fn unlock(&mut self, key: [u8; 32]) {
+        if let Some(cryp) = self.locked.take() {
+            self.unlocked = Some(XtsCiphers::new(cryp, key));
+        }
+    }
+
+    fn xts(&mut self) -> Option<&mut XtsCiphers> {
+        self.unlocked.as_mut()
+    }
 }
 
 pub struct UsbStorage<'a, B: UsbBus> {
@@ -79,17 +164,22 @@ pub struct UsbStorage<'a, B: UsbBus> {
     state: State,
     block_device: MmcStorage<mmc::Peripheral, mmc::Pins>,
     responder: StorageResponder<'a>,
-    xts: Option<Xts128<Aes128>>,
+    encryption: EncryptionState,
 }
 
 impl<'a, B: UsbBus> UsbStorage<'a, B> {
-    pub fn new(usb_bus: &'a UsbBusAllocator<B>, mmc: Mmc, responder: StorageResponder<'a>) -> Self {
+    pub fn new(
+        usb_bus: &'a UsbBusAllocator<B>,
+        mmc: Mmc,
+        cryp: Cryp,
+        responder: StorageResponder<'a>,
+    ) -> Self {
         Self {
             scsi: usb_classes::storage::setup(usb_bus, 512, [0; 512]),
             state: State::default(),
             block_device: MmcStorage::new(mmc),
             responder,
-            xts: None,
+            encryption: EncryptionState::new(cryp),
         }
     }
 
@@ -99,14 +189,10 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
     {
         if let Some(action) = self.responder.take_request() {
             self.responder.respond(()).ok();
-            self.xts = match action {
-                StorageAction::Lock => None,
-                StorageAction::Unlock(key) => {
-                    let cipher1 = Aes128::new(Key::<Aes128>::from_slice(&key[..16]));
-                    let cipher2 = Aes128::new(Key::<Aes128>::from_slice(&key[16..]));
-                    Some(Xts128::new(cipher1, cipher2))
-                }
-            };
+            match action {
+                StorageAction::Lock => self.encryption.lock(),
+                StorageAction::Unlock(key) => self.encryption.unlock(key),
+            }
             if let Err(_err) = (force_reset)(device) {
                 warn!("Failed to trigger USB force reset: {_err:?}");
             }
@@ -121,8 +207,8 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
         for _ in 0..2 {
             let result = self.scsi.poll_command(|command| {
                 let mut block_device = self
-                    .xts
-                    .as_ref()
+                    .encryption
+                    .xts()
                     .map(|xts| EncryptedBlockDevice::new(&mut self.block_device, xts));
                 usb_classes::storage::process_command(
                     command,

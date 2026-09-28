@@ -46,6 +46,7 @@ pub fn init_usb_nfc<B: Board>(
     nfc_rp: CcidResponder<'static>,
     #[cfg(feature = "board-nkso3")] storage_rp: boards::nkso3::StorageResponder<'static>,
     #[cfg(feature = "board-nkso3")] mmc: boards::nkso3::Mmc,
+    #[cfg(feature = "board-nkso3")] cryp: stm32n657_hal::cryp::Cryp,
 ) -> UsbNfc<B> {
     const USB_PRODUCT: &str = if cfg!(feature = "board-nkso3") {
         "Nitrokey Storage 3"
@@ -65,5 +66,7 @@ pub fn init_usb_nfc<B: Board>(
         storage_rp,
         #[cfg(feature = "board-nkso3")]
         mmc,
+        #[cfg(feature = "board-nkso3")]
+        cryp,
     )
 }
