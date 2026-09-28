@@ -58,17 +58,18 @@ pub trait BlockDevice {
 
     fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error>;
     fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error>;
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error>;
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error>;
 }
 
-pub struct MemoryBlockDevice<'a, const N: usize>(&'a mut [u8; N]);
+pub struct MemoryBlockDevice<'a, const N: usize>(&'a mut [[u8; BLOCK_SIZE]; N]);
 
 impl<'a, const N: usize> MemoryBlockDevice<'a, N> {
-    pub fn new(buffer: &'a mut [u8; N]) -> Self {
+    pub fn new(buffer: &'a mut [[u8; BLOCK_SIZE]; N]) -> Self {
         const {
             assert!(N.is_multiple_of(BLOCK_SIZE));
-            let block_count = N / BLOCK_SIZE;
-            assert!(block_count <= (u32::MAX as usize));
-            assert!((block_count as u32) <= u32::MAX);
+            assert!(N <= (u32::MAX as usize));
         }
         Self(buffer)
     }
@@ -80,16 +81,20 @@ impl<const N: usize> BlockDevice for MemoryBlockDevice<'_, N> {
     fn blocks(&self) -> u32 {
         const { (N / BLOCK_SIZE) as _ }
     }
-
     fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
-        let offset = lba as usize * BLOCK_SIZE;
-        buf.copy_from_slice(&self.0[offset..][..BLOCK_SIZE]);
+        self.read_blocks(lba, core::slice::from_mut(buf))
+    }
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        self.write_blocks(lba, core::slice::from_mut(buf))
+    }
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        buf.copy_from_slice(&self.0[lba as usize..][..buf.len()]);
         Ok(())
     }
 
-    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
-        let offset = lba as usize * BLOCK_SIZE;
-        self.0[offset..][..BLOCK_SIZE].copy_from_slice(buf);
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        self.0[lba as usize..][..buf.len()].copy_from_slice(buf);
         Ok(())
     }
 }
@@ -129,6 +134,27 @@ where
         let tweak = xts_mode::get_tweak_default(lba.into());
         self.xts.encrypt_sector(buf, tweak);
         self.block_device.write_block(lba, buf)
+    }
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        self.block_device.read_blocks(lba, buf)?;
+        self.xts.decrypt_area(
+            buf.as_flattened_mut(),
+            BLOCK_SIZE,
+            lba as u128,
+            xts_mode::get_tweak_default,
+        );
+        Ok(())
+    }
+
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        self.xts.encrypt_area(
+            buf.as_flattened_mut(),
+            BLOCK_SIZE,
+            lba as u128,
+            xts_mode::get_tweak_default,
+        );
+        self.block_device.write_blocks(lba, buf)
     }
 }
 
@@ -428,7 +454,6 @@ mod tests {
     use super::*;
 
     const BLOCKS: usize = 4;
-    const BUFFER_LEN: usize = BLOCKS * BLOCK_SIZE;
     const KEY1: &[u8; 32] = b"0123456789abcdef0123456789abcdef";
     const KEY2: &[u8; 32] = b"deadbeefdeadbeefdeadbeefdeadbeef";
 
@@ -440,23 +465,32 @@ mod tests {
         fn blocks(&self) -> u32 {
             self.0
         }
-
-        fn read_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
+        fn read_block(
+            &mut self,
+            _lba: u32,
+            _buf: &mut [u8; BLOCK_SIZE],
+        ) -> Result<(), Self::Error> {
+            Ok(())
+        }
+        fn write_block(
+            &mut self,
+            _lba: u32,
+            _buf: &mut [u8; BLOCK_SIZE],
+        ) -> Result<(), Self::Error> {
             Ok(())
         }
 
-        fn write_block(&mut self, _lba: u32, _buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
+        fn read_blocks(&mut self, _lba: u32, _buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), ()> {
+            Ok(())
+        }
+
+        fn write_blocks(&mut self, _lba: u32, _buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), ()> {
             Ok(())
         }
     }
 
     fn block(fill: u8) -> [u8; BLOCK_SIZE] {
         [fill; _]
-    }
-
-    fn raw_block(buffer: &[u8], lba: usize) -> [u8; BLOCK_SIZE] {
-        let offset = lba * BLOCK_SIZE;
-        *buffer[offset..].first_chunk().unwrap()
     }
 
     fn setup_xts(key: &[u8; 32]) -> Xts128<Aes128> {
@@ -478,7 +512,7 @@ mod tests {
 
     #[test]
     fn memory_round_trip() {
-        let mut buffer = [0; BUFFER_LEN];
+        let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
         let mut device = MemoryBlockDevice::new(&mut buffer);
         assert_eq!(device.blocks(), u32::try_from(BLOCKS).unwrap());
 
@@ -495,13 +529,13 @@ mod tests {
     #[test]
     fn encrypted_round_trip() {
         let xts = setup_xts(KEY1);
-        let mut buffer = [0; BUFFER_LEN];
+        let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
         let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
         encrypted_device.write_block(1, &mut block(0xC3)).unwrap();
 
-        assert_ne!(raw_block(&buffer, 1), block(0xC3));
+        assert_ne!(buffer[1], block(0xC3));
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
         let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
@@ -513,7 +547,7 @@ mod tests {
     #[test]
     fn tweak_differs_per_block() {
         let xts = setup_xts(KEY1);
-        let mut buffer = [0; BUFFER_LEN];
+        let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
         let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
@@ -521,12 +555,12 @@ mod tests {
         encrypted_device.write_block(0, &mut block(0xFF)).unwrap();
         encrypted_device.write_block(1, &mut block(0xFF)).unwrap();
 
-        assert_ne!(raw_block(&buffer, 0), raw_block(&buffer, 1));
+        assert_ne!(buffer[0], buffer[1]);
     }
 
     #[test]
     fn encrypted_different_keys() {
-        let mut buffer = [0; BUFFER_LEN];
+        let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
         let xts = setup_xts(KEY1);
         let mut device = MemoryBlockDevice::new(&mut buffer);

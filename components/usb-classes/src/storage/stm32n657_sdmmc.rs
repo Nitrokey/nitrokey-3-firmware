@@ -26,20 +26,36 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> BlockDevice for MmcStorage<P, Pins
         lba: u32,
         buf: &mut [u8; super::BLOCK_SIZE],
     ) -> Result<(), Self::Error> {
-        if lba >= self.blocks() {
-            error!("Reading out of bounds");
-        }
-        self.mmc.read_blocks(core::slice::from_mut(buf), lba)
+        self.read_blocks(lba, core::slice::from_mut(buf))
     }
-
     fn write_block(
         &mut self,
         lba: u32,
         buf: &mut [u8; super::BLOCK_SIZE],
     ) -> Result<(), Self::Error> {
-        if lba >= self.blocks() {
+        self.write_blocks(lba, core::slice::from_mut(buf))
+    }
+
+    fn read_blocks(
+        &mut self,
+        lba: u32,
+        buf: &mut [[u8; super::BLOCK_SIZE]],
+    ) -> Result<(), Self::Error> {
+        if lba + buf.len() as u32 >= self.blocks() {
+            error!("Reading out of bounds");
+        }
+
+        self.mmc.read_blocks(buf, lba)
+    }
+
+    fn write_blocks(
+        &mut self,
+        lba: u32,
+        buf: &mut [[u8; super::BLOCK_SIZE]],
+    ) -> Result<(), Self::Error> {
+        if lba + buf.len() as u32 >= self.blocks() {
             error!("Writing out of bounds");
         }
-        self.mmc.write_blocks(core::slice::from_ref(buf), lba)
+        self.mmc.write_blocks(buf, lba)
     }
 }
