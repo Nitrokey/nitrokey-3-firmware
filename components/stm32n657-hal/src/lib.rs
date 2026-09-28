@@ -9,6 +9,8 @@
 delog::generate_macros!();
 
 pub mod bsec;
+#[cfg(feature = "cryp")]
+pub mod cryp;
 pub mod gpio;
 pub mod mmc;
 #[cfg(feature = "otg")]

@@ -16,8 +16,9 @@ delog.workspace = true
 bitflags.workspace = true
 
 [features]
-default = ["otg", "saes"]
+default = ["cryp", "otg", "saes"]
 
+cryp = ["dep:cipher"]
 otg = ["dep:synopsys-usb-otg"]
 saes = ["dep:cipher"]
 

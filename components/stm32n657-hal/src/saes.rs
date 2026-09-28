@@ -1,9 +1,7 @@
 //! Secure AES coprocessor (SAES), see Section 48 of RM0486.
 
-use core::cell::RefCell;
-
 use cipher::{
-    Block, BlockBackend, BlockClosure, BlockDecrypt, BlockEncrypt, BlockSizeUser,
+    Block, BlockBackend, BlockClosure, BlockDecryptMut, BlockEncryptMut, BlockSizeUser,
     ParBlocksSizeUser,
     generic_array::GenericArray,
     inout::InOut,
@@ -24,7 +22,7 @@ enum ChainingMode {
 }
 
 impl ChainingMode {
-    const fn value(self) -> u8 {
+    const fn saes_chmod(self) -> u8 {
         match self {
             Self::Ecb => 0x0,
         }
@@ -38,7 +36,7 @@ enum Mode {
 }
 
 impl Mode {
-    const fn value(self) -> u8 {
+    const fn saes_mode(self) -> u8 {
         match self {
             Self::Encryption => 0x0,
             Self::KeyDerivation => 0x1,
@@ -52,7 +50,7 @@ enum KeyMode {
 }
 
 impl KeyMode {
-    const fn value(self) -> u8 {
+    const fn saes_kmod(self) -> u8 {
         match self {
             Self::Normal => 0x0,
         }
@@ -64,7 +62,7 @@ enum DataType {
 }
 
 impl DataType {
-    const fn value(self) -> u8 {
+    const fn saes_datatype(self) -> u8 {
         match self {
             Self::NoSwapping => 0x0,
         }
@@ -120,7 +118,7 @@ enum KeySize {
 }
 
 impl KeySize {
-    const fn value(self) -> bool {
+    const fn saes_keysize(self) -> bool {
         matches!(self, KeySize::Aes256)
     }
 }
@@ -208,12 +206,12 @@ impl Saes {
         self.0.cr().write(|w| {
             unsafe {
                 if let Some(chmod) = chmod {
-                    w.chmod().bits(chmod.value());
+                    w.chmod().bits(chmod.saes_chmod());
                 }
-                w.mode().bits(mode.value());
-                w.datatype().bits(DataType::NoSwapping.value());
-                w.keysize().bit(key_size.value());
-                w.kmod().bits(KeyMode::Normal.value());
+                w.mode().bits(mode.saes_mode());
+                w.datatype().bits(DataType::NoSwapping.saes_datatype());
+                w.keysize().bit(key_size.saes_keysize());
+                w.kmod().bits(KeyMode::Normal.saes_kmod());
             }
             w
         });
@@ -223,9 +221,9 @@ impl Saes {
         self.0.cr().modify(|_, w| {
             unsafe {
                 if let Some(chmod) = chmod {
-                    w.chmod().bits(chmod.value());
+                    w.chmod().bits(chmod.saes_chmod());
                 }
-                w.mode().bits(mode.value());
+                w.mode().bits(mode.saes_mode());
             }
             w
         });
@@ -280,27 +278,24 @@ impl ParBlocksSizeUser for Saes {
     type ParBlocksSize = U1;
 }
 
-pub struct AesDec<'a>(RefCell<&'a mut Saes>);
+pub struct AesDec<'a>(&'a mut Saes);
 
 impl<'a> AesDec<'a> {
     pub fn new(saes: &'a mut Saes, key: Key) -> Self {
         saes.setup(Operation::Decryption, ChainingMode::Ecb, key);
-        Self(RefCell::new(saes))
+        Self(saes)
     }
 }
 
 impl Drop for AesDec<'_> {
     fn drop(&mut self) {
-        if let Ok(mut saes) = self.0.try_borrow_mut() {
-            saes.disable();
-        }
+        self.0.disable();
     }
 }
 
-impl BlockDecrypt for AesDec<'_> {
-    fn decrypt_with_backend(&self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        let mut saes = self.0.borrow_mut();
-        f.call(*saes);
+impl BlockDecryptMut for AesDec<'_> {
+    fn decrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
+        f.call(self.0);
     }
 }
 
@@ -308,27 +303,24 @@ impl BlockSizeUser for AesDec<'_> {
     type BlockSize = U16;
 }
 
-pub struct AesEnc<'a>(RefCell<&'a mut Saes>);
+pub struct AesEnc<'a>(&'a mut Saes);
 
 impl<'a> AesEnc<'a> {
     pub fn new(saes: &'a mut Saes, key: Key) -> Self {
         saes.setup(Operation::Encryption, ChainingMode::Ecb, key);
-        Self(RefCell::new(saes))
+        Self(saes)
     }
 }
 
 impl Drop for AesEnc<'_> {
     fn drop(&mut self) {
-        if let Ok(mut saes) = self.0.try_borrow_mut() {
-            saes.disable();
-        }
+        self.0.disable();
     }
 }
 
-impl BlockEncrypt for AesEnc<'_> {
-    fn encrypt_with_backend(&self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        let mut saes = self.0.borrow_mut();
-        f.call(*saes);
+impl BlockEncryptMut for AesEnc<'_> {
+    fn encrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
+        f.call(self.0);
     }
 }
 

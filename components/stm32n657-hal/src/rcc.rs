@@ -148,6 +148,7 @@ macro_rules! impl_peripheral {
 
 impl_peripheral!(
     (ahb3ensr, ahb3rstsr, ahb3rstcr) => [
+        (Cryp, crypens, cryprsts, cryprstc),
         (Rng, rngens, rngrsts, rngrstc),
         (Saes, saesens, saesrsts, saesrstc),
     ],

@@ -33,6 +33,7 @@ mod app {
     use embedded_time::duration::Milliseconds;
     use interchange::Channel;
     use stm32n657_hal::{
+        cryp::Cryp,
         mmc::CardKind,
         pac::Interrupt,
         pwr::Pwr,
@@ -168,12 +169,14 @@ mod app {
             Storage::new(storage_rq),
         );
 
+        let _cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
         let _saes = Saes::new(ctx.device.SAES_S, &rcc);
-        #[cfg(feature = "saes-tests")]
+        #[cfg(feature = "aes-tests")]
         {
-            use embedded_runner_lib::saes_tests;
+            use embedded_runner_lib::aes_tests;
+            let mut cryp = _cryp;
             let mut saes = _saes;
-            saes_tests::run(&mut saes, &mut dev_rng);
+            aes_tests::run(&mut cryp, &mut saes, &mut dev_rng);
         }
 
         let usb_timer = if usb_nfc.usb_storage.is_some() {

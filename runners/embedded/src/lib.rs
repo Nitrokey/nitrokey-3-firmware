@@ -16,8 +16,8 @@ delog::generate_macros!();
 #[cfg(feature = "board-nk3xn")]
 pub mod nk3xn;
 
-#[cfg(all(feature = "soc-stm32n6", feature = "saes-tests"))]
-pub mod saes_tests;
+#[cfg(all(feature = "soc-stm32n6", feature = "aes-tests"))]
+pub mod aes_tests;
 #[cfg(all(feature = "soc-stm32n6", feature = "sdmmc-tests"))]
 pub mod sdmmc_tests;
 

@@ -98,7 +98,7 @@ soc-stm32n6 = ["embedded-time", "stm32n6", "stm32n657-hal", "systick-monotonic",
 
 se050 = ["apps/se050", "boards/se050", "dep:se05x"]
 
-saes-tests = ["log-info", "log-error", "stm32n657-hal?/log-info", "dep:aes"]
+aes-tests = ["log-info", "log-error", "stm32n657-hal?/log-info", "dep:aes"]
 sdmmc-tests = ["log-info", "log-error", "stm32n657-hal?/log-info"]
 
 lpc55-hardware-checks = []
