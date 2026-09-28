@@ -58,8 +58,9 @@ impl BlockDevice for HostBlockDevice {
         self.blocks
     }
 
-    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> io::Result<()> {
         let offset = Self::offset(lba);
+        let buf = buf.as_flattened_mut();
         match &mut self.backing {
             Backing::File(file) => {
                 file.seek(SeekFrom::Start(offset))?;
@@ -73,8 +74,9 @@ impl BlockDevice for HostBlockDevice {
         Ok(())
     }
 
-    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> io::Result<()> {
         let offset = Self::offset(lba);
+        let buf = buf.as_flattened();
         match &mut self.backing {
             Backing::File(file) => {
                 file.seek(SeekFrom::Start(offset))?;
