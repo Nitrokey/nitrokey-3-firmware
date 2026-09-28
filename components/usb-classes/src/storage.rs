@@ -1,8 +1,9 @@
 //! USB mass storage, exposed as a SCSI block device over Bulk Only Transport.
 
+pub mod xts;
+
 use core::{borrow::BorrowMut, convert::Infallible};
 
-use cipher::{BlockCipher, BlockDecrypt, BlockEncrypt};
 use usb_device::bus::{UsbBus, UsbBusAllocator};
 use usbd_storage::{
     subclass::{
@@ -14,7 +15,8 @@ use usbd_storage::{
         TransportError,
     },
 };
-use xts_mode::Xts128;
+
+use xts::Xts128;
 
 /// Bytes per logical block. 512 is mostly assumed.
 const BLOCK_SIZE_U16: u16 = 512;
@@ -90,23 +92,21 @@ impl<const N: usize> BlockDevice for MemoryBlockDevice<'_, N> {
     }
 }
 
-pub struct EncryptedBlockDevice<'a, B, C: BlockCipher + BlockEncrypt + BlockDecrypt> {
+pub struct EncryptedBlockDevice<'a, B, X> {
     block_device: &'a mut B,
-    xts: &'a Xts128<C>,
+    xts: &'a mut X,
 }
 
-impl<'a, B: BlockDevice, C: BlockCipher + BlockEncrypt + BlockDecrypt>
-    EncryptedBlockDevice<'a, B, C>
-{
-    pub fn new(block_device: &'a mut B, xts: &'a Xts128<C>) -> Self {
+impl<'a, B: BlockDevice, X> EncryptedBlockDevice<'a, B, X> {
+    pub fn new(block_device: &'a mut B, xts: &'a mut X) -> Self {
         Self { block_device, xts }
     }
 }
 
-impl<'a, B, C> BlockDevice for EncryptedBlockDevice<'a, B, C>
+impl<'a, B, X> BlockDevice for EncryptedBlockDevice<'a, B, X>
 where
     B: BlockDevice,
-    C: BlockCipher + BlockEncrypt + BlockDecrypt,
+    X: Xts128,
 {
     type Error = B::Error;
 
@@ -116,35 +116,23 @@ where
 
     fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
         self.block_device.read_block(lba, buf)?;
-        let tweak = xts_mode::get_tweak_default(lba.into());
-        self.xts.decrypt_sector(buf, tweak);
+        self.xts.decrypt_sector(buf, lba);
         Ok(())
     }
 
     fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
-        let tweak = xts_mode::get_tweak_default(lba.into());
-        self.xts.encrypt_sector(buf, tweak);
+        self.xts.encrypt_sector(buf, lba);
         self.block_device.write_block(lba, buf)
     }
 
     fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
         self.block_device.read_blocks(lba, buf)?;
-        self.xts.decrypt_area(
-            buf.as_flattened_mut(),
-            BLOCK_SIZE,
-            lba as u128,
-            xts_mode::get_tweak_default,
-        );
+        self.xts.decrypt_sectors(buf, lba);
         Ok(())
     }
 
     fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
-        self.xts.encrypt_area(
-            buf.as_flattened_mut(),
-            BLOCK_SIZE,
-            lba as u128,
-            xts_mode::get_tweak_default,
-        );
+        self.xts.encrypt_sectors(buf, lba);
         self.block_device.write_blocks(lba, buf)
     }
 }
@@ -465,10 +453,10 @@ mod tests {
         [fill; _]
     }
 
-    fn setup_xts(key: &[u8; 32]) -> Xts128<Aes128> {
+    fn setup_xts(key: &[u8; 32]) -> xts::Ciphers<Aes128, Aes128> {
         let cipher1 = Aes128::new_from_slice(&key[..16]).unwrap();
         let cipher2 = Aes128::new_from_slice(&key[16..]).unwrap();
-        Xts128::new(cipher1, cipher2)
+        xts::Ciphers { cipher1, cipher2 }
     }
 
     #[test]
@@ -500,17 +488,17 @@ mod tests {
 
     #[test]
     fn encrypted_round_trip() {
-        let xts = setup_xts(KEY1);
+        let mut xts = setup_xts(KEY1);
         let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
-        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &mut xts);
         encrypted_device.write_block(1, &mut block(0xC3)).unwrap();
 
         assert_ne!(buffer[1], block(0xC3));
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
-        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &mut xts);
         let mut buf = block(0);
         encrypted_device.read_block(1, &mut buf).unwrap();
         assert_eq!(buf, block(0xC3));
@@ -518,11 +506,11 @@ mod tests {
 
     #[test]
     fn tweak_differs_per_block() {
-        let xts = setup_xts(KEY1);
+        let mut xts = setup_xts(KEY1);
         let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
         let mut device = MemoryBlockDevice::new(&mut buffer);
-        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &mut xts);
 
         encrypted_device.write_block(0, &mut block(0xFF)).unwrap();
         encrypted_device.write_block(1, &mut block(0xFF)).unwrap();
@@ -534,15 +522,15 @@ mod tests {
     fn encrypted_different_keys() {
         let mut buffer = [[0; BLOCK_SIZE]; BLOCKS];
 
-        let xts = setup_xts(KEY1);
+        let mut xts = setup_xts(KEY1);
         let mut device = MemoryBlockDevice::new(&mut buffer);
-        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &mut xts);
 
         encrypted_device.write_block(0, &mut block(0xFF)).unwrap();
 
-        let xts = setup_xts(KEY2);
+        let mut xts = setup_xts(KEY2);
         let mut device = MemoryBlockDevice::new(&mut buffer);
-        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &xts);
+        let mut encrypted_device = EncryptedBlockDevice::new(&mut device, &mut xts);
 
         let mut buf = block(0);
         encrypted_device.read_block(0, &mut buf).unwrap();

@@ -4040,7 +4040,6 @@ dependencies = [
  "trussed-usbip",
  "usb-classes",
  "utils",
- "xts-mode",
 ]
 
 [[package]]
