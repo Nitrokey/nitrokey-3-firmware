@@ -126,6 +126,7 @@ pub fn init_usb_nfc<B: Board>(
     version: Version,
     #[cfg(feature = "board-nkso3")] storage_rp: crate::nkso3::StorageResponder<'static>,
     #[cfg(feature = "board-nkso3")] mmc: crate::nkso3::Mmc,
+    #[cfg(feature = "board-nkso3")] saes: stm32n657_hal::saes::Saes,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
     static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
@@ -143,7 +144,7 @@ pub fn init_usb_nfc<B: Board>(
     if let Some(usb_bus) = usb_bus {
         let usb_bus = resources.usb_bus.insert(usb_bus);
         #[cfg(feature = "board-nkso3")]
-        let storage = crate::nkso3::UsbStorage::new(usb_bus, mmc, storage_rp);
+        let storage = crate::nkso3::UsbStorage::new(usb_bus, mmc, storage_rp, saes);
         let usb_classes = usb_classes::build(
             usb_bus,
             Some(usb_classes::CcidConfig {

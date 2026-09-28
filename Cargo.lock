@@ -369,6 +369,7 @@ dependencies = [
  "aes",
  "apdu-dispatch",
  "apps",
+ "cipher",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtic",
