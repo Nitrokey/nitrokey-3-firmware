@@ -38,6 +38,7 @@ mod app {
         pwr::Pwr,
         rcc::Rcc,
         rng::Rng,
+        saes::Saes,
         syscfg::Syscfg,
         timer::{MillisecondsCounter, Tim6},
         Rate,
@@ -166,6 +167,14 @@ mod app {
             VERSION_STRING,
             Storage::new(storage_rq),
         );
+
+        let _saes = Saes::new(ctx.device.SAES_S, &rcc);
+        #[cfg(feature = "saes-tests")]
+        {
+            use embedded_runner_lib::saes_tests;
+            let mut saes = _saes;
+            saes_tests::run(&mut saes, &mut dev_rng);
+        }
 
         let usb_timer = if usb_nfc.usb_storage.is_some() {
             let tim6 = Tim6::new(ctx.device.TIM6_S, &rcc);

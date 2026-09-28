@@ -1176,6 +1176,7 @@ dependencies = [
 name = "embedded-runner-lib"
 version = "1.9.0-rc.1"
 dependencies = [
+ "aes",
  "apdu-dispatch",
  "apps",
  "boards",
@@ -3332,6 +3333,7 @@ name = "stm32n657-hal"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.9.4",
+ "cipher",
  "cortex-m",
  "delog",
  "embedded-hal",

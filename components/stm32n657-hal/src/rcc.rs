@@ -149,6 +149,7 @@ macro_rules! impl_peripheral {
 impl_peripheral!(
     (ahb3ensr, ahb3rstsr, ahb3rstcr) => [
         (Rng, rngens, rngrsts, rngrstc),
+        (Saes, saesens, saesrsts, saesrstc),
     ],
     (ahb4ensr, ahb4rstsr, ahb4rstcr) => [
         (GpioA, gpioaens, gpioarsts, gpioarstc),

@@ -17,6 +17,8 @@ pub mod pac;
 pub mod pwr;
 pub mod rcc;
 pub mod rng;
+#[cfg(feature = "saes")]
+pub mod saes;
 pub mod sdmmc;
 pub mod syscfg;
 pub mod timer;

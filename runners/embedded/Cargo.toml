@@ -44,6 +44,7 @@ nb = { version = "1", optional = true }
 systick-monotonic = { version = "1.0.0", optional = true }
 
 ### STM32N6 specific dependencies
+aes = { version = "0.8", optional = true }
 embedded-time = { version = "0.12", optional = true }
 stm32n6 = { version = "0.16", features = ["stm32n657"], optional = true }
 stm32n657-hal = { path = "../../components/stm32n657-hal", optional = true }
@@ -97,6 +98,7 @@ soc-stm32n6 = ["embedded-time", "stm32n6", "stm32n657-hal", "systick-monotonic",
 
 se050 = ["apps/se050", "boards/se050", "dep:se05x"]
 
+saes-tests = ["log-info", "log-error", "stm32n657-hal?/log-info", "dep:aes"]
 sdmmc-tests = ["log-info", "log-error", "stm32n657-hal?/log-info"]
 
 lpc55-hardware-checks = []
