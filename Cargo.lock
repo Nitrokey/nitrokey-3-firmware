@@ -377,7 +377,6 @@ dependencies = [
 name = "boards"
 version = "1.9.0-rc.1"
 dependencies = [
- "aes 0.9.3",
  "apdu-dispatch",
  "apps",
  "cortex-m",

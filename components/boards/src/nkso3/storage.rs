@@ -1,6 +1,5 @@
 use crate::soc::stm32n6::mmc::{self, Mmc};
 
-use aes::{cipher::KeyInit as _, Aes128};
 use interchange::{Channel, Requester, Responder};
 use stm32n657_hal::cryp::{self, Cryp};
 use usb_classes::storage::{
@@ -73,17 +72,17 @@ pub fn xts_bench_cycles(cryp: Cryp) -> (u32, Cryp) {
 struct XtsCiphers {
     cryp: Cryp,
     key1: [u8; 16],
-    cipher2: Aes128,
+    key2: [u8; 16],
 }
 
 impl XtsCiphers {
     fn new(cryp: Cryp, key: [u8; 32]) -> Self {
         let (key1, key2) = key.split_first_chunk().unwrap();
-        let cipher2 = Aes128::new_from_slice(key2).unwrap();
+        let key2 = key2.try_into().unwrap();
         Self {
             cryp,
             key1: *key1,
-            cipher2,
+            key2,
         }
     }
 
@@ -95,22 +94,24 @@ impl XtsCiphers {
 impl Xts128 for XtsCiphers {
     type C1Dec<'a> = cryp::AesDec<'a>;
     type C1Enc<'a> = cryp::AesEnc<'a>;
-    type C2<'a> = Aes128;
+    type C2<'a> = cryp::AesEnc<'a>;
 
     fn with_dec<F>(&mut self, f: F)
     where
         F: FnOnce(&Self::C1Dec<'_>, &Self::C2<'_>),
     {
-        let mut cipher1 = cryp::AesDec::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
-        f(&mut cipher1, &mut self.cipher2)
+        let cipher1 = cryp::AesDec::new(&self.cryp, cryp::Key::Aes128(self.key1));
+        let cipher2 = cryp::AesEnc::new(&self.cryp, cryp::Key::Aes128(self.key2));
+        f(&cipher1, &cipher2)
     }
 
     fn with_enc<F>(&mut self, f: F)
     where
         F: FnOnce(&Self::C1Enc<'_>, &Self::C2<'_>),
     {
-        let mut cipher1 = cryp::AesEnc::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
-        f(&mut cipher1, &mut self.cipher2)
+        let cipher1 = cryp::AesEnc::new(&self.cryp, cryp::Key::Aes128(self.key1));
+        let cipher2 = cryp::AesEnc::new(&self.cryp, cryp::Key::Aes128(self.key2));
+        f(&cipher1, &cipher2)
     }
 }
 
