@@ -18,6 +18,18 @@ use usbd_storage::{
     },
 };
 
+/// Truncate the end of the buffer if in an operation that is smaller
+/// than the total length of the buffer
+fn relevant_buffer(
+    buf: &mut [[u8; BLOCK_SIZE]; BUFFER_BLOCK_COUNT],
+    offset: usize,
+    total: usize,
+) -> &mut [[u8; BLOCK_SIZE]] {
+    let block_start = offset - (offset % BUFFER_SIZE);
+    let max_blocks_remaining = (total - block_start) / BLOCK_SIZE;
+    &mut buf[..max_blocks_remaining.min(BUFFER_BLOCK_COUNT)]
+}
+
 pub use usbd_storage::transport::TransportError as StorageTransportError;
 use xts::Xts128;
 
@@ -143,13 +155,16 @@ where
     }
 }
 
+const BUFFER_BLOCK_COUNT: usize = 16;
+const BUFFER_SIZE: usize = BUFFER_BLOCK_COUNT * BLOCK_SIZE;
+
 /// Per-transfer state. A single SCSI read or write is spread across several
 /// `poll_command` calls, so the progress within it has to be carried over.
 pub struct State {
     /// Bytes transferred so far within the current command.
     offset: usize,
     /// The block currently being streamed.
-    block: [u8; BLOCK_SIZE],
+    buffer: [[u8; BLOCK_SIZE]; BUFFER_BLOCK_COUNT],
     sense_key: Option<u8>,
     sense_key_code: Option<u8>,
     sense_qualifier: Option<u8>,
@@ -159,7 +174,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             offset: 0,
-            block: [0; BLOCK_SIZE],
+            buffer: [[0; BLOCK_SIZE]; BUFFER_BLOCK_COUNT],
             sense_key: None,
             sense_key_code: None,
             sense_qualifier: None,
@@ -326,11 +341,13 @@ where
                 if state.offset == total {
                     break;
                 }
+                let state_buffer = relevant_buffer(&mut state.buffer, state.offset, total);
 
-                let block_offset = state.offset % BLOCK_SIZE;
-                if block_offset == 0 {
+                let buffer_offset = state.offset % BUFFER_SIZE;
+                if buffer_offset == 0 {
                     let block = lba + (state.offset / BLOCK_SIZE) as u32;
-                    if let Err(_err) = device.read_block(block, &mut state.block) {
+                    debug!("Reading {} blocks at address {block}", state_buffer.len());
+                    if let Err(_err) = device.read_blocks(block, state_buffer) {
                         warn!("storage: read failed at block {} with {_err:?}", block);
                         state.fail_with(SENSE_MEDIUM_ERROR, ASC_UNRECOVERED_READ_ERROR);
                         command.fail(0);
@@ -339,7 +356,7 @@ where
                     }
                 }
 
-                let count = command.write_data(&state.block[block_offset..])?;
+                let count = command.write_data(&state_buffer.as_flattened()[buffer_offset..])?;
                 state.offset += count;
                 if count == 0 {
                     break;
@@ -376,14 +393,17 @@ where
                 if state.offset == total {
                     break;
                 }
+                let state_buffer = relevant_buffer(&mut state.buffer, state.offset, total);
 
-                let block_offset = state.offset % BLOCK_SIZE;
-                let count = command.read_data(&mut state.block[block_offset..])?;
+                let buffer_offset = state.offset % BUFFER_SIZE;
+                let count =
+                    command.read_data(&mut state_buffer.as_flattened_mut()[buffer_offset..])?;
                 state.offset += count;
 
-                if count > 0 && state.offset.is_multiple_of(BLOCK_SIZE) {
+                if count > 0 && state.offset.is_multiple_of(BUFFER_SIZE) {
                     let block = lba + (state.offset / BLOCK_SIZE) as u32 - 1;
-                    if device.write_block(block, &mut state.block).is_err() {
+                    debug!("Writing {} blocks at address {block}", state_buffer.len());
+                    if device.write_blocks(block, state_buffer).is_err() {
                         warn!("storage: write failed at block {}", block);
                         state.fail_with(SENSE_MEDIUM_ERROR, ASC_WRITE_FAULT);
                         command.fail(0);
