@@ -161,6 +161,7 @@ impl_peripheral!(
         (GpioF, gpiofens, gpiofrsts, gpiofrstc),
         (GpioG, gpiogens, gpiogrsts, gpiogrstc),
         (GpioH, gpiohens, gpiohrsts, gpiohrstc),
+        (GpioP, gpiopens, gpioprsts, gpioprstc),
     ],
     (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
         (Otg1, otg1ens, otg1rsts, otg1rstc),

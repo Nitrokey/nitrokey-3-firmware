@@ -46,7 +46,7 @@ const CARD_READY_POLL_LIMIT: u32 = 100_000;
 /// identification clock limit
 const INIT_CLOCK: Rate = Rate::kHz(400);
 /// default speed data clock limit
-const DATA_CLOCK: Rate = Rate::MHz(25);
+const DATA_CLOCK: Rate = Rate::MHz(50);
 
 /// CLKDIV so that SDMMC_CK = sdmmc_ker_ck / (2 * CLKDIV) <= target; 0 = bypass
 fn clock_div(kernel: Rate, target: Rate) -> u16 {
