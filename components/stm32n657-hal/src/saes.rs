@@ -1,11 +1,12 @@
 //! Secure AES coprocessor (SAES), see Section 48 of RM0486.
 
 use cipher::{
-    Block, BlockBackend, BlockClosure, BlockDecryptMut, BlockEncryptMut, BlockSizeUser,
-    ParBlocksSizeUser,
-    generic_array::GenericArray,
-    inout::InOut,
-    typenum::{U1, U16},
+    Array, Block, BlockSizeUser, InOut, ParBlocksSizeUser,
+    block::{
+        BlockCipherDecBackend, BlockCipherDecClosure, BlockCipherDecrypt, BlockCipherEncBackend,
+        BlockCipherEncClosure, BlockCipherEncrypt,
+    },
+    common::typenum::{U1, U16},
 };
 use stm32n6::stm32n657::SAES_S;
 
@@ -132,7 +133,17 @@ impl Saes {
         Self(saes)
     }
 
-    fn setup(&mut self, operation: Operation, chmod: ChainingMode, key: Key) {
+    fn setup_dec(&self, chmod: ChainingMode, key: Key) -> SaesDec<'_> {
+        self.setup(Operation::Decryption, chmod, key);
+        SaesDec(self)
+    }
+
+    fn setup_enc(&self, chmod: ChainingMode, key: Key) -> SaesEnc<'_> {
+        self.setup(Operation::Encryption, chmod, key);
+        SaesEnc(self)
+    }
+
+    fn setup(&self, operation: Operation, chmod: ChainingMode, key: Key) {
         // See Section 48.4.9 for ECB encryption and decryption.  Ex refers to the steps for the
         // encryption setup, Dx to the steps for the decryption setup.
 
@@ -178,11 +189,11 @@ impl Saes {
         self.enable();
     }
 
-    fn disable(&mut self) {
+    fn disable(&self) {
         self.0.cr().modify(|_, w| w.en().clear_bit());
     }
 
-    fn enable(&mut self) {
+    fn enable(&self) {
         self.0.cr().modify(|_, w| w.en().set_bit());
     }
 
@@ -198,11 +209,11 @@ impl Saes {
         self.0.isr().read().ccf().bit_is_set()
     }
 
-    fn clear_computation_complete(&mut self) {
+    fn clear_computation_complete(&self) {
         self.0.icr().write(|w| w.ccf().set_bit());
     }
 
-    fn configure(&mut self, mode: Mode, chmod: Option<ChainingMode>, key_size: KeySize) {
+    fn configure(&self, mode: Mode, chmod: Option<ChainingMode>, key_size: KeySize) {
         self.0.cr().write(|w| {
             unsafe {
                 if let Some(chmod) = chmod {
@@ -217,7 +228,7 @@ impl Saes {
         });
     }
 
-    fn reconfigure(&mut self, mode: Mode, chmod: Option<ChainingMode>) {
+    fn reconfigure(&self, mode: Mode, chmod: Option<ChainingMode>) {
         self.0.cr().modify(|_, w| {
             unsafe {
                 if let Some(chmod) = chmod {
@@ -229,7 +240,7 @@ impl Saes {
         });
     }
 
-    fn write_key(&mut self, key: Key) {
+    fn write_key(&self, key: Key) {
         let [keyr0, keyr1, keyr2, keyr3] = key.keyr0123();
         self.0.keyr0().write(|w| unsafe { w.key().bits(keyr0) });
         self.0.keyr1().write(|w| unsafe { w.key().bits(keyr1) });
@@ -243,7 +254,7 @@ impl Saes {
         }
     }
 
-    fn compute_polling(&mut self, mut block: InOut<'_, '_, GenericArray<u8, U16>>) {
+    fn compute_polling(&self, mut block: InOut<'_, '_, Array<u8, U16>>) {
         // See Section 48.4.5
         // Write four input data words into the SAES_DINR register
         let buf = block.get_in();
@@ -264,38 +275,65 @@ impl Saes {
     }
 }
 
-impl BlockBackend for Saes {
-    fn proc_block(&mut self, block: InOut<'_, '_, Block<Self>>) {
-        self.compute_polling(block)
-    }
-}
+struct SaesDec<'a>(&'a Saes);
 
-impl BlockSizeUser for Saes {
-    type BlockSize = U16;
-}
-
-impl ParBlocksSizeUser for Saes {
-    type ParBlocksSize = U1;
-}
-
-pub struct AesDec<'a>(&'a mut Saes);
-
-impl<'a> AesDec<'a> {
-    pub fn new(saes: &'a mut Saes, key: Key) -> Self {
-        saes.setup(Operation::Decryption, ChainingMode::Ecb, key);
-        Self(saes)
-    }
-}
-
-impl Drop for AesDec<'_> {
+impl Drop for SaesDec<'_> {
     fn drop(&mut self) {
         self.0.disable();
     }
 }
 
-impl BlockDecryptMut for AesDec<'_> {
-    fn decrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        f.call(self.0);
+impl BlockCipherDecBackend for SaesDec<'_> {
+    fn decrypt_block(&self, block: InOut<'_, '_, Block<Self>>) {
+        self.0.compute_polling(block)
+    }
+}
+
+impl BlockSizeUser for SaesDec<'_> {
+    type BlockSize = U16;
+}
+
+impl ParBlocksSizeUser for SaesDec<'_> {
+    type ParBlocksSize = U1;
+}
+
+struct SaesEnc<'a>(&'a Saes);
+
+impl Drop for SaesEnc<'_> {
+    fn drop(&mut self) {
+        self.0.disable();
+    }
+}
+
+impl BlockCipherEncBackend for SaesEnc<'_> {
+    fn encrypt_block(&self, block: InOut<'_, '_, Block<Self>>) {
+        self.0.compute_polling(block)
+    }
+}
+
+impl BlockSizeUser for SaesEnc<'_> {
+    type BlockSize = U16;
+}
+
+impl ParBlocksSizeUser for SaesEnc<'_> {
+    type ParBlocksSize = U1;
+}
+
+pub struct AesDec<'a> {
+    saes: &'a Saes,
+    key: Key,
+}
+
+impl<'a> AesDec<'a> {
+    pub fn new(saes: &'a Saes, key: Key) -> Self {
+        Self { saes, key }
+    }
+}
+
+impl BlockCipherDecrypt for AesDec<'_> {
+    fn decrypt_with_backend(&self, f: impl BlockCipherDecClosure<BlockSize = Self::BlockSize>) {
+        let backend = self.saes.setup_dec(ChainingMode::Ecb, self.key);
+        f.call(&backend)
     }
 }
 
@@ -303,24 +341,21 @@ impl BlockSizeUser for AesDec<'_> {
     type BlockSize = U16;
 }
 
-pub struct AesEnc<'a>(&'a mut Saes);
+pub struct AesEnc<'a> {
+    saes: &'a Saes,
+    key: Key,
+}
 
 impl<'a> AesEnc<'a> {
-    pub fn new(saes: &'a mut Saes, key: Key) -> Self {
-        saes.setup(Operation::Encryption, ChainingMode::Ecb, key);
-        Self(saes)
+    pub fn new(saes: &'a Saes, key: Key) -> Self {
+        Self { saes, key }
     }
 }
 
-impl Drop for AesEnc<'_> {
-    fn drop(&mut self) {
-        self.0.disable();
-    }
-}
-
-impl BlockEncryptMut for AesEnc<'_> {
-    fn encrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        f.call(self.0);
+impl BlockCipherEncrypt for AesEnc<'_> {
+    fn encrypt_with_backend(&self, f: impl BlockCipherEncClosure<BlockSize = Self::BlockSize>) {
+        let backend = self.saes.setup_enc(ChainingMode::Ecb, self.key);
+        f.call(&backend)
     }
 }
 

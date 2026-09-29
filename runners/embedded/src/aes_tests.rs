@@ -1,6 +1,6 @@
 use aes::cipher::{
-    generic_array::GenericArray, BlockDecrypt as _, BlockDecryptMut as _, BlockEncrypt as _,
-    BlockEncryptMut as _, KeyInit as _,
+    block::{BlockCipherDecrypt as _, BlockCipherEncrypt as _},
+    Array, KeyInit as _,
 };
 use delog::hexstr;
 use stm32n657_hal::{
@@ -44,15 +44,15 @@ fn run_saes_aes128(saes: &mut Saes, rng: &mut Rng) -> Result<(), &'static str> {
     info!("key = {}", hexstr!(&key));
 
     let cleartext: [_; 16] = generate(rng);
-    let cleartext = GenericArray::from(cleartext);
+    let cleartext = Array::from(cleartext);
     info!("cleartext = {}", hexstr!(&cleartext));
 
     let mut block1 = cleartext;
     let mut block2 = cleartext;
 
-    let mut cipher1 = saes::AesEnc::new(saes, saes::Key::Aes128(key));
-    let cipher2 = aes::Aes128Enc::new(&GenericArray::from(key));
-    cipher1.encrypt_block_mut(&mut block1);
+    let cipher1 = saes::AesEnc::new(saes, saes::Key::Aes128(key));
+    let cipher2 = aes::Aes128Enc::new(&Array::from(key));
+    cipher1.encrypt_block(&mut block1);
     cipher2.encrypt_block(&mut block2);
     info!("ciphertext1 = {}", hexstr!(&block1));
     info!("ciphertext2 = {}", hexstr!(&block2));
@@ -62,9 +62,9 @@ fn run_saes_aes128(saes: &mut Saes, rng: &mut Rng) -> Result<(), &'static str> {
         return Err("SAES encrypt AES-128");
     }
 
-    let mut cipher1 = saes::AesDec::new(saes, saes::Key::Aes128(key));
-    let cipher2 = aes::Aes128Dec::new(&GenericArray::from(key));
-    cipher1.decrypt_block_mut(&mut block1);
+    let cipher1 = saes::AesDec::new(saes, saes::Key::Aes128(key));
+    let cipher2 = aes::Aes128Dec::new(&Array::from(key));
+    cipher1.decrypt_block(&mut block1);
     cipher2.decrypt_block(&mut block2);
     info!("cleartext1 = {}", hexstr!(&block1));
     info!("cleartext1 = {}", hexstr!(&block2));
@@ -83,15 +83,15 @@ fn run_saes_aes256(saes: &mut Saes, rng: &mut Rng) -> Result<(), &'static str> {
     info!("key = {}", hexstr!(&key));
 
     let cleartext: [_; 16] = generate(rng);
-    let cleartext = GenericArray::from(cleartext);
+    let cleartext = Array::from(cleartext);
     info!("cleartext = {}", hexstr!(&cleartext));
 
     let mut block1 = cleartext;
     let mut block2 = cleartext;
 
-    let mut cipher1 = saes::AesEnc::new(saes, saes::Key::Aes256(key));
-    let cipher2 = aes::Aes256Enc::new(&GenericArray::from(key));
-    cipher1.encrypt_block_mut(&mut block1);
+    let cipher1 = saes::AesEnc::new(saes, saes::Key::Aes256(key));
+    let cipher2 = aes::Aes256Enc::new(&Array::from(key));
+    cipher1.encrypt_block(&mut block1);
     cipher2.encrypt_block(&mut block2);
     info!("ciphertext1 = {}", hexstr!(&block1));
     info!("ciphertext2 = {}", hexstr!(&block2));
@@ -101,9 +101,9 @@ fn run_saes_aes256(saes: &mut Saes, rng: &mut Rng) -> Result<(), &'static str> {
         return Err("SAES encrypt AES-256");
     }
 
-    let mut cipher1 = saes::AesDec::new(saes, saes::Key::Aes256(key));
-    let cipher2 = aes::Aes256Dec::new(&GenericArray::from(key));
-    cipher1.decrypt_block_mut(&mut block1);
+    let cipher1 = saes::AesDec::new(saes, saes::Key::Aes256(key));
+    let cipher2 = aes::Aes256Dec::new(&Array::from(key));
+    cipher1.decrypt_block(&mut block1);
     cipher2.decrypt_block(&mut block2);
     info!("cleartext1 = {}", hexstr!(&block1));
     info!("cleartext1 = {}", hexstr!(&block2));
@@ -122,15 +122,15 @@ fn run_cryp_aes128(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
     info!("key = {}", hexstr!(&key));
 
     let cleartext: [_; 16] = generate(rng);
-    let cleartext = GenericArray::from(cleartext);
+    let cleartext = Array::from(cleartext);
     info!("cleartext = {}", hexstr!(&cleartext));
 
     let mut block1 = cleartext;
     let mut block2 = cleartext;
 
-    let mut cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes128(key));
-    let cipher2 = aes::Aes128Enc::new(&GenericArray::from(key));
-    cipher1.encrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes128(key));
+    let cipher2 = aes::Aes128Enc::new(&Array::from(key));
+    cipher1.encrypt_block(&mut block1);
     cipher2.encrypt_block(&mut block2);
     info!("ciphertext1 = {}", hexstr!(&block1));
     info!("ciphertext2 = {}", hexstr!(&block2));
@@ -140,9 +140,9 @@ fn run_cryp_aes128(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
         return Err("CRYP encrypt AES-128");
     }
 
-    let mut cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes128(key));
-    let cipher2 = aes::Aes128Dec::new(&GenericArray::from(key));
-    cipher1.decrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes128(key));
+    let cipher2 = aes::Aes128Dec::new(&Array::from(key));
+    cipher1.decrypt_block(&mut block1);
     cipher2.decrypt_block(&mut block2);
     info!("cleartext1 = {}", hexstr!(&block1));
     info!("cleartext1 = {}", hexstr!(&block2));
@@ -161,15 +161,15 @@ fn run_cryp_aes192(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
     info!("key = {}", hexstr!(&key));
 
     let cleartext: [_; 16] = generate(rng);
-    let cleartext = GenericArray::from(cleartext);
+    let cleartext = Array::from(cleartext);
     info!("cleartext = {}", hexstr!(&cleartext));
 
     let mut block1 = cleartext;
     let mut block2 = cleartext;
 
-    let mut cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes192(key));
-    let cipher2 = aes::Aes192Enc::new(&GenericArray::from(key));
-    cipher1.encrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes192(key));
+    let cipher2 = aes::Aes192Enc::new(&Array::from(key));
+    cipher1.encrypt_block(&mut block1);
     cipher2.encrypt_block(&mut block2);
     info!("ciphertext1 = {}", hexstr!(&block1));
     info!("ciphertext2 = {}", hexstr!(&block2));
@@ -179,9 +179,9 @@ fn run_cryp_aes192(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
         return Err("CRYP encrypt AES-192");
     }
 
-    let mut cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes192(key));
-    let cipher2 = aes::Aes192Dec::new(&GenericArray::from(key));
-    cipher1.decrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes192(key));
+    let cipher2 = aes::Aes192Dec::new(&Array::from(key));
+    cipher1.decrypt_block(&mut block1);
     cipher2.decrypt_block(&mut block2);
     info!("cleartext1 = {}", hexstr!(&block1));
     info!("cleartext1 = {}", hexstr!(&block2));
@@ -200,15 +200,15 @@ fn run_cryp_aes256(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
     info!("key = {}", hexstr!(&key));
 
     let cleartext: [_; 16] = generate(rng);
-    let cleartext = GenericArray::from(cleartext);
+    let cleartext = Array::from(cleartext);
     info!("cleartext = {}", hexstr!(&cleartext));
 
     let mut block1 = cleartext;
     let mut block2 = cleartext;
 
-    let mut cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes256(key));
-    let cipher2 = aes::Aes256Enc::new(&GenericArray::from(key));
-    cipher1.encrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesEnc::new(cryp, cryp::Key::Aes256(key));
+    let cipher2 = aes::Aes256Enc::new(&Array::from(key));
+    cipher1.encrypt_block(&mut block1);
     cipher2.encrypt_block(&mut block2);
     info!("ciphertext1 = {}", hexstr!(&block1));
     info!("ciphertext2 = {}", hexstr!(&block2));
@@ -218,9 +218,9 @@ fn run_cryp_aes256(cryp: &mut Cryp, rng: &mut Rng) -> Result<(), &'static str> {
         return Err("CRYP encrypt AES-256");
     }
 
-    let mut cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes256(key));
-    let cipher2 = aes::Aes256Dec::new(&GenericArray::from(key));
-    cipher1.decrypt_block_mut(&mut block1);
+    let cipher1 = cryp::AesDec::new(cryp, cryp::Key::Aes256(key));
+    let cipher2 = aes::Aes256Dec::new(&Array::from(key));
+    cipher1.decrypt_block(&mut block1);
     cipher2.decrypt_block(&mut block2);
     info!("cleartext1 = {}", hexstr!(&block1));
     info!("cleartext1 = {}", hexstr!(&block2));

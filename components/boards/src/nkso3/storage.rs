@@ -99,7 +99,7 @@ impl Xts128 for XtsCiphers {
 
     fn with_dec<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut Self::C1Dec<'_>, &mut Self::C2<'_>),
+        F: FnOnce(&Self::C1Dec<'_>, &Self::C2<'_>),
     {
         let mut cipher1 = cryp::AesDec::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
         f(&mut cipher1, &mut self.cipher2)
@@ -107,7 +107,7 @@ impl Xts128 for XtsCiphers {
 
     fn with_enc<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut Self::C1Enc<'_>, &mut Self::C2<'_>),
+        F: FnOnce(&Self::C1Enc<'_>, &Self::C2<'_>),
     {
         let mut cipher1 = cryp::AesEnc::new(&mut self.cryp, cryp::Key::Aes128(self.key1));
         f(&mut cipher1, &mut self.cipher2)

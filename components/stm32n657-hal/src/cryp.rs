@@ -1,11 +1,12 @@
 // Cryptographic processor (CRYP), see Section 49 of RM0486.
 
 use cipher::{
-    Block, BlockBackend, BlockClosure, BlockDecryptMut, BlockEncryptMut, BlockSizeUser, ParBlocks,
-    ParBlocksSizeUser,
-    generic_array::GenericArray,
-    inout::{InOut, InOutBuf},
-    typenum::{U16, U32},
+    Array, Block, BlockSizeUser, InOut, InOutBuf, ParBlocks, ParBlocksSizeUser,
+    block::{
+        BlockCipherDecBackend, BlockCipherDecClosure, BlockCipherDecrypt, BlockCipherEncBackend,
+        BlockCipherEncClosure, BlockCipherEncrypt,
+    },
+    common::typenum::{U16, U32},
 };
 use stm32n6::stm32n657::CRYP_S;
 
@@ -197,7 +198,17 @@ impl Cryp {
         Self(saes)
     }
 
-    fn setup(&mut self, operation: Operation, chmod: ChainingMode, key: Key) {
+    fn setup_dec(&self, chmod: ChainingMode, key: Key) -> CrypDec<'_> {
+        self.setup(Operation::Decryption, chmod, key);
+        CrypDec(self)
+    }
+
+    fn setup_enc(&self, chmod: ChainingMode, key: Key) -> CrypEnc<'_> {
+        self.setup(Operation::Encryption, chmod, key);
+        CrypEnc(self)
+    }
+
+    fn setup(&self, operation: Operation, chmod: ChainingMode, key: Key) {
         // See Section 49.4.9 for ECB encryption and decryption.  Ex refers to the steps for the
         // encryption setup, Dx to the steps for the decryption setup.
 
@@ -240,11 +251,11 @@ impl Cryp {
         self.enable();
     }
 
-    fn disable(&mut self) {
+    fn disable(&self) {
         self.0.cr().modify(|_, w| w.crypen().clear_bit());
     }
 
-    fn enable(&mut self) {
+    fn enable(&self) {
         self.0.cr().modify(|_, w| w.crypen().set_bit());
     }
 
@@ -264,11 +275,11 @@ impl Cryp {
         self.0.sr().read().keyvalid().bit_is_set()
     }
 
-    fn flush_fifos(&mut self) {
+    fn flush_fifos(&self) {
         self.0.cr().modify(|_, w| w.fflush().set_bit());
     }
 
-    fn configure(&mut self, mode: Mode, algomode: AlgoMode, key_size: KeySize) {
+    fn configure(&self, mode: Mode, algomode: AlgoMode, key_size: KeySize) {
         self.0.cr().write(|w| {
             unsafe {
                 w.algomode().bits(algomode.cryp_algomode());
@@ -281,7 +292,7 @@ impl Cryp {
         });
     }
 
-    fn reconfigure(&mut self, mode: Mode, algomode: AlgoMode) {
+    fn reconfigure(&self, mode: Mode, algomode: AlgoMode) {
         self.0.cr().modify(|_, w| {
             unsafe {
                 w.algomode().bits(algomode.cryp_algomode());
@@ -291,7 +302,7 @@ impl Cryp {
         });
     }
 
-    fn write_key(&mut self, key: Key) {
+    fn write_key(&self, key: Key) {
         self.0.k3rr().write(|w| unsafe { w.k().bits(key.k3rr()) });
         self.0.k3lr().write(|w| unsafe { w.k().bits(key.k3lr()) });
         self.0.k2rr().write(|w| unsafe { w.k().bits(key.k2rr()) });
@@ -310,7 +321,7 @@ impl Cryp {
         }
     }
 
-    fn compute_polling(&mut self, mut block: InOut<'_, '_, GenericArray<u8, U16>>) {
+    fn compute_polling(&self, mut block: InOut<'_, '_, Array<u8, U16>>) {
         // See Section 49.4.5.
         // Wait until the not-full flag IFNF is set
         while self.is_input_fifo_full() {}
@@ -322,7 +333,7 @@ impl Cryp {
         self.read_block(block.get_out());
     }
 
-    fn compute_polling_multi(&mut self, mut blocks: InOutBuf<'_, '_, GenericArray<u8, U16>>) {
+    fn compute_polling_multi(&self, mut blocks: InOutBuf<'_, '_, Array<u8, U16>>) {
         let n = blocks.len();
         let mut i = 0;
         let mut j = 0;
@@ -349,14 +360,14 @@ impl Cryp {
         }
     }
 
-    fn write_block(&mut self, block: &GenericArray<u8, U16>) {
+    fn write_block(&self, block: &Array<u8, U16>) {
         for i in 0..4 {
             let din = u32::from_be_bytes(*block[i * 4..].first_chunk().unwrap());
             self.0.dinr().write(|w| unsafe { w.din().bits(din) });
         }
     }
 
-    fn read_block(&mut self, block: &mut GenericArray<u8, U16>) {
+    fn read_block(&self, block: &mut Array<u8, U16>) {
         for i in 0..4 {
             let dout = self.0.doutr().read().dout().bits();
             block[i * 4..][..4].copy_from_slice(&dout.to_be_bytes());
@@ -364,46 +375,81 @@ impl Cryp {
     }
 }
 
-impl BlockBackend for Cryp {
-    fn proc_block(&mut self, block: InOut<'_, '_, Block<Self>>) {
-        self.compute_polling(block)
-    }
+struct CrypDec<'a>(&'a Cryp);
 
-    fn proc_par_blocks(&mut self, blocks: InOut<'_, '_, ParBlocks<Self>>) {
-        self.compute_polling_multi(blocks.into_buf())
-    }
-
-    fn proc_tail_blocks(&mut self, blocks: InOutBuf<'_, '_, Block<Self>>) {
-        self.compute_polling_multi(blocks)
-    }
-}
-
-impl BlockSizeUser for Cryp {
-    type BlockSize = U16;
-}
-
-impl ParBlocksSizeUser for Cryp {
-    type ParBlocksSize = U32;
-}
-
-pub struct AesDec<'a>(&'a mut Cryp);
-
-impl<'a> AesDec<'a> {
-    pub fn new(cryp: &'a mut Cryp, key: Key) -> Self {
-        cryp.setup(Operation::Decryption, ChainingMode::Ecb, key);
-        Self(cryp)
-    }
-}
-
-impl Drop for AesDec<'_> {
+impl Drop for CrypDec<'_> {
     fn drop(&mut self) {
         self.0.disable();
     }
 }
 
-impl BlockDecryptMut for AesDec<'_> {
-    fn decrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        f.call(self.0)
+impl BlockCipherDecBackend for CrypDec<'_> {
+    fn decrypt_block(&self, block: InOut<'_, '_, Block<Self>>) {
+        self.0.compute_polling(block)
+    }
+
+    fn decrypt_par_blocks(&self, blocks: InOut<'_, '_, ParBlocks<Self>>) {
+        self.0.compute_polling_multi(blocks.into_buf())
+    }
+
+    fn decrypt_tail_blocks(&self, blocks: InOutBuf<'_, '_, Block<Self>>) {
+        self.0.compute_polling_multi(blocks)
+    }
+}
+
+impl BlockSizeUser for CrypDec<'_> {
+    type BlockSize = U16;
+}
+
+impl ParBlocksSizeUser for CrypDec<'_> {
+    type ParBlocksSize = U32;
+}
+
+struct CrypEnc<'a>(&'a Cryp);
+
+impl Drop for CrypEnc<'_> {
+    fn drop(&mut self) {
+        self.0.disable();
+    }
+}
+
+impl BlockCipherEncBackend for CrypEnc<'_> {
+    fn encrypt_block(&self, block: InOut<'_, '_, Block<Self>>) {
+        self.0.compute_polling(block)
+    }
+
+    fn encrypt_par_blocks(&self, blocks: InOut<'_, '_, ParBlocks<Self>>) {
+        self.0.compute_polling_multi(blocks.into_buf())
+    }
+
+    fn encrypt_tail_blocks(&self, blocks: InOutBuf<'_, '_, Block<Self>>) {
+        self.0.compute_polling_multi(blocks)
+    }
+}
+
+impl BlockSizeUser for CrypEnc<'_> {
+    type BlockSize = U16;
+}
+
+impl ParBlocksSizeUser for CrypEnc<'_> {
+    type ParBlocksSize = U32;
+}
+
+pub struct AesDec<'a> {
+    cryp: &'a Cryp,
+    key: Key,
+}
+
+impl<'a> AesDec<'a> {
+    pub fn new(cryp: &'a Cryp, key: Key) -> Self {
+        Self { cryp, key }
+    }
+}
+
+impl BlockCipherDecrypt for AesDec<'_> {
+    fn decrypt_with_backend(&self, f: impl BlockCipherDecClosure<BlockSize = Self::BlockSize>) {
+        let backend = self.cryp.setup_dec(ChainingMode::Ecb, self.key);
+        f.call(&backend)
     }
 }
 
@@ -411,24 +457,21 @@ impl BlockSizeUser for AesDec<'_> {
     type BlockSize = U16;
 }
 
-pub struct AesEnc<'a>(&'a mut Cryp);
+pub struct AesEnc<'a> {
+    cryp: &'a Cryp,
+    key: Key,
+}
 
 impl<'a> AesEnc<'a> {
-    pub fn new(cryp: &'a mut Cryp, key: Key) -> Self {
-        cryp.setup(Operation::Encryption, ChainingMode::Ecb, key);
-        Self(cryp)
+    pub fn new(cryp: &'a Cryp, key: Key) -> Self {
+        Self { cryp, key }
     }
 }
 
-impl Drop for AesEnc<'_> {
-    fn drop(&mut self) {
-        self.0.disable();
-    }
-}
-
-impl BlockEncryptMut for AesEnc<'_> {
-    fn encrypt_with_backend_mut(&mut self, f: impl BlockClosure<BlockSize = Self::BlockSize>) {
-        f.call(self.0)
+impl BlockCipherEncrypt for AesEnc<'_> {
+    fn encrypt_with_backend(&self, f: impl BlockCipherEncClosure<BlockSize = Self::BlockSize>) {
+        let backend = self.cryp.setup_enc(ChainingMode::Ecb, self.key);
+        f.call(&backend)
     }
 }
 

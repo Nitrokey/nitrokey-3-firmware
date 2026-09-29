@@ -55,7 +55,7 @@ lfs-backup = { path = "../lfs-backup", optional = true }
 fm11nc08 = { path = "../fm11nc08", optional = true }
 
 # board-nkso3
-aes = { version = "0.8", optional = true }
+aes = { version = "0.9", optional = true }
 storage-app = { path = "../storage-app", optional = true }
 
 # logging
