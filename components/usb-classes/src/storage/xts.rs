@@ -1,5 +1,7 @@
 use cipher::{
-    generic_array::GenericArray, typenum::U16, BlockDecryptMut, BlockEncryptMut, BlockSizeUser,
+    generic_array::GenericArray,
+    typenum::{U16, U32},
+    BlockDecryptMut, BlockEncryptMut, BlockSizeUser,
 };
 
 pub const SECTOR_SIZE: usize = super::BLOCK_SIZE;
@@ -9,6 +11,18 @@ const BLOCKS_PER_SECTOR: usize = {
     SECTOR_SIZE / BLOCK_SIZE
 };
 
+fn blocks(sector: &mut [u8; SECTOR_SIZE]) -> &mut [[u8; BLOCK_SIZE]; BLOCKS_PER_SECTOR] {
+    let (blocks, rest) = sector.as_chunks_mut::<BLOCK_SIZE>();
+    let blocks: &mut [[u8; BLOCK_SIZE]; BLOCKS_PER_SECTOR] = blocks.try_into().unwrap();
+    assert!(rest.is_empty());
+    blocks
+}
+
+fn cast_slice(data: &mut [[u8; 16]; 32]) -> &mut GenericArray<GenericArray<u8, U16>, U32> {
+    // see GenericArray::from_slice_mut
+    unsafe { &mut *(data.as_mut_ptr() as *mut GenericArray<GenericArray<u8, U16>, U32>) }
+}
+
 fn encrypt_sector_impl<C1, C2>(sector: &mut [u8; SECTOR_SIZE], n: u32, c1: &mut C1, c2: &mut C2)
 where
     C1: BlockSizeUser<BlockSize = U16> + BlockEncryptMut,
@@ -17,17 +31,10 @@ where
     let mut tweak = u128::from(n).to_le_bytes();
     c2.encrypt_block_mut(GenericArray::from_mut_slice(&mut tweak));
 
-    let (blocks, rest) = sector.as_chunks_mut::<BLOCK_SIZE>();
-    debug_assert!(blocks.len() == BLOCKS_PER_SECTOR);
-    debug_assert!(rest.is_empty());
-
-    for block in blocks {
-        xor(block, &tweak);
-        c1.encrypt_block_mut(GenericArray::from_mut_slice(block));
-        xor(block, &tweak);
-
-        tweak = galois_field_128_mul_le(tweak);
-    }
+    let blocks = blocks(sector);
+    xor_blocks(blocks, tweak);
+    c1.encrypt_blocks_mut(cast_slice(blocks));
+    xor_blocks(blocks, tweak);
 }
 
 fn decrypt_sector_impl<C1, C2>(sector: &mut [u8; SECTOR_SIZE], n: u32, c1: &mut C1, c2: &mut C2)
@@ -38,17 +45,10 @@ where
     let mut tweak = u128::from(n).to_le_bytes();
     c2.encrypt_block_mut(GenericArray::from_mut_slice(&mut tweak));
 
-    let (blocks, rest) = sector.as_chunks_mut::<BLOCK_SIZE>();
-    debug_assert!(blocks.len() == BLOCKS_PER_SECTOR);
-    debug_assert!(rest.is_empty());
-
-    for block in blocks {
-        xor(block, &tweak);
-        c1.decrypt_block_mut(GenericArray::from_mut_slice(block));
-        xor(block, &tweak);
-
-        tweak = galois_field_128_mul_le(tweak);
-    }
+    let blocks = blocks(sector);
+    xor_blocks(blocks, tweak);
+    c1.decrypt_blocks_mut(cast_slice(blocks));
+    xor_blocks(blocks, tweak);
 }
 
 pub trait Xts128 {
@@ -92,9 +92,16 @@ pub trait Xts128 {
 }
 
 #[inline(always)]
-fn xor(block: &mut [u8; BLOCK_SIZE], tweak: &[u8; BLOCK_SIZE]) {
+fn xor_block(block: &mut [u8; BLOCK_SIZE], tweak: &[u8; BLOCK_SIZE]) {
     for i in 0..BLOCK_SIZE {
         block[i] ^= tweak[i];
+    }
+}
+
+fn xor_blocks(blocks: &mut [[u8; BLOCK_SIZE]], mut tweak: [u8; BLOCK_SIZE]) {
+    for block in blocks.iter_mut() {
+        xor_block(block, &tweak);
+        tweak = galois_field_128_mul_le(tweak);
     }
 }
 

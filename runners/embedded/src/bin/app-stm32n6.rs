@@ -105,15 +105,18 @@ mod app {
         const SD_MAX_CLOCK: Rate = Rate::MHz(8);
         #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]
         let mut mmc = mmc.enable(&rcc, CARD_KIND, SD_MAX_CLOCK).unwrap();
+        let cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
 
         #[cfg(feature = "sdmmc-tests")]
-        {
+        let cryp = {
             use embedded_runner_lib::sdmmc_tests;
             // no PLL: the core runs on the system bus clock
             let core_clock = clock_config.sys_bus_ck();
             sdmmc_tests::run(&mut mmc, core_clock);
-            sdmmc_tests::report("xts encrypt", 1, nkso3::xts_bench_cycles(), core_clock);
-        }
+            let (cycles, cryp) = nkso3::xts_bench_cycles(cryp);
+            sdmmc_tests::report("xts encrypt", 1, cycles, core_clock);
+            cryp
+        };
 
         let usb_bus = stm32n6::setup_usb_bus(
             &mut ctx.local.resources.board,
@@ -132,7 +135,6 @@ mod app {
             &mut init_status,
         );
 
-        let cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
         let _saes = Saes::new(ctx.device.SAES_S, &rcc);
         let mut dev_rng = Rng::new(ctx.device.RNG_S, &rcc);
         #[cfg(feature = "aes-tests")]

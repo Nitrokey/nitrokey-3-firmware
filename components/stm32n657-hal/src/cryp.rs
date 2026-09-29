@@ -1,11 +1,11 @@
 // Cryptographic processor (CRYP), see Section 49 of RM0486.
 
 use cipher::{
-    Block, BlockBackend, BlockClosure, BlockDecryptMut, BlockEncryptMut, BlockSizeUser,
+    Block, BlockBackend, BlockClosure, BlockDecryptMut, BlockEncryptMut, BlockSizeUser, ParBlocks,
     ParBlocksSizeUser,
     generic_array::GenericArray,
-    inout::InOut,
-    typenum::{U1, U16},
+    inout::{InOut, InOutBuf},
+    typenum::{U16, U32},
 };
 use stm32n6::stm32n657::CRYP_S;
 
@@ -315,18 +315,51 @@ impl Cryp {
         // Wait until the not-full flag IFNF is set
         while self.is_input_fifo_full() {}
         // Write data in the input FIFO
-        let buf = block.get_in();
-        for i in 0..4 {
-            let din = u32::from_be_bytes(*buf[i * 4..].first_chunk().unwrap());
-            self.0.dinr().write(|w| unsafe { w.din().bits(din) });
-        }
+        self.write_block(block.get_in());
         // Wait until the not-empty flag OFNE is set
         while self.is_output_fifo_empty() {}
         // Read the output FIFO
-        let buf = block.get_out();
+        self.read_block(block.get_out());
+    }
+
+    fn compute_polling_multi(&mut self, mut blocks: InOutBuf<'_, '_, GenericArray<u8, U16>>) {
+        let n = blocks.len();
+        let mut i = 0;
+        let mut j = 0;
+        while j < n {
+            // Write data to the input FIFO until it is full
+            while i < n && !self.is_input_fifo_full() {
+                self.write_block(&blocks.get_in()[i]);
+                i += 1;
+            }
+
+            // Wait until the output FIFO is not empty
+            while self.is_output_fifo_empty() {}
+
+            // Read data from the output FIFO until it is empty
+            while j < n && !self.is_output_fifo_empty() {
+                self.read_block(&mut blocks.get_out()[j]);
+                j += 1;
+            }
+
+            if i < n {
+                // Wait until the input FIFO is not full
+                while self.is_input_fifo_full() {}
+            }
+        }
+    }
+
+    fn write_block(&mut self, block: &GenericArray<u8, U16>) {
+        for i in 0..4 {
+            let din = u32::from_be_bytes(*block[i * 4..].first_chunk().unwrap());
+            self.0.dinr().write(|w| unsafe { w.din().bits(din) });
+        }
+    }
+
+    fn read_block(&mut self, block: &mut GenericArray<u8, U16>) {
         for i in 0..4 {
             let dout = self.0.doutr().read().dout().bits();
-            buf[i * 4..][..4].copy_from_slice(&dout.to_be_bytes());
+            block[i * 4..][..4].copy_from_slice(&dout.to_be_bytes());
         }
     }
 }
@@ -335,6 +368,14 @@ impl BlockBackend for Cryp {
     fn proc_block(&mut self, block: InOut<'_, '_, Block<Self>>) {
         self.compute_polling(block)
     }
+
+    fn proc_par_blocks(&mut self, blocks: InOut<'_, '_, ParBlocks<Self>>) {
+        self.compute_polling_multi(blocks.into_buf())
+    }
+
+    fn proc_tail_blocks(&mut self, blocks: InOutBuf<'_, '_, Block<Self>>) {
+        self.compute_polling_multi(blocks)
+    }
 }
 
 impl BlockSizeUser for Cryp {
@@ -342,7 +383,7 @@ impl BlockSizeUser for Cryp {
 }
 
 impl ParBlocksSizeUser for Cryp {
-    type ParBlocksSize = U1;
+    type ParBlocksSize = U32;
 }
 
 pub struct AesDec<'a>(&'a mut Cryp);

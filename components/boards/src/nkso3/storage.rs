@@ -1,15 +1,10 @@
 use crate::soc::stm32n6::mmc::{self, Mmc};
 
-use aes::{
-    cipher::{Key, KeyInit as _},
-    Aes128,
-};
+use aes::{cipher::KeyInit as _, Aes128};
 use interchange::{Channel, Requester, Responder};
 use stm32n657_hal::cryp::{self, Cryp};
 use usb_classes::storage::{
-    stm32n657_sdmmc::MmcStorage,
-    xts::{Ciphers, Xts128},
-    EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
+    stm32n657_sdmmc::MmcStorage, xts::Xts128, EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
 };
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
@@ -64,16 +59,15 @@ impl storage_app::Storage for Storage {
 pub const BUFFER_LEN: usize = 2 * BLOCK_SIZE;
 
 /// DWT cycles for one XTS-AES-128 sector encryption, averaged over 16
-pub fn xts_bench_cycles() -> u32 {
-    let cipher1 = Aes128::new(Key::<Aes128>::from_slice(&[1; 16]));
-    let cipher2 = Aes128::new(Key::<Aes128>::from_slice(&[2; 16]));
-    let mut xts = Ciphers { cipher1, cipher2 };
+pub fn xts_bench_cycles(cryp: Cryp) -> (u32, Cryp) {
+    let mut xts = XtsCiphers::new(cryp, [1; 32]);
     let mut block = [0x5au8; BLOCK_SIZE];
     let start = cortex_m::peripheral::DWT::cycle_count();
     for i in 0..16u32 {
         xts.encrypt_sector(&mut block, i.into());
     }
-    cortex_m::peripheral::DWT::cycle_count().wrapping_sub(start) / 16
+    let cycles = cortex_m::peripheral::DWT::cycle_count().wrapping_sub(start) / 16;
+    (cycles, xts.lock())
 }
 
 struct XtsCiphers {
