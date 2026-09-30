@@ -86,6 +86,8 @@ lint:
   stage: build
   script:
     - make lint
+  variables:
+    RUSTFLAGS: "-Dwarnings"
 
 build-nightly:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
