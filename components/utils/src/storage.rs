@@ -23,8 +23,8 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
 
     fn read(&mut self, off: usize, buf: &mut [u8]) -> Result<usize, Error> {
         let read_size: usize = Self::READ_SIZE;
-        debug_assert!(off % read_size == 0);
-        debug_assert!(buf.len() % read_size == 0);
+        debug_assert!(off.is_multiple_of(read_size));
+        debug_assert!(buf.len().is_multiple_of(read_size));
         for (from, to) in self.buf.iter().skip(off).zip(buf.iter_mut()) {
             *to = *from;
         }
@@ -41,8 +41,8 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
             return Err(Error::NO_SPACE);
         }
         let write_size: usize = Self::WRITE_SIZE;
-        debug_assert!(off % write_size == 0);
-        debug_assert!(data.len() % write_size == 0);
+        debug_assert!(off.is_multiple_of(write_size));
+        debug_assert!(data.len().is_multiple_of(write_size));
         for (from, to) in data.iter().zip(self.buf.iter_mut().skip(off)) {
             *to = *from;
         }
@@ -52,8 +52,8 @@ impl<S: Storage, const SIZE: usize> Storage for RamStorage<S, SIZE> {
 
     fn erase(&mut self, off: usize, len: usize) -> Result<usize, Error> {
         let block_size: usize = Self::BLOCK_SIZE;
-        debug_assert!(off % block_size == 0);
-        debug_assert!(len % block_size == 0);
+        debug_assert!(off.is_multiple_of(block_size));
+        debug_assert!(len.is_multiple_of(block_size));
         for byte in self.buf.iter_mut().skip(off).take(len) {
             *byte = ERASED;
         }

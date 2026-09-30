@@ -56,8 +56,8 @@ pub const FS_END: usize = {
 };
 pub const BLOCK_COUNT: usize = {
     assert!(FS_START < FS_END);
-    assert!(FS_START % BLOCK_SIZE == 0);
-    assert!(FS_END % BLOCK_SIZE == 0);
+    assert!(FS_START.is_multiple_of(BLOCK_SIZE));
+    assert!(FS_END.is_multiple_of(BLOCK_SIZE));
     (FS_END - FS_START) / BLOCK_SIZE
 };
 
