@@ -43,7 +43,7 @@ admin-app = "0.4"
 fido-authenticator = { version = "0.3", features = ["chunked", "dispatch"], optional = true }
 ndef-app = { path = "../ndef-app", optional = true }
 secrets-app = { version = "0.16", features = ["apdu-dispatch", "ctaphid"], optional = true }
-opcard = { version = "1.10", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096", "admin-app"], optional = true }
+opcard = { version = "1.10", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
 piv-authenticator = { version = "0.7", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
