@@ -3,6 +3,9 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+
+## v1.9.1 (2026-09-30)
+
 - Fix USB descriptor for compatibility with Windows when using CCID ([#708](https://github.com/Nitrokey/nitrokey-3-firmware/issues/708))
 
 ## v1.9.0 (2026-09-21)
