@@ -470,17 +470,19 @@ impl Stage1 {
         let old_firmware_version =
             Self::validate_cfpa(&mut pfr, secure_firmware_version, require_prince);
 
-        if boot_to_bootrom && three_buttons.is_some() {
-            info!("bootrom request start {}", perf_timer.elapsed().0 / 1000);
-            if self.is_bootrom_requested(three_buttons.as_mut().unwrap(), &mut delay_timer) {
-                // Give a small red blink show success
-                rgb.red(200);
-                rgb.green(200);
-                rgb.blue(0);
-                delay_timer.start(100_000.microseconds());
-                nb::block!(delay_timer.wait()).ok();
+        if boot_to_bootrom {
+            if let Some(three_buttons) = three_buttons.as_mut() {
+                info!("bootrom request start {}", perf_timer.elapsed().0 / 1000);
+                if self.is_bootrom_requested(three_buttons, &mut delay_timer) {
+                    // Give a small red blink show success
+                    rgb.red(200);
+                    rgb.green(200);
+                    rgb.blue(0);
+                    delay_timer.start(100_000.microseconds());
+                    nb::block!(delay_timer.wait()).ok();
 
-                hal::boot_to_bootrom()
+                    hal::boot_to_bootrom()
+                }
             }
         }
 
