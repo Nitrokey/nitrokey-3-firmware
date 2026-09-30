@@ -171,7 +171,7 @@ pub fn init_usb_nfc<B: Board>(
             .implements_wink();
 
         let vidpid = UsbVidPid(USB_VENDOR_ID, usb_product_id);
-        let strings = StringDescriptors::new(LangID::EN)
+        let strings = StringDescriptors::new(LangID::EN_US)
             .product(usb_product)
             .manufacturer(USB_MANUFACTURER);
         let usbd = UsbDeviceBuilder::new(usb_bus, vidpid)
