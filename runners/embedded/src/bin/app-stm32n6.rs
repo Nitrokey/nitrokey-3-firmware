@@ -87,6 +87,9 @@ mod app {
 
         let soc = stm32n6::init_bootup(ctx.device.BSEC);
         let rcc = Rcc::new(ctx.device.RCC);
+        debug_now!("Enabling pll1");
+        rcc.enable_pll1(Rate::MHz(120));
+        debug_now!("Enabled pll1");
         let clock_config = rcc.clock_config();
 
         let (board_gpio, mmc) = nkso3::init_pins(
