@@ -51,16 +51,28 @@ impl Rcc {
     pub fn clock_config(&self) -> ClockConfig {
         let cfgr1 = self.0.cfgr1().read();
         let cfgr2 = self.0.cfgr2().read();
+        let ic2 = self.0.ic2cfgr().read();
+        let pll1_cfg = self.0.pll1cfgr1().read();
+        let pll1_cfg2 = self.0.pll1cfgr2().read();
 
         let system_clock = SystemClock::from_bits(cfgr1.syssws().bits());
 
         let prescaler_ahb = cfgr2.hpre().bits();
         let prescaler_timer = cfgr2.timpre().bits();
 
+        let pll1_input_divider = pll1_cfg.pll1divm().bits() as u64;
+        let pll1_integer_multiplier = pll1_cfg.pll1divn().bits() as u64;
+        let pll1_frac_multiplier = pll1_cfg2.pll1divnfrac().bits() as u64;
+
         ClockConfig {
             system_clock,
             prescaler_ahb,
             prescaler_timer,
+            divider_ic2: ic2.ic2int().bits(),
+            input_ic2: Pll::from_bits(ic2.ic2sel().bits()),
+            pll1_input_clock: SystemClock::from_bits(pll1_cfg.pll1sel().bits()),
+            pll1_multiplier: ((pll1_frac_multiplier / (1 << 24) + pll1_integer_multiplier)
+                / pll1_input_divider) as _,
         }
     }
 
@@ -124,18 +136,54 @@ impl Rcc {
                 .ic1int()
                 .bits(0)
         });
-        // Enable IC1
-        self.0.divenr().modify(|_, w| w.ic1en().set_bit());
+        self.0.ic2cfgr().write(|w| unsafe {
+            // Select PLL1 output for IC2
+            w.ic2sel()
+                .bits(0b00)
+                // Set divider to 1 (PLL outout straight to ahb)h
+                .ic2int()
+                .bits(0)
+        });
+        self.0.ic6cfgr().write(|w| unsafe {
+            // Select PLL1 output for IC6
+            w.ic6sel()
+                .bits(0b00)
+                // Set divider to max (outputs to NPU)
+                .ic6int()
+                .bits(0xFF)
+        });
+        self.0.ic11cfgr().write(|w| unsafe {
+            // Select PLL1 output for IC11
+            w.ic11sel()
+                .bits(0b00)
+                // Set divider to max (outputs to NPU)
+                .ic11int()
+                .bits(0xFF)
+        });
+        // Enable IC1 (used then as sys_cpu_ck)
+        // Enable IC2 (used then as sysb_ck) // AHB bus
+        // Enable IC6 (used then as sysc_ck), only used in NPU
+        // Enable IC11 (used then as sysd_ck), only used in NPU
+        self.0.divenr().modify(|_, w| {
+            w.ic1en()
+                .set_bit()
+                .ic2en()
+                .set_bit()
+                .ic6en()
+                .set_bit()
+                .ic11en()
+                .set_bit()
+        });
 
         // Select CPU clock source and system clock to be PLL1
         self.0
             .cfgr1()
-            .modify(|_, w| unsafe { w.cpusw().bits(0b11) });
+            .modify(|_, w| unsafe { w.cpusw().bits(0b11).syssw().bits(0b11) });
 
         debug_now!("Waiting for cpsws");
         while self.0.cfgr1().read().cpusws().bits() != 0b11 {}
-        // debug_now!("Waiting for syssws");
-        // while self.0.cfgr1().read().syssws().bits() != 0b11 {}
+        debug_now!("Waiting for syssws");
+        while self.0.cfgr1().read().syssws().bits() != 0b11 {}
     }
 
     pub fn reset(&self, peripheral: Peripheral) {
@@ -263,8 +311,32 @@ impl_peripheral!(
 );
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Pll {
+    Pll1 = 0b00,
+    Pll2 = 0b01,
+    Pll3 = 0b10,
+    Pll4 = 0b11,
+}
+
+impl Pll {
+    const fn from_bits(value: u8) -> Self {
+        match value {
+            0b00 => Self::Pll1,
+            0b01 => Self::Pll2,
+            0b10 => Self::Pll3,
+            0b11 => Self::Pll4,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ClockConfig {
     pub system_clock: SystemClock,
+    pub divider_ic2: u8,
+    pub input_ic2: Pll,
+    pub pll1_input_clock: SystemClock,
+    pub pll1_multiplier: u32,
     pub prescaler_ahb: u8,
     pub prescaler_timer: u8,
 }
@@ -274,17 +346,34 @@ impl ClockConfig {
         system_clock: SystemClock::Hsi,
         prescaler_ahb: 1,
         prescaler_timer: 0,
+        input_ic2: Pll::Pll1,
+        divider_ic2: 0,
+        pll1_input_clock: SystemClock::Hsi,
+        pll1_multiplier: 0,
     };
 
-    pub const fn sys_bus_ck(&self) -> Rate {
-        self.system_clock.frequency()
+    pub fn sys_bus_ck(&self) -> Rate {
+        const HSI: Rate = Rate::MHz(64);
+
+        match self.system_clock {
+            SystemClock::Hsi => HSI,
+            SystemClock::Ic2 => {
+                if !matches!(self.input_ic2, Pll::Pll1) {
+                    unimplemented!();
+                }
+
+                self.pll1_input_clock.frequency() * self.pll1_multiplier
+                    / (self.divider_ic2 as u32 + 1)
+            }
+            _ => unimplemented!(),
+        }
     }
 
-    pub const fn sys_bus2_ck(&self) -> Rate {
+    pub fn sys_bus2_ck(&self) -> Rate {
         scale(self.sys_bus_ck(), self.prescaler_ahb).unwrap()
     }
 
-    pub const fn timg_ck(&self) -> Rate {
+    pub fn timg_ck(&self) -> Rate {
         scale(self.sys_bus_ck(), self.prescaler_timer).unwrap()
     }
 }
