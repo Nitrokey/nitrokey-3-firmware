@@ -3,6 +3,14 @@
 #[cfg(feature = "trussed-usbip")]
 extern crate alloc;
 
+#[macro_use]
+extern crate delog;
+
+generate_macros!();
+
+#[cfg(feature = "storage-app")]
+pub mod storage;
+
 #[cfg(feature = "secrets-app")]
 const SECRETS_APP_CREDENTIALS_COUNT_LIMIT: u16 = 50;
 
@@ -17,10 +25,8 @@ use littlefs2_core::{path, Path};
 use admin_app::ResetConfigResult;
 use admin_app::{ConfigField, FieldType};
 
-#[macro_use]
-extern crate delog;
-
-generate_macros!();
+#[cfg(feature = "storage-app")]
+use storage::{StorageApp, StorageData};
 
 use serde::{Deserialize, Serialize};
 #[cfg(all(feature = "opcard", feature = "se050"))]
@@ -335,9 +341,6 @@ pub trait Runner {
     #[cfg(not(feature = "se050"))]
     type Se050Timer: 'static;
 
-    #[cfg(feature = "storage-app")]
-    type Storage: storage_app::Storage;
-
     fn uuid(&self) -> [u8; 16];
     fn is_efs_available(&self) -> bool;
 }
@@ -349,7 +352,7 @@ pub struct Data<R: Runner> {
     #[cfg(feature = "provisioner-app")]
     pub provisioner: ProvisionerData<R>,
     #[cfg(feature = "storage-app")]
-    pub storage: StorageData<R>,
+    pub storage: StorageData,
     pub _marker: PhantomData<R>,
 }
 
@@ -372,8 +375,6 @@ type OpcardApp<R> = opcard::Card<Client<R>>;
 type PivApp<R> = piv_authenticator::Authenticator<Client<R>>;
 #[cfg(feature = "provisioner-app")]
 type ProvisionerApp<R> = provisioner_app::Provisioner<<R as Runner>::Store, Client<R>>;
-#[cfg(feature = "storage-app")]
-type StorageApp<R> = storage_app::StorageApp<Client<R>, <R as Runner>::Storage>;
 
 #[repr(u8)]
 pub enum CustomStatus {
@@ -1242,45 +1243,6 @@ impl<R: Runner> App<R> for ProvisionerApp<R> {
     fn interrupt() -> Option<&'static InterruptFlag> {
         static INTERRUPT: InterruptFlag = InterruptFlag::new();
         Some(&INTERRUPT)
-    }
-}
-
-#[cfg(feature = "storage-app")]
-pub struct StorageData<R: Runner> {
-    pub storage: R::Storage,
-}
-
-#[cfg(feature = "storage-app")]
-impl<R: Runner> App<R> for StorageApp<R> {
-    const CLIENT_ID: &'static Path = path!("storage");
-
-    type Data = StorageData<R>;
-    type Config = ();
-
-    fn with_client(_runner: &R, trussed: Client<R>, data: Self::Data, _: &()) -> Self {
-        Self::new(trussed, data.storage)
-    }
-
-    fn channel() -> &'static TrussedChannel {
-        static CHANNEL: TrussedChannel = TrussedChannel::new();
-        &CHANNEL
-    }
-
-    fn interrupt() -> Option<&'static InterruptFlag> {
-        static INTERRUPT: InterruptFlag = InterruptFlag::new();
-        Some(&INTERRUPT)
-    }
-
-    fn backends(runner: &R, _: &()) -> &'static [BackendId<Backend>] {
-        const BACKENDS_STORAGE: &[BackendId<Backend>] = &[
-            #[cfg(feature = "se050")]
-            BackendId::Custom(Backend::Se050),
-            #[cfg(not(feature = "se050"))]
-            BackendId::Custom(Backend::Auth),
-            BackendId::Core,
-        ];
-        let _ = runner;
-        BACKENDS_STORAGE
     }
 }
 

@@ -125,9 +125,6 @@ impl apps::Runner for Runner {
     type Twi = ();
     type Se050Timer = ();
 
-    #[cfg(feature = "usb-storage")]
-    type Storage = block_device::Storage;
-
     fn uuid(&self) -> [u8; 16] {
         self.serial
     }
@@ -195,6 +192,11 @@ fn exec(
     serial: Option<u128>,
     user_presence: UserPresence,
 ) {
+    #[cfg(feature = "usb-storage")]
+    static STORAGE_CHANNEL: apps::storage::StorageChannel = apps::storage::StorageChannel::new();
+    #[cfg(feature = "usb-storage")]
+    let (storage_rq, _) = STORAGE_CHANNEL.split().unwrap();
+
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {
@@ -220,8 +222,8 @@ fn exec(
             rebooter: || unimplemented!(),
         },
         #[cfg(feature = "usb-storage")]
-        storage: apps::StorageData {
-            storage: block_device::Storage,
+        storage: apps::storage::StorageData {
+            requester: storage_rq,
         },
         _marker: Default::default(),
     };

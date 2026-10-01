@@ -1,6 +1,6 @@
 use crate::soc::stm32n6::mmc::{self, Mmc};
 
-use interchange::{Channel, Requester, Responder};
+use apps::storage::{StorageAction, StorageResponder};
 use stm32n657_hal::{
     cryp::{self, Cryp},
     mmc::{MmcMaster, MmcPins},
@@ -12,49 +12,6 @@ use usb_classes::{
 };
 use usb_device::{bus::UsbBus, device::UsbDevice};
 
-pub type StorageChannel = Channel<StorageAction, ()>;
-pub type StorageRequester<'a> = Requester<'a, StorageAction, ()>;
-pub type StorageResponder<'a> = Responder<'a, StorageAction, ()>;
-
-pub enum StorageAction {
-    Lock,
-    Unlock([u8; 32]),
-}
-
-pub struct Storage {
-    rq: StorageRequester<'static>,
-}
-
-impl Storage {
-    pub fn new(rq: StorageRequester<'static>) -> Self {
-        Self { rq }
-    }
-
-    fn send(&mut self, action: StorageAction) -> Result<(), storage_app::Error> {
-        // discard any replies to free the channel
-        self.rq.take_response();
-        self.rq
-            .request(action)
-            .map_err(|_| storage_app::Error::InternalError)
-    }
-}
-
-impl storage_app::Storage for Storage {
-    fn init(&mut self, _key: &[u8; 32]) -> Result<(), storage_app::Error> {
-        info!("Storage initialized");
-        Ok(())
-    }
-
-    fn unlock(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
-        info!("Storage unlocked");
-        self.send(StorageAction::Unlock(*key))
-    }
-
-    fn lock(&mut self) -> Result<(), storage_app::Error> {
-        info!("Storage locked");
-        self.send(StorageAction::Lock)
-    }
-}
 pub struct MmcStorage<P, Pins> {
     mmc: MmcMaster<P, Pins, Enabled>,
 }

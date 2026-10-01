@@ -7,27 +7,7 @@ use std::{
     slice,
 };
 
-use log::info;
 use usb_classes::scsi::{BlockDevice, BLOCK_SIZE};
-
-pub struct Storage;
-
-impl storage_app::Storage for Storage {
-    fn init(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
-        info!("Storage::init called with key = {key:?}");
-        Ok(())
-    }
-
-    fn unlock(&mut self, key: &[u8; 32]) -> Result<(), storage_app::Error> {
-        info!("Storage::unlock called with key = {key:?}");
-        Ok(())
-    }
-
-    fn lock(&mut self) -> Result<(), storage_app::Error> {
-        info!("Storage::lock called");
-        Ok(())
-    }
-}
 
 enum Backing {
     File(std::fs::File),

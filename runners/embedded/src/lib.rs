@@ -44,7 +44,7 @@ pub fn init_usb_nfc<B: Board>(
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
-    #[cfg(feature = "board-nkso3")] storage_rp: boards::nkso3::StorageResponder<'static>,
+    #[cfg(feature = "board-nkso3")] storage_rp: apps::storage::StorageResponder<'static>,
     #[cfg(feature = "board-nkso3")] mmc: boards::nkso3::Mmc,
     #[cfg(feature = "board-nkso3")] cryp: stm32n657_hal::cryp::Cryp,
 ) -> UsbNfc<B> {

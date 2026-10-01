@@ -124,7 +124,7 @@ pub fn init_usb_nfc<B: Board>(
     usb_product: &'static str,
     usb_product_id: u16,
     version: Version,
-    #[cfg(feature = "board-nkso3")] storage_rp: crate::nkso3::StorageResponder<'static>,
+    #[cfg(feature = "board-nkso3")] storage_rp: apps::storage::StorageResponder<'static>,
     #[cfg(feature = "board-nkso3")] mmc: crate::nkso3::Mmc,
     #[cfg(feature = "board-nkso3")] cryp: stm32n657_hal::cryp::Cryp,
 ) -> UsbNfc<B> {
@@ -189,7 +189,7 @@ pub fn init_apps<B: Board>(
     nfc_powered: bool,
     version: Version,
     version_string: &'static str,
-    #[cfg(feature = "board-nkso3")] storage: crate::nkso3::Storage,
+    #[cfg(feature = "board-nkso3")] storage_rq: apps::storage::StorageRequester<'static>,
 ) -> (Apps<B>, Endpoints) {
     let mut admin = AdminData::new(*store, B::Soc::VARIANT, version, version_string);
     admin.init_status = init_status;
@@ -207,7 +207,9 @@ pub fn init_apps<B: Board>(
     }
 
     #[cfg(feature = "board-nkso3")]
-    let storage = apps::StorageData { storage };
+    let storage = apps::storage::StorageData {
+        requester: storage_rq,
+    };
 
     #[cfg(feature = "provisioner")]
     let provisioner = {

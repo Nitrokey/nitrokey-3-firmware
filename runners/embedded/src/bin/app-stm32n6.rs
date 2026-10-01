@@ -21,10 +21,10 @@ core::arch::global_asm!(
 #[rtic::app(device = stm32n657_hal::pac, peripherals = true, dispatchers = [LPTIM1, LPTIM2, LPTIM3])]
 mod app {
     use apdu_dispatch::{dispatch::ApduDispatch, interchanges::Channel as CcidChannel};
-    use apps::Endpoints;
+    use apps::{storage::StorageChannel, Endpoints};
     use boards::{
         init::{CtaphidDispatch, Resources, UsbClasses},
-        nkso3::{self, Storage, StorageChannel, UsbStorage, NKSO3},
+        nkso3::{self, UsbStorage, NKSO3},
         runtime,
         soc::{monotonic::SystickMonotonic, stm32n6},
         store, Apps, Trussed,
@@ -183,7 +183,7 @@ mod app {
             false,
             VERSION,
             VERSION_STRING,
-            Storage::new(storage_rq),
+            storage_rq,
         );
 
         let usb_timer = if usb_nfc.usb_storage.is_some() {
