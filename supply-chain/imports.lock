@@ -171,8 +171,8 @@ when = "2026-07-23"
 trusted-publisher = "github:trussed-dev/trussed-staging"
 
 [[publisher.trussed-usbip]]
-version = "0.2.0"
-when = "2026-09-14"
+version = "0.3.0"
+when = "2026-10-01"
 trusted-publisher = "github:trussed-dev/pc-usbip-runner"
 
 [[publisher.trussed-wrap-key-to-file]]

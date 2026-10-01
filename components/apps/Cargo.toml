@@ -4,10 +4,10 @@ version = { workspace = true }
 edition = "2021"
 
 [dependencies]
-delog = "0.1"
 apdu-app = "0.2"
 bitflags = "2"
 ctaphid-app = "0.2"
+delog.workspace = true
 embedded-hal = "0.2.7"
 heapless = "0.9"
 heapless-bytes = "0.5"
@@ -16,7 +16,7 @@ se05x = { version = "0.4", optional = true}
 serde = { version = "1.0.180", default-features = false }
 trussed = { workspace = true, features = ["crypto-client", "filesystem-client", "management-client", "serde-extensions", "ui-client"] }
 trussed-core.workspace = true
-trussed-usbip = { workspace = true, features = ["ctaphid"], optional = true }
+trussed-usbip = { workspace = true, features = ["ccid", "ctaphid"], optional = true }
 usbd-ctaphid = { workspace = true, optional = true }
 utils = { path = "../utils" }
 if_chain = "1.0.2"
@@ -81,8 +81,7 @@ log-debug = []
 log-trace = []
 log-none = []
 
-trussed-usbip = ["dep:trussed-usbip", "backend-rsa", "trussed-rsa-alloc/raw"]
-trussed-usbip-ccid = ["trussed-usbip/ccid", "backend-software-hpke"]
+trussed-usbip = ["dep:trussed-usbip", "backend-rsa", "backend-software-hpke", "trussed-rsa-alloc/raw"]
 
 factory-reset = ["admin-app/factory-reset"]
 

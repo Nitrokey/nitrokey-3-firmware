@@ -4,15 +4,15 @@ edition = "2021"
 version.workspace = true
 
 [dependencies]
-apdu-dispatch = "0.4"
+apdu-dispatch.workspace = true
 apps = { path = "../apps", features = ["fido-authenticator"] }
 cortex-m = "0.7"
 cortex-m-rtic = "1.0"
 cortex-m-rt = "0.7.5"
-ctaphid-dispatch = "0.4"
-delog = "0.1"
+ctaphid-dispatch.workspace = true
+delog.workspace = true
 embedded-hal = "0.2.3"
-embedded-time = "0.12"
+embedded-time.workspace = true
 generic-array = "0.14"
 interchange.workspace = true
 littlefs2 = { version = "=0.8.0", features = ["c-stubs", "unstable-littlefs-patched"] }
@@ -26,6 +26,7 @@ ref-swap = "0.1.0"
 spi-memory = "0.2.0"
 trussed.workspace = true
 trussed-core.workspace = true
+usb-classes = { path = "../usb-classes" }
 usb-device.workspace = true
 usbd-ccid.workspace = true
 usbd-ctaphid.workspace = true
@@ -71,13 +72,13 @@ soc-nrf52 = ["embedded-storage", "nrf52840-hal", "nrf52840-pac", "se05x?/nrf-v0.
 fm11nt08c = ["dep:fm11nt08c"]
 fm11nc08 = ["dep:fm11nc08"]
 
-log-all = []
-log-trace = []
-log-debug = []
-log-info = []
-log-warn = []
-log-error = []
-log-none = []
+log-all = ["usb-classes/log-all"]
+log-trace = ["usb-classes/log-trace"]
+log-debug = ["usb-classes/log-debug"]
+log-info = ["usb-classes/log-info"]
+log-warn = ["usb-classes/log-warn"]
+log-error = ["usb-classes/log-error"]
+log-none = ["usb-classes/log-none"]
 
 log-rtt = ["rtt-target"]
 log-semihosting = ["cortex-m-semihosting"]

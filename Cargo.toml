@@ -13,6 +13,10 @@ resolver = "2"
 version = "1.9.1"
 
 [workspace.dependencies]
+apdu-dispatch = "0.4"
+ctaphid-dispatch = "0.4"
+delog = "0.1"
+embedded-time = "0.12"
 interchange = "0.3.3"
 littlefs2 = "0.8"
 lpc55-hal = "0.7.1"
@@ -21,7 +25,7 @@ nrf52840-hal = "0.18"
 nrf52840-pac = "0.12"
 trussed = { version = "0.2", default-features = false }
 trussed-core = "0.2"
-trussed-usbip = { version = "0.2", default-features = false }
+trussed-usbip = { version = "0.3", default-features = false }
 usb-device = "0.3"
 usbd-ccid = "0.5"
 usbd-ctaphid = "0.5"

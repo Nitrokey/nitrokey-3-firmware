@@ -5,8 +5,8 @@ version = "0.1.0"
 
 
 [dependencies]
-delog = "0.1.0"
-embedded-time = "0.12"
+delog.workspace = true
+embedded-time.workspace = true
 nb = "1"
 nfc-device = {path = "../nfc-device"}
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
