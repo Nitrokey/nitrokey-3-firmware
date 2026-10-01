@@ -52,7 +52,9 @@ pub struct UsbClasses<B: UsbBus + 'static, const CTAP_N: usize> {
     pub ccid: Option<Ccid<'static, 'static, B, CCID_SIZE>>,
     pub ctaphid: CtapHid<'static, 'static, 'static, B, CTAP_N>,
     #[cfg(feature = "scsi")]
-    pub scsi: scsi::Scsi<'static, B>,
+    scsi: scsi::Scsi<'static, B>,
+    #[cfg(feature = "scsi")]
+    scsi_state: scsi::State,
 }
 
 impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
@@ -75,6 +77,11 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
         classes.push(&mut self.scsi).ok();
 
         self.usbd.poll(&mut classes);
+    }
+
+    #[cfg(feature = "scsi")]
+    pub fn poll_scsi<D: scsi::BlockDevice>(&mut self, device: Option<D>) {
+        scsi::poll(&mut self.usbd, &mut self.scsi, device, &mut self.scsi_state)
     }
 }
 
@@ -115,6 +122,8 @@ pub fn build<B: UsbBus + 'static, const CTAP_N: usize>(
         ctaphid,
         #[cfg(feature = "scsi")]
         scsi,
+        #[cfg(feature = "scsi")]
+        scsi_state: scsi::State::default(),
     }
 }
 

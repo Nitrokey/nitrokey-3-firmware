@@ -6,12 +6,11 @@ use stm32n657_hal::{
     mmc::{MmcMaster, MmcPins},
     sdmmc::{Enabled, Error, SdMmc},
 };
-use usb_classes::scsi::{xts::Xts128, BlockDevice, EncryptedBlockDevice, Scsi, State, BLOCK_SIZE};
-use usb_device::{
-    bus::UsbBus,
-    device::{UsbDevice, UsbDeviceState},
-    UsbError,
+use usb_classes::{
+    scsi::{xts::Xts128, BlockDevice, EncryptedBlockDevice, BLOCK_SIZE},
+    UsbClasses,
 };
+use usb_device::{bus::UsbBus, device::UsbDevice};
 
 pub type StorageChannel = Channel<StorageAction, ()>;
 pub type StorageRequester<'a> = Requester<'a, StorageAction, ()>;
@@ -195,7 +194,6 @@ impl EncryptionState {
 }
 
 pub struct UsbStorage<'a> {
-    state: State,
     block_device: MmcStorage<mmc::Peripheral, mmc::Pins>,
     responder: StorageResponder<'a>,
     encryption: EncryptionState,
@@ -204,19 +202,14 @@ pub struct UsbStorage<'a> {
 impl<'a> UsbStorage<'a> {
     pub fn new(mmc: Mmc, cryp: Cryp, responder: StorageResponder<'a>) -> Self {
         Self {
-            state: State::default(),
             block_device: MmcStorage::new(mmc),
             responder,
             encryption: EncryptionState::new(cryp),
         }
     }
 
-    pub fn poll<B, F>(
-        &mut self,
-        device: &mut UsbDevice<'_, B>,
-        scsi: &mut Scsi<'_, B>,
-        force_reset: F,
-    ) where
+    pub fn poll<B, F, const N: usize>(&mut self, classes: &mut UsbClasses<B, N>, force_reset: F)
+    where
         B: UsbBus,
         F: FnOnce(&mut UsbDevice<'_, B>) -> usb_device::Result<()>,
     {
@@ -226,34 +219,15 @@ impl<'a> UsbStorage<'a> {
                 StorageAction::Lock => self.encryption.lock(),
                 StorageAction::Unlock(key) => self.encryption.unlock(key),
             }
-            if let Err(_err) = (force_reset)(device) {
+            if let Err(_err) = (force_reset)(&mut classes.usbd) {
                 warn!("Failed to trigger USB force reset: {_err:?}");
             }
         }
 
-        if device.state() == UsbDeviceState::Default {
-            self.state.reset();
-        }
-
-        // One `poll_command` per transport poll, and `UsbDevice::poll` did one
-        // too: a from-host phase ending strands undrained data in the buffer.
-        for _ in 0..2 {
-            let result = scsi.poll_command(|command| {
-                let mut block_device = self
-                    .encryption
-                    .xts()
-                    .map(|xts| EncryptedBlockDevice::new(&mut self.block_device, xts));
-                usb_classes::scsi::process_command(command, block_device.as_mut(), &mut self.state)
-            });
-            // WouldBlock is routine here: the transport polls the endpoint after the callback
-            if let Err(_err) = result {
-                if !matches!(
-                    _err,
-                    usb_classes::scsi::StorageTransportError::Usb(UsbError::WouldBlock)
-                ) {
-                    warn_now!("storage: transport {_err:?}");
-                }
-            }
-        }
+        let block_device = self
+            .encryption
+            .xts()
+            .map(|xts| EncryptedBlockDevice::new(&mut self.block_device, xts));
+        classes.poll_scsi(block_device);
     }
 }

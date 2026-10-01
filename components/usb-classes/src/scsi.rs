@@ -4,7 +4,11 @@ pub mod xts;
 
 use core::convert::Infallible;
 
-use usb_device::bus::{UsbBus, UsbBusAllocator};
+use usb_device::{
+    bus::{UsbBus, UsbBusAllocator},
+    device::{UsbDevice, UsbDeviceState},
+    UsbError,
+};
 use usbd_storage::{
     subclass::{
         scsi::{self, ScsiCommand},
@@ -163,6 +167,30 @@ pub trait BlockDevice {
     fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error>;
 }
 
+impl<B: BlockDevice> BlockDevice for &mut B {
+    type Error = B::Error;
+
+    fn blocks(&self) -> u32 {
+        B::blocks(self)
+    }
+
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        B::read_block(self, lba, buf)
+    }
+
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        B::write_block(self, lba, buf)
+    }
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        B::read_blocks(self, lba, buf)
+    }
+
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        B::write_blocks(self, lba, buf)
+    }
+}
+
 pub struct MemoryBlockDevice<'a, const N: usize>(&'a mut [[u8; BLOCK_SIZE]; N]);
 
 impl<'a, const N: usize> MemoryBlockDevice<'a, N> {
@@ -248,7 +276,7 @@ const BUFFER_SIZE: usize = BUFFER_BLOCK_COUNT * BLOCK_SIZE;
 
 /// Per-transfer state. A single SCSI read or write is spread across several
 /// `poll_command` calls, so the progress within it has to be carried over.
-pub struct State {
+pub(crate) struct State {
     /// Bytes transferred so far within the current command.
     offset: usize,
     /// The block currently being streamed.
@@ -290,8 +318,36 @@ fn in_bounds<D: BlockDevice>(device: &D, lba: u32, count: u32) -> bool {
         .is_some_and(|end| end <= device.blocks())
 }
 
+pub(crate) fn poll<B, D>(
+    usb_device: &mut UsbDevice<'_, B>,
+    scsi: &mut Scsi<'_, B>,
+    mut block_device: Option<D>,
+    state: &mut State,
+) where
+    B: UsbBus,
+    D: BlockDevice,
+{
+    // A bus reset abandons any transfer that was in flight.
+    if usb_device.state() == UsbDeviceState::Default {
+        state.reset();
+    }
+
+    // One `poll_command` per transport poll, and `UsbDevice::poll` did one
+    // too: a from-host phase ending strands undrained data in the buffer.
+    for _ in 0..2 {
+        let result =
+            scsi.poll_command(|command| process_command(command, block_device.as_mut(), state));
+        // WouldBlock is routine here: the transport polls the endpoint after the callback
+        if let Err(_err) = result {
+            if !matches!(_err, TransportError::Usb(UsbError::WouldBlock)) {
+                warn_now!("storage: transport {_err:?}");
+            }
+        }
+    }
+}
+
 /// Handles one SCSI command against `device`.
-pub fn process_command<B, D>(
+fn process_command<B, D>(
     mut command: Command<ScsiCommand, Scsi<'_, B>>,
     device: Option<&mut D>,
     state: &mut State,

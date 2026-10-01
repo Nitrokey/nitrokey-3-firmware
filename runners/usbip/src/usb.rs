@@ -31,7 +31,6 @@ const BLOCKS: u32 = 16384;
 #[cfg(feature = "usb-storage")]
 struct Storage {
     device: crate::block_device::HostBlockDevice,
-    state: usb_classes::scsi::State,
     xts: Option<usb_classes::scsi::xts::Ciphers<aes::Aes128, aes::Aes128>>,
 }
 
@@ -95,7 +94,6 @@ impl Setup<Dispatch> for NkSetup {
                 BLOCKS,
             )
             .expect("failed to open block device"),
-            state: Default::default(),
             xts: self.block_device_key.map(|key| {
                 use aes::{cipher::KeyInit as _, Aes128};
                 use usb_classes::scsi::xts::Ciphers;
@@ -151,40 +149,15 @@ impl Classes for NkClasses {
 
     #[cfg(feature = "usb-storage")]
     fn poll(&mut self) {
-        use trussed_usbip::usb_device::device::UsbDeviceState;
         use usb_classes::scsi::EncryptedBlockDevice;
 
         self.classes.poll();
 
-        // A bus reset abandons any transfer that was in flight.
-        if self.classes.usbd.state() == UsbDeviceState::Default {
-            self.storage.state.reset();
-        }
-
-        // One `poll_command` per transport poll, and `UsbDevice::poll` did one
-        // too: a from-host phase ending strands undrained data in the buffer.
-        for _ in 0..2 {
-            let result = self.classes.scsi.poll_command(|command| {
-                if let Some(xts) = self.storage.xts.as_mut() {
-                    usb_classes::scsi::process_command(
-                        command,
-                        Some(&mut EncryptedBlockDevice::new(
-                            &mut self.storage.device,
-                            xts,
-                        )),
-                        &mut self.storage.state,
-                    )
-                } else {
-                    usb_classes::scsi::process_command(
-                        command,
-                        Some(&mut self.storage.device),
-                        &mut self.storage.state,
-                    )
-                }
-            });
-            if let Err(err) = result {
-                log::warn!("storage: {err:?}");
-            }
+        if let Some(xts) = self.storage.xts.as_mut() {
+            let block_device = EncryptedBlockDevice::new(&mut self.storage.device, xts);
+            self.classes.poll_scsi(Some(block_device));
+        } else {
+            self.classes.poll_scsi(Some(&mut self.storage.device));
         }
     }
 

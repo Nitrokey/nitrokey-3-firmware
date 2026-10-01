@@ -56,7 +56,7 @@ pub fn poll_usb<B, D, FA, FB, TA, TB, E, R>(
     usb_classes.poll();
 
     #[cfg(feature = "board-nkso3")]
-    usb_storage.poll(&mut usb_classes.usbd, &mut usb_classes.scsi, _force_reset);
+    usb_storage.poll(usb_classes, _force_reset);
 
     if let Some(ccid) = &mut usb_classes.ccid {
         maybe_spawn_ccid(ccid.did_start_processing(), ccid_spawner);
