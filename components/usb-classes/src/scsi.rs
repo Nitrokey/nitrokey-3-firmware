@@ -1,7 +1,5 @@
 //! USB mass storage, exposed as a SCSI block device over Bulk Only Transport.
 
-#[cfg(feature = "stm32n657")]
-pub mod stm32n657_sdmmc;
 pub mod xts;
 
 use core::convert::Infallible;

@@ -1,10 +1,12 @@
 use crate::soc::stm32n6::mmc::{self, Mmc};
 
 use interchange::{Channel, Requester, Responder};
-use stm32n657_hal::cryp::{self, Cryp};
-use usb_classes::scsi::{
-    stm32n657_sdmmc::MmcStorage, xts::Xts128, EncryptedBlockDevice, Scsi, State, BLOCK_SIZE,
+use stm32n657_hal::{
+    cryp::{self, Cryp},
+    mmc::{MmcMaster, MmcPins},
+    sdmmc::{Enabled, Error, SdMmc},
 };
+use usb_classes::scsi::{xts::Xts128, BlockDevice, EncryptedBlockDevice, Scsi, State, BLOCK_SIZE};
 use usb_device::{
     bus::UsbBus,
     device::{UsbDevice, UsbDeviceState},
@@ -52,6 +54,44 @@ impl storage_app::Storage for Storage {
     fn lock(&mut self) -> Result<(), storage_app::Error> {
         info!("Storage locked");
         self.send(StorageAction::Lock)
+    }
+}
+pub struct MmcStorage<P, Pins> {
+    mmc: MmcMaster<P, Pins, Enabled>,
+}
+
+impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcStorage<P, Pins> {
+    pub fn new(mmc: MmcMaster<P, Pins, Enabled>) -> Self {
+        Self { mmc }
+    }
+}
+
+impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> BlockDevice for MmcStorage<P, Pins> {
+    type Error = Error;
+    fn blocks(&self) -> u32 {
+        self.mmc.block_count()
+    }
+
+    fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        self.read_blocks(lba, core::slice::from_mut(buf))
+    }
+    fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), Self::Error> {
+        self.write_blocks(lba, core::slice::from_mut(buf))
+    }
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        if lba + buf.len() as u32 >= self.blocks() {
+            error!("Reading out of bounds");
+        }
+
+        self.mmc.read_blocks(buf, lba)
+    }
+
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
+        if lba + buf.len() as u32 >= self.blocks() {
+            error!("Writing out of bounds");
+        }
+        self.mmc.write_blocks(buf, lba)
     }
 }
 

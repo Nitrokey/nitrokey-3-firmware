@@ -4119,7 +4119,6 @@ dependencies = [
  "embedded-time",
  "heapless 0.9.1",
  "ref-swap",
- "stm32n657-hal",
  "trussed-core",
  "usb-device 0.3.2",
  "usbd-ccid",
