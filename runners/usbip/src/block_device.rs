@@ -4,6 +4,7 @@ use std::{
     fs::OpenOptions,
     io::{self, Read, Seek, SeekFrom, Write},
     path::Path,
+    slice,
 };
 
 use log::info;
@@ -30,7 +31,7 @@ impl storage_app::Storage for Storage {
 
 enum Backing {
     File(std::fs::File),
-    Memory(Vec<u8>),
+    Memory(Vec<[u8; BLOCK_SIZE]>),
 }
 
 /// A fixed-size block device, optionally encrypted on the fly.
@@ -42,25 +43,21 @@ pub struct HostBlockDevice {
 impl HostBlockDevice {
     /// Opens `path` as a file image, or uses memory when `None`.
     pub fn open(path: Option<&Path>, blocks: u32) -> io::Result<Self> {
-        let len = blocks as u64 * BLOCK_SIZE as u64;
-
-        let backing = match path {
-            Some(path) => {
-                let file = OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .create(true)
-                    .truncate(false)
-                    .open(path)?;
-                // Fixes the size on first use; an existing image keeps its data.
-                file.set_len(len)?;
-                log::info!("storage image: {}", path.display());
-                Backing::File(file)
-            }
-            None => {
-                log::info!("storage in memory");
-                Backing::Memory(vec![0; len as usize])
-            }
+        let backing = if let Some(path) = path {
+            let len = blocks as u64 * BLOCK_SIZE as u64;
+            let file = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(true)
+                .truncate(false)
+                .open(path)?;
+            // Fixes the size on first use; an existing image keeps its data.
+            file.set_len(len)?;
+            log::info!("storage image: {}", path.display());
+            Backing::File(file)
+        } else {
+            log::info!("storage in memory");
+            Backing::Memory(vec![[0x00; BLOCK_SIZE]; blocks as usize])
         };
 
         Ok(Self { backing, blocks })
@@ -79,31 +76,41 @@ impl BlockDevice for HostBlockDevice {
     }
 
     fn read_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
-        let offset = Self::offset(lba);
+        self.read_blocks(lba, slice::from_mut(buf))
+    }
+
+    fn read_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> io::Result<()> {
         match &mut self.backing {
             Backing::File(file) => {
+                let buf = buf.as_flattened_mut();
+                let offset = Self::offset(lba);
                 file.seek(SeekFrom::Start(offset))?;
                 file.read_exact(buf)?;
             }
             Backing::Memory(mem) => {
-                let offset = offset as usize;
-                buf.copy_from_slice(&mem[offset..][..BLOCK_SIZE]);
+                let block = usize::try_from(lba).unwrap();
+                buf.copy_from_slice(&mem[block..][..buf.len()]);
             }
         }
         Ok(())
     }
 
     fn write_block(&mut self, lba: u32, buf: &mut [u8; BLOCK_SIZE]) -> io::Result<()> {
-        let offset = Self::offset(lba);
+        self.write_blocks(lba, slice::from_mut(buf))
+    }
+
+    fn write_blocks(&mut self, lba: u32, buf: &mut [[u8; BLOCK_SIZE]]) -> Result<(), Self::Error> {
         match &mut self.backing {
             Backing::File(file) => {
+                let buf = buf.as_flattened();
+                let offset = Self::offset(lba);
                 file.seek(SeekFrom::Start(offset))?;
                 file.write_all(buf)?;
                 file.flush()
             }
             Backing::Memory(mem) => {
-                let offset = offset as usize;
-                mem[offset..offset + buf.len()].copy_from_slice(buf);
+                let block = usize::try_from(lba).unwrap();
+                mem[block..][..buf.len()].copy_from_slice(buf);
                 Ok(())
             }
         }
