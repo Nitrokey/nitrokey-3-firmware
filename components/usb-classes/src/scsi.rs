@@ -2,12 +2,12 @@
 
 pub mod xts;
 
-use core::{borrow::BorrowMut, convert::Infallible};
+use core::convert::Infallible;
 
 use usb_device::bus::{UsbBus, UsbBusAllocator};
 use usbd_storage::{
     subclass::{
-        scsi::{Scsi, ScsiCommand},
+        scsi::{self, ScsiCommand},
         Command,
     },
     transport::{
@@ -127,7 +127,7 @@ impl From<ProtocolError> for SenseData {
     }
 }
 
-pub type StorageClass<'bus, B, Buf> = Scsi<BulkOnly<'bus, B, Buf>>;
+pub type Scsi<'bus, B> = scsi::Scsi<BulkOnly<'bus, B, [u8; BLOCK_SIZE]>>;
 
 /// A fixed-size block device backing the SCSI logical unit.
 pub trait BlockDevice {
@@ -269,14 +269,10 @@ impl State {
 }
 
 /// Allocates the mass storage class.
-///
-/// `packet_size` must be 512 when the device enumerates at high speed.
-pub fn setup<B: UsbBus, Buf: BorrowMut<[u8]>>(
-    bus: &UsbBusAllocator<B>,
-    packet_size: u16,
-    buf: Buf,
-) -> StorageClass<'_, B, Buf> {
-    Scsi::new(bus, packet_size, MAX_LUN, buf).expect("failed to allocate USB mass storage class")
+pub fn setup<B: UsbBus>(bus: &UsbBusAllocator<B>) -> Scsi<'_, B> {
+    // `packet_size` must be 512 when the device enumerates at high speed.
+    const PACKET_SIZE: u16 = 512;
+    Scsi::new(bus, PACKET_SIZE, MAX_LUN, [0; _]).expect("failed to allocate USB mass storage class")
 }
 
 /// True if `[lba, lba + count)` lies within the device.
@@ -286,14 +282,13 @@ fn in_bounds<D: BlockDevice>(device: &D, lba: u32, count: u32) -> bool {
 }
 
 /// Handles one SCSI command against `device`.
-pub fn process_command<B, Buf, D>(
-    mut command: Command<ScsiCommand, StorageClass<'_, B, Buf>>,
+pub fn process_command<B, D>(
+    mut command: Command<ScsiCommand, Scsi<'_, B>>,
     device: &mut D,
     state: &mut State,
 ) -> Result<(), TransportError<BulkOnlyError>>
 where
     B: UsbBus,
-    Buf: BorrowMut<[u8]>,
     D: BlockDevice,
 {
     debug!("storage: {:?}", command.kind);

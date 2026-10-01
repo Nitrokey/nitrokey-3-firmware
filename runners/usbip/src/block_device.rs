@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use usb_classes::storage::{BlockDevice, BLOCK_SIZE};
+use usb_classes::scsi::{BlockDevice, BLOCK_SIZE};
 
 enum Backing {
     File(std::fs::File),

@@ -39,4 +39,4 @@ provisioner = ["apps/nk3-provisioner"]
 ccid = []
 
 # SCSI block device over USB/IP
-usb-storage = ["usb-classes/storage", "dep:aes"]
+usb-storage = ["usb-classes/scsi", "dep:aes"]

@@ -15,7 +15,7 @@ usb-device.workspace = true
 usbd-ccid.workspace = true
 usbd-ctaphid.workspace = true
 
-# storage
+# scsi
 cipher = { version = "0.4", optional = true }
 usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
 
@@ -31,7 +31,7 @@ highspeed-usb = ["usbd-ccid/highspeed-usb"]
 
 # SCSI mass storage over Bulk Only Transport. The block device backing it is
 # provided by the runner.
-storage = ["dep:cipher", "dep:usbd-storage"]
+scsi = ["dep:cipher", "dep:usbd-storage"]
 
 log-all = []
 log-none = []
