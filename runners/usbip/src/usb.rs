@@ -30,10 +30,9 @@ const BLOCKS: u32 = 16384;
 
 #[cfg(feature = "usb-storage")]
 struct Storage {
-    scsi: usb_classes::storage::StorageClass<'static, UsbIpBus, Vec<u8>>,
     device: crate::block_device::HostBlockDevice,
-    state: usb_classes::storage::State,
-    xts: Option<usb_classes::storage::xts::Ciphers<aes::Aes128, aes::Aes128>>,
+    state: usb_classes::scsi::State,
+    xts: Option<usb_classes::scsi::xts::Ciphers<aes::Aes128, aes::Aes128>>,
 }
 
 pub struct NkSetup {
@@ -91,8 +90,6 @@ impl Setup<Dispatch> for NkSetup {
         // Must precede `build`, which freezes the allocator.
         #[cfg(feature = "usb-storage")]
         let storage = Storage {
-            // usbip-device enumerates as high speed, so bulk endpoints are 512.
-            scsi: usb_classes::storage::setup(allocator, 512, vec![0; 512]),
             device: crate::block_device::HostBlockDevice::open(
                 self.block_device.as_deref(),
                 BLOCKS,
@@ -101,7 +98,7 @@ impl Setup<Dispatch> for NkSetup {
             state: Default::default(),
             xts: self.block_device_key.map(|key| {
                 use aes::{cipher::KeyInit as _, Aes128};
-                use usb_classes::storage::xts::Ciphers;
+                use usb_classes::scsi::xts::Ciphers;
 
                 log::info!("storage encryption: AES-128 XTS");
                 let ([key1, key2], []) = key.as_chunks() else {
@@ -155,31 +152,33 @@ impl Classes for NkClasses {
     #[cfg(feature = "usb-storage")]
     fn poll(&mut self) {
         use trussed_usbip::usb_device::device::UsbDeviceState;
-        use usb_classes::storage::EncryptedBlockDevice;
+        use usb_classes::scsi::EncryptedBlockDevice;
 
-        let storage = &mut self.storage;
-        self.classes.poll_with(&mut [&mut storage.scsi]);
+        self.classes.poll();
 
         // A bus reset abandons any transfer that was in flight.
         if self.classes.usbd.state() == UsbDeviceState::Default {
-            storage.state.reset();
+            self.storage.state.reset();
         }
 
         // One `poll_command` per transport poll, and `UsbDevice::poll` did one
         // too: a from-host phase ending strands undrained data in the buffer.
         for _ in 0..2 {
-            let result = storage.scsi.poll_command(|command| {
-                if let Some(xts) = storage.xts.as_mut() {
-                    usb_classes::storage::process_command(
+            let result = self.classes.scsi.poll_command(|command| {
+                if let Some(xts) = self.storage.xts.as_mut() {
+                    usb_classes::scsi::process_command(
                         command,
-                        Some(&mut EncryptedBlockDevice::new(&mut storage.device, xts)),
-                        &mut storage.state,
+                        Some(&mut EncryptedBlockDevice::new(
+                            &mut self.storage.device,
+                            xts,
+                        )),
+                        &mut self.storage.state,
                     )
                 } else {
-                    usb_classes::storage::process_command(
+                    usb_classes::scsi::process_command(
                         command,
-                        Some(&mut storage.device),
-                        &mut storage.state,
+                        Some(&mut self.storage.device),
+                        &mut self.storage.state,
                     )
                 }
             });

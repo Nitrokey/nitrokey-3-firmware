@@ -26,7 +26,7 @@ mod app {
         init::{CtaphidDispatch, Resources, UsbClasses},
         nkso3::{self, Storage, StorageChannel, UsbStorage, NKSO3},
         runtime,
-        soc::{self, monotonic::SystickMonotonic, stm32n6},
+        soc::{monotonic::SystickMonotonic, stm32n6},
         store, Apps, Trussed,
     };
     use embedded_runner_lib::{VERSION, VERSION_STRING};
@@ -58,7 +58,7 @@ mod app {
         apdu_dispatch: ApduDispatch<'static>,
         ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
         usb_classes: Option<UsbClasses<Soc>>,
-        usb_storage: Option<UsbStorage<'static, <Soc as soc::Soc>::UsbBus>>,
+        usb_storage: Option<UsbStorage<'static>>,
         usb_timer: Option<MillisecondsCounter<Tim6>>,
     }
 

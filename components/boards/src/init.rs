@@ -109,7 +109,7 @@ pub struct UsbNfc<B: Board> {
     pub ctaphid_dispatch: CtaphidDispatch<'static, 'static>,
     pub iso14443: Option<Iso14443<B::NfcDevice>>,
     #[cfg(feature = "board-nkso3")]
-    pub usb_storage: Option<crate::nkso3::UsbStorage<'static, <B::Soc as Soc>::UsbBus>>,
+    pub usb_storage: Option<crate::nkso3::UsbStorage<'static>>,
 }
 
 const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
@@ -144,7 +144,7 @@ pub fn init_usb_nfc<B: Board>(
     if let Some(usb_bus) = usb_bus {
         let usb_bus = resources.usb_bus.insert(usb_bus);
         #[cfg(feature = "board-nkso3")]
-        let storage = crate::nkso3::UsbStorage::new(usb_bus, mmc, cryp, storage_rp);
+        let storage = crate::nkso3::UsbStorage::new(mmc, cryp, storage_rp);
         let usb_classes = usb_classes::build(
             usb_bus,
             Some(usb_classes::CcidConfig {

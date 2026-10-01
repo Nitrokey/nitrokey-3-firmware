@@ -2,11 +2,11 @@ use crate::soc::stm32n6::mmc::{self, Mmc};
 
 use interchange::{Channel, Requester, Responder};
 use stm32n657_hal::cryp::{self, Cryp};
-use usb_classes::storage::{
-    stm32n657_sdmmc::MmcStorage, xts::Xts128, EncryptedBlockDevice, State, StorageClass, BLOCK_SIZE,
+use usb_classes::scsi::{
+    stm32n657_sdmmc::MmcStorage, xts::Xts128, EncryptedBlockDevice, Scsi, State, BLOCK_SIZE,
 };
 use usb_device::{
-    bus::{UsbBus, UsbBusAllocator},
+    bus::UsbBus,
     device::{UsbDevice, UsbDeviceState},
     UsbError,
 };
@@ -154,23 +154,16 @@ impl EncryptionState {
     }
 }
 
-pub struct UsbStorage<'a, B: UsbBus> {
-    pub scsi: StorageClass<'a, B, [u8; 512]>,
+pub struct UsbStorage<'a> {
     state: State,
     block_device: MmcStorage<mmc::Peripheral, mmc::Pins>,
     responder: StorageResponder<'a>,
     encryption: EncryptionState,
 }
 
-impl<'a, B: UsbBus> UsbStorage<'a, B> {
-    pub fn new(
-        usb_bus: &'a UsbBusAllocator<B>,
-        mmc: Mmc,
-        cryp: Cryp,
-        responder: StorageResponder<'a>,
-    ) -> Self {
+impl<'a> UsbStorage<'a> {
+    pub fn new(mmc: Mmc, cryp: Cryp, responder: StorageResponder<'a>) -> Self {
         Self {
-            scsi: usb_classes::storage::setup(usb_bus, 512, [0; 512]),
             state: State::default(),
             block_device: MmcStorage::new(mmc),
             responder,
@@ -178,8 +171,13 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
         }
     }
 
-    pub fn poll<F>(&mut self, device: &mut UsbDevice<'_, B>, force_reset: F)
-    where
+    pub fn poll<B, F>(
+        &mut self,
+        device: &mut UsbDevice<'_, B>,
+        scsi: &mut Scsi<'_, B>,
+        force_reset: F,
+    ) where
+        B: UsbBus,
         F: FnOnce(&mut UsbDevice<'_, B>) -> usb_device::Result<()>,
     {
         if let Some(action) = self.responder.take_request() {
@@ -200,22 +198,18 @@ impl<'a, B: UsbBus> UsbStorage<'a, B> {
         // One `poll_command` per transport poll, and `UsbDevice::poll` did one
         // too: a from-host phase ending strands undrained data in the buffer.
         for _ in 0..2 {
-            let result = self.scsi.poll_command(|command| {
+            let result = scsi.poll_command(|command| {
                 let mut block_device = self
                     .encryption
                     .xts()
                     .map(|xts| EncryptedBlockDevice::new(&mut self.block_device, xts));
-                usb_classes::storage::process_command(
-                    command,
-                    block_device.as_mut(),
-                    &mut self.state,
-                )
+                usb_classes::scsi::process_command(command, block_device.as_mut(), &mut self.state)
             });
             // WouldBlock is routine here: the transport polls the endpoint after the callback
             if let Err(_err) = result {
                 if !matches!(
                     _err,
-                    usb_classes::storage::StorageTransportError::Usb(UsbError::WouldBlock)
+                    usb_classes::scsi::StorageTransportError::Usb(UsbError::WouldBlock)
                 ) {
                     warn_now!("storage: transport {_err:?}");
                 }

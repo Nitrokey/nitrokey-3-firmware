@@ -8,8 +8,8 @@
 
 delog::generate_macros!();
 
-#[cfg(feature = "storage")]
-pub mod storage;
+#[cfg(feature = "scsi")]
+pub mod scsi;
 
 use apdu_dispatch::interchanges::{Requester as CcidRequester, SIZE as CCID_SIZE};
 use ctaphid_dispatch::Requester as CtapRequester;
@@ -26,8 +26,8 @@ use usb_device::{
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
 
-/// CCID, CTAPHID and one caller-supplied class.
-const MAX_CLASSES: usize = 3;
+/// CCID, CTAPHID and maybe SCSI.
+const MAX_CLASSES: usize = 2 + if cfg!(feature = "scsi") { 1 } else { 0 };
 
 /// Identification and descriptor settings for the USB device.
 pub struct Config<'a> {
@@ -46,11 +46,13 @@ pub struct CcidConfig<'a> {
     pub card_issuer: Option<&'a [u8]>,
 }
 
-/// The USB device together with the CTAPHID class and, optionally, CCID.
+/// The USB device together with the CTAPHID class and, optionally, CCID and/or SCSI.
 pub struct UsbClasses<B: UsbBus + 'static, const CTAP_N: usize> {
     pub usbd: UsbDevice<'static, B>,
     pub ccid: Option<Ccid<'static, 'static, B, CCID_SIZE>>,
     pub ctaphid: CtapHid<'static, 'static, 'static, B, CTAP_N>,
+    #[cfg(feature = "scsi")]
+    pub scsi: scsi::Scsi<'static, B>,
 }
 
 impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
@@ -59,12 +61,6 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
     /// [`UsbDevice::poll`] only polls classes on bus activity, so queued
     /// application responses have to be picked up first.
     pub fn poll(&mut self) {
-        self.poll_with(&mut []);
-    }
-
-    /// As [`UsbClasses::poll`], additionally polling caller-owned classes such
-    /// as mass storage.
-    pub fn poll_with(&mut self, extra: &mut [&mut dyn UsbClass<B>]) {
         self.ctaphid.check_for_app_response();
         if let Some(ccid) = &mut self.ccid {
             ccid.check_for_app_response();
@@ -75,9 +71,8 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<B, CTAP_N> {
             classes.push(ccid).ok();
         }
         classes.push(&mut self.ctaphid).ok();
-        for class in extra {
-            classes.push(&mut **class).ok();
-        }
+        #[cfg(feature = "scsi")]
+        classes.push(&mut self.scsi).ok();
 
         self.usbd.poll(&mut classes);
     }
@@ -99,6 +94,8 @@ pub fn build<B: UsbBus + 'static, const CTAP_N: usize>(
         .implements_ctap1()
         .implements_ctap2()
         .implements_wink();
+    #[cfg(feature = "scsi")]
+    let scsi = scsi::setup(bus);
 
     let strings = StringDescriptors::new(LangID::EN)
         .product(config.product)
@@ -116,6 +113,8 @@ pub fn build<B: UsbBus + 'static, const CTAP_N: usize>(
         usbd,
         ccid,
         ctaphid,
+        #[cfg(feature = "scsi")]
+        scsi,
     }
 }
 

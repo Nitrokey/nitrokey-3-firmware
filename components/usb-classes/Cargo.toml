@@ -16,7 +16,7 @@ usbd-ccid = "0.5"
 usbd-ctaphid = "0.5"
 stm32n657-hal = { path = "../stm32n657-hal", optional = true }
 
-# storage
+# scsi
 cipher = { version = "0.5", optional = true }
 usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true }
 
@@ -25,14 +25,14 @@ aes = "0.9"
 xts-mode = "0.6"
 
 [features]
-default = ["stm32n657", "storage"]
+default = ["stm32n657", "scsi"]
 
 # 512-byte CCID bulk endpoints, as required when enumerating at high speed.
 highspeed-usb = ["usbd-ccid/highspeed-usb"]
 
 # SCSI mass storage over Bulk Only Transport. The block device backing it is
 # provided by the runner.
-storage = ["dep:cipher", "dep:usbd-storage"]
+scsi = ["dep:cipher", "dep:usbd-storage"]
 
 stm32n657 = ["dep:stm32n657-hal"]
 

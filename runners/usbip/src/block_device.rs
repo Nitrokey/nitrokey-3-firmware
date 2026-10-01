@@ -8,7 +8,7 @@ use std::{
 };
 
 use log::info;
-use usb_classes::storage::{BlockDevice, BLOCK_SIZE};
+use usb_classes::scsi::{BlockDevice, BLOCK_SIZE};
 
 pub struct Storage;
 
