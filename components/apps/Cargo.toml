@@ -81,8 +81,7 @@ log-debug = []
 log-trace = []
 log-none = []
 
-trussed-usbip = ["dep:trussed-usbip", "backend-rsa", "trussed-rsa-alloc/raw"]
-trussed-usbip-ccid = ["backend-software-hpke"]
+trussed-usbip = ["dep:trussed-usbip", "backend-rsa", "backend-software-hpke", "trussed-rsa-alloc/raw"]
 
 factory-reset = ["admin-app/factory-reset"]
 

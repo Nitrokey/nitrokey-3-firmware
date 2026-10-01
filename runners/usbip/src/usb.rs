@@ -30,6 +30,7 @@ pub struct NkSetup {
     pub vid: u16,
     pub pid: u16,
     pub device_release: u16,
+    pub ccid: bool,
 }
 
 pub struct NkClasses<'a> {
@@ -59,7 +60,7 @@ impl Setup<Dispatch> for NkSetup {
         let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
         let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
-        let ccid = if cfg!(feature = "ccid") {
+        let ccid = if self.ccid {
             Some(usb_classes::CcidConfig {
                 requester: ccid_rq,
                 card_issuer: Some(CARD_ISSUER),

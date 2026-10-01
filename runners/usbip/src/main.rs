@@ -34,6 +34,10 @@ struct Args {
     #[clap(short, long, value_parser(maybe_hex::<u128>))]
     serial: Option<u128>,
 
+    /// Enable CCID transport.
+    #[clap(long)]
+    ccid: bool,
+
     /// Internal file system (default: use RAM).
     #[clap(short, long)]
     ifs: Option<PathBuf>,
@@ -120,7 +124,7 @@ fn main() {
 
     let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store, args.serial, user_presence)
+    exec(store, args.serial, user_presence, args.ccid)
 }
 
 fn print_version() {
@@ -140,7 +144,7 @@ fn print_version() {
     println!();
 }
 
-fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence) {
+fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence, ccid: bool) {
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {
@@ -188,6 +192,7 @@ fn exec(store: Store, serial: Option<u128>, user_presence: UserPresence) {
         vid: VID,
         pid: PID,
         device_release: VERSION.usb_release(),
+        ccid,
     };
 
     trussed_usbip::Builder::with_usb_classes(usb_setup)
