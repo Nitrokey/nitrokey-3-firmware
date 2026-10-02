@@ -32,21 +32,14 @@ pub struct CardInfo {
     log_block_size: u32,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub enum CardKind {
-    #[default]
-    Mmc,
-    Sd,
-}
-
 const POWER_UP_DELAY_CYCLES: u32 = 64_000;
 const DATA_POLL_LIMIT: u32 = sdmmc::calc_timeout(5000);
 /// polls after write/erase
 const CARD_READY_POLL_LIMIT: u32 = 100_000;
 /// identification clock limit
 const INIT_CLOCK: Rate = Rate::kHz(400);
-/// default speed data clock limit
-const DATA_CLOCK: Rate = Rate::MHz(50);
+/// HS_TIMING stays 0, FEMDMExxxG-A8A58 6.9 allows up to 20 MHz then
+const DATA_CLOCK: Rate = Rate::MHz(20);
 
 /// CLKDIV so that SDMMC_CK = sdmmc_ker_ck / (2 * CLKDIV) <= target; 0 = bypass
 fn clock_div(kernel: Rate, target: Rate) -> u16 {
@@ -54,11 +47,11 @@ fn clock_div(kernel: Rate, target: Rate) -> u16 {
 }
 /// R1 CURRENT_STATE [12:9] = transfer state
 const CARD_STATE_TRANSFER: u32 = 4;
+const MMC_RCA: u16 = 2;
 
 pub struct MmcMaster<P, Pins, S> {
     sdmmc: SdMmcMaster<P, S>,
     state: State,
-    kind: CardKind,
     card_info: CardInfo,
     cid: [u32; 4],
     csd: [u32; 4],
@@ -100,7 +93,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             errorstate: Error::empty(),
             sdmmc: SdMmcMaster::new(peripheral),
             state: State::Reset,
-            kind: CardKind::default(),
             card_info: CardInfo::default(),
             cid: [0; 4],
             csd: [0; 4],
@@ -111,12 +103,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
     }
 
     /// `max_clock` caps the data clock
-    pub fn enable(
-        self,
-        rcc: &Rcc,
-        kind: CardKind,
-        max_clock: Rate,
-    ) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
+    pub fn enable(self, rcc: &Rcc, max_clock: Rate) -> Result<MmcMaster<P, Pins, Enabled>, Error> {
         let kernel = self.sdmmc.peripheral.kernel_clock(rcc);
         let init_div = clock_div(kernel, INIT_CLOCK);
         let data_div = clock_div(kernel, max_clock.min(DATA_CLOCK));
@@ -143,7 +130,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             errorstate: Error::empty(),
             sdmmc,
             state: State::Ready,
-            kind,
             card_info: CardInfo::default(),
             cid: [0; 4],
             csd: [0; 4],
@@ -154,27 +140,18 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         this.sdmmc.power_state_on();
         cortex_m::asm::delay(POWER_UP_DELAY_CYCLES);
 
-        match kind {
-            CardKind::Mmc => {
-                this.power_on()?;
-                this.init_card()?;
-                this.enable_wide_bus()?;
-            }
-            CardKind::Sd => {
-                this.power_on_sd()?;
-                this.init_card_sd()?;
-                this.enable_wide_bus_sd()?;
-                let init = sdmmc::SdMMCInit {
-                    clock_edge: sdmmc::ClockEdge::Rising,
-                    clock_power_save: sdmmc::ClockPowerSave::Disable,
-                    bus_wide: this.pins.width(),
-                    hardware_flow_control: sdmmc::HardwareFlowControl::Enable,
-                    clock_div: data_div,
-                    is_transceiver_present: 0,
-                };
-                this.sdmmc.init(init);
-            }
-        }
+        this.power_on()?;
+        this.init_card()?;
+        this.enable_wide_bus()?;
+        let init = sdmmc::SdMMCInit {
+            clock_edge: sdmmc::ClockEdge::Rising,
+            clock_power_save: sdmmc::ClockPowerSave::Disable,
+            bus_wide: this.pins.width(),
+            hardware_flow_control: sdmmc::HardwareFlowControl::Enable,
+            clock_div: data_div,
+            is_transceiver_present: 0,
+        };
+        this.sdmmc.init(init);
 
         if let Err(err) = this.sdmmc.cmd_block_len(BLOCK_SIZE) {
             this.sdmmc.clear_static_flags();
@@ -183,8 +160,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
             return Err(err);
         }
         info_now!(
-            "{:?} card enabled: {:?} bus, {} blocks of {} bytes",
-            this.kind,
+            "mmc enabled: {:?} bus, {} blocks of {} bytes",
             this.pins.width(),
             this.card_info.log_block_number,
             this.card_info.log_block_size
@@ -193,93 +169,82 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
     }
 }
 
-#[derive(Default)]
-struct Scr {
-    value: [u32; 2],
-}
-
-impl Scr {
-    fn wide_bus_support(&self) -> bool {
-        self.value[1] & 0x00010000 != 0
-    }
-}
-
 #[expect(unused)]
 #[derive(Default)]
 struct Csd {
-    /// CSD structure                         
+    /// CSD structure
     csd_struct: u8,
-    ///System specification version          
+    ///System specification version
     sys_spec_version: u8,
-    /// Reserved                              
+    /// Reserved
     reserved1: u8,
-    /// Data read access time 1               
+    /// Data read access time 1
     taac: u8,
     /// Data read access time 2 in CLK cycles
     nsac: u8,
-    /// Max. bus clock frequency              
+    /// Max. bus clock frequency
     max_bus_clk_frec: u8,
-    /// Card command classes                  
+    /// Card command classes
     card_comd_classes: u16,
-    ///Max. read data block length           
+    ///Max. read data block length
     rd_block_len: u8,
-    /// Partial blocks for read allowed       
+    /// Partial blocks for read allowed
     part_block_read: u8,
-    /// Write block misalignment              
+    /// Write block misalignment
     wr_block_misalign: u8,
-    /// Read block misalignment               
+    /// Read block misalignment
     rd_block_misalign: u8,
-    /// DSR implemented                       
+    /// DSR implemented
     dsr_impl: u8,
-    /// Reserved                              
+    /// Reserved
     reserved2: u8,
-    /// Device Size                           
+    /// Device Size
     device_size: u32,
-    ///Max. read current @ VDD min           
+    ///Max. read current @ VDD min
     max_rd_current_vdd_min: u8,
-    /// Max. read current @ VDD max           
+    /// Max. read current @ VDD max
     max_rd_current_vdd_max: u8,
-    /// Max. write current @ VDD min          
+    /// Max. write current @ VDD min
     max_wr_current_vdd_min: u8,
-    /// Max. write current @ VDD max          
+    /// Max. write current @ VDD max
     max_wr_current_vdd_max: u8,
-    /// Device size multiplier                
+    /// Device size multiplier
     device_size_mul: u8,
-    /// Erase group size                      
+    /// Erase group size
     erase_gr_size: u8,
-    /// Erase group size multiplier           
+    /// Erase group size multiplier
     erase_gr_mul: u8,
-    /// Write protect group size              
+    /// Write protect group size
     wr_protect_gr_size: u8,
-    /// Write protect group enable            
+    /// Write protect group enable
     wr_protect_gr_enable: u8,
-    /// Manufacturer default ECC              
+    /// Manufacturer default ECC
     man_defl_ec_c: u8,
-    /// Write speed factor                    
+    /// Write speed factor
     wr_speed_fact: u8,
-    /// Max. write data block length          
+    /// Max. write data block length
     max_wr_block_len: u8,
-    /// Partial blocks for write allowed      
+    /// Partial blocks for write allowed
     write_block_pa_partial: u8,
-    /// Reserved                              
+    /// Reserved
     reserved3: u8,
-    /// Content protection application        
+    /// Content protection application
     content_protect_appli: u8,
-    /// File format group                     
+    /// File format group
     file_format_group: u8,
-    /// Copy flag (OTP)                       
+    /// Copy flag (OTP)
     copy_flag: u8,
-    /// Permanent write protection            
+    /// Permanent write protection
     perm_wr_protect: u8,
-    /// Temporary write protection            
+    /// Temporary write protection
     temp_wr_protect: u8,
-    /// File format                           
+    /// File format
     file_format: u8,
-    /// ECC code                              
+    /// ECC code
     ecc: u8,
-    /// CSD CRC                               
+    /// CSD CRC
     csd_crc: u8,
-    /// Always 1                              
+    /// Always 1
     reserved4: u8,
 }
 impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
@@ -313,91 +278,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         Ok(())
     }
 
-    /// sd power on
-    fn power_on_sd(&mut self) -> Result<(), Error> {
-        self.sdmmc.cmd_go_idle_state()?;
-
-        self.sdmmc.cmd_oper_cond()?;
-
-        self.sdmmc
-            .cmd_app_command(0)
-            .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
-
-        // ACMD41: from c
-        const ACMD41_ARG: u32 = 0x8010_0000 | 0x4000_0000 | 0x0100_0000;
-        let mut count = 0u32;
-        let mut response = 0u32;
-        while count < 0xFFFF && response >> 31 == 0 {
-            self.sdmmc.cmd_app_command(0)?;
-            self.sdmmc
-                .cmd_app_oper_command(ACMD41_ARG)
-                .map_err(|_| Error::UNSUPPORTED_FEATURE)?;
-            response = self.sdmmc.get_response(Resp::Resp1).bits();
-            count += 1;
-        }
-        if count >= 0xFFFF {
-            return Err(Error::INVALID_VOLTRANGE);
-        }
-        info_now!("ACMD41 {:#010x} - {} tries", response, count);
-
-        // high capa only (todo?)
-        self.card_info.card_type = CardType::HighCapacity;
-        Ok(())
-    }
-
-    /// SD card init
-    fn init_card_sd(&mut self) -> Result<(), Error> {
-        if self.sdmmc.power() == PowerCtrl::Off {
-            return Err(Error::REQUEST_NOT_APPLICABLE);
-        }
-
-        // cid
-        self.sdmmc.cmd_send_cid()?;
-        self.cid[0] = self.sdmmc.get_response(Resp::Resp1).bits();
-        self.cid[1] = self.sdmmc.get_response(Resp::Resp2).bits();
-        self.cid[2] = self.sdmmc.get_response(Resp::Resp3).bits();
-        self.cid[3] = self.sdmmc.get_response(Resp::Resp4).bits();
-        info_now!("CID {:08x?}", self.cid);
-
-        // rca
-        let mut rca = 0;
-        let mut tries = 0;
-        while rca == 0 {
-            rca = self.sdmmc.cmd_set_rel_add()?;
-            tries += 1;
-            if tries > 1000 {
-                return Err(Error::TIMEOUT);
-            }
-        }
-        self.card_info.rca = rca;
-        info_now!("RCA {:#06x}", rca);
-
-        // csd
-        self.sdmmc.cmd_send_csd((rca as u32) << 16)?;
-        self.csd[0] = self.sdmmc.get_response(Resp::Resp1).bits();
-        self.csd[1] = self.sdmmc.get_response(Resp::Resp2).bits();
-        self.csd[2] = self.sdmmc.get_response(Resp::Resp3).bits();
-        self.csd[3] = self.sdmmc.get_response(Resp::Resp4).bits();
-        info_now!("CSD {:08x?}", self.csd);
-        self.card_info.class = Class::from_bits_retain(self.csd[1] >> 20);
-
-        // csd v2
-        let c_size = ((self.csd[1] & 0x0000003F) << 16) | ((self.csd[2] & 0xFFFF0000) >> 16);
-        self.card_info.block_number = (c_size + 1) * 1024;
-        self.card_info.block_size = BLOCK_SIZE;
-        self.card_info.log_block_number = self.card_info.block_number;
-        self.card_info.log_block_size = BLOCK_SIZE;
-        info_now!(
-            "sd card: {} blocks of {} bytes",
-            self.card_info.log_block_number,
-            self.card_info.log_block_size
-        );
-
-        self.sdmmc
-            .cmd_select_deselect((self.card_info.rca as u32) << 16)?;
-        Ok(())
-    }
-
     fn init_card(&mut self) -> Result<(), Error> {
         if self.sdmmc.power() == PowerCtrl::Off {
             return Err(Error::REQUEST_NOT_APPLICABLE);
@@ -409,7 +289,8 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         self.cid[2] = self.sdmmc.get_response(Resp::Resp3).bits();
         self.cid[3] = self.sdmmc.get_response(Resp::Resp4).bits();
         info_now!("CID {:08x?}", self.cid);
-        self.card_info.rca = self.sdmmc.cmd_set_rel_add()?;
+        self.card_info.rca = MMC_RCA;
+        self.sdmmc.set_rel_add_mmc(self.card_info.rca)?;
         info_now!("RCA {:#06x}", self.card_info.rca);
 
         self.sdmmc.cmd_send_csd((self.card_info.rca as u32) << 16)?;
@@ -435,6 +316,12 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         }
 
         self.ext_csd = self.get_card_ext_csd()?;
+        info_now!(
+            "EXT_CSD DATA_SECTOR_SIZE {} USE_NATIVE_SECTOR {} NATIVE_SECTOR_SIZE {}",
+            (self.ext_csd[61 / 4] >> 8) & 0xFF,
+            (self.ext_csd[62 / 4] >> 16) & 0xFF,
+            (self.ext_csd[63 / 4] >> 24) & 0xFF
+        );
 
         if let Err(err) = self
             .sdmmc
@@ -447,86 +334,15 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     }
 
     fn enable_wide_bus(&mut self) -> Result<(), Error> {
-        todo!();
-    }
-
-    fn enable_wide_bus_sd(&mut self) -> Result<(), Error> {
-        core::assert_matches!(
-            self.pins.width(),
-            BusWidth::OneBit | BusWidth::FourBit,
-            "SD card only support up to 4 bits"
-        );
-
-        let scr = self.get_card_scr_sd()?;
-        if !scr.wide_bus_support() {
-            self.sdmmc
-                .cmd_app_command((self.card_info.rca as u32) << 16)?;
-            self.sdmmc.cmd_bus_width(match self.pins.width() {
-                BusWidth::OneBit => 0,
-                BusWidth::FourBit => 2,
-                BusWidth::EightBit => unreachable!(),
-            })?;
-        }
-
-        Ok(())
-    }
-
-    fn get_card_scr_sd(&mut self) -> Result<Scr, Error> {
+        let width: u32 = match self.pins.width() {
+            BusWidth::OneBit => return Ok(()),
+            BusWidth::FourBit => 1,
+            BusWidth::EightBit => 2,
+        };
+        // CMD6 write byte: EXT_CSD BUS_WIDTH [183] set channel width
         self.sdmmc
-            .cmd_app_command((self.card_info.rca as u32) << 16)?;
-        self.sdmmc.config_data(sdmmc::ConfigData {
-            data_time_out: 0xFFFFFFFF,
-            data_len: 8,
-            data_block_size: sdmmc::DataBlockSize::B8,
-            transfer_dir: TransferDir::ToSdMmc,
-            transfer_mode: TransferMode::Block,
-            dpsm: DpsmState::Enable,
-        });
-        self.sdmmc.cmd_send_scr()?;
-
-        let mut scr = Scr { value: [0; 2] };
-        let mut read_scr = false;
-        let mut star;
-        while {
-            star = self.sdmmc.peripheral.star().read();
-            !(star.rxoverr().bit()
-                | star.dcrcfail().bit()
-                | star.dtimeout().bit()
-                | star.dbckend().bit()
-                | star.dataend().bit())
-        } {
-            if !star.rxfifoe().bit() && !read_scr {
-                scr.value[0] = self.sdmmc.read_fifo();
-                scr.value[1] = self.sdmmc.read_fifo();
-                read_scr = true;
-            }
-        }
-
-        if star.dtimeout().bit() {
-            self.sdmmc.clear_static_flags();
-            return Err(Error::DATA_TIMEOUT);
-        }
-
-        if star.dtimeout().bit() {
-            self.sdmmc.clear_static_flags();
-            return Err(Error::DATA_TIMEOUT);
-        }
-
-        if star.dcrcfail().bit() {
-            self.sdmmc.clear_static_flags();
-            return Err(Error::DATA_CRC_FAIL);
-        }
-
-        if star.rxoverr().bit() {
-            self.sdmmc.clear_static_flags();
-            return Err(Error::RX_OVERRUN);
-        }
-        self.sdmmc.clear_static_flags();
-
-        scr.value[1] = scr.value[1].swap_bytes();
-        scr.value[0] = scr.value[0].swap_bytes();
-
-        Ok(scr)
+            .cmd_switch((0b11 << 24) | (183 << 16) | (width << 8))?;
+        self.wait_card_ready()
     }
 
     fn get_card_csd(&mut self) -> Result<Csd, Error> {
@@ -717,7 +533,9 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             self.sdmmc.data_counter()
         );
         self.sdmmc.cmd_trans_disable();
-        if multi {
+        // after DTIMEOUT the DPSM stays busy until a CPSM abort (CMD12 with CMDSTOP)
+        let dpsm_active = self.sdmmc.peripheral.star().read().dpsmact().bit();
+        if multi || dpsm_active {
             let _ = self.sdmmc.cmd_stop_transfer();
         }
         self.sdmmc
@@ -725,9 +543,20 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             .dctrl()
             .modify(|_, w| w.fiforst().bit(true));
         self.sdmmc.clear_static_flags();
+        if !multi && dpsm_active {
+            // CMD12 in TRAN state is flagged ILLEGAL_COMMAND in the next status
+            let _ = self
+                .sdmmc
+                .cmd_send_status((self.card_info.rca as u32) << 16);
+        }
         if let Err(_e) = self.wait_card_ready() {
             info_now!("abort: card not ready: {_e:?}");
         }
+        info_now!(
+            "abort: card status {:#010x}, STA {:#010x}",
+            self.sdmmc.get_response(Resp::Resp1).bits(),
+            self.sdmmc.peripheral.star().read().bits()
+        );
         self.errorstate |= err;
         self.state = State::Ready;
         err
@@ -751,10 +580,16 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             data_block_size: sdmmc::DataBlockSize::B512,
             transfer_dir: TransferDir::ToSdMmc,
             transfer_mode: TransferMode::Block,
-            dpsm: DpsmState::Enable,
+            // CMDTRANS starts the DPSM, DTEN must not be used with eMMC
+            dpsm: DpsmState::Disable,
         });
         self.sdmmc.cmd_trans_enable();
         if let Err(err) = self.sdmmc.cmd_send_ext_csd(0) {
+            info_now!(
+                "EXT_CSD CMD8 failed: {err:?}, STA {:#010x}",
+                self.sdmmc.peripheral.star().read().bits()
+            );
+            self.sdmmc.cmd_trans_disable();
             self.errorstate |= err;
             self.sdmmc.clear_static_flags();
             return Err(err);
@@ -904,10 +739,6 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
     pub fn free(mut self) -> SdMmcMaster<P, Enabled> {
         self.sdmmc.power_state_off();
         self.sdmmc
-    }
-
-    pub fn card_kind(&self) -> CardKind {
-        self.kind
     }
 
     /// Number of logic blocks addressable by `read_blocks`/`write_blocks`.
@@ -1162,6 +993,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
             return Err(Error::LOCK_UNLOCK_FAILED);
         }
 
+        // TODO: addr handling looks wrong (x8 on high capacity, end is exluded (> instead of >= ?))
         let blocks = match self.card_info.card_type {
             CardType::HighCapacity => blocks_addr.start * 8..blocks_addr.end * 8,
             CardType::LowCapacity => blocks_addr,
@@ -1236,6 +1068,7 @@ pins! {
     (PinB9, ALTERNATE_FUNCTION_11, D2, SDMMC2_S),
     (PinB13, ALTERNATE_FUNCTION_11, D6, SDMMC2_S),
     (PinC0, ALTERNATE_FUNCTION_11, D2, SDMMC2_S),
+    (PinC1, ALTERNATE_FUNCTION_10, D5, SDMMC1_S),
     (PinC1, ALTERNATE_FUNCTION_11, D5, SDMMC2_S),
     (PinC2, ALTERNATE_FUNCTION_11, Ck, SDMMC2_S),
     (PinC3, ALTERNATE_FUNCTION_11, Cmd, SDMMC2_S),

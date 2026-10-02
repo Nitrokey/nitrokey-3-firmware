@@ -92,11 +92,7 @@ pub fn run<P: SdMmc, Pins: MmcPins<Peripheral = P>>(mmc: Mmc<'_, P, Pins>, core_
         core_clock,
     };
 
-    info_now!(
-        "sdmmc tests: {:?} card, {} cases",
-        mmc.card_kind(),
-        cases.len()
-    );
+    info_now!("sdmmc tests: {} cases", cases.len());
     let mut failed = 0;
     for (i, (name, case)) in cases.iter().enumerate() {
         info_now!("sdmmc test {}/{} {}: start", i + 1, cases.len(), name);
@@ -225,8 +221,7 @@ fn card_info<P: SdMmc, Pins: MmcPins<Peripheral = P>>(
 ) -> Result<(), Failure> {
     let blocks = mmc.block_count();
     info_now!(
-        "card: {:?}, {} blocks of {} bytes ({} MiB)",
-        mmc.card_kind(),
+        "card: {} blocks of {} bytes ({} MiB)",
         blocks,
         mmc.log_block_size(),
         blocks / (1024 * 1024 / BLOCK_SIZE)

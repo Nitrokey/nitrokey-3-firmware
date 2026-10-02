@@ -21,22 +21,39 @@ pub struct Stm32n6 {
 }
 
 pub mod mmc {
-    use stm32n6::stm32n657::SDMMC2_S;
+    use stm32n6::stm32n657::SDMMC1_S;
     use stm32n657_hal::gpio::{
-        Alternate, PinC0, PinC2, PinC3, PinC4, PinC5, PinE4, PullUp, ALTERNATE_FUNCTION_11,
+        Alternate, PinC1, PinC10, PinC11, PinC12, PinC6, PinC7, PinC9, PinD11, PinH2, PinH9,
+        PullUp, ALTERNATE_FUNCTION_10,
     };
     use stm32n657_hal::mmc::MmcMaster;
     use stm32n657_hal::sdmmc::Enabled;
 
-    pub type CmdPin = PinC3<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    pub type CkPin = PinC2<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    pub type D0Pin = PinC4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    pub type D1Pin = PinC5<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    pub type D2Pin = PinC0<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
-    pub type D3Pin = PinE4<Alternate<PullUp, { ALTERNATE_FUNCTION_11 }>>;
+    // the eMMC drops its DAT1-7 pull-ups in wide bus mode, the MCU ones (30-50k) stay
+    pub type CmdPin = PinH2<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type CkPin = PinC12<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D0Pin = PinD11<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D1Pin = PinC9<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D2Pin = PinC10<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D3Pin = PinC11<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D4Pin = PinH9<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D5Pin = PinC1<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D6Pin = PinC6<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D7Pin = PinC7<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
 
-    pub type Pins = (CmdPin, CkPin, D0Pin, D1Pin, D2Pin, D3Pin);
-    pub type Peripheral = SDMMC2_S;
+    pub type Pins = (
+        CmdPin,
+        CkPin,
+        D0Pin,
+        D1Pin,
+        D2Pin,
+        D3Pin,
+        D4Pin,
+        D5Pin,
+        D6Pin,
+        D7Pin,
+    );
+    pub type Peripheral = SDMMC1_S;
 
     pub type Mmc<S = Enabled> = MmcMaster<Peripheral, Pins, S>;
 }

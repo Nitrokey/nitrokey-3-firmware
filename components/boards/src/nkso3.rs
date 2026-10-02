@@ -8,9 +8,9 @@ use littlefs2::{
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOB_S, GPIOC_S, GPIOE_S, GPIOG_S, SDMMC2_S, TIM7_S};
+use stm32n6::stm32n657::{GPIOB_S, GPIOC_S, GPIOD_S, GPIOG_S, GPIOH_S, SDMMC1_S, TIM7_S};
 use stm32n657_hal::{
-    gpio::{GpioB, GpioC, GpioE, GpioG},
+    gpio::{GpioB, GpioC, GpioD, GpioG, GpioH},
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
     timer::Tim7,
@@ -152,15 +152,17 @@ pub struct BoardGPIO {
 pub fn init_pins(
     gpiob: GPIOB_S,
     gpioc: GPIOC_S,
-    gpioe: GPIOE_S,
+    gpiod: GPIOD_S,
     gpiog: GPIOG_S,
-    sdmmc: SDMMC2_S,
+    gpioh: GPIOH_S,
+    sdmmc: SDMMC1_S,
     rcc: &Rcc,
 ) -> (BoardGPIO, Mmc<Disabled>) {
     let gpiob = GpioB::new(gpiob, rcc);
     let gpioc = GpioC::new(gpioc, rcc);
-    let gpioe = GpioE::new(gpioe, rcc);
+    let gpiod = GpioD::new(gpiod, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
+    let gpioh = GpioH::new(gpioh, rcc);
     (
         BoardGPIO {
             led: Led::init(gpiog.g10, gpiog.g1, gpiob.b10),
@@ -168,12 +170,16 @@ pub fn init_pins(
         Mmc::new(
             sdmmc,
             (
-                gpioc.c3.into_sdmmc2_cmd(),
-                gpioc.c2.into_sdmmc2_ck(),
-                gpioc.c4.into_sdmmc2_d0(),
-                gpioc.c5.into_sdmmc2_d1(),
-                gpioc.c0.into_sdmmc2_d2(),
-                gpioe.e4.into_sdmmc2_d3(),
+                gpioh.h2.into_sdmmc1_cmd(),
+                gpioc.c12.into_sdmmc1_ck(),
+                gpiod.d11.into_sdmmc1_d0(),
+                gpioc.c9.into_sdmmc1_d1(),
+                gpioc.c10.into_sdmmc1_d2(),
+                gpioc.c11.into_sdmmc1_d3(),
+                gpioh.h9.into_sdmmc1_d4(),
+                gpioc.c1.into_sdmmc1_d5(),
+                gpioc.c6.into_sdmmc1_d6(),
+                gpioc.c7.into_sdmmc1_d7(),
             ),
         ),
     )

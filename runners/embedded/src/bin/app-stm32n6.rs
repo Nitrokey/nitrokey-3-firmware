@@ -34,7 +34,6 @@ mod app {
     use interchange::Channel;
     use stm32n657_hal::{
         cryp::Cryp,
-        mmc::CardKind,
         pac::Interrupt,
         pwr::Pwr,
         rcc::Rcc,
@@ -97,9 +96,10 @@ mod app {
         let (board_gpio, mmc) = nkso3::init_pins(
             ctx.device.GPIOB_S,
             ctx.device.GPIOC_S,
-            ctx.device.GPIOE_S,
+            ctx.device.GPIOD_S,
             ctx.device.GPIOG_S,
-            ctx.device.SDMMC2_S,
+            ctx.device.GPIOH_S,
+            ctx.device.SDMMC1_S,
             &rcc,
         );
 
@@ -107,11 +107,9 @@ mod app {
         pwr.enable_mmc_vddio();
         Syscfg::new(ctx.device.SYSCFG_S, &rcc).apply_io_compensation_workaround();
 
-        const MMC_ENABLED: bool = false;
-        const CARD_KIND: CardKind = CardKind::Sd;
-        const SD_MAX_CLOCK: Rate = Rate::MHz(8);
+        const MMC_MAX_CLOCK: Rate = Rate::MHz(20);
         #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]
-        let mut mmc = MMC_ENABLED.then(|| mmc.enable(&rcc, CARD_KIND, SD_MAX_CLOCK).unwrap());
+        let mut mmc = mmc.enable(&rcc, MMC_MAX_CLOCK).unwrap();
         let cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
 
         #[cfg(feature = "sdmmc-tests")]
@@ -119,9 +117,7 @@ mod app {
             use embedded_runner_lib::sdmmc_tests;
             // no PLL: the core runs on the system bus clock
             let core_clock = clock_config.sys_bus_ck();
-            if let Some(mmc) = mmc.as_mut() {
-                sdmmc_tests::run(mmc, core_clock);
-            }
+            sdmmc_tests::run(&mut mmc, core_clock);
             let (cycles, cryp) = nkso3::xts_bench_cycles(cryp);
             sdmmc_tests::report("xts encrypt", 1, cycles, core_clock);
             cryp

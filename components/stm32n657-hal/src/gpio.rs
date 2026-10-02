@@ -355,6 +355,7 @@ alternate_functions!(
     PinC0: into_spi1_sck(PullUp, ALTERNATE_FUNCTION_5),
     PinC0: into_spi6_sck(PullUp, ALTERNATE_FUNCTION_8),
     PinC0: into_spi3_sck(PullUp, ALTERNATE_FUNCTION_6),
+    PinC1: into_sdmmc1_d5(PullUp, ALTERNATE_FUNCTION_10),
     PinC1: into_sdmmc2_d5(PullUp, ALTERNATE_FUNCTION_11),
     PinC1: into_spi2_nss(PullUp, ALTERNATE_FUNCTION_5),
     PinC2: into_spi3_mosi(PullUp, ALTERNATE_FUNCTION_5),
