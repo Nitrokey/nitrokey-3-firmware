@@ -3,14 +3,22 @@ pub mod ui;
 
 use core::sync::atomic::{AtomicBool, Ordering};
 
+use embedded_hal::{
+    blocking::i2c::{Read as _, Write as _},
+    digital::v2::OutputPin as _,
+};
+
 use littlefs2::{
     consts,
     fs::Filesystem,
     io::{Error as LfsError, Result as LfsResult},
 };
-use stm32n6::stm32n657::{GPIOB_S, GPIOC_S, GPIOD_S, GPIOG_S, GPIOH_S, SDMMC1_S, TIM7_S};
+use stm32n6::stm32n657::{
+    GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOG_S, GPIOH_S, I2C1_S, SDMMC1_S, TIM7_S,
+};
 use stm32n657_hal::{
-    gpio::{GpioB, GpioC, GpioD, GpioG, GpioH},
+    gpio::{GpioB, GpioC, GpioD, GpioE, GpioG, GpioH, Output, PinB13, PushPull},
+    i2c::I2c1,
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
     timer::Tim7,
@@ -147,25 +155,38 @@ ram_storage!(
 
 pub struct BoardGPIO {
     pub led: Led,
+    /// SE050 ENA, high = enabled
+    pub se050_enable: PinB13<Output<PushPull>>,
+    pub se050_i2c: I2c1,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn init_pins(
     gpiob: GPIOB_S,
     gpioc: GPIOC_S,
     gpiod: GPIOD_S,
+    gpioe: GPIOE_S,
     gpiog: GPIOG_S,
     gpioh: GPIOH_S,
+    i2c1: I2C1_S,
     sdmmc: SDMMC1_S,
     rcc: &Rcc,
 ) -> (BoardGPIO, Mmc<Disabled>) {
     let gpiob = GpioB::new(gpiob, rcc);
     let gpioc = GpioC::new(gpioc, rcc);
     let gpiod = GpioD::new(gpiod, rcc);
+    let gpioe = GpioE::new(gpioe, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     let gpioh = GpioH::new(gpioh, rcc);
     (
         BoardGPIO {
             led: Led::init(gpiog.g10, gpiog.g1, gpiob.b10),
+            se050_enable: gpiob.b13.into_push_pull_output(),
+            se050_i2c: I2c1::new(
+                i2c1,
+                (gpioe.e5.into_i2c1_scl(), gpioe.e6.into_i2c1_sda()),
+                rcc,
+            ),
         },
         Mmc::new(
             sdmmc,
@@ -183,6 +204,35 @@ pub fn init_pins(
             ),
         ),
     )
+}
+
+/// T=1 over I2C RESYNC round trip
+pub fn check_se050(gpio: &mut BoardGPIO) {
+    const SE050_ADDRESS: u8 = 0x48;
+    // NAD, PCB S(RESYNC request), LEN, CRC
+    const RESYNC_REQUEST: [u8; 5] = [0x5a, 0xc0, 0x00, 0xff, 0xfc];
+    const RESYNC_RESPONSE: [u8; 5] = [0xa5, 0xe0, 0x00, 0x3f, 0x19];
+    // ~100 ms at 120 MHz, SE050 boot
+    const WAIT_CYCLES: u32 = 12_000_000;
+
+    gpio.se050_enable.set_high().ok();
+    cortex_m::asm::delay(WAIT_CYCLES);
+
+    if let Err(_err) = gpio.se050_i2c.write(SE050_ADDRESS, &RESYNC_REQUEST) {
+        error_now!("se050: RESYNC write failed: {_err:?}");
+        return;
+    }
+    cortex_m::asm::delay(WAIT_CYCLES);
+    let mut response = [0; 5];
+    if let Err(_err) = gpio.se050_i2c.read(SE050_ADDRESS, &mut response) {
+        error_now!("se050: RESYNC read failed: {_err:?}");
+        return;
+    }
+    if response == RESYNC_RESPONSE {
+        info_now!("se050: RESYNC ok");
+    } else {
+        error_now!("se050: unexpected RESYNC response {response:02x?}");
+    }
 }
 
 pub fn init_ui(

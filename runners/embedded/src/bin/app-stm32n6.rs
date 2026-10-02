@@ -93,15 +93,18 @@ mod app {
         // Y1, 48 MHz crystal on PH0/PH1, feeds the USB PHY.
         rcc.enable_hse();
 
-        let (board_gpio, mmc) = nkso3::init_pins(
+        let (mut board_gpio, mmc) = nkso3::init_pins(
             ctx.device.GPIOB_S,
             ctx.device.GPIOC_S,
             ctx.device.GPIOD_S,
+            ctx.device.GPIOE_S,
             ctx.device.GPIOG_S,
             ctx.device.GPIOH_S,
+            ctx.device.I2C1_S,
             ctx.device.SDMMC1_S,
             &rcc,
         );
+        nkso3::check_se050(&mut board_gpio);
 
         let pwr = Pwr::new(ctx.device.PWR_S);
         pwr.enable_mmc_vddio();

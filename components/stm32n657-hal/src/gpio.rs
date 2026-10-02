@@ -131,6 +131,15 @@ macro_rules! impl_pin {
             }
 
             #[allow(unused)]
+            fn into_alternate_open_drain<R: PullResistor, const F: u8>(
+                self,
+            ) -> $pin<Alternate<R, F>> {
+                // ot: 1 = output open-drain
+                self.gpio().otyper().modify(|_, w| w.$ot().set_bit());
+                self.into_alternate()
+            }
+
+            #[allow(unused)]
             fn into_alternate<R: PullResistor, const F: u8>(self) -> $pin<Alternate<R, F>> {
                 const {
                     assert!(F <= 0xF);
@@ -245,6 +254,8 @@ impl_gpio!(GpioE, GPIOE_S, [
     e0: PinE0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
     e2: PinE2 = (mode2, ospeed2, ot2, pupd2, id2, bs2, br2, afrl,afsel2),
     e4: PinE4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+    e5: PinE5 = (mode5, ospeed5, ot5, pupd5, id5, bs5, br5, afrl,afsel5),
+    e6: PinE6 = (mode6, ospeed6, ot6, pupd6, id6, bs6, br6, afrl,afsel6),
     e11: PinE11 = (mode11, ospeed11, ot11, pupd11, id11, bs11, br11, afrh,afsel11),
     e12: PinE12 = (mode12, ospeed12, ot12, pupd12, id12, bs12, br12, afrh,afsel12),
     e13: PinE13 = (mode13, ospeed13, ot13, pupd13, id13, bs13, br13, afrh,afsel13),
@@ -317,6 +328,23 @@ macro_rules! alternate_functions {
         )*
     };
 }
+
+macro_rules! alternate_functions_open_drain {
+    ($($pin:ident: $function:ident($resistor:ident, $alternate:ident)),* $(,)?) => {
+        $(
+            impl<M> $pin<M> {
+                pub fn $function(self) -> $pin<Alternate<$resistor, $alternate>> {
+                    self.into_alternate_open_drain()
+                }
+            }
+        )*
+    };
+}
+
+alternate_functions_open_drain!(
+    PinE5: into_i2c1_scl(PullUp, ALTERNATE_FUNCTION_4),
+    PinE6: into_i2c1_sda(PullUp, ALTERNATE_FUNCTION_4),
+);
 
 alternate_functions!(
     PinA0: into_sdmmc2_cmd(PullUp, ALTERNATE_FUNCTION_11),

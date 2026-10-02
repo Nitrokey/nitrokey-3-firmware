@@ -174,6 +174,14 @@ impl Rcc {
         });
     }
 
+    /// I2C1 kernel clock from hsi_div_ck (64 MHz), independent of the bus prescalers.
+    pub fn select_i2c1_hsi(&self) {
+        // 0b101 selects hsi_div_ck (RM0486 RCC_CCIPR4 I2C1SEL).
+        self.0
+            .ccipr4()
+            .modify(|_, w| unsafe { w.i2c1sel().bits(0b101) });
+    }
+
     /// The OTG1 PHY controller is clocked through OTG1 and has no enable bit of its own.
     pub fn assert_reset_otg1_phy_ctl(&self) {
         self.0
@@ -253,6 +261,7 @@ impl_peripheral!(
         (Sdmmc2, sdmmc2ens, sdmmc2rsts, sdmmc2rstc),
     ],
     (apb1lensr, apb1lrstsr, apb1lrstcr) => [
+        (I2c1, i2c1ens, i2c1rsts, i2c1rstc),
         (Tim6, tim6ens, tim6rsts, tim6rstc),
         (Tim7, tim7ens, tim7rsts, tim7rstc),
     ],

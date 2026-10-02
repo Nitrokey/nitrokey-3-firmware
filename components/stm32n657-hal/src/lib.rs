@@ -12,6 +12,7 @@ pub mod bsec;
 #[cfg(feature = "cryp")]
 pub mod cryp;
 pub mod gpio;
+pub mod i2c;
 pub mod mmc;
 #[cfg(feature = "otg")]
 pub mod otg;
