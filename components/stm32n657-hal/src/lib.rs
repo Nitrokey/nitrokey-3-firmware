@@ -23,6 +23,7 @@ pub mod rng;
 #[cfg(feature = "saes")]
 pub mod saes;
 pub mod sdmmc;
+pub mod spi;
 pub mod syscfg;
 pub mod timer;
 mod utils;

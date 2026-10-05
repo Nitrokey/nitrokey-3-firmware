@@ -84,6 +84,14 @@ impl Rcc {
         }
     }
 
+    /// XSPI1SEL: 0 = hclk5 (the AHB clock)
+    pub fn xspi1_kernel_clock(&self) -> Rate {
+        match self.0.ccipr6().read().xspi1sel().bits() {
+            0 => self.clock_config().sys_bus2_ck(),
+            _ => unimplemented!(),
+        }
+    }
+
     pub fn enable_pll1(&self, target_rate: Rate) {
         self.0.ccr().write(|w| w.pll1onc().set_bit());
 
@@ -252,6 +260,7 @@ impl_peripheral!(
         (GpioF, gpiofens, gpiofrsts, gpiofrstc),
         (GpioG, gpiogens, gpiogrsts, gpiogrstc),
         (GpioH, gpiohens, gpiohrsts, gpiohrstc),
+        (GpioO, gpiooens, gpioorsts, gpioorstc),
         (GpioP, gpiopens, gpioprsts, gpioprstc),
     ],
     (ahb5ensr, ahb5rstsr, ahb5rstcr) => [
@@ -259,6 +268,8 @@ impl_peripheral!(
         (OtgPhy1, otgphy1ens, otgphy1rsts, otgphy1rstc),
         (Sdmmc1, sdmmc1ens, sdmmc1rsts, sdmmc1rstc),
         (Sdmmc2, sdmmc2ens, sdmmc2rsts, sdmmc2rstc),
+        (Xspi1, xspi1ens, xspi1rsts, xspi1rstc),
+        (Xspim, xspimens, xspimrsts, xspimrstc),
     ],
     (apb1lensr, apb1lrstsr, apb1lrstcr) => [
         (I2c1, i2c1ens, i2c1rsts, i2c1rstc),

@@ -100,14 +100,20 @@ mod app {
             ctx.device.GPIOE_S,
             ctx.device.GPIOG_S,
             ctx.device.GPIOH_S,
+            ctx.device.GPIOO_S,
+            ctx.device.GPIOP_S,
             ctx.device.I2C1_S,
             ctx.device.SDMMC1_S,
+            ctx.device.XSPI1_S,
+            ctx.device.XSPIM_S,
             &rcc,
         );
         nkso3::check_se050(&mut board_gpio);
 
         let pwr = Pwr::new(ctx.device.PWR_S);
         pwr.enable_mmc_vddio();
+        pwr.enable_flash_vddio();
+        nkso3::check_flash(&mut board_gpio);
         Syscfg::new(ctx.device.SYSCFG_S, &rcc).apply_io_compensation_workaround();
 
         const MMC_MAX_CLOCK: Rate = Rate::MHz(20);

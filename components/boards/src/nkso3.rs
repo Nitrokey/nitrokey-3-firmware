@@ -14,14 +14,17 @@ use littlefs2::{
     io::{Error as LfsError, Result as LfsResult},
 };
 use stm32n6::stm32n657::{
-    GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOG_S, GPIOH_S, I2C1_S, SDMMC1_S, TIM7_S,
+    GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOG_S, GPIOH_S, GPIOO_S, GPIOP_S, I2C1_S, SDMMC1_S,
+    TIM7_S, XSPI1_S, XSPIM_S,
 };
 use stm32n657_hal::{
-    gpio::{GpioB, GpioC, GpioD, GpioE, GpioG, GpioH, Output, PinB13, PushPull},
+    gpio::{GpioB, GpioC, GpioD, GpioE, GpioG, GpioH, GpioO, GpioP, Output, PinB13, PushPull},
     i2c::I2c1,
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
+    spi::{self, Xspi1},
     timer::Tim7,
+    Rate,
 };
 
 use crate::{
@@ -158,6 +161,7 @@ pub struct BoardGPIO {
     /// SE050 ENA, high = enabled
     pub se050_enable: PinB13<Output<PushPull>>,
     pub se050_i2c: I2c1,
+    pub flash_spi: Xspi1,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -168,16 +172,24 @@ pub fn init_pins(
     gpioe: GPIOE_S,
     gpiog: GPIOG_S,
     gpioh: GPIOH_S,
+    gpioo: GPIOO_S,
+    gpiop: GPIOP_S,
     i2c1: I2C1_S,
     sdmmc: SDMMC1_S,
+    xspi1: XSPI1_S,
+    xspim: XSPIM_S,
     rcc: &Rcc,
 ) -> (BoardGPIO, Mmc<Disabled>) {
+    const FLASH_MAX_CLOCK: Rate = Rate::MHz(8);
+
     let gpiob = GpioB::new(gpiob, rcc);
     let gpioc = GpioC::new(gpioc, rcc);
     let gpiod = GpioD::new(gpiod, rcc);
     let gpioe = GpioE::new(gpioe, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     let gpioh = GpioH::new(gpioh, rcc);
+    let gpioo = GpioO::new(gpioo, rcc);
+    let gpiop = GpioP::new(gpiop, rcc);
     (
         BoardGPIO {
             led: Led::init(gpiog.g10, gpiog.g1, gpiob.b10),
@@ -186,6 +198,18 @@ pub fn init_pins(
                 i2c1,
                 (gpioe.e5.into_i2c1_scl(), gpioe.e6.into_i2c1_sda()),
                 rcc,
+            ),
+            flash_spi: Xspi1::new(
+                xspi1,
+                xspim,
+                (
+                    gpioo.o0.into_xspim_p1_ncs1(),
+                    gpioo.o4.into_xspim_p1_clk(),
+                    gpiop.p0.into_xspim_p1_io0(),
+                    gpiop.p1.into_xspim_p1_io1(),
+                ),
+                rcc,
+                FLASH_MAX_CLOCK,
             ),
         },
         Mmc::new(
@@ -233,6 +257,61 @@ pub fn check_se050(gpio: &mut BoardGPIO) {
     } else {
         error_now!("se050: unexpected RESYNC response {response:02x?}");
     }
+}
+
+/// GD25Q16C: JEDEC ID, erase/write/read
+pub fn check_flash(gpio: &mut BoardGPIO) {
+    const JEDEC_ID: [u8; 3] = [0xc8, 0x40, 0x15];
+    const PATTERN: [u8; 8] = *b"nkso3\xc0\xff\xee";
+    const OFFSET: u32 = 0x20_0000 - 4096;
+
+    const READ_JEDEC_ID: u8 = 0x9f;
+    const READ_STATUS: u8 = 0x05;
+    const WRITE_ENABLE: u8 = 0x06;
+    const SECTOR_ERASE: u8 = 0x20;
+    const PAGE_PROGRAM: u8 = 0x02;
+    const READ: u8 = 0x03;
+    // status bit 0: write in progress
+    const STATUS_WIP: u8 = 1;
+
+    fn wait_done(spi: &mut Xspi1) -> Result<(), spi::Error> {
+        for _ in 0..1_000_000 {
+            let mut status = [0];
+            spi.read(READ_STATUS, None, &mut status)?;
+            if status[0] & STATUS_WIP == 0 {
+                return Ok(());
+            }
+        }
+        Err(spi::Error::Timeout)
+    }
+
+    fn roundtrip(spi: &mut Xspi1) -> Result<[u8; PATTERN.len()], spi::Error> {
+        spi.command(WRITE_ENABLE, None)?;
+        spi.command(SECTOR_ERASE, Some(OFFSET))?;
+        wait_done(spi)?;
+        spi.command(WRITE_ENABLE, None)?;
+        spi.write(PAGE_PROGRAM, Some(OFFSET), &PATTERN)?;
+        wait_done(spi)?;
+        let mut data = [0; PATTERN.len()];
+        spi.read(READ, Some(OFFSET), &mut data)?;
+        Ok(data)
+    }
+
+    let spi = &mut gpio.flash_spi;
+    let mut id = [0; 3];
+    if let Err(_err) = spi.read(READ_JEDEC_ID, None, &mut id) {
+        error_now!("flash: JEDEC ID read failed: {_err:?}");
+        return;
+    }
+    if id != JEDEC_ID {
+        error_now!("flash: unexpected JEDEC ID {id:02x?}");
+        return;
+    }
+    match roundtrip(spi) {
+        Ok(data) if data == PATTERN => info_now!("flash: write/read ok"),
+        Ok(_data) => error_now!("flash: read back {_data:02x?}"),
+        Err(_err) => error_now!("flash: erase/write/read failed: {_err:?}"),
+    };
 }
 
 pub fn init_ui(

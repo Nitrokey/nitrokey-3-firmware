@@ -23,4 +23,11 @@ impl Pwr {
         self.0.svmcr1().modify(|_, w| w.vddio4vrsel().set_bit());
         self.0.svmcr1().modify(|_, w| w.vddio4sv().set_bit());
     }
+
+    /// VDDIO2 (PO/PP pins, external flash) at 3v3
+    pub fn enable_flash_vddio(&self) {
+        self.0.svmcr3().modify(|_, w| w.vddio2vmen().set_bit());
+        while self.0.svmcr3().read().vddio2rdy().bit_is_clear() {}
+        self.0.svmcr3().modify(|_, w| w.vddio2sv().set_bit());
+    }
 }

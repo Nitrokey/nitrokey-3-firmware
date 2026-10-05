@@ -4,7 +4,7 @@ use core::{convert::Infallible, marker::PhantomData};
 
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use stm32n6::stm32n657::{
-    GPIOA_S, GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOF_S, GPIOG_S, GPIOH_S, GPIOP_S,
+    GPIOA_S, GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOF_S, GPIOG_S, GPIOH_S, GPIOO_S, GPIOP_S,
 };
 
 use crate::rcc::{Peripheral, Rcc};
@@ -295,7 +295,13 @@ impl_gpio!(GpioH, GPIOH_S, [
     h9: PinH9 = (mode9, ospeed9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
 ]);
 
+impl_gpio!(GpioO, GPIOO_S, [
+    o0: PinO0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    o4: PinO4 = (mode4, ospeed4, ot4, pupd4, id4, bs4, br4, afrl,afsel4),
+]);
 impl_gpio!(GpioP, GPIOP_S, [
+    p0: PinP0 = (mode0, ospeed0, ot0, pupd0, id0, bs0, br0, afrl,afsel0),
+    p1: PinP1 = (mode1, ospeed1, ot1, pupd1, id1, bs1, br1, afrl,afsel1),
     p8: PinP8 = (mode8, ospeed8, ot8, pupd8, id8, bs8, br8, afrh,afsel8),
     p9: PinP9 = (mode9, ospeed9, ot9, pupd9, id9, bs9, br9, afrh,afsel9),
 ]);
@@ -460,6 +466,10 @@ alternate_functions!(
     PinH9: into_sdmmc1_d4(PullUp, ALTERNATE_FUNCTION_10),
     PinH9: into_sdmmc2_d4(PullUp, ALTERNATE_FUNCTION_11),
     PinH9: into_sdmmc1_ckin(PullUp, ALTERNATE_FUNCTION_12),
+    PinO0: into_xspim_p1_ncs1(PullUp, ALTERNATE_FUNCTION_9),
+    PinO4: into_xspim_p1_clk(Floating, ALTERNATE_FUNCTION_9),
+    PinP0: into_xspim_p1_io0(Floating, ALTERNATE_FUNCTION_9),
+    PinP1: into_xspim_p1_io1(PullUp, ALTERNATE_FUNCTION_9),
     PinP8: into_spi2_miso(PullUp, ALTERNATE_FUNCTION_5),
     PinP9: into_spi2_mosi(PullUp, ALTERNATE_FUNCTION_5),
 );
