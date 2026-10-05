@@ -28,6 +28,7 @@ struct DividerRates {
     input_divider: u8,
     integer_divider: u16,
     frac_divider: u32,
+    ppre1: u8,
 }
 
 /// Returns divm, divn and divnfrac
@@ -46,11 +47,24 @@ fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> DividerRates {
         _ => 0b11,
     };
 
+    let timer_bus_prescaler_need = target_rate / SystemClock::Hsi.frequency();
+    let ppre1 = match timer_bus_prescaler_need {
+        0 | 1 => 0b000u8,
+        2 => 0b001,
+        3..=4 => 0b010,
+        5..=8 => 0b011,
+        9..=16 => 0b100,
+        17..=32 => 0b101,
+        33..=64 => 0b110,
+        65.. => 0b111,
+    };
+
     DividerRates {
         timer_divider: timpre,
         input_divider,
         integer_divider: integer_divider.try_into().unwrap(),
         frac_divider: frac_divider.try_into().unwrap(),
+        ppre1,
     }
 }
 
@@ -121,6 +135,7 @@ impl Rcc {
 
         let hsi_rate = SystemClock::Hsi.frequency();
         let divider_rates = pll_divider_rates(hsi_rate, target_rate);
+        debug_now!("{divider_rates:?}");
         self.0.pll1cfgr1().modify(|_, w| unsafe {
             w.pll1divm()
                 .bits(divider_rates.input_divider)
@@ -133,7 +148,7 @@ impl Rcc {
             w.pll1divnfrac()
                 .bits((divider_rates.frac_divider >> 24) as u32)
         });
-        self.0.pll1cfgr3().modify(|_, w| {
+        self.0.pll1cfgr3().modify(|_, w| unsafe {
             w.pll1moddsen()
                 .set_bit()
                 .pll1dacen()
@@ -142,11 +157,26 @@ impl Rcc {
                 .set_bit()
                 .pll1modssrst()
                 .set_bit()
+                .pll1pdiven()
+                .set_bit()
+                .pll1pdiv1()
+                .bits(1)
+                .pll1pdiv2()
+                .bits(1)
         });
 
-        self.0
-            .cfgr2()
-            .modify(|_, w| unsafe { w.timpre().bits(divider_rates.timer_divider) });
+        self.0.cfgr2().modify(|_, w| unsafe {
+            w.timpre()
+                .bits(divider_rates.timer_divider)
+                .ppre1()
+                .bits(divider_rates.ppre1)
+                .ppre2()
+                .bits(divider_rates.ppre1)
+                .ppre4()
+                .bits(divider_rates.ppre1)
+                .ppre5()
+                .bits(divider_rates.ppre1)
+        });
 
         self.0.csr().write(|w| w.pll1ons().bit(true));
         debug_now!("Waiting for pll1rdy");
