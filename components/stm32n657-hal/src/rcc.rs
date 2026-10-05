@@ -22,8 +22,16 @@ fn pll_ideal_input_divider(input_rate: Rate, target_rate: Rate) -> u8 {
     return 0x3F;
 }
 
+#[derive(Debug)]
+struct DividerRates {
+    timer_divider: u8,
+    input_divider: u8,
+    integer_divider: u16,
+    frac_divider: u32,
+}
+
 /// Returns divm, divn and divnfrac
-fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> (u8, u8, u16, u32) {
+fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> DividerRates {
     let input_divider = pll_ideal_input_divider(input_rate, target_rate);
     let integer_divider = (target_rate * input_divider as u32) / input_rate;
     let frac_divider = ((target_rate.raw() as u64 * input_divider as u64) << 24)
@@ -38,12 +46,12 @@ fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> (u8, u8, u16, u32) 
         _ => 0b11,
     };
 
-    return (
-        timpre,
+    DividerRates {
+        timer_divider: timpre,
         input_divider,
-        integer_divider.try_into().unwrap(),
-        frac_divider.try_into().unwrap(),
-    );
+        integer_divider: integer_divider.try_into().unwrap(),
+        frac_divider: frac_divider.try_into().unwrap(),
+    }
 }
 
 impl Rcc {
@@ -112,19 +120,19 @@ impl Rcc {
         self.0.ccr().write(|w| w.pll1onc().set_bit());
 
         let hsi_rate = SystemClock::Hsi.frequency();
-        let (timpre, input_divider, integer_divider, frac_divider) =
-            pll_divider_rates(hsi_rate, target_rate);
+        let divider_rates = pll_divider_rates(hsi_rate, target_rate);
         self.0.pll1cfgr1().modify(|_, w| unsafe {
             w.pll1divm()
-                .bits(input_divider)
+                .bits(divider_rates.input_divider)
                 .pll1divn()
-                .bits(integer_divider)
+                .bits(divider_rates.integer_divider)
                 .pll1sel()
                 .bits(SystemClock::Hsi as u8)
         });
-        self.0
-            .pll1cfgr2()
-            .modify(|_, w| unsafe { w.pll1divnfrac().bits((frac_divider >> 24) as u32) });
+        self.0.pll1cfgr2().modify(|_, w| unsafe {
+            w.pll1divnfrac()
+                .bits((divider_rates.frac_divider >> 24) as u32)
+        });
         self.0.pll1cfgr3().modify(|_, w| {
             w.pll1moddsen()
                 .set_bit()
@@ -138,7 +146,7 @@ impl Rcc {
 
         self.0
             .cfgr2()
-            .modify(|_, w| unsafe { w.timpre().bits(timpre) });
+            .modify(|_, w| unsafe { w.timpre().bits(divider_rates.timer_divider) });
 
         self.0.csr().write(|w| w.pll1ons().bit(true));
         debug_now!("Waiting for pll1rdy");
@@ -480,13 +488,17 @@ mod test {
         ];
 
         for (input_rate, target_rate) in test_rates {
-            let (prescaler_timer, divm, divn, fracdiv) = pll_divider_rates(input_rate, target_rate);
-            assert!(divm >= 1);
-            assert!(divn >= 20);
-            assert!(divn <= 320);
+            let divider_rates = pll_divider_rates(input_rate, target_rate);
+            assert!(divider_rates.input_divider >= 1);
+            assert!(divider_rates.integer_divider >= 20);
+            assert!(divider_rates.integer_divider <= 320);
             let two_24 = 16777216.0; // 2^24
             let input_rate_f64 = input_rate.raw() as f64;
-            let (divm, divn, fracdiv) = (divm as f64, divn as f64, fracdiv as f64);
+            let (divm, divn, fracdiv) = (
+                divider_rates.input_divider as f64,
+                divider_rates.integer_divider as f64,
+                divider_rates.frac_divider as f64,
+            );
             let pll1_multiplier = (divn + fracdiv / two_24) / divm;
             let fvco = input_rate_f64 * pll1_multiplier;
             assert!(
@@ -505,7 +517,7 @@ mod test {
                 pll1_input_clock: SystemClock::Hsi,
                 pll1_multiplier: pll1_multiplier as u32,
                 prescaler_ahb: 1,
-                prescaler_timer,
+                prescaler_timer: divider_rates.timer_divider,
             };
             assert!((clock_config.timg_ck().raw() as f64 - 64e6).abs() <= 32e6);
         }
