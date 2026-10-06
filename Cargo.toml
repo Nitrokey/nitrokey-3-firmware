@@ -20,7 +20,7 @@ lpc55-pac = "0.5"
 nrf52840-hal = "0.18"
 nrf52840-pac = "0.12"
 trussed = { version = "0.2", default-features = false }
-trussed-core = "0.2"
+trussed-core = "0.2.3"
 trussed-usbip = { version = "0.2", default-features = false }
 usb-device = "0.3"
 usbd-ccid = "0.5"
@@ -32,6 +32,8 @@ memory-regions = { path = "components/memory-regions" }
 
 # unreleased libraries
 p256-cortex-m4  = { git = "https://github.com/ycrypto/p256-cortex-m4.git", rev = "cdb31e12594b4dc1f045b860a885fdc94d96aee2" }
+admin-app = { git = "https://github.com/trussed-dev/admin-app.git", rev = "1680038235c7963c2e74cfc663082eec32470baf"}
+opcard = { git = "https://github.com/nitrokey/opcard-rs.git", rev = "5ad5af2c8a05adb07ecde9a39e1855ce69bb723b"}
 
 [profile.release]
 codegen-units = 1
