@@ -22,48 +22,61 @@ fn pll_ideal_input_divider(input_rate: Rate, target_rate: Rate) -> u8 {
     return 0x3F;
 }
 
-#[derive(Debug)]
-struct DividerRates {
-    timer_divider: u8,
-    input_divider: u8,
-    integer_divider: u16,
-    frac_divider: u32,
-    ppre1: u8,
+/// calculate a timer prescaler that will be closest to the target rate
+/// from the input rate but stay strictly lower than the target rate if possible
+fn prescale_to_lower(input_rate: Rate, target_rate: Rate, max: u8) -> u8 {
+    if input_rate < target_rate {
+        0
+    } else if input_rate < target_rate * 2 {
+        1
+    } else if input_rate < target_rate * 4 {
+        2
+    } else if input_rate < target_rate * 4 {
+        3
+    } else if input_rate < target_rate * 8 {
+        4
+    } else if input_rate < target_rate * 16 {
+        5
+    } else if input_rate < target_rate * 32 {
+        6
+    } else if input_rate < target_rate * 64 {
+        7
+    } else if input_rate < target_rate * 128 {
+        8
+    } else {
+        9
+    }
+    .min(max)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PllDividerRates {
+    pub prescaler_timer: u8,
+    pub input_divider: u8,
+    pub integer_multiplier: u16,
+    pub frac_multiplier: u32,
+    pub ppre1: u8,
 }
 
 /// Returns divm, divn and divnfrac
-fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> DividerRates {
+fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> PllDividerRates {
     let input_divider = pll_ideal_input_divider(input_rate, target_rate);
     let integer_divider = (target_rate * input_divider as u32) / input_rate;
-    let frac_divider = ((target_rate.raw() as u64 * input_divider as u64) << 24)
-        / (input_rate.raw() as u64)
-        - ((integer_divider as u64) << 24);
-    // Set timpre to run timers close to 64MHz
-    let timer_prescaler_need = target_rate / SystemClock::Hsi.frequency();
-    let timpre = match timer_prescaler_need {
-        0 | 1 => 0b00u8,
-        2 => 0b01,
-        3 | 4 => 0b10,
-        _ => 0b11,
-    };
+    // integer_divider * 2^24
+    let integer_divider_224 = integer_divider as u64 * (1 << 24);
+    let input_divider_224 = input_divider as u64 * (1 << 24);
+    let frac_divider = (target_rate.raw() as u64 * input_divider_224) / (input_rate.raw() as u64)
+        - integer_divider_224;
 
-    let timer_bus_prescaler_need = target_rate / SystemClock::Hsi.frequency();
-    let ppre1 = match timer_bus_prescaler_need {
-        0 | 1 => 0b000u8,
-        2 => 0b001,
-        3..=4 => 0b010,
-        5..=8 => 0b011,
-        9..=16 => 0b100,
-        17..=32 => 0b101,
-        33..=64 => 0b110,
-        65.. => 0b111,
-    };
+    // We want the timer clock to be lower that 64MHz if possible
+    let prescaler_timer = prescale_to_lower(target_rate, SystemClock::Hsi.frequency(), 0b11);
+    let ppre1 = prescale_to_lower(target_rate, SystemClock::Hsi.frequency(), 0b111);
 
-    DividerRates {
-        timer_divider: timpre,
+    PllDividerRates {
+        prescaler_timer,
         input_divider,
-        integer_divider: integer_divider.try_into().unwrap(),
-        frac_divider: frac_divider.try_into().unwrap(),
+        integer_multiplier: integer_divider.try_into().unwrap(),
+        frac_multiplier: frac_divider.try_into().unwrap(),
         ppre1,
     }
 }
@@ -92,19 +105,21 @@ impl Rcc {
         let prescaler_ahb = cfgr2.hpre().bits();
         let prescaler_timer = cfgr2.timpre().bits();
 
-        let pll1_input_divider = pll1_cfg.pll1divm().bits() as u64;
-        let pll1_integer_multiplier = pll1_cfg.pll1divn().bits() as u64;
-        let pll1_frac_multiplier = pll1_cfg2.pll1divnfrac().bits() as u64;
+        let pll1_divider_rates = PllDividerRates {
+            input_divider: pll1_cfg.pll1divm().bits(),
+            integer_multiplier: pll1_cfg.pll1divn().bits(),
+            frac_multiplier: pll1_cfg2.pll1divnfrac().bits(),
+            ppre1: cfgr2.ppre1().bits(),
+            prescaler_timer,
+        };
 
         let config = ClockConfig {
             system_clock,
             prescaler_ahb,
-            prescaler_timer,
             divider_ic2: ic2.ic2int().bits(),
             input_ic2: Pll::from_bits(ic2.ic2sel().bits()),
             pll1_input_clock: SystemClock::from_bits(pll1_cfg.pll1sel().bits()),
-            pll1_multiplier: ((pll1_frac_multiplier / (1 << 24) + pll1_integer_multiplier)
-                / pll1_input_divider) as _,
+            pll1_divider_rates,
         };
         debug!("{config:?}");
         config
@@ -135,18 +150,18 @@ impl Rcc {
 
         let hsi_rate = SystemClock::Hsi.frequency();
         let divider_rates = pll_divider_rates(hsi_rate, target_rate);
-        debug_now!("{divider_rates:?}");
+        debug_now!("Divider rates for PLL1: {divider_rates:?}");
         self.0.pll1cfgr1().modify(|_, w| unsafe {
             w.pll1divm()
                 .bits(divider_rates.input_divider)
                 .pll1divn()
-                .bits(divider_rates.integer_divider)
+                .bits(divider_rates.integer_multiplier)
                 .pll1sel()
                 .bits(SystemClock::Hsi as u8)
         });
         self.0.pll1cfgr2().modify(|_, w| unsafe {
             w.pll1divnfrac()
-                .bits((divider_rates.frac_divider >> 24) as u32)
+                .bits((divider_rates.frac_multiplier) as u32)
         });
         self.0.pll1cfgr3().modify(|_, w| unsafe {
             w.pll1moddsen()
@@ -167,7 +182,7 @@ impl Rcc {
 
         self.0.cfgr2().modify(|_, w| unsafe {
             w.timpre()
-                .bits(divider_rates.timer_divider)
+                .bits(divider_rates.prescaler_timer)
                 .ppre1()
                 .bits(divider_rates.ppre1)
                 .ppre2()
@@ -390,22 +405,11 @@ pub struct ClockConfig {
     pub divider_ic2: u8,
     pub input_ic2: Pll,
     pub pll1_input_clock: SystemClock,
-    pub pll1_multiplier: u32,
+    pub pll1_divider_rates: PllDividerRates,
     pub prescaler_ahb: u8,
-    pub prescaler_timer: u8,
 }
 
 impl ClockConfig {
-    pub const DEFAULT: Self = Self {
-        system_clock: SystemClock::Hsi,
-        prescaler_ahb: 1,
-        prescaler_timer: 0,
-        input_ic2: Pll::Pll1,
-        divider_ic2: 0,
-        pll1_input_clock: SystemClock::Hsi,
-        pll1_multiplier: 0,
-    };
-
     pub fn sys_bus_ck(&self) -> Rate {
         const HSI: Rate = Rate::MHz(64);
 
@@ -416,8 +420,15 @@ impl ClockConfig {
                     unimplemented!();
                 }
 
-                self.pll1_input_clock.frequency() * self.pll1_multiplier
-                    / (self.divider_ic2 as u32 + 1)
+                let input_rate = self.pll1_input_clock.frequency().raw() as u64;
+                let integer_multiplier = self.pll1_divider_rates.integer_multiplier as u64;
+                let frac_multiplier = self.pll1_divider_rates.frac_multiplier as u64;
+                let input_divider = self.pll1_divider_rates.input_divider as u64;
+                let value = input_rate * (integer_multiplier * (1 << 24) + frac_multiplier)
+                    / input_divider
+                    / (1 << 24);
+
+                Rate::Hz(value.try_into().unwrap())
             }
             _ => unimplemented!(),
         }
@@ -425,13 +436,13 @@ impl ClockConfig {
 
     pub fn sys_bus2_ck(&self) -> Rate {
         let rate = scale(self.sys_bus_ck(), self.prescaler_ahb);
-        debug!("{rate:?}");
+        debug!("sys_bus2_ck: {rate:?}");
         rate
     }
 
     pub fn timg_ck(&self) -> Rate {
-        let rate = scale(self.sys_bus_ck(), self.prescaler_timer);
-        debug!("{rate:?}");
+        let rate = scale(self.sys_bus_ck(), self.pll1_divider_rates.prescaler_timer);
+        debug!("sys_bus_ck: {} timg_ck: {rate}", self.sys_bus_ck());
         rate
     }
 }
@@ -484,14 +495,27 @@ impl SystemClock {
 mod test {
     use crate::{
         Rate,
-        rcc::{Pll, SystemClock, pll_divider_rates, pll_ideal_input_divider},
+        rcc::{Pll, PllDividerRates, SystemClock, pll_divider_rates, pll_ideal_input_divider},
     };
 
     use super::ClockConfig;
 
     #[test]
     fn test_clock_config() {
-        let config = ClockConfig::DEFAULT;
+        let config = ClockConfig {
+            system_clock: SystemClock::Hsi,
+            divider_ic2: 0,
+            input_ic2: Pll::Pll1,
+            prescaler_ahb: 1,
+            pll1_input_clock: SystemClock::Hsi,
+            pll1_divider_rates: PllDividerRates {
+                prescaler_timer: 0,
+                input_divider: 0,
+                integer_multiplier: 0,
+                frac_multiplier: 0,
+                ppre1: 0,
+            },
+        };
 
         assert_eq!(config.sys_bus_ck().to_Hz(), 64_000_000);
         assert_eq!(config.sys_bus2_ck().to_Hz(), 32_000_000);
@@ -509,6 +533,8 @@ mod test {
         let test_rates = [
             (Rate::MHz(64), Rate::MHz(800)),
             (Rate::MHz(64), Rate::MHz(600)),
+            (Rate::MHz(64), Rate::MHz(192)),
+            (Rate::MHz(64), Rate::MHz(191)),
             (Rate::MHz(64), Rate::MHz(400)),
             (Rate::MHz(64), Rate::MHz(200)),
             (Rate::MHz(32), Rate::MHz(800)),
@@ -520,19 +546,18 @@ mod test {
         for (input_rate, target_rate) in test_rates {
             let divider_rates = pll_divider_rates(input_rate, target_rate);
             assert!(divider_rates.input_divider >= 1);
-            assert!(divider_rates.integer_divider >= 20);
-            assert!(divider_rates.integer_divider <= 320);
+            assert!(divider_rates.integer_multiplier >= 20);
+            assert!(divider_rates.integer_multiplier <= 320);
             let two_24 = 16777216.0; // 2^24
             let input_rate_f64 = input_rate.raw() as f64;
-            let (divm, divn, fracdiv) = (
-                divider_rates.input_divider as f64,
-                divider_rates.integer_divider as f64,
-                divider_rates.frac_divider as f64,
-            );
+            let divm = divider_rates.input_divider as f64;
+            let divn = divider_rates.integer_multiplier as f64;
+            let fracdiv = divider_rates.frac_multiplier as f64;
+
             let pll1_multiplier = (divn + fracdiv / two_24) / divm;
             let fvco = input_rate_f64 * pll1_multiplier;
             assert!(
-                (fvco - target_rate.raw() as f64).abs() < 1e-3,
+                (fvco - target_rate.raw() as f64).abs() < 1e-9,
                 "{divm}, {divn} {fracdiv}"
             );
 
@@ -545,11 +570,25 @@ mod test {
                 divider_ic2: 0,
                 input_ic2: Pll::Pll1,
                 pll1_input_clock: SystemClock::Hsi,
-                pll1_multiplier: pll1_multiplier as u32,
                 prescaler_ahb: 1,
-                prescaler_timer: divider_rates.timer_divider,
+                pll1_divider_rates: divider_rates,
             };
-            assert!((clock_config.timg_ck().raw() as f64 - 64e6).abs() <= 32e6);
+            // 800 MHz leads to too high bus speed for timer prescaler. In that case bus
+            // speed will need to be lowered anyway
+            if target_rate != Rate::MHz(800) {
+                if target_rate != Rate::MHz(600) {
+                    assert!(
+                        clock_config.timg_ck().raw() <= 64_000_000,
+                        "{clock_config:?}, timg_ck: {}",
+                        clock_config.timg_ck(),
+                    );
+                }
+                assert!(
+                    (clock_config.timg_ck().raw() as f64 - 64e6).abs() <= 32e6,
+                    "{} {clock_config:?}, input_rate: {input_rate} target_rate: {target_rate}",
+                    clock_config.timg_ck(),
+                );
+            }
         }
     }
 }
