@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  check:
+  check-x86_64:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -18,9 +18,51 @@ jobs:
         run: make check-components
       - name: Check usbip runner
         run: |
-          cargo check --manifest-path runners/usbip/Cargo.toml
-          cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
-          cargo check --manifest-path runners/usbip/Cargo.toml --features test
+          cd runners/usbip
+          cargo check
+          cargo check --features provisioner
+          cargo check --features test
+
+  check-thumbv7em:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install build dependencies
+        run: sudo apt-get install gcc-arm-none-eabi
+      - name: Check embedded runner
+        run: |
+          cd runners/embedded
+          make check-nk3am.bl
+          make check-nk3am.bl FEATURES=provisioner
+          make check-nk3am.bl FEATURES=develop,log-all
+          make check-nk3am.bl FEATURES=develop,log-all,provisioner
+      - name: Check nkpk runner
+        run: |
+          cd runners/nkpk
+          cargo check
+          cargo check --features provisioner
+          cargo check --features develop,log-all
+          cargo check --features develop,log-all,provisioner
+
+  check-thumbv8m:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install build dependencies
+        run: sudo apt-get install gcc-arm-none-eabi
+      - name: Check embedded runner
+        run: |
+          cd runners/embedded
+          make check-nk3xn
+          make check-nk3xn FEATURES=provisioner
+          make check-nk3xn FEATURES=develop,log-all
+          make check-nk3xn FEATURES=develop,log-all,provisioner
 
   lint:
     runs-on: ubuntu-latest
