@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Check components
+        run: make check-components
+      - name: Check usbip runner
+        run: |
+          cargo check --manifest-path runners/usbip/Cargo.toml
+          cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
+          cargo check --manifest-path runners/usbip/Cargo.toml --features test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install build dependencies
+        run: sudo apt-get install gcc-arm-none-eabi
+      - name: Lint
+        run: make lint
+        env:
+          RUSTFLAGS: "-Dwarnings"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Run software tests
+        run: make software-tests

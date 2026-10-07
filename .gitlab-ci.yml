@@ -53,42 +53,6 @@ metadata:
     paths:
       - artifacts
 
-check-usbip:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - cargo check --manifest-path runners/usbip/Cargo.toml
-    - cargo check --manifest-path runners/usbip/Cargo.toml --features provisioner
-    - cargo check --manifest-path runners/usbip/Cargo.toml --features test
-
-check-components:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make check-components
-
-lint:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
-  tags:
-    - docker
-  stage: build
-  script:
-    - make lint
-  variables:
-    RUSTFLAGS: "-Dwarnings"
-
 build-nightly:
   image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
   rules:
@@ -223,16 +187,6 @@ metrics:
 
 ###############################################################################
 # test stage
-
-software-tests:
-  image: registry.git.nitrokey.com/nitrokey/nitrokey-3-firmware/nitrokey3:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-  tags:
-    - docker
-  stage: test
-  script:
-    - make software-tests
 
 hardware-tests:
   rules:
