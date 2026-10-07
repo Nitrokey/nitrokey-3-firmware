@@ -102,6 +102,11 @@ mod app {
     fn init(c: init::Context) -> (SharedResources, LocalResources, init::Monotonics) {
         let was_reset_from_wwdt = c.device.PMC.aoreg1.read().wdtreset().bit();
 
+        debug_now!("Reset from watchdog: {}", was_reset_from_wwdt);
+        if was_reset_from_wwdt {
+            lpc55_hal::boot_to_bootrom();
+        }
+
         #[cfg(feature = "alloc")]
         embedded_runner_lib::init_alloc();
 
@@ -126,11 +131,6 @@ mod app {
         let systick = unsafe { lpc55_hal::raw::CorePeripherals::steal() }.SYST;
         // actual system clock
         let systick = Systick::new(systick, sysclk_hz);
-
-        debug_now!("Reset from watchdog: {}", was_reset_from_wwdt);
-        if was_reset_from_wwdt {
-            lpc55_hal::boot_to_bootrom();
-        }
 
         let shared = SharedResources {
             trussed,
