@@ -88,9 +88,12 @@ mod app {
         let soc = stm32n6::init_bootup(ctx.device.BSEC);
         let rcc = Rcc::new(ctx.device.RCC);
         debug_now!("Enabling pll1");
-        rcc.enable_pll1(Rate::MHz(120));
-        debug_now!("Enabled pll1");
+        let ahb_freq = Rate::MHz(100);
+        let cpu_freq = Rate::MHz(200);
+        let ahb_divider = ((cpu_freq / ahb_freq) - 1) as u8;
+        rcc.enable_pll1(Rate::MHz(200), ahb_divider);
         let clock_config = rcc.clock_config();
+        debug_now!("Enabled pll1: {clock_config:?}");
 
         let (board_gpio, mmc) = nkso3::init_pins(
             ctx.device.GPIOC_S,
@@ -105,7 +108,7 @@ mod app {
         Syscfg::new(ctx.device.SYSCFG_S, &rcc).apply_io_compensation_workaround();
 
         const CARD_KIND: CardKind = CardKind::Sd;
-        const SD_MAX_CLOCK: Rate = Rate::MHz(8);
+        const SD_MAX_CLOCK: Rate = Rate::MHz(2);
         #[cfg_attr(not(feature = "sdmmc-tests"), expect(unused_mut))]
         let mut mmc = mmc.enable(&rcc, CARD_KIND, SD_MAX_CLOCK).unwrap();
         let cryp = Cryp::new(ctx.device.CRYP_S, &rcc);
@@ -304,6 +307,7 @@ mod app {
     #[task(priority = 1, shared = [trussed])]
     fn ui(ctx: ui::Context) {
         let mut trussed = ctx.shared.trussed;
+        debug!("UI");
 
         trussed.lock(|trussed| {
             trussed.update_ui();

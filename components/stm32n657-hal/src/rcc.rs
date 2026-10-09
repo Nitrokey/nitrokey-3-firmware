@@ -50,8 +50,11 @@ fn prescale_to_lower(input_rate: Rate, target_rate: Rate, max: u8) -> u8 {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PllDividerRates {
     pub prescaler_timer: u8,
+    #[doc(alias = "divm")]
     pub input_divider: u8,
+    #[doc(alias = "divn")]
     pub integer_multiplier: u16,
+    #[doc(alias = "fracdiv")]
     pub frac_multiplier: u32,
     pub ppre1: u8,
     pub postdiv1: u8,
@@ -172,12 +175,9 @@ impl Rcc {
         }
     }
 
-    pub fn enable_pll1(&self, target_rate: Rate) {
-        self.0.ccr().write(|w| w.pll1onc().set_bit());
-
-        let hsi_rate = SystemClock::Hsi.frequency();
-        let divider_rates = pll_divider_rates(hsi_rate, target_rate);
-        debug_now!("Divider rates for PLL1: {divider_rates:?}");
+    fn configure_pll1_integer(&self, divider_rates: PllDividerRates) {
+        assert!((16..=640).contains(&divider_rates.integer_multiplier));
+        self.0.ccr().write(|w| w.pll1onc().clear_bit());
         self.0.pll1cfgr1().modify(|_, w| unsafe {
             w.pll1divm()
                 .bits(divider_rates.input_divider)
@@ -188,26 +188,67 @@ impl Rcc {
                 .pll1byp()
                 .clear_bit()
         });
-        self.0.pll1cfgr2().modify(|_, w| unsafe {
-            w.pll1divnfrac()
-                .bits((divider_rates.frac_multiplier) as u32)
+        self.0
+            .pll1cfgr2()
+            .modify(|_, w| unsafe { w.pll1divnfrac().bits(0) });
+        self.0.pll1cfgr3().modify(|_, w| w.pll1modssrst().set_bit());
+        self.0.ccr().write(|w| w.pll1onc().set_bit());
+    }
+
+    fn configure_pll1_fractional(&self, divider_rates: PllDividerRates) {
+        assert!((20..=320).contains(&divider_rates.integer_multiplier));
+
+        self.0.ccr().write(|w| w.pll1onc().clear_bit());
+
+        self.0.pll1cfgr1().modify(|_, w| unsafe {
+            w.pll1divm()
+                .bits(divider_rates.input_divider)
+                .pll1divn()
+                .bits(divider_rates.integer_multiplier)
+                .pll1sel()
+                .bits(SystemClock::Hsi as u8)
+                .pll1byp()
+                .clear_bit()
         });
+        self.0
+            .pll1cfgr2()
+            .modify(|_, w| unsafe { w.pll1divnfrac().bits(0) });
+        self.0.pll1cfgr3().modify(|_, w| {
+            w.pll1modssrst()
+                .set_bit()
+                .pll1moddsen()
+                .set_bit()
+                .pll1dacen()
+                .set_bit()
+        });
+
+        self.0.ccr().write(|w| w.pll1onc().set_bit());
+    }
+
+    /// Enable PLL1 and set it as CPU clock
+    ///
+    /// ahb bus clock will be target_rate/(ahb_divider + 1)
+    pub fn enable_pll1(&self, target_rate: Rate, ahb_divider: u8) {
+        self.0.ccr().write(|w| w.pll1onc().set_bit());
+
+        let hsi_rate = SystemClock::Hsi.frequency();
+        let divider_rates = pll_divider_rates(hsi_rate, target_rate);
+        debug_now!("Divider rates for PLL1: {divider_rates:?}");
+
         self.0.pll1cfgr3().modify(|_, w| unsafe {
-            w.pll1moddsen()
-                .set_bit()
-                .pll1dacen()
-                .set_bit()
-                .pll1dacen()
-                .set_bit()
-                .pll1modssrst()
-                .set_bit()
-                .pll1pdiven()
+            w.pll1pdiven()
                 .set_bit()
                 .pll1pdiv1()
                 .bits(1)
                 .pll1pdiv2()
                 .bits(1)
         });
+
+        if divider_rates.frac_multiplier == 0 {
+            self.configure_pll1_integer(divider_rates);
+        } else {
+            self.configure_pll1_fractional(divider_rates);
+        }
 
         self.0.cfgr2().modify(|_, w| unsafe {
             w.timpre()
@@ -222,18 +263,16 @@ impl Rcc {
                 .bits(divider_rates.ppre1)
         });
 
+        self.0.csr().write(|w| w.pll1ons().bit(true));
+        debug_now!("Waiting for pll1rdy");
+        while !self.0.sr().read().pll1rdy().bit() {}
+
         self.0.pll1cfgr3().modify(|_, w| unsafe {
-            w.pll1pdiven()
-                .set_bit()
-                .pll1pdiv1()
+            w.pll1pdiv1()
                 .bits(divider_rates.postdiv1)
                 .pll1pdiv2()
                 .bits(divider_rates.postdiv2)
         });
-
-        self.0.csr().write(|w| w.pll1ons().bit(true));
-        debug_now!("Waiting for pll1rdy");
-        while !self.0.sr().read().pll1rdy().bit() {}
 
         self.0.ic1cfgr().write(|w| unsafe {
             // Select PLL1 output for IC1
@@ -249,7 +288,7 @@ impl Rcc {
                 .bits(0b00)
                 // Set divider to 1 (PLL outout straight to ahb)h
                 .ic2int()
-                .bits(0)
+                .bits(ahb_divider)
         });
         self.0.ic6cfgr().write(|w| unsafe {
             // Select PLL1 output for IC6
@@ -458,19 +497,30 @@ impl ClockConfig {
                     unimplemented!();
                 }
 
-                let input_rate = self.pll1_input_clock.frequency().raw() as u64;
-                let integer_multiplier = self.pll1_divider_rates.integer_multiplier as u64;
-                let frac_multiplier = self.pll1_divider_rates.frac_multiplier as u64;
-                let input_divider = self.pll1_divider_rates.input_divider as u64;
-                let value = input_rate * (integer_multiplier * (1 << 24) + frac_multiplier)
-                    / input_divider
-                    / (1 << 24);
+                if self.pll1_divider_rates.frac_multiplier != 0 {
+                    let input_rate = self.pll1_input_clock.frequency().raw() as u64;
+                    let integer_multiplier = self.pll1_divider_rates.integer_multiplier as u64;
+                    let frac_multiplier = self.pll1_divider_rates.frac_multiplier as u64;
+                    let input_divider = self.pll1_divider_rates.input_divider as u64;
+                    let fvco = input_rate * (integer_multiplier * (1 << 24) + frac_multiplier)
+                        / input_divider
+                        / (1 << 24);
 
-                let value = value
-                    / self.pll1_divider_rates.postdiv1 as u64
-                    / self.pll1_divider_rates.postdiv2 as u64;
+                    let postdiv = fvco
+                        / self.pll1_divider_rates.postdiv1 as u64
+                        / self.pll1_divider_rates.postdiv2 as u64;
 
-                Rate::Hz(value.try_into().unwrap())
+                    Rate::Hz(postdiv.try_into().unwrap())
+                } else {
+                    let input_rate = self.pll1_input_clock.frequency();
+                    let integer_multiplier = self.pll1_divider_rates.integer_multiplier;
+                    let input_divider = self.pll1_divider_rates.input_divider;
+                    let fvco = input_rate * integer_multiplier as u32 / input_divider as u32;
+                    let postdiv = fvco
+                        / self.pll1_divider_rates.postdiv1 as u32
+                        / self.pll1_divider_rates.postdiv2 as u32;
+                    postdiv
+                }
             }
             _ => unimplemented!(),
         }
