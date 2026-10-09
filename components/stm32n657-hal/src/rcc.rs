@@ -54,16 +54,40 @@ pub struct PllDividerRates {
     pub integer_multiplier: u16,
     pub frac_multiplier: u32,
     pub ppre1: u8,
+    pub postdiv1: u8,
+    pub postdiv2: u8,
+}
+
+/// The PLL output rate must be between 800MHz and 3200MHz,
+///
+/// This calculates a Rate and postdiv1 and postdiv2 such that:
+///
+/// - Rate is between 800MHz and 3200MHz
+/// - Rate / postdiv1 / postidv2 = target_rate
+fn before_postdiv_rate(target_rate: Rate) -> (Rate, u8, u8) {
+    let acceptable_rate_range = Rate::MHz(800)..Rate::MHz(3200);
+
+    for postdiv1 in 0b001..=0b111 {
+        for postdiv2 in 0b001..=0b111 {
+            let before_div_rate = target_rate * postdiv1 * postdiv2;
+            if acceptable_rate_range.contains(&before_div_rate) {
+                return (before_div_rate, postdiv1 as u8, postdiv2 as u8);
+            }
+        }
+    }
+    panic!("Failed to find a valid PLL rate with the postdiv constraints");
 }
 
 /// Returns divm, divn and divnfrac
 fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> PllDividerRates {
-    let input_divider = pll_ideal_input_divider(input_rate, target_rate);
-    let integer_divider = (target_rate * input_divider as u32) / input_rate;
+    let (before_postdiv_rate, postdiv1, postdiv2) = before_postdiv_rate(target_rate);
+    let input_divider = pll_ideal_input_divider(input_rate, before_postdiv_rate);
+    let integer_divider = (before_postdiv_rate * input_divider as u32) / input_rate;
     // integer_divider * 2^24
     let integer_divider_224 = integer_divider as u64 * (1 << 24);
     let input_divider_224 = input_divider as u64 * (1 << 24);
-    let frac_divider = (target_rate.raw() as u64 * input_divider_224) / (input_rate.raw() as u64)
+    let frac_divider = (before_postdiv_rate.raw() as u64 * input_divider_224)
+        / (input_rate.raw() as u64)
         - integer_divider_224;
 
     // We want the timer clock to be lower that 64MHz if possible
@@ -76,6 +100,8 @@ fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> PllDividerRates {
         integer_multiplier: integer_divider.try_into().unwrap(),
         frac_multiplier: frac_divider.try_into().unwrap(),
         ppre1,
+        postdiv1,
+        postdiv2,
     }
 }
 
@@ -97,6 +123,7 @@ impl Rcc {
         let ic2 = self.0.ic2cfgr().read();
         let pll1_cfg = self.0.pll1cfgr1().read();
         let pll1_cfg2 = self.0.pll1cfgr2().read();
+        let pll1cfgr3 = self.0.pll1cfgr3().read();
 
         let system_clock = SystemClock::from_bits(cfgr1.syssws().bits());
 
@@ -109,6 +136,8 @@ impl Rcc {
             frac_multiplier: pll1_cfg2.pll1divnfrac().bits(),
             ppre1: cfgr2.ppre1().bits(),
             prescaler_timer,
+            postdiv1: pll1cfgr3.pll1pdiv1().bits(),
+            postdiv2: pll1cfgr3.pll1pdiv2().bits(),
         };
 
         let config = ClockConfig {
@@ -156,6 +185,8 @@ impl Rcc {
                 .bits(divider_rates.integer_multiplier)
                 .pll1sel()
                 .bits(SystemClock::Hsi as u8)
+                .pll1byp()
+                .clear_bit()
         });
         self.0.pll1cfgr2().modify(|_, w| unsafe {
             w.pll1divnfrac()
@@ -189,6 +220,15 @@ impl Rcc {
                 .bits(divider_rates.ppre1)
                 .ppre5()
                 .bits(divider_rates.ppre1)
+        });
+
+        self.0.pll1cfgr3().modify(|_, w| unsafe {
+            w.pll1pdiven()
+                .set_bit()
+                .pll1pdiv1()
+                .bits(divider_rates.postdiv1)
+                .pll1pdiv2()
+                .bits(divider_rates.postdiv2)
         });
 
         self.0.csr().write(|w| w.pll1ons().bit(true));
@@ -426,6 +466,10 @@ impl ClockConfig {
                     / input_divider
                     / (1 << 24);
 
+                let value = value
+                    / self.pll1_divider_rates.postdiv1 as u64
+                    / self.pll1_divider_rates.postdiv2 as u64;
+
                 Rate::Hz(value.try_into().unwrap())
             }
             _ => unimplemented!(),
@@ -512,6 +556,8 @@ mod test {
                 integer_multiplier: 0,
                 frac_multiplier: 0,
                 ppre1: 0,
+                postdiv1: 0,
+                postdiv2: 0,
             },
         };
 
@@ -554,8 +600,9 @@ mod test {
 
             let pll1_multiplier = (divn + fracdiv / two_24) / divm;
             let fvco = input_rate_f64 * pll1_multiplier;
+            let pll_out = fvco / divider_rates.postdiv1 as f64 / divider_rates.postdiv2 as f64;
             assert!(
-                (fvco - target_rate.raw() as f64).abs() < 1e-9,
+                (pll_out - target_rate.raw() as f64).abs() < 1e-9,
                 "{divm}, {divn} {fracdiv}"
             );
 
