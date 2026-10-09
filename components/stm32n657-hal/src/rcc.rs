@@ -95,7 +95,8 @@ fn pll_divider_rates(input_rate: Rate, target_rate: Rate) -> PllDividerRates {
 
     // We want the timer clock to be lower that 64MHz if possible
     let prescaler_timer = prescale_to_lower(target_rate, SystemClock::Hsi.frequency(), 0b11);
-    let ppre1 = prescale_to_lower(target_rate, SystemClock::Hsi.frequency(), 0b111);
+    // hpre = 1 so divides by 2
+    let ppre1 = prescale_to_lower(target_rate / 2, SystemClock::Hsi.frequency(), 0b111);
 
     PllDividerRates {
         prescaler_timer,
@@ -191,7 +192,14 @@ impl Rcc {
         self.0
             .pll1cfgr2()
             .modify(|_, w| unsafe { w.pll1divnfrac().bits(0) });
-        self.0.pll1cfgr3().modify(|_, w| w.pll1modssrst().set_bit());
+        self.0.pll1cfgr3().modify(|_, w| {
+            w.pll1modssrst()
+                .set_bit()
+                .pll1moddsen()
+                .clear_bit()
+                .pll1dacen()
+                .clear_bit()
+        });
         self.0.ccr().write(|w| w.pll1onc().set_bit());
     }
 
@@ -261,6 +269,8 @@ impl Rcc {
                 .bits(divider_rates.ppre1)
                 .ppre5()
                 .bits(divider_rates.ppre1)
+                .hpre()
+                .bits(1)
         });
 
         self.0.csr().write(|w| w.pll1ons().bit(true));
@@ -286,7 +296,7 @@ impl Rcc {
             // Select PLL1 output for IC2
             w.ic2sel()
                 .bits(0b00)
-                // Set divider to 1 (PLL outout straight to ahb)h
+                // Set divider to 1 (PLL outout straight to ahb)
                 .ic2int()
                 .bits(ahb_divider)
         });
