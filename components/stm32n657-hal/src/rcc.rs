@@ -31,20 +31,18 @@ fn prescale_to_lower(input_rate: Rate, target_rate: Rate, max: u8) -> u8 {
         1
     } else if input_rate < target_rate * 4 {
         2
-    } else if input_rate < target_rate * 4 {
-        3
     } else if input_rate < target_rate * 8 {
-        4
+        3
     } else if input_rate < target_rate * 16 {
-        5
+        4
     } else if input_rate < target_rate * 32 {
-        6
+        5
     } else if input_rate < target_rate * 64 {
-        7
+        6
     } else if input_rate < target_rate * 128 {
-        8
+        7
     } else {
-        9
+        8
     }
     .min(max)
 }
