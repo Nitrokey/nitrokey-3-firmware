@@ -1183,6 +1183,11 @@ impl<R: Runner> App<R> for PivApp<R> {
         const BACKENDS_PIV: &[BackendId<Backend>] = &[
             #[cfg(feature = "se050")]
             BackendId::Custom(Backend::Se050),
+            // Without the SE050, the PINs and RSA keys come from the software backends
+            #[cfg(not(feature = "se050"))]
+            BackendId::Custom(Backend::SoftwareRsa),
+            #[cfg(not(feature = "se050"))]
+            BackendId::Custom(Backend::Auth),
             BackendId::Custom(Backend::Staging),
             BackendId::Core,
         ];
