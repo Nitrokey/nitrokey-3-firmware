@@ -1,4 +1,3 @@
-use apps::Model;
 use embedded_hal::digital::v2::InputPin as _;
 #[cfg(feature = "se050")]
 use embedded_hal::{blocking::delay::DelayUs, timer::CountDown};
@@ -23,7 +22,7 @@ use lpc55_hal::{
 use se05x::embedded_hal::Hal027;
 
 use memory_regions::MemoryRegions;
-use utils::OptionalStorage;
+use utils::{Model, OptionalStorage};
 
 use crate::{flash::ExtFlashStorage, soc::lpc55::Lpc55, Board};
 

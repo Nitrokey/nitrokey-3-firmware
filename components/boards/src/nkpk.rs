@@ -1,7 +1,6 @@
-use apps::Model;
 use littlefs2::{fs::Allocation, io::Result as LfsResult};
 use memory_regions::MemoryRegions;
-use utils::RamStorage;
+use utils::{Model, RamStorage};
 
 use super::nk3am::{
     self,

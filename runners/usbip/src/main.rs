@@ -6,23 +6,19 @@ mod usb;
 
 use std::{path::PathBuf, sync::Arc, thread};
 
-use apps::{AdminData, Apps, Dispatch, FidoData, InitStatus, Model, Variant};
+use apps::{AdminData, Apps, Dispatch, FidoData, InitStatus, Variant};
 use clap::{ArgAction, Parser, ValueEnum};
 use clap_num::maybe_hex;
 use rand_core::{OsRng, RngCore};
 use trussed::platform::Platform as _;
 use trussed_core::types::{Bytes, Location};
 use trussed_usbip::{Platform, Store, Syscall};
-use utils::Version;
+use utils::{Model, Version};
 
 use ui::{Signals, UserInterface, UserPresence};
 
 const VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION"));
 const VERSION_STRING: &str = env!("USBIP_FIRMWARE_VERSION");
-const MANUFACTURER: &str = "Nitrokey";
-const PRODUCT: &str = "Nitrokey 3";
-const VID: u16 = 0x20a0;
-const PID: u16 = 0x42b2;
 
 /// USP/IP based virtualization of a Nitrokey 3 device.
 #[derive(Parser, Debug)]
@@ -130,11 +126,7 @@ fn main() {
     }
 
     let usb = usb::NkSetup {
-        manufacturer: MANUFACTURER,
-        product: PRODUCT,
-        vid: VID,
-        pid: PID,
-        device_release: VERSION.usb_release(),
+        version: VERSION,
         ccid: args.ccid,
         #[cfg(feature = "scsi")]
         scsi: scsi::Setup {

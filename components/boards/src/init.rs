@@ -110,19 +110,12 @@ pub struct UsbNfc<B: Board> {
     pub iso14443: Option<Iso14443<B::NfcDevice>>,
 }
 
-const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
-const USB_MANUFACTURER: &str = "Nitrokey";
-const USB_VENDOR_ID: u16 = 0x20A0;
-
-#[expect(clippy::too_many_arguments)]
 pub fn init_usb_nfc<B: Board>(
     resources: &'static mut UsbResources<B>,
     nfc_callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
-    usb_product: &'static str,
-    usb_product_id: u16,
     version: Version,
 ) -> UsbNfc<B> {
     static CCID_CHANNEL: CcidChannel = Channel::new();
@@ -144,18 +137,12 @@ pub fn init_usb_nfc<B: Board>(
         let usb_bus = resources.usb_bus.insert(usb_bus);
         usb_classes::build(
             usb_bus,
-            Some(usb_classes::CcidConfig {
-                requester: ccid_rq,
-                card_issuer: Some(CARD_ISSUER),
-            }),
+            Some(ccid_rq),
             ctaphid_rq,
             &CTAP_INTERRUPT,
             usb_classes::Config {
-                manufacturer: USB_MANUFACTURER,
-                product: usb_product,
-                vid: USB_VENDOR_ID,
-                pid: usb_product_id,
-                device_release: version.usb_release(),
+                model: B::MODEL,
+                version,
             },
         )
     });

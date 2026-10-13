@@ -286,12 +286,12 @@ mod tests {
         soc::Soc,
         ui::{buttons::UserPresence, rgb_led::RgbLed, Clock},
     };
-    use apps::Model;
     use cortex_m::interrupt::InterruptNumber;
     use embedded_time::duration::Milliseconds;
     use littlefs2::{path, path::PathBuf};
     use nfc_device::traits::nfc::{Device as NfcDevice, Error as NfcError, State as NfcState};
     use usb_device::bus::UsbBus;
+    use utils::Model;
 
     struct TestBoard<EfsStorage> {
         soc: TestSoc,

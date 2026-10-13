@@ -3950,6 +3950,7 @@ dependencies = [
  "usbd-ccid",
  "usbd-ctaphid",
  "usbd-storage",
+ "utils",
  "xts-mode",
 ]
 

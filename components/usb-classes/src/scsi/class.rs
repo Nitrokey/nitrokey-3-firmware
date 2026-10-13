@@ -16,6 +16,7 @@ pub type Scsi<'bus, B> = scsi::Scsi<BulkOnly<'bus, B, [u8; BLOCK_SIZE]>>;
 
 const BLOCK_SIZE_U32: u32 = BLOCK_SIZE_U16 as _;
 
+// TODO: derive from Model and Version
 const VENDOR_ID: &[u8; 8] = b"Nitrokey";
 const PRODUCT_ID: &[u8; 16] = b"Storage         ";
 const PRODUCT_REVISION: &[u8; 4] = b"1.00";

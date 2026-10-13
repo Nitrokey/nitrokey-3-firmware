@@ -21,7 +21,7 @@ pub mod nkpk;
 
 use core::marker::PhantomData;
 
-use apps::{Dispatch, Model};
+use apps::Dispatch;
 use littlefs2::{
     driver::Storage,
     fs::{Allocation, Filesystem},
@@ -30,6 +30,7 @@ use littlefs2::{
 use nfc_device::traits::nfc::Device as NfcDevice;
 use rand_chacha::ChaCha8Rng;
 use trussed::platform::{Platform, Syscall};
+use utils::Model;
 
 use crate::{
     soc::{Soc, Uuid},

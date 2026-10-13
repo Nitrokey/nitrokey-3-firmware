@@ -25,25 +25,41 @@ use usb_device::{
 };
 use usbd_ccid::Ccid;
 use usbd_ctaphid::CtapHid;
+use utils::{Model, Version};
 
 /// CCID, CTAPHID and maybe SCSI.
 const MAX_CLASSES: usize = 2 + if cfg!(feature = "scsi") { 1 } else { 0 };
 
+const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
+
+const MANUFACTURER: &str = "Nitrokey";
+const PRODUCT_NK3: &str = "Nitrokey 3";
+const PRODUCT_NKPK: &str = "Nitrokey Passkey";
+
+const VID: u16 = 0x20a0;
+const PID_NK3: u16 = 0x42b2;
+const PID_NKPK: u16 = 0x42f3;
+
 /// Identification and descriptor settings for the USB device.
-pub struct Config<'a> {
-    pub manufacturer: &'a str,
-    pub product: &'a str,
-    pub vid: u16,
-    pub pid: u16,
-    /// `bcdDevice`.
-    pub device_release: u16,
+pub struct Config {
+    pub model: Model,
+    pub version: Version,
 }
 
-/// Enables the CCID interface. Omitting it leaves the interface out entirely.
-pub struct CcidConfig<'a> {
-    pub requester: CcidRequester<'static>,
-    /// CCID historical bytes; `None` yields the generic ATR.
-    pub card_issuer: Option<&'a [u8]>,
+impl Config {
+    const fn product(&self) -> &'static str {
+        match self.model {
+            Model::NK3 => PRODUCT_NK3,
+            Model::NKPK => PRODUCT_NKPK,
+        }
+    }
+
+    const fn pid(&self) -> u16 {
+        match self.model {
+            Model::NK3 => PID_NK3,
+            Model::NKPK => PID_NKPK,
+        }
+    }
 }
 
 /// The USB device together with the CTAPHID class and, optionally, CCID and/or SCSI.
@@ -91,12 +107,12 @@ impl<B: UsbBus + 'static, const CTAP_N: usize> UsbClasses<'_, B, CTAP_N> {
 /// endpoint, interface or string allocation panics.
 pub fn build<'a, B: UsbBus + 'static, const CTAP_N: usize>(
     bus: &'a UsbBusAllocator<B>,
-    ccid: Option<CcidConfig<'a>>,
+    ccid_rq: Option<CcidRequester<'static>>,
     ctaphid_rq: CtapRequester<'static, CTAP_N>,
     ctap_interrupt: &'static OptionRefSwap<'static, InterruptFlag>,
-    config: Config<'a>,
+    config: Config,
 ) -> UsbClasses<'a, B, CTAP_N> {
-    let ccid = ccid.map(|ccid| Ccid::new(bus, ccid.requester, ccid.card_issuer));
+    let ccid = ccid_rq.map(|ccid_rq| Ccid::new(bus, ccid_rq, Some(CARD_ISSUER)));
     let ctaphid = CtapHid::with_interrupt(bus, ctaphid_rq, Some(ctap_interrupt), 0u32)
         .implements_ctap1()
         .implements_ctap2()
@@ -105,12 +121,12 @@ pub fn build<'a, B: UsbBus + 'static, const CTAP_N: usize>(
     let scsi = scsi::setup(bus);
 
     let strings = StringDescriptors::new(LangID::EN_US)
-        .product(config.product)
-        .manufacturer(config.manufacturer);
-    let usbd = UsbDeviceBuilder::new(bus, UsbVidPid(config.vid, config.pid))
+        .product(config.product())
+        .manufacturer(MANUFACTURER);
+    let usbd = UsbDeviceBuilder::new(bus, UsbVidPid(VID, config.pid()))
         .strings(&[strings])
         .expect("failed to set USB string descriptors")
-        .device_release(config.device_release)
+        .device_release(config.version.usb_release())
         .max_packet_size_0(64)
         .expect("invalid max packet size for EP0")
         .composite_with_iads()

@@ -14,3 +14,18 @@ pub use build::{setup_linker_script, version_string, Soc};
 #[cfg(feature = "storage")]
 pub use storage::{OptionalStorage, RamStorage};
 pub use version::Version;
+
+#[derive(Copy, Clone)]
+pub enum Model {
+    NK3,
+    NKPK,
+}
+
+impl From<Model> for u8 {
+    fn from(model: Model) -> Self {
+        match model {
+            Model::NK3 => 0,
+            Model::NKPK => 1,
+        }
+    }
+}

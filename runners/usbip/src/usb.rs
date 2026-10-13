@@ -13,23 +13,18 @@ use trussed_usbip::{
     usb_device::bus::UsbBusAllocator, Classes, Dispatches, Setup, Timeout, UsbIpBus,
 };
 use usb_classes::Config;
+use utils::{Model, Version};
 
 use crate::Runner;
 
 /// Matches the firmware, which caps the message size to reduce stack usage.
 pub const CTAPHID_MESSAGE_SIZE: usize = 3072;
 
-const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
-
 pub(crate) type UsbClasses<'a> = usb_classes::UsbClasses<'a, UsbIpBus, CTAPHID_MESSAGE_SIZE>;
 type CtaphidDispatch = ctaphid_dispatch::Dispatch<'static, 'static, CTAPHID_MESSAGE_SIZE>;
 
 pub struct NkSetup {
-    pub manufacturer: &'static str,
-    pub product: &'static str,
-    pub vid: u16,
-    pub pid: u16,
-    pub device_release: u16,
+    pub version: Version,
     pub ccid: bool,
     #[cfg(feature = "scsi")]
     pub scsi: super::scsi::Setup,
@@ -64,29 +59,19 @@ impl Setup<Dispatch> for NkSetup {
         let (ccid_rq, ccid_rp) = CCID_CHANNEL.split().unwrap();
         let (ctaphid_rq, ctaphid_rp) = CTAP_CHANNEL.split().unwrap();
 
-        let ccid = if self.ccid {
-            Some(usb_classes::CcidConfig {
-                requester: ccid_rq,
-                card_issuer: Some(CARD_ISSUER),
-            })
-        } else {
-            None
-        };
+        let ccid_rq = if self.ccid { Some(ccid_rq) } else { None };
 
         #[cfg(feature = "scsi")]
         let scsi = super::scsi::State::new(&self.scsi);
 
         let classes = usb_classes::build(
             allocator,
-            ccid,
+            ccid_rq,
             ctaphid_rq,
             &CTAP_INTERRUPT,
             Config {
-                manufacturer: self.manufacturer,
-                product: self.product,
-                vid: self.vid,
-                pid: self.pid,
-                device_release: self.device_release,
+                model: Model::NK3,
+                version: self.version,
             },
         );
 

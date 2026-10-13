@@ -40,7 +40,7 @@ use trussed_core::{
     InterruptFlag,
 };
 
-use utils::Version;
+use utils::{Model, Version};
 
 use admin_app::{ConfigValueMut, ResetSignalAllocation};
 
@@ -861,21 +861,6 @@ impl From<Variant> for u8 {
             Variant::Usbip => 0,
             Variant::Lpc55 => 1,
             Variant::Nrf52 => 2,
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-pub enum Model {
-    NK3,
-    NKPK,
-}
-
-impl From<Model> for u8 {
-    fn from(model: Model) -> Self {
-        match model {
-            Model::NK3 => 0,
-            Model::NKPK => 1,
         }
     }
 }

@@ -41,16 +41,5 @@ pub fn init_usb_nfc<B: Board>(
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfc<B> {
-    const USB_PRODUCT: &str = "Nitrokey 3";
-    const USB_PRODUCT_ID: u16 = 0x42B2;
-    boards::init::init_usb_nfc(
-        resources,
-        nfc_callback,
-        usb_bus,
-        nfc,
-        nfc_rp,
-        USB_PRODUCT,
-        USB_PRODUCT_ID,
-        VERSION,
-    )
+    boards::init::init_usb_nfc(resources, nfc_callback, usb_bus, nfc, nfc_rp, VERSION)
 }

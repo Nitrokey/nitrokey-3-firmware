@@ -1,4 +1,3 @@
-use apps::Model;
 use littlefs2::{
     fs::{Allocation, Filesystem},
     io::Result as LfsResult,
@@ -11,6 +10,7 @@ use nrf52840_hal::{
     spim, twim, Spim,
 };
 use nrf52840_pac::{FICR, GPIOTE, P0, P1, POWER, PWM0, PWM1, PWM2, SPIM3};
+use utils::Model;
 
 #[cfg(feature = "se050")]
 use {

@@ -97,8 +97,6 @@ mod app {
             &mut init_status,
         );
 
-        const USB_PRODUCT: &str = "Nitrokey Passkey";
-        const USB_PRODUCT_ID: u16 = 0x42F3;
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usb_nfc = boards::init::init_usb_nfc::<Board>(
@@ -107,8 +105,6 @@ mod app {
             Some(usb_bus),
             None,
             nfc_rp,
-            USB_PRODUCT,
-            USB_PRODUCT_ID,
             VERSION,
         );
 
