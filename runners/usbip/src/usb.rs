@@ -21,18 +21,8 @@ pub const CTAPHID_MESSAGE_SIZE: usize = 3072;
 
 const CARD_ISSUER: &[u8; 13] = b"Nitrokey\0\0\0\0\0";
 
-type UsbClasses<'a> = usb_classes::UsbClasses<'a, UsbIpBus, CTAPHID_MESSAGE_SIZE>;
+pub(crate) type UsbClasses<'a> = usb_classes::UsbClasses<'a, UsbIpBus, CTAPHID_MESSAGE_SIZE>;
 type CtaphidDispatch = ctaphid_dispatch::Dispatch<'static, 'static, CTAPHID_MESSAGE_SIZE>;
-
-/// 16384 blocks of 512 bytes, i.e. 8 MiB.
-#[cfg(feature = "usb-storage")]
-const BLOCKS: u32 = 16384;
-
-#[cfg(feature = "usb-storage")]
-struct Storage {
-    device: crate::block_device::HostBlockDevice,
-    xts: Option<usb_classes::scsi::xts::Ciphers<aes::Aes128, aes::Aes128>>,
-}
 
 pub struct NkSetup {
     pub manufacturer: &'static str,
@@ -41,19 +31,16 @@ pub struct NkSetup {
     pub pid: u16,
     pub device_release: u16,
     pub ccid: bool,
-    /// Backing file for the block device; memory when `None`.
-    #[cfg(feature = "usb-storage")]
-    pub block_device: Option<std::path::PathBuf>,
-    #[cfg(feature = "usb-storage")]
-    pub block_device_key: Option<[u8; 32]>,
+    #[cfg(feature = "scsi")]
+    pub scsi: super::scsi::Setup,
 }
 
 pub struct NkClasses<'a> {
     classes: UsbClasses<'a>,
     timeout_ccid: Timeout,
     timeout_ctaphid: Timeout,
-    #[cfg(feature = "usb-storage")]
-    storage: Storage,
+    #[cfg(feature = "scsi")]
+    scsi: super::scsi::State,
 }
 
 pub struct NkDispatches {
@@ -86,28 +73,8 @@ impl Setup<Dispatch> for NkSetup {
             None
         };
 
-        // Must precede `build`, which freezes the allocator.
-        #[cfg(feature = "usb-storage")]
-        let storage = Storage {
-            device: crate::block_device::HostBlockDevice::open(
-                self.block_device.as_deref(),
-                BLOCKS,
-            )
-            .expect("failed to open block device"),
-            xts: self.block_device_key.map(|key| {
-                use aes::{cipher::KeyInit as _, Aes128};
-                use usb_classes::scsi::xts::Ciphers;
-
-                log::info!("storage encryption: AES-128 XTS");
-                let ([key1, key2], []) = key.as_chunks() else {
-                    unreachable!();
-                };
-                Ciphers {
-                    cipher1: Aes128::new(key1.into()),
-                    cipher2: Aes128::new(key2.into()),
-                }
-            }),
-        };
+        #[cfg(feature = "scsi")]
+        let scsi = super::scsi::State::new(&self.scsi);
 
         let classes = usb_classes::build(
             allocator,
@@ -133,8 +100,8 @@ impl Setup<Dispatch> for NkSetup {
                 classes,
                 timeout_ccid: Timeout::new(),
                 timeout_ctaphid: Timeout::new(),
-                #[cfg(feature = "usb-storage")]
-                storage,
+                #[cfg(feature = "scsi")]
+                scsi,
             },
             NkDispatches { ctaphid, apdu },
         )
@@ -142,23 +109,11 @@ impl Setup<Dispatch> for NkSetup {
 }
 
 impl Classes for NkClasses<'_> {
-    #[cfg(not(feature = "usb-storage"))]
     fn poll(&mut self) {
         self.classes.poll();
-    }
 
-    #[cfg(feature = "usb-storage")]
-    fn poll(&mut self) {
-        use usb_classes::scsi::EncryptedBlockDevice;
-
-        self.classes.poll();
-
-        if let Some(xts) = self.storage.xts.as_mut() {
-            let mut block_device = EncryptedBlockDevice::new(&mut self.storage.device, xts);
-            self.classes.poll_scsi(&mut block_device);
-        } else {
-            self.classes.poll_scsi(&mut self.storage.device);
-        }
+        #[cfg(feature = "scsi")]
+        self.scsi.poll(&mut self.classes);
     }
 
     fn keepalive(&mut self, epoch: Instant) {

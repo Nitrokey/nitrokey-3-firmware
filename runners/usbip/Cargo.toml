@@ -27,7 +27,7 @@ trussed-usbip = { workspace = true, features = ["ccid", "ctaphid"] }
 usb-classes = { path = "../../components/usb-classes", features = ["highspeed-usb"] }
 utils = { path = "../../components/utils", features = ["log-all"] }
 
-# usb-storage
+# scsi
 aes = { version = "0.8", optional = true }
 
 [build-dependencies]
@@ -36,7 +36,6 @@ utils = { path = "../../components/utils", features = ["build"] }
 [features]
 test = ["apps/nk3-test"]
 provisioner = ["apps/nk3-provisioner"]
-ccid = []
 
 # SCSI block device over USB/IP
-usb-storage = ["usb-classes/scsi", "dep:aes"]
+scsi = ["usb-classes/scsi", "dep:aes"]

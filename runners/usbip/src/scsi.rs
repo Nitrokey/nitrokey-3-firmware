@@ -3,25 +3,69 @@
 use std::{
     fs::OpenOptions,
     io::{self, Read, Seek, SeekFrom, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
-use usb_classes::scsi::{BlockDevice, BLOCK_SIZE};
+use aes::{cipher::KeyInit as _, Aes128};
+use usb_classes::scsi::{xts::Ciphers, BlockDevice, EncryptedBlockDevice, BLOCK_SIZE};
+
+use super::usb::UsbClasses;
+
+/// 16384 blocks of 512 bytes, i.e. 8 MiB.
+const BLOCKS: u32 = 16_384;
+
+pub struct Setup {
+    /// Backing file for the block device; memory when `None`.
+    pub block_device: Option<PathBuf>,
+    pub block_device_key: Option<[u8; 32]>,
+}
+
+pub struct State {
+    device: HostBlockDevice,
+    xts: Option<Ciphers<Aes128, Aes128>>,
+}
+
+impl State {
+    pub fn new(setup: &Setup) -> Self {
+        let device = HostBlockDevice::open(setup.block_device.as_deref(), BLOCKS)
+            .expect("failed to open block device");
+        let xts = setup.block_device_key.map(|key| {
+            log::info!("storage encryption: AES-128 XTS");
+            let ([key1, key2], []) = key.as_chunks() else {
+                unreachable!();
+            };
+            Ciphers {
+                cipher1: Aes128::new(key1.into()),
+                cipher2: Aes128::new(key2.into()),
+            }
+        });
+        Self { device, xts }
+    }
+
+    pub fn poll(&mut self, classes: &mut UsbClasses<'_>) {
+        if let Some(xts) = self.xts.as_mut() {
+            let mut block_device = EncryptedBlockDevice::new(&mut self.device, xts);
+            classes.poll_scsi(&mut block_device);
+        } else {
+            classes.poll_scsi(&mut self.device);
+        }
+    }
+}
 
 enum Backing {
     File(std::fs::File),
     Memory(Vec<u8>),
 }
 
-/// A fixed-size block device, optionally encrypted on the fly.
-pub struct HostBlockDevice {
+/// A fixed-size block device.
+struct HostBlockDevice {
     backing: Backing,
     blocks: u32,
 }
 
 impl HostBlockDevice {
     /// Opens `path` as a file image, or uses memory when `None`.
-    pub fn open(path: Option<&Path>, blocks: u32) -> io::Result<Self> {
+    fn open(path: Option<&Path>, blocks: u32) -> io::Result<Self> {
         let len = blocks as u64 * BLOCK_SIZE as u64;
 
         let backing = match path {

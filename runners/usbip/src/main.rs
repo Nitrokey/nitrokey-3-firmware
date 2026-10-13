@@ -1,5 +1,5 @@
-#[cfg(feature = "usb-storage")]
-mod block_device;
+#[cfg(feature = "scsi")]
+mod scsi;
 mod store;
 mod ui;
 mod usb;
@@ -49,7 +49,7 @@ struct Args {
     efs: Option<PathBuf>,
 
     /// Backing file for the block device (default: use RAM).
-    #[cfg(feature = "usb-storage")]
+    #[cfg(feature = "scsi")]
     #[clap(short, long)]
     block_device: Option<PathBuf>,
 
@@ -136,10 +136,11 @@ fn main() {
         pid: PID,
         device_release: VERSION.usb_release(),
         ccid: args.ccid,
-        #[cfg(feature = "usb-storage")]
-        block_device: args.block_device,
-        #[cfg(feature = "usb-storage")]
-        block_device_key: Some(*b"12_123456789_123456789_123456789"),
+        #[cfg(feature = "scsi")]
+        scsi: scsi::Setup {
+            block_device: args.block_device,
+            block_device_key: Some(*b"12_123456789_123456789_123456789"),
+        },
     };
 
     let store = store::init(args.ifs, args.efs);
