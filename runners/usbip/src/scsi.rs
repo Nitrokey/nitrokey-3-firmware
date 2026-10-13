@@ -7,7 +7,7 @@ use std::{
 };
 
 use aes::{cipher::KeyInit as _, Aes128};
-use usb_classes::scsi::{xts::Ciphers, BlockDevice, EncryptedBlockDevice, BLOCK_SIZE};
+use usb_classes::scsi::{BlockDevice, Ciphers, EncryptedBlockDevice, BLOCK_SIZE};
 
 use super::usb::UsbClasses;
 
