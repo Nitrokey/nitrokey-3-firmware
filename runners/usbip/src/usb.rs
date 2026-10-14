@@ -12,7 +12,7 @@ use trussed_core::InterruptFlag;
 use trussed_usbip::{
     usb_device::bus::UsbBusAllocator, Classes, Dispatches, Setup, Timeout, UsbIpBus,
 };
-use usb_classes::Config;
+use usb_classes::{Config, Serial};
 use utils::{Model, Version};
 
 use crate::Runner;
@@ -25,6 +25,7 @@ type CtaphidDispatch = ctaphid_dispatch::Dispatch<'static, 'static, CTAPHID_MESS
 
 pub struct NkSetup {
     pub version: Version,
+    pub serial: Serial,
     pub ccid: bool,
     #[cfg(feature = "scsi")]
     pub scsi: super::scsi::Setup,
@@ -72,6 +73,7 @@ impl Setup<Dispatch> for NkSetup {
             Config {
                 model: Model::NK3,
                 version: self.version,
+                serial: &self.serial,
             },
         );
 

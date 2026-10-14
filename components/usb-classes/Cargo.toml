@@ -22,6 +22,8 @@ usbd-storage = { version = "3.0.0", features = ["bbb", "scsi"], optional = true 
 
 [dev-dependencies]
 aes = "0.8"
+hex = "0.4"
+hex-literal = "1"
 xts-mode = "0.5"
 
 [features]

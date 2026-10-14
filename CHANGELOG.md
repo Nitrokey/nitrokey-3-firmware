@@ -2,7 +2,7 @@
 
 ## Unreleased
 
--
+- Add serial number to USB descriptor ([#634](https://github.com/Nitrokey/nitrokey-3-firmware/issues/634))
 
 ## v1.9.1 (2026-09-30)
 

@@ -35,11 +35,20 @@ pub fn init_alloc() {
 }
 
 pub fn init_usb_nfc<B: Board>(
+    board: &B,
     resources: &'static mut UsbResources<B>,
     nfc_callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
     nfc: Option<Iso14443<B::NfcDevice>>,
     nfc_rp: CcidResponder<'static>,
 ) -> UsbNfc<B> {
-    boards::init::init_usb_nfc(resources, nfc_callback, usb_bus, nfc, nfc_rp, VERSION)
+    boards::init::init_usb_nfc(
+        board,
+        resources,
+        nfc_callback,
+        usb_bus,
+        nfc,
+        nfc_rp,
+        VERSION,
+    )
 }

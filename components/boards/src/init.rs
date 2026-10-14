@@ -16,6 +16,7 @@ use rand_chacha::ChaCha8Rng;
 use ref_swap::OptionRefSwap;
 use trussed::store::Store as _;
 use trussed_core::InterruptFlag;
+use usb_classes::Serial;
 use usb_device::bus::UsbBusAllocator;
 use utils::Version;
 
@@ -57,6 +58,7 @@ impl<B: Board> Resources<B> {
 
 pub struct UsbResources<B: Board> {
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
+    serial: Option<Serial>,
 }
 
 impl<B: Board> Default for UsbResources<B> {
@@ -67,7 +69,10 @@ impl<B: Board> Default for UsbResources<B> {
 
 impl<B: Board> UsbResources<B> {
     pub const fn new() -> Self {
-        Self { usb_bus: None }
+        Self {
+            usb_bus: None,
+            serial: None,
+        }
     }
 }
 
@@ -111,6 +116,7 @@ pub struct UsbNfc<B: Board> {
 }
 
 pub fn init_usb_nfc<B: Board>(
+    board: &B,
     resources: &'static mut UsbResources<B>,
     nfc_callback: interchange::Callback,
     usb_bus: Option<UsbBusAllocator<<B::Soc as Soc>::UsbBus>>,
@@ -135,6 +141,9 @@ pub fn init_usb_nfc<B: Board>(
     /* populate requesters (if bus options are provided) */
     let usb_classes = usb_bus.map(|usb_bus| {
         let usb_bus = resources.usb_bus.insert(usb_bus);
+        let serial = resources
+            .serial
+            .insert(Serial::from_uuid(*board.soc().uuid()));
         usb_classes::build(
             usb_bus,
             Some(ccid_rq),
@@ -143,6 +152,7 @@ pub fn init_usb_nfc<B: Board>(
             usb_classes::Config {
                 model: B::MODEL,
                 version,
+                serial,
             },
         )
     });
