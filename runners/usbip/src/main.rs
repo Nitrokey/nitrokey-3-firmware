@@ -13,6 +13,7 @@ use rand_core::{OsRng, RngCore};
 use trussed::platform::Platform as _;
 use trussed_core::types::{Bytes, Location};
 use trussed_usbip::{Platform, Store, Syscall};
+use usb_classes::Serial;
 use utils::{Model, Version};
 
 use ui::{Signals, UserInterface, UserPresence};
@@ -85,12 +86,7 @@ struct Runner {
 }
 
 impl Runner {
-    fn new(serial: Option<u128>) -> Self {
-        let serial = serial.map(u128::to_be_bytes).unwrap_or_else(|| {
-            let mut uuid = [0; 16];
-            OsRng.fill_bytes(&mut uuid);
-            uuid
-        });
+    fn new(serial: [u8; 16]) -> Self {
         Runner { serial }
     }
 }
@@ -125,8 +121,15 @@ fn main() {
         return;
     }
 
+    let uuid = args.serial.map(u128::to_be_bytes).unwrap_or_else(|| {
+        let mut uuid = [0; 16];
+        OsRng.fill_bytes(&mut uuid);
+        uuid
+    });
+
     let usb = usb::NkSetup {
         version: VERSION,
+        serial: Serial::from_uuid(uuid),
         ccid: args.ccid,
         #[cfg(feature = "scsi")]
         scsi: scsi::Setup {
@@ -137,7 +140,7 @@ fn main() {
 
     let store = store::init(args.ifs, args.efs);
     let user_presence = args.user_presence.into();
-    exec(store, usb, args.serial, user_presence)
+    exec(store, usb, uuid, user_presence)
 }
 
 fn print_version() {
@@ -157,7 +160,7 @@ fn print_version() {
     println!();
 }
 
-fn exec(store: Store, usb: usb::NkSetup, serial: Option<u128>, user_presence: UserPresence) {
+fn exec(store: Store, usb: usb::NkSetup, serial: [u8; 16], user_presence: UserPresence) {
     if let UserPresence::Signal(signals) = &user_presence {
         let signals = signals.clone();
         thread::spawn(move || {

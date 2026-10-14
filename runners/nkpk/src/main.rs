@@ -100,6 +100,7 @@ mod app {
         static NFC_CHANNEL: CcidChannel = Channel::new();
         let (_nfc_rq, nfc_rp) = NFC_CHANNEL.split().unwrap();
         let usb_nfc = boards::init::init_usb_nfc::<Board>(
+            &board,
             &mut ctx.local.resources.usb,
             || {},
             Some(usb_bus),

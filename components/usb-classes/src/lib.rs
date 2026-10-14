@@ -14,7 +14,7 @@ pub mod scsi;
 use apdu_dispatch::interchanges::{Requester as CcidRequester, SIZE as CCID_SIZE};
 use ctaphid_dispatch::Requester as CtapRequester;
 use embedded_time::duration::Milliseconds;
-use heapless::Vec;
+use heapless::{String, Vec};
 use ref_swap::OptionRefSwap;
 use trussed_core::InterruptFlag;
 use usb_device::{
@@ -40,13 +40,32 @@ const VID: u16 = 0x20a0;
 const PID_NK3: u16 = 0x42b2;
 const PID_NKPK: u16 = 0x42f3;
 
-/// Identification and descriptor settings for the USB device.
-pub struct Config {
-    pub model: Model,
-    pub version: Version,
+pub struct Serial(String<32>);
+
+impl Serial {
+    pub fn from_uuid(uuid: [u8; 16]) -> Self {
+        const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
+        let mut s = String::new();
+        for byte in uuid {
+            s.push(HEX_CHARS[usize::from(byte >> 4)].into()).unwrap();
+            s.push(HEX_CHARS[usize::from(byte & 0xf)].into()).unwrap();
+        }
+        Self(s)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
-impl Config {
+/// Identification and descriptor settings for the USB device.
+pub struct Config<'a> {
+    pub model: Model,
+    pub version: Version,
+    pub serial: &'a Serial,
+}
+
+impl<'a> Config<'a> {
     const fn product(&self) -> &'static str {
         match self.model {
             Model::NK3 => PRODUCT_NK3,
@@ -110,7 +129,7 @@ pub fn build<'a, B: UsbBus + 'static, const CTAP_N: usize>(
     ccid_rq: Option<CcidRequester<'static>>,
     ctaphid_rq: CtapRequester<'static, CTAP_N>,
     ctap_interrupt: &'static OptionRefSwap<'static, InterruptFlag>,
-    config: Config,
+    config: Config<'a>,
 ) -> UsbClasses<'a, B, CTAP_N> {
     let ccid = ccid_rq.map(|ccid_rq| Ccid::new(bus, ccid_rq, Some(CARD_ISSUER)));
     let ctaphid = CtapHid::with_interrupt(bus, ctaphid_rq, Some(ctap_interrupt), 0u32)
@@ -122,7 +141,8 @@ pub fn build<'a, B: UsbBus + 'static, const CTAP_N: usize>(
 
     let strings = StringDescriptors::new(LangID::EN_US)
         .product(config.product())
-        .manufacturer(MANUFACTURER);
+        .manufacturer(MANUFACTURER)
+        .serial_number(config.serial.as_str());
     let usbd = UsbDeviceBuilder::new(bus, UsbVidPid(VID, config.pid()))
         .strings(&[strings])
         .expect("failed to set USB string descriptors")
