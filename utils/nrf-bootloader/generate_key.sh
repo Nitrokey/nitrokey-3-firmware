@@ -26,11 +26,13 @@ if [ -r "${privkey}" ] | [ -r "${pubkey}" ]; then
 fi
 
 # Generate a private key
-nrfutil keys generate ${privkey}
-
+#nrfutil keys generate ${privkey}
+nitropy-nrf keys generate ${privkey}
 # Generate C source file containing the public key
-nrfutil keys display --key pk --format code ${privkey} --out_file ${pubkey}
-nrfutil keys display --key pk --format pem ${privkey} --out_file ${pubkey_pem}
+#nrfutil keys display --key pk --format code ${privkey} --out_file ${pubkey}
+#nrfutil keys display --key pk --format pem ${privkey} --out_file ${pubkey_pem}
+nitropy-nrf keys display --format code --key-file ${privkey} --out-file ${pubkey}
+nitropy-nrf keys display --format pem --key-file ${privkey} --out-file ${pubkey_pem}
 
 stat ${pubkey}
 stat ${privkey}
