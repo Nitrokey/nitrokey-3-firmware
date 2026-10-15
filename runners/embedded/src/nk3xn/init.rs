@@ -1153,8 +1153,10 @@ impl Stage6 {
         usbhs: Usbhs<Unknown>,
     ) -> All {
         self.perform_data_migrations();
+
+        let board = NK3xN::new(self.nfc_use.revision);
         let (apps, endpoints) = init::init_apps(
-            &NK3xN::new(self.nfc_use.revision),
+            &board,
             &mut self.trussed,
             self.status,
             &self.store,
@@ -1170,6 +1172,7 @@ impl Stage6 {
         };
 
         let usb_nfc = crate::init_usb_nfc(
+            &board,
             resources,
             || rtic::pend(lpc55_hal::raw::Interrupt::PIN_INT6),
             usb_bus,

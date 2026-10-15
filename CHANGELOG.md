@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+- Add serial number to USB descriptor ([#634](https://github.com/Nitrokey/nitrokey-3-firmware/issues/634))
 
 ## v1.9.1 (2026-09-30)
 
