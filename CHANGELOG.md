@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- fido-authenticator: Implement the largeBlobKey extension and the largeBlobs command ([fido-authenticator#38][])
+-
 
 ## v1.9.1 (2026-09-30)
 

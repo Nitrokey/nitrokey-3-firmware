@@ -34,11 +34,8 @@ use trussed::{
     ClientImplementation, Platform, Service,
 };
 #[cfg(all(feature = "opcard", feature = "se050"))]
-use trussed_core::types::NotBefore;
-use trussed_core::{
-    types::{Location, Mechanism},
-    InterruptFlag,
-};
+use trussed_core::types::{Location, NotBefore};
+use trussed_core::{types::Mechanism, InterruptFlag};
 
 use utils::{Model, Version};
 
@@ -1021,19 +1018,11 @@ impl<R: Runner> App<R> for FidoApp<R> {
     type Data = FidoData;
     type Config = FidoConfig;
 
-    fn with_client(runner: &R, trussed: Client<R>, data: FidoData, config: &Self::Config) -> Self {
+    fn with_client(_runner: &R, trussed: Client<R>, data: FidoData, config: &Self::Config) -> Self {
         let skip_up_timeout = if config.disable_skip_up_timeout {
             None
         } else {
             Some(core::time::Duration::from_secs(2))
-        };
-        let large_blobs = if cfg!(feature = "nk3-test") && runner.is_efs_available() {
-            Some(fido_authenticator::LargeBlobsConfig {
-                location: Location::External,
-                max_size: 4096,
-            })
-        } else {
-            None
         };
         fido_authenticator::Authenticator::new(
             trussed,
@@ -1042,7 +1031,7 @@ impl<R: Runner> App<R> for FidoApp<R> {
                 max_msg_size: data.max_message_size,
                 skip_up_timeout,
                 max_resident_credential_count: Some(100),
-                large_blobs,
+                large_blobs: None,
                 nfc_transport: data.has_nfc,
             },
         )
@@ -1071,6 +1060,8 @@ impl<R: Runner> App<R> for SecretsApp<R> {
     type Config = ();
 
     fn with_client(runner: &R, trussed: Client<R>, _: (), _: &()) -> Self {
+        use trussed_core::types::Location;
+
         let uuid = runner.uuid();
         let options = secrets_app::Options::new(
             Location::External,
@@ -1111,6 +1102,8 @@ impl<R: Runner> App<R> for OpcardApp<R> {
     type Config = OpcardConfig;
 
     fn with_client(runner: &R, trussed: Client<R>, _: (), config: &OpcardConfig) -> Self {
+        use trussed_core::types::Location;
+
         let _ = config;
         let uuid = runner.uuid();
         let mut options = opcard::Options::default();
