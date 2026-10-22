@@ -10,4 +10,5 @@ fi
 UPDATE_FILENAME=$1
 SERIAL_PORT=$2
 
-nrfutil dfu usb-serial -pkg $UPDATE_FILENAME -p $SERIAL_PORT
+#nrfutil dfu usb-serial -pkg $UPDATE_FILENAME -p $SERIAL_PORT
+nitropy-nrf dfu usb-serial --package $UPDATE_FILENAME --port $SERIAL_PORT
