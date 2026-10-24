@@ -235,6 +235,17 @@ register_bitfield! {
     pub nfc_silence, set_nfc_silence: 0;
 }
 
+/// The register only reacts to these magic values, not to the individual bits.
+impl ResetSilence {
+    /// Reset the chip. Registers are reloaded from EEPROM and the contactless
+    /// interface restarts from IDLE.
+    pub const SOFT_RESET: u8 = 0x55;
+    /// Contactless interface stops answering the reader.
+    pub const SILENCE: u8 = 0x33;
+    /// Contactless interface answers the reader again.
+    pub const UNSILENCE: u8 = 0xCC;
+}
+
 register_bitfield! {
     #[derive(Clone)]
     struct Status(u8): 0xFFE7;
