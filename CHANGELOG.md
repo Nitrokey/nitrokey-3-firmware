@@ -3,6 +3,19 @@
 ## Unreleased
 
 - Add serial number to USB descriptor ([#634](https://github.com/Nitrokey/nitrokey-3-firmware/issues/634))
+- fido-authenticator: Update to [v0.4.0-rc.4](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.4)
+  - Add support for CTAP 2.3.
+  - Implement the `credBlob`, `hmac-secret-mc` and `minPinLength` extensions.
+  - Implement the `alwaysUv` feature.
+  - Implement the `authenticatorConfig` command with the `toggleAlwaysUv` and `setMinPINLength` subcommands.
+  - Use AES-256-GCM to encrypt the credential metadata. (This change only takes effect on new devices or after a factory reset.)
+  - Set `firmwareVersion` to 1 (legacy credential format) or 2 (new credential format using AES-256-CBC).
+  - Don’t decrement the PIN retry counter for invalid pinAuth data in `credential_management`.
+  - Also enforce the `credProtect` extension over U2F/CTAP1.
+  - Add initial and max usage timer for PIN tokens.
+  - Always disable the skip-up time window after reboot and remove `fido.disable_skip_up_timeout` config option.
+  - Various fixes.
+- opcard: Fix serialization of secp256k1 signatures ([opcard-rs#241](https://github.com/Nitrokey/opcard-rs/issues/241))
 
 ## v1.9.1 (2026-09-30)
 

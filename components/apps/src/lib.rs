@@ -63,8 +63,6 @@ pub const DEVICE_LABEL_LEN: usize = 32;
 pub struct Config {
     #[serde(default, rename = "a", skip_serializing_if = "is_default")]
     admin: AdminConfig,
-    #[serde(default, rename = "f", skip_serializing_if = "is_default")]
-    fido: FidoConfig,
     #[cfg(feature = "opcard")]
     #[serde(default, rename = "o", skip_serializing_if = "is_default")]
     opcard: OpcardConfig,
@@ -83,7 +81,6 @@ impl admin_app::Config for Config {
         let (app, key) = key.split_once('.')?;
         match app {
             "admin" => self.admin.field(key),
-            "fido" => self.fido.field(key),
             #[cfg(feature = "opcard")]
             "opcard" => self.opcard.field(key),
             #[cfg(feature = "piv-authenticator")]
@@ -100,13 +97,6 @@ impl admin_app::Config for Config {
                 requires_reboot: false,
                 destructive: false,
                 ty: FieldType::String,
-            },
-            ConfigField {
-                name: "fido.disable_skip_up_timeout",
-                requires_touch_confirmation: false,
-                requires_reboot: false,
-                destructive: false,
-                ty: FieldType::Bool,
             },
             #[cfg(feature = "se050")]
             ConfigField {
@@ -143,9 +133,6 @@ impl admin_app::Config for Config {
     ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
         #[cfg(feature = "factory-reset")]
         return match (key.split_once('.'), key) {
-            (Some(("fido", key)), _) => self.fido.reset_client_id(key),
-            (None, "fido") => self.fido.reset_client_id(""),
-
             #[cfg(feature = "opcard")]
             (Some(("opcard", key)), _) => self.opcard.reset_client_id(key),
             #[cfg(feature = "opcard")]
@@ -169,7 +156,6 @@ impl admin_app::Config for Config {
     #[cfg(feature = "factory-reset")]
     fn reset_client_config(&mut self, key: &str) -> ResetConfigResult {
         match key {
-            "fido" => self.fido.reset_config(),
             #[cfg(feature = "opcard")]
             "opcard" => self.opcard.reset_config(),
             _ => ResetConfigResult::WrongKey,
@@ -196,43 +182,6 @@ impl AdminConfig {
         match key {
             "label" => Some(ConfigValueMut::String(self.label.as_mut_view())),
             _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct FidoConfig {
-    #[serde(default, rename = "t", skip_serializing_if = "is_default")]
-    disable_skip_up_timeout: bool,
-}
-
-impl FidoConfig {
-    fn field(&mut self, key: &str) -> Option<ConfigValueMut<'_>> {
-        match key {
-            "disable_skip_up_timeout" => {
-                Some(ConfigValueMut::Bool(&mut self.disable_skip_up_timeout))
-            }
-            _ => None,
-        }
-    }
-
-    #[cfg(feature = "factory-reset")]
-    fn reset_client_id(
-        &self,
-        _key: &str,
-    ) -> Option<(&'static Path, &'static ResetSignalAllocation)> {
-        None
-    }
-
-    #[cfg(feature = "factory-reset")]
-    fn reset_config(&mut self) -> ResetConfigResult {
-        use core::mem;
-        let old = mem::take(self);
-
-        if &old == self {
-            ResetConfigResult::Unchanged
-        } else {
-            ResetConfigResult::Changed
         }
     }
 }
@@ -593,8 +542,7 @@ impl<R: Runner> Apps<R> {
         let opcard = (!is_nfc_powered && !config_has_error && migrated_successfully)
             .then(|| App::new(runner, client_builder, (), &admin.config().opcard));
         #[cfg(feature = "fido-authenticator")]
-        let fido = migrated_successfully
-            .then(|| App::new(runner, client_builder, fido, &admin.config().fido));
+        let fido = migrated_successfully.then(|| App::new(runner, client_builder, fido, &()));
 
         #[cfg(feature = "secrets-app")]
         let oath = (!is_nfc_powered && migrated_successfully)
@@ -1016,23 +964,32 @@ impl<R: Runner> App<R> for FidoApp<R> {
     const CLIENT_ID: &'static Path = path!("fido");
 
     type Data = FidoData;
-    type Config = FidoConfig;
+    type Config = ();
 
-    fn with_client(_runner: &R, trussed: Client<R>, data: FidoData, config: &Self::Config) -> Self {
-        let skip_up_timeout = if config.disable_skip_up_timeout {
-            None
-        } else {
-            Some(core::time::Duration::from_secs(2))
-        };
+    fn with_client(
+        _runner: &R,
+        trussed: Client<R>,
+        data: FidoData,
+        _config: &Self::Config,
+    ) -> Self {
+        use fido_authenticator::{credential::CredentialIdVersion, FirmwareVersion};
+
+        let mut firmware_version = FirmwareVersion::new(1);
+        firmware_version.credential_id_v2 = Some(2);
         fido_authenticator::Authenticator::new(
             trussed,
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: data.max_message_size,
-                skip_up_timeout,
+                skip_up_timeout: None,
                 max_resident_credential_count: Some(100),
                 large_blobs: None,
                 nfc_transport: data.has_nfc,
+                ccid_transport: false,
+                firmware_version: Some(firmware_version),
+                credential_id_version: Some(CredentialIdVersion::V2),
+                long_touch_for_reset: false,
+                fido2_up_timeout: None,
             },
         )
     }
@@ -1245,7 +1202,7 @@ mod tests {
     use super::OpcardConfig;
     #[cfg(feature = "piv-authenticator")]
     use super::PivConfig;
-    use super::{AdminConfig, Config, FidoConfig};
+    use super::{AdminConfig, Config};
     use cbor_smol::cbor_serialize;
 
     #[test]
@@ -1255,9 +1212,6 @@ mod tests {
 
         let config = Config {
             admin: AdminConfig { label },
-            fido: FidoConfig {
-                disable_skip_up_timeout: true,
-            },
             #[cfg(feature = "opcard")]
             opcard: OpcardConfig {
                 #[cfg(feature = "se050")]
