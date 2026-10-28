@@ -13,6 +13,7 @@
   - Don’t decrement the PIN retry counter for invalid pinAuth data in `credential_management`.
   - Also enforce the `credProtect` extension over U2F/CTAP1.
   - Add initial and max usage timer for PIN tokens.
+  - Always disable the skip-up time window after reboot and remove `fido.disable_skip_up_timeout` config option.
   - Various fixes.
 
 ## v1.9.1 (2026-09-30)
