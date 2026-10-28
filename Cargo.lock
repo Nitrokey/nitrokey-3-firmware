@@ -3781,9 +3781,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-se050-backend"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75b9f1a4147d9a0b674a7121bccfb871c7538fe85416212fab21de92af72ce49"
+checksum = "8c7743073ba665a34d4c640ad31c3c19f34431dbcd59479e954f386d7c5f555c"
 dependencies = [
  "bitflags 2.13.1",
  "cbor-smol",

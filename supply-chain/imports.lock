@@ -156,8 +156,8 @@ when = "2026-03-25"
 trusted-publisher = "github:trussed-dev/trussed-rsa-backend"
 
 [[publisher.trussed-se050-backend]]
-version = "0.8.0"
-when = "2026-07-23"
+version = "0.8.2"
+when = "2026-10-28"
 trusted-publisher = "github:Nitrokey/trussed-se050-backend"
 
 [[publisher.trussed-se050-manage]]
