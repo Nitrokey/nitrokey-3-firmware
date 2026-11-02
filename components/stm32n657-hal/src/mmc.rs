@@ -38,7 +38,7 @@ const DATA_POLL_LIMIT: u32 = sdmmc::calc_timeout(5000);
 const CARD_READY_POLL_LIMIT: u32 = 100_000;
 /// identification clock limit
 const INIT_CLOCK: Rate = Rate::kHz(400);
-/// HS_TIMING stays 0, FEMDMExxxG-A8A58 6.9 allows up to 20 MHz then
+/// HS_TIMING is set at init (52 MHz allowed), the 32 MHz kernel clock gives 16 MHz
 const DATA_CLOCK: Rate = Rate::MHz(20);
 
 /// CLKDIV so that SDMMC_CK = sdmmc_ker_ck / (2 * CLKDIV) <= target; 0 = bypass
@@ -143,6 +143,7 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Disabled> {
         this.power_on()?;
         this.init_card()?;
         this.enable_wide_bus()?;
+        this.enable_hs_timing()?;
         let init = sdmmc::SdMMCInit {
             clock_edge: sdmmc::ClockEdge::Rising,
             clock_power_save: sdmmc::ClockPowerSave::Disable,
@@ -342,6 +343,15 @@ impl<P: SdMmc, Pins: MmcPins<Peripheral = P>> MmcMaster<P, Pins, Enabled> {
         // CMD6 write byte: EXT_CSD BUS_WIDTH [183] set channel width
         self.sdmmc
             .cmd_switch((0b11 << 24) | (183 << 16) | (width << 8))?;
+        self.wait_card_ready()
+    }
+
+    /// CMD6 write byte: EXT_CSD HS_TIMING [185] = 1 (high speed interface timing).
+    /// In backward compatible timing the FEMDME064G sends the write CRC status 21 clocks
+    /// after the end bit, the DPSM only waits 8; in high speed timing it comes after 5.
+    fn enable_hs_timing(&mut self) -> Result<(), Error> {
+        self.sdmmc
+            .cmd_switch((0b11 << 24) | (185 << 16) | (1 << 8))?;
         self.wait_card_ready()
     }
 
