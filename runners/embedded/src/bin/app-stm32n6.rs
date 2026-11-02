@@ -96,7 +96,6 @@ mod app {
         let (mut board_gpio, mmc) = nkso3::init_pins(
             ctx.device.GPIOB_S,
             ctx.device.GPIOC_S,
-            ctx.device.GPIOD_S,
             ctx.device.GPIOE_S,
             ctx.device.GPIOG_S,
             ctx.device.GPIOH_S,

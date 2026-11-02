@@ -23,8 +23,8 @@ pub struct Stm32n6 {
 pub mod mmc {
     use stm32n6::stm32n657::SDMMC1_S;
     use stm32n657_hal::gpio::{
-        Alternate, PinC1, PinC10, PinC11, PinC12, PinC6, PinC7, PinC9, PinD11, PinH2, PinH9,
-        PullUp, ALTERNATE_FUNCTION_10,
+        Alternate, PinC1, PinC10, PinC11, PinC12, PinC6, PinC7, PinC8, PinC9, PinH2, PinH9, PullUp,
+        ALTERNATE_FUNCTION_10,
     };
     use stm32n657_hal::mmc::MmcMaster;
     use stm32n657_hal::sdmmc::Enabled;
@@ -32,7 +32,7 @@ pub mod mmc {
     // the eMMC drops its DAT1-7 pull-ups in wide bus mode, the MCU ones (30-50k) stay
     pub type CmdPin = PinH2<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
     pub type CkPin = PinC12<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
-    pub type D0Pin = PinD11<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
+    pub type D0Pin = PinC8<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
     pub type D1Pin = PinC9<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
     pub type D2Pin = PinC10<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;
     pub type D3Pin = PinC11<Alternate<PullUp, { ALTERNATE_FUNCTION_10 }>>;

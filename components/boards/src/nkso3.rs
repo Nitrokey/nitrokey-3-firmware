@@ -14,11 +14,11 @@ use littlefs2::{
     io::{Error as LfsError, Result as LfsResult},
 };
 use stm32n6::stm32n657::{
-    GPIOB_S, GPIOC_S, GPIOD_S, GPIOE_S, GPIOG_S, GPIOH_S, GPIOO_S, GPIOP_S, I2C1_S, SDMMC1_S,
-    TIM7_S, XSPI1_S, XSPIM_S,
+    GPIOB_S, GPIOC_S, GPIOE_S, GPIOG_S, GPIOH_S, GPIOO_S, GPIOP_S, I2C1_S, SDMMC1_S, TIM7_S,
+    XSPI1_S, XSPIM_S,
 };
 use stm32n657_hal::{
-    gpio::{GpioB, GpioC, GpioD, GpioE, GpioG, GpioH, GpioO, GpioP, Output, PinB13, PushPull},
+    gpio::{GpioB, GpioC, GpioE, GpioG, GpioH, GpioO, GpioP, Output, PinB13, PushPull},
     i2c::I2c1,
     rcc::{ClockConfig, Rcc},
     sdmmc::Disabled,
@@ -168,7 +168,6 @@ pub struct BoardGPIO {
 pub fn init_pins(
     gpiob: GPIOB_S,
     gpioc: GPIOC_S,
-    gpiod: GPIOD_S,
     gpioe: GPIOE_S,
     gpiog: GPIOG_S,
     gpioh: GPIOH_S,
@@ -184,7 +183,6 @@ pub fn init_pins(
 
     let gpiob = GpioB::new(gpiob, rcc);
     let gpioc = GpioC::new(gpioc, rcc);
-    let gpiod = GpioD::new(gpiod, rcc);
     let gpioe = GpioE::new(gpioe, rcc);
     let gpiog = GpioG::new(gpiog, rcc);
     let gpioh = GpioH::new(gpioh, rcc);
@@ -217,7 +215,7 @@ pub fn init_pins(
             (
                 gpioh.h2.into_sdmmc1_cmd(),
                 gpioc.c12.into_sdmmc1_ck(),
-                gpiod.d11.into_sdmmc1_d0(),
+                gpioc.c8.into_sdmmc1_d0(),
                 gpioc.c9.into_sdmmc1_d1(),
                 gpioc.c10.into_sdmmc1_d2(),
                 gpioc.c11.into_sdmmc1_d3(),
