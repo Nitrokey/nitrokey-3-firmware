@@ -12,7 +12,7 @@ heapless-bytes = "0.5.0"
 heapless.workspace = true
 
 serde = { version = "1.0", default-features = false }
-postcard = "1.0"
+postcard = { version = "1.0", default-features = false }
 
 trussed.workspace = true
 trussed-core.workspace = true
