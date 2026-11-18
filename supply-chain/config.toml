@@ -17,11 +17,26 @@ url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
+[policy.cortex-m-rtic]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.cortex-m-rtic-macros]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
 [policy.embedded-runner-lib]
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
 [policy.gen-commands-bd]
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.heapless]
+audit-as-crates-io = true
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
@@ -32,6 +47,51 @@ notes = "relaxed to reduce initial efforts"
 [policy.p256-cortex-m4]
 audit-as-crates-io = false
 notes = "pinned to a reviewed revision"
+
+[policy.rtic-syntax]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-auth-backend]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-chunked]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-core]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-rsa-types]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-se050-backend]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.trussed-staging]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
+[policy.usb-device]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
 
 [policy.usbip-runner]
 criteria = "safe-to-run"

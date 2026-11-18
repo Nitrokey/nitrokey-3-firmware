@@ -44,6 +44,7 @@ trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "335194c2a
 trussed-core = { git = "https://github.com/trussed-dev/trussed.git", rev = "335194c2a70cc659fa75e7cc504846bf5796866e" }
 trussed-auth-backend = { git = "https://github.com/trussed-dev/trussed-auth.git", rev = "ecd8507023cbb8cdf278a7baa087bcae398017a6" }
 trussed-staging = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "81ffa3535d4bf521c89d4872a0f7a07f8d3fe267" }
+trussed-chunked = { git = "https://github.com/trussed-dev/trussed-staging.git", rev = "81ffa3535d4bf521c89d4872a0f7a07f8d3fe267" }
 trussed-se050-backend = { git = "https://github.com/Nitrokey/trussed-se050-backend.git", rev = "e6a3256c5902549c89dd1a2c86cceddd9bc93059" }
 usb-device = { git = "https://github.com/sosthene-nitrokey/usb-device.git", rev = "cdfd3dd1ca9ddb9b49133595a1e7f680b216f79d" }
 
