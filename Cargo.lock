@@ -1503,7 +1503,7 @@ dependencies = [
  "libc",
  "log",
  "rustversion",
- "windows-link 0.1.3",
+ "windows-link 0.2.0",
  "windows-result",
 ]
 
@@ -2074,9 +2074,9 @@ dependencies = [
 
 [[package]]
 name = "littlefs2-sys"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "999d08bb7fae46d63ecb98d2474d28f7af1a6c928a51b4dfe5f1804abf9afc46"
+checksum = "8e7ac0780611028998a3fe674f119233590923267b9848c8adbb3b956a384137"
 dependencies = [
  "bindgen",
  "cc",

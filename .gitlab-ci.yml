@@ -9,6 +9,7 @@ stages:
   - pull-github
   - build
   - metrics
+  - vet
   - test
   - deploy
   - commands
@@ -160,7 +161,7 @@ vet-dependencies:
     - if: '$CI_PIPELINE_SOURCE == "pipeline" && $COMMAND_BOT == "nitrokey-ci" && $COMMAND == "full-test"'
   tags:
     - docker
-  stage: build
+  stage: vet
   script:
     - cargo vet check --locked
 
