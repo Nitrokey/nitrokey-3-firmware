@@ -307,6 +307,11 @@ who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.3.2"
 
+[[audits.littlefs2-sys]]
+who = "Sosthène Guédon <sosthene@nitrokey.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.0 -> 0.4.1"
+
 [[audits.log]]
 who = "Sosthène Guédon <sosthene@nitrokey.com>"
 criteria = "safe-to-deploy"
