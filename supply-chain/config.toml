@@ -53,6 +53,11 @@ audit-as-crates-io = true
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
 
+[policy.se05x]
+audit-as-crates-io = true
+criteria = "safe-to-run"
+notes = "relaxed to reduce initial efforts"
+
 [policy.trussed]
 audit-as-crates-io = true
 criteria = "safe-to-run"
@@ -96,10 +101,6 @@ notes = "relaxed to reduce initial efforts"
 [policy.usbip-runner]
 criteria = "safe-to-run"
 notes = "relaxed to reduce initial efforts"
-
-[[exemptions.aead]]
-version = "0.5.2"
-criteria = "safe-to-run"
 
 [[exemptions.aes]]
 version = "0.8.4"
@@ -189,24 +190,12 @@ criteria = "safe-to-run"
 version = "0.21.0"
 criteria = "safe-to-run"
 
-[[exemptions.cbc]]
-version = "0.1.2"
-criteria = "safe-to-run"
-
 [[exemptions.cc]]
 version = "1.2.38"
 criteria = "safe-to-run"
 
 [[exemptions.cfg-if]]
 version = "1.0.3"
-criteria = "safe-to-run"
-
-[[exemptions.chacha20]]
-version = "0.9.1"
-criteria = "safe-to-run"
-
-[[exemptions.chacha20poly1305]]
-version = "0.10.1"
 criteria = "safe-to-run"
 
 [[exemptions.chrono]]
@@ -231,10 +220,6 @@ criteria = "safe-to-run"
 
 [[exemptions.clap_derive]]
 version = "4.5.47"
-criteria = "safe-to-run"
-
-[[exemptions.cmac]]
-version = "0.7.2"
 criteria = "safe-to-run"
 
 [[exemptions.colorchoice]]
@@ -287,10 +272,6 @@ criteria = "safe-to-run"
 
 [[exemptions.dashmap]]
 version = "5.5.3"
-criteria = "safe-to-run"
-
-[[exemptions.dbl]]
-version = "0.3.2"
 criteria = "safe-to-run"
 
 [[exemptions.der_derive]]
@@ -406,23 +387,11 @@ version = "2.6.0"
 criteria = "safe-to-run"
 
 [[exemptions.hash32]]
-version = "0.2.1"
-criteria = "safe-to-run"
-
-[[exemptions.hash32]]
 version = "0.3.1"
 criteria = "safe-to-run"
 
 [[exemptions.hashbrown]]
 version = "0.14.5"
-criteria = "safe-to-run"
-
-[[exemptions.heapless]]
-version = "0.8.0"
-criteria = "safe-to-run"
-
-[[exemptions.heapless]]
-version = "0.9.1"
 criteria = "safe-to-run"
 
 [[exemptions.hermit-abi]]
@@ -537,10 +506,6 @@ criteria = "safe-to-run"
 version = "1.70.1"
 criteria = "safe-to-run"
 
-[[exemptions.opaque-debug]]
-version = "0.3.1"
-criteria = "safe-to-run"
-
 [[exemptions.ordered-float]]
 version = "2.10.1"
 criteria = "safe-to-run"
@@ -567,10 +532,6 @@ criteria = "safe-to-run"
 
 [[exemptions.pkcs8]]
 version = "0.10.2"
-criteria = "safe-to-run"
-
-[[exemptions.poly1305]]
-version = "0.8.0"
 criteria = "safe-to-run"
 
 [[exemptions.portable-atomic]]
@@ -603,10 +564,6 @@ criteria = "safe-to-run"
 
 [[exemptions.redox_syscall]]
 version = "0.5.17"
-criteria = "safe-to-run"
-
-[[exemptions.ref-swap]]
-version = "0.1.2"
 criteria = "safe-to-run"
 
 [[exemptions.regex]]
@@ -813,24 +770,12 @@ criteria = "safe-to-run"
 version = "1.0.3"
 criteria = "safe-to-run"
 
-[[exemptions.typenum]]
-version = "1.18.0"
-criteria = "safe-to-run"
-
 [[exemptions.unicode-ident]]
 version = "1.0.19"
 criteria = "safe-to-run"
 
-[[exemptions.universal-hash]]
-version = "0.5.1"
-criteria = "safe-to-run"
-
 [[exemptions.untrusted]]
 version = "0.9.0"
-criteria = "safe-to-run"
-
-[[exemptions.usb-device]]
-version = "0.3.2"
 criteria = "safe-to-run"
 
 [[exemptions.valuable]]

@@ -287,6 +287,11 @@ who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 delta = "0.7.4 -> 0.7.5"
 
+[[audits.cmac]]
+who = "Sosthene Guedon <sothene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.8.0"
+
 [[audits.cmov]]
 who = "Sosthene Guedon <sothene@nitrokey.com>"
 criteria = "safe-to-run"
@@ -342,10 +347,20 @@ who = "Sosthene Guedon <sothene@nitrokey.com>"
 criteria = "safe-to-run"
 version = "0.4.8"
 
+[[audits.dbl]]
+who = "Sosthene Guedon <sothene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.5.0"
+
 [[audits.delog]]
 who = "Robin Krahl <robin@nitrokey.com>"
 criteria = "safe-to-deploy"
 version = "0.1.8"
+
+[[audits.digest]]
+who = "Sosthene Guedon <sothene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.11.3"
 
 [[audits.embedded-hal]]
 who = "Robin Krahl <robin@nitrokey.com>"
@@ -497,6 +512,11 @@ notes = "Mostly lint/formatting changes small feature change"
 who = "Sosthene Guedon <sothene@nitrokey.com>"
 criteria = "safe-to-run"
 version = "1.0.3@git:9c28a7ca6c2f699a40152bcdfe098bf152e9cb34"
+
+[[audits.se05x]]
+who = "Sosthene Guedon <sothene@nitrokey.com>"
+criteria = "safe-to-run"
+version = "0.4.2@git:ae95cce762d6edad4c08b683a37969b2021026bd"
 
 [[audits.secrets-app]]
 who = "Robin Krahl <robin@nitrokey.com>"
