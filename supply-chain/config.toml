@@ -925,10 +925,6 @@ criteria = "safe-to-run"
 version = "0.5.1"
 criteria = "safe-to-run"
 
-[[exemptions.untrusted]]
-version = "0.9.0"
-criteria = "safe-to-run"
-
 [[exemptions.url]]
 version = "2.5.8"
 criteria = "safe-to-run"

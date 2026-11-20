@@ -44,7 +44,7 @@ fido-authenticator = { version = "0.4", features = ["chunked", "dispatch", "cred
 ndef-app = { path = "../ndef-app", optional = true }
 secrets-app = { version = "0.16", features = ["apdu-dispatch", "ctaphid"], optional = true }
 opcard = { version = "1.11", features = ["apdu-dispatch", "delog", "rsa2048-gen", "rsa4096"], optional = true }
-piv-authenticator = { version = "0.7", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
+piv-authenticator = { version = "0.7.1", features = ["apdu-dispatch", "delog", "rsa"], optional = true }
 provisioner-app = { path = "../provisioner-app", optional = true }
 
 [dev-dependencies]

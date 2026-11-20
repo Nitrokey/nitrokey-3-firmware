@@ -2567,9 +2567,9 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "piv-authenticator"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14e6f47cf14578da3dd2e441cfb71a4df68a4632c6e8157ab375deaf65cd2f5f"
+checksum = "39deae31001221fdd6f80bdd6d80d698e9543020956b68b5e26618c893ccdcb0"
 dependencies = [
  "apdu-app",
  "cbor-smol",
@@ -2589,7 +2589,6 @@ dependencies = [
  "trussed-hpke",
  "trussed-rsa-types",
  "trussed-wrap-key-to-file",
- "untrusted",
 ]
 
 [[package]]
@@ -4019,12 +4018,6 @@ dependencies = [
  "crypto-common",
  "subtle",
 ]
-
-[[package]]
-name = "untrusted"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "url"

@@ -91,8 +91,8 @@ when = "2026-09-17"
 trusted-publisher = "github:Nitrokey/opcard-rs"
 
 [[publisher.piv-authenticator]]
-version = "0.7.0"
-when = "2026-08-19"
+version = "0.7.1"
+when = "2026-11-20"
 trusted-publisher = "github:trussed-dev/piv-authenticator"
 
 [[publisher.se05x]]

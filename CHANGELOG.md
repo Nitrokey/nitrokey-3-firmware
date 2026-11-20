@@ -16,6 +16,11 @@
   - Always disable the skip-up time window after reboot and remove `fido.disable_skip_up_timeout` config option.
   - Various fixes.
 - opcard: Fix serialization of secp256k1 signatures ([opcard-rs#241](https://github.com/Nitrokey/opcard-rs/issues/241))
+- piv-authenticator: Update to [v0.7.1](https://github.com/trussed-dev/piv-authenticator/releases/tag/v0.7.1)
+  - Fix the PUK being initialized with the PIN's retry counter (3) instead of its own default (5)
+  - Fix the inverted parsing of the touch requirement in SET MANAGEMENT KEY's P2 (0xFF means no touch, 0xFE means touch required)
+  - Derive the GET SERIAL response from the device uuid instead of a shared constant
+  - Fix memory leak in import key
 - Update applications (maintenance only):
   - opcard v1.11.0
 
