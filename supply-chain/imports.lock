@@ -2,8 +2,8 @@
 # cargo-vet imports lock
 
 [[publisher.admin-app]]
-version = "0.4.0"
-when = "2026-09-16"
+version = "0.5.0"
+when = "2026-09-17"
 trusted-publisher = "github:trussed-dev/admin-app"
 
 [[publisher.apdu-app]]
@@ -12,8 +12,8 @@ when = "2026-03-25"
 trusted-publisher = "github:trussed-dev/apdu-dispatch"
 
 [[publisher.apdu-dispatch]]
-version = "0.4.0"
-when = "2026-03-25"
+version = "0.4.1"
+when = "2026-10-10"
 trusted-publisher = "github:trussed-dev/apdu-dispatch"
 
 [[publisher.bumpalo]]
@@ -31,8 +31,8 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.ctap-types]]
-version = "0.6.0-rc.5"
-when = "2026-06-08"
+version = "0.6.0"
+when = "2026-11-20"
 trusted-publisher = "github:trussed-dev/ctap-types"
 
 [[publisher.ctaphid-app]]
@@ -46,8 +46,8 @@ when = "2026-03-23"
 trusted-publisher = "github:trussed-dev/ctaphid-dispatch"
 
 [[publisher.fido-authenticator]]
-version = "0.4.0-rc.4"
-when = "2026-10-28"
+version = "0.4.0"
+when = "2026-11-20"
 trusted-publisher = "github:trussed-dev/fido-authenticator"
 
 [[publisher.heapless-bytes]]
@@ -61,8 +61,8 @@ when = "2026-09-15"
 trusted-publisher = "github:trussed-dev/interchange"
 
 [[publisher.iso7816]]
-version = "0.2.0"
-when = "2025-09-25"
+version = "0.2.2"
+when = "2026-10-09"
 trusted-publisher = "github:trussed-dev/iso7816"
 
 [[publisher.littlefs2]]
@@ -86,8 +86,8 @@ when = "2026-09-15"
 trusted-publisher = "github:lpc55/lpc55-hal"
 
 [[publisher.opcard]]
-version = "1.10.0"
-when = "2026-09-16"
+version = "1.11.0"
+when = "2026-09-17"
 trusted-publisher = "github:Nitrokey/opcard-rs"
 
 [[publisher.piv-authenticator]]
@@ -121,8 +121,8 @@ when = "2026-03-23"
 trusted-publisher = "github:trussed-dev/trussed-staging"
 
 [[publisher.trussed-core]]
-version = "0.2.2"
-when = "2026-06-01"
+version = "0.2.3"
+when = "2026-09-17"
 trusted-publisher = "github:trussed-dev/trussed"
 
 [[publisher.trussed-fs-info]]
@@ -719,19 +719,6 @@ does-not-implement-crypto: Hashing containers (e.g., IndexMap) defer to other
 machinery like the hash32 crate for hashing.
 """
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
-
-[[audits.google.audits.heck]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-version = "0.4.1"
-notes = """
-Grepped for `-i cipher`, `-i crypto`, `'\bfs\b'``, `'\bnet\b'``, `'\bunsafe\b'``
-and there were no hits.
-
-`heck` (version `0.3.3`) has been added to Chromium in
-https://source.chromium.org/chromium/chromium/src/+/28841c33c77833cc30b286f9ae24c97e7a8f4057
-"""
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.heck]]
 who = "Ying Hsu <yinghsu@chromium.org>"
@@ -1332,17 +1319,6 @@ who = "Ying Hsu <yinghsu@chromium.org>"
 criteria = "safe-to-run"
 version = "0.11.1"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
-
-[[audits.google.audits.strum_macros]]
-who = "danakj@chromium.org"
-criteria = "safe-to-deploy"
-version = "0.25.3"
-notes = """
-Reviewed in https://crrev.com/c/5171063
-
-Previously reviewed during security review and the audit is grandparented in.
-"""
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.syn]]
 who = "ChromeOS"

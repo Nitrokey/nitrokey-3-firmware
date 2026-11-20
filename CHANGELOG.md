@@ -16,6 +16,8 @@
   - Always disable the skip-up time window after reboot and remove `fido.disable_skip_up_timeout` config option.
   - Various fixes.
 - opcard: Fix serialization of secp256k1 signatures ([opcard-rs#241](https://github.com/Nitrokey/opcard-rs/issues/241))
+- Update applications (maintenance only):
+  - opcard v1.11.0
 
 ## v1.9.1 (2026-09-30)
 
