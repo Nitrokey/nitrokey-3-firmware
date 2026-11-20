@@ -89,7 +89,11 @@ SECTIONS
     KEEP(*(.vector_table.interrupts)); /* this is the `__INTERRUPTS` symbol */
   } > FLASH
 
-  PROVIDE(_stext = ADDR(.vector_table) + SIZEOF(.vector_table));
+  /* The alignment of .text is the maximum alignment required by its input sections, which
+     can be more than 4 (e.g. `.p2align` directives inside inline assembly). Since the
+     start address of .text is set explicitly, the linker won't align it automatically, so do it
+     here. */
+  PROVIDE(_stext = ALIGN(ADDR(.vector_table) + SIZEOF(.vector_table), ALIGNOF(.text)));
 
   /* ### .text */
   .text _stext :
@@ -182,11 +186,12 @@ SECTIONS
     __euninit = .;
   } > RAM
 
-  /* Place the heap right after `.uninit` in RAM */
-  PROVIDE(__sheap = __euninit);
+  /* Align `__sheap` and `_stack_end` pointers to 4 bytes */
+  . = ALIGN(4);
 
-  /* Place stack end at the end of allocated RAM */
-  PROVIDE(_stack_end = __euninit);
+  /* Place the heap start and stack end at the end of allocated RAM */
+  PROVIDE(__sheap = .);
+  PROVIDE(_stack_end = .);
 
   /* ## .got */
   /* Dynamic relocations are unsupported. This section is only used to detect relocatable code in
@@ -261,12 +266,18 @@ Possible solutions, from most likely to less likely:
 may be enabling it)
 - Supply the interrupt handlers yourself. Check the documentation for details.");
 
+ASSERT(ADDR(.vector_table) % MAX(128, 1 << LOG2CEIL(SIZEOF(.vector_table))) == 0, "
+ERROR(cortex-m-rt): Interrupt vector table misalignment detected. The vector table must
+be aligned to the larger of:
+- 128 bytes
+- The next power of two greater than or equal to its size");
+
 /* ## .text */
 ASSERT(ADDR(.vector_table) + SIZEOF(.vector_table) <= _stext, "
 ERROR(cortex-m-rt): The .text section can't be placed inside the .vector_table section
 Set _stext to an address greater than the end of .vector_table (See output of `nm`)");
 
-ASSERT(_stext > ORIGIN(FLASH) && _stext < ORIGIN(FLASH) + LENGTH(FLASH), "
+ASSERT(_stext >= ORIGIN(FLASH) && _stext < ORIGIN(FLASH) + LENGTH(FLASH), "
 ERROR(cortex-m-rt): The .text section must be placed inside the FLASH memory.
 Set _stext to an address within the FLASH region.");
 
