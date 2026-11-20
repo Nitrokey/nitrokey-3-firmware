@@ -15,7 +15,7 @@ use littlefs2_core::{path, Path};
 
 #[cfg(feature = "factory-reset")]
 use admin_app::ResetConfigResult;
-use admin_app::{ConfigField, FieldType};
+use admin_app::{ConfigField, ConfigValueMut, FieldType};
 
 #[macro_use]
 extern crate delog;
@@ -35,11 +35,9 @@ use trussed::{
 };
 #[cfg(all(feature = "opcard", feature = "se050"))]
 use trussed_core::types::{Location, NotBefore};
-use trussed_core::{types::Mechanism, InterruptFlag};
+use trussed_core::{reset_signal::ResetSignalAllocation, types::Mechanism, InterruptFlag};
 
 use utils::{Model, Version};
-
-use admin_app::{ConfigValueMut, ResetSignalAllocation};
 
 mod dispatch;
 pub use dispatch::{Backend, Dispatch, DispatchContext};
