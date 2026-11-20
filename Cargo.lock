@@ -930,9 +930,9 @@ dependencies = [
 
 [[package]]
 name = "ctap-types"
-version = "0.6.0-rc.5"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c1d5360e4e3f195ce108e062459e39c59514549f74b5c25f30ad43eecb2ccb"
+checksum = "b8394b016f457e3c7b3cdd8e997fcf02ffda9542c3401af58bc17481cb999be0"
 dependencies = [
  "bitflags 1.3.2",
  "cbor-smol",
@@ -1277,9 +1277,9 @@ dependencies = [
 
 [[package]]
 name = "fido-authenticator"
-version = "0.4.0-rc.4"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521edd560889322138845d1ef981d1880640f01ff01738172e2300204327c1bf"
+checksum = "47eeb8febf984bf4491cd1739ff7d0a16e79a30b57fca730f27596a5163ae480"
 dependencies = [
  "apdu-app",
  "cbor-smol",

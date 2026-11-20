@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Add serial number to USB descriptor ([#634](https://github.com/Nitrokey/nitrokey-3-firmware/issues/634))
-- fido-authenticator: Update to [v0.4.0-rc.4](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0-rc.4)
+- fido-authenticator: Update to [v0.4.0](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0)
   - Add support for CTAP 2.3.
   - Implement the `credBlob`, `hmac-secret-mc` and `minPinLength` extensions.
   - Implement the `alwaysUv` feature.
