@@ -23,9 +23,9 @@ pub const CTAPHID_MESSAGE_SIZE: usize = 3072;
 pub(crate) type UsbClasses<'a> = usb_classes::UsbClasses<'a, UsbIpBus, CTAPHID_MESSAGE_SIZE>;
 type CtaphidDispatch = ctaphid_dispatch::Dispatch<'static, 'static, CTAPHID_MESSAGE_SIZE>;
 
-pub struct NkSetup {
+pub struct NkSetup<'a> {
     pub version: Version,
-    pub serial: Serial,
+    pub serial: &'a Serial,
     pub ccid: bool,
     #[cfg(feature = "scsi")]
     pub scsi: super::scsi::Setup,
@@ -44,14 +44,17 @@ pub struct NkDispatches {
     apdu: ApduDispatch<'static>,
 }
 
-impl Setup<Dispatch> for NkSetup {
-    type Classes<'a> = NkClasses<'a>;
+impl<'a> Setup<'a, Dispatch> for NkSetup<'a> {
+    type Classes<'b>
+        = NkClasses<'b>
+    where
+        'a: 'b;
     type Dispatches = NkDispatches;
 
-    fn setup<'a>(
-        &'a self,
-        allocator: &'a UsbBusAllocator<UsbIpBus>,
-    ) -> (NkClasses<'a>, NkDispatches) {
+    fn setup<'b>(self, allocator: &'b UsbBusAllocator<UsbIpBus>) -> (NkClasses<'b>, NkDispatches)
+    where
+        'a: 'b,
+    {
         static CCID_CHANNEL: CcidChannel = Channel::new();
         static CONTACTLESS_CHANNEL: CcidChannel = Channel::new();
         static CTAP_CHANNEL: CtapChannel<CTAPHID_MESSAGE_SIZE> = Channel::new();
@@ -73,7 +76,7 @@ impl Setup<Dispatch> for NkSetup {
             Config {
                 model: Model::NK3,
                 version: self.version,
-                serial: &self.serial,
+                serial: self.serial,
             },
         );
 

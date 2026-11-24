@@ -21,6 +21,7 @@
   - Fix the inverted parsing of the touch requirement in SET MANAGEMENT KEY's P2 (0xFF means no touch, 0xFE means touch required)
   - Derive the GET SERIAL response from the device uuid instead of a shared constant
   - Fix memory leak in import key
+- Improve stability of the usbip runner
 - Update applications (maintenance only):
   - opcard v1.11.0
 

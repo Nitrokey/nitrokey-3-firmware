@@ -129,7 +129,7 @@ fn main() {
 
     let usb = usb::NkSetup {
         version: VERSION,
-        serial: Serial::from_uuid(uuid),
+        serial: &Serial::from_uuid(uuid),
         ccid: args.ccid,
         #[cfg(feature = "scsi")]
         scsi: scsi::Setup {
