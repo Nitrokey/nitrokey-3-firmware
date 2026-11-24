@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+-
+
+## v2.0.0 (2026-11-24)
+
 - Add serial number to USB descriptor ([#634](https://github.com/Nitrokey/nitrokey-3-firmware/issues/634))
 - fido-authenticator: Update to [v0.4.0](https://github.com/trussed-dev/fido-authenticator/releases/tag/v0.4.0)
   - Add support for CTAP 2.3.

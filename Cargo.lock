@@ -159,7 +159,7 @@ dependencies = [
 
 [[package]]
 name = "apps"
-version = "1.9.1"
+version = "2.0.0"
 dependencies = [
  "admin-app",
  "apdu-app",
@@ -376,7 +376,7 @@ dependencies = [
 
 [[package]]
 name = "boards"
-version = "1.9.1"
+version = "2.0.0"
 dependencies = [
  "apdu-dispatch",
  "apps",
@@ -1178,7 +1178,7 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "embedded-runner-lib"
-version = "1.9.1"
+version = "2.0.0"
 dependencies = [
  "apdu-dispatch",
  "apps",
@@ -4106,7 +4106,7 @@ dependencies = [
 
 [[package]]
 name = "usbip-runner"
-version = "1.9.1"
+version = "2.0.0"
 dependencies = [
  "aes",
  "apdu-dispatch",
@@ -4155,7 +4155,7 @@ checksum = "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6"
 
 [[package]]
 name = "utils"
-version = "1.9.1"
+version = "2.0.0"
 dependencies = [
  "cargo-lock",
  "chrono",
