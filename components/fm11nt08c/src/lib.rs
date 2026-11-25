@@ -19,7 +19,7 @@ use embedded_time::duration::Microseconds;
 use nfc_device::traits::nfc::{Error as NfcError, State as NfcState};
 use registers::{
     FifoAccess, FifoIrq, FifoIrqMask, FifoWordCnt, MainIrq, MainIrqMask, NfcRats, NfcStatus,
-    NfcTxen, NfcTxenValue, Register, ResetSilence, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
+    NfcStatusValue, NfcTxen, NfcTxenValue, Register, UserCfg0, UserCfg1, UserCfg2, VoutResCfg,
 };
 
 // bits: 4 (rx_done), 5 (rx_start), 6 (active_flag), 7 (power_on_flag) enabled; bit 1 (fifo_flag)
@@ -498,13 +498,21 @@ where
             })?;
         }
 
+        // `SwitchToReceiveStateAndIdle` also returns the ISO14443-3 state machine to IDLE,
+        // which drops an already established ISO14443-4 session. Only do it while the
+        // chip is not past RATS yet.
+        let status: u8 = self.read_register::<NfcStatus>()?.into();
+        let state = status >> 4;
+        let past_rats = state == NfcStatusValue::Iso14443_4BewtweenRatsAndPPS as u8
+            || state == NfcStatusValue::Iso14443_4AfterPPS as u8;
+        if past_rats {
+            debug!("Chip already in ISO14443-4 state {state:#x}, keeping session");
+        } else {
+            self.write_register(NfcTxen::new(NfcTxenValue::SwitchToReceiveStateAndIdle))?;
+        }
+
         self.write_register(MainIrqMask(MAIN_IRQ_MASK_ACTIVE))?;
         self.write_register(FifoIrqMask(FIFO_IRQ_MASK_ACTIVE))?;
-        self.write_register(NfcTxen(0x77))?;
-        self.write_register(ResetSilence(0x55))?;
-
-        self.timer.start(Microseconds::new(5_000));
-        nb::block!(self.timer.wait()).unwrap();
         Ok(())
     }
 
