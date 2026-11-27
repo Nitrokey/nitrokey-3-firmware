@@ -67,6 +67,10 @@ binaries:
 metrics: binaries
 	repometrics generate > metrics.toml
 
+.PHONY: install-sbom-tool
+install-sbom-tool:
+	cargo install cargo-cyclonedx@0.5.10 --locked
+
 license.txt:
 	cargo run --release --manifest-path utils/collect-license-info/Cargo.toml -- runners/embedded/Cargo.toml "Nitrokey 3" > license.txt
 

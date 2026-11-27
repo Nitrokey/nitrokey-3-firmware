@@ -2,7 +2,7 @@
 
 ## Unreleased
 
--
+- Generate CycloneDX software bills of materials (SBOMs) for the direct runtime dependencies of the LPC55 and nRF52 firmware release builds.
 
 ## v2.0.0 (2026-11-24)
 

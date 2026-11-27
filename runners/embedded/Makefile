@@ -46,7 +46,7 @@ BUILD_FEATURES := board-$(BOARD),$(FEATURES),$(NO_DELOG_FEATURE),$(LITTLEFS_INTR
 # rust-analyzer config (regen per-build to match last: BOARD/FEATURES
 RA_CONFIG = ../../rust-analyzer.toml
 
-.PHONY: list build build-all reset program check doc check-all bloat clean clean-all check-env set-vars lint-all lint set-ra-config
+.PHONY: list build build-all reset program check doc check-all bloat clean clean-all check-env set-vars lint-all lint set-ra-config sbom
 
 # default target -> just build all "shortcuts"
 all: build-all $(ARTIFACTS)
@@ -129,6 +129,13 @@ build: build-banner check-var-BOARD check-var-SOC set-ra-config
 
 	$(GNU_TARGET)-objcopy -O binary ./$(OUT_ELF) ./$(OUT_BIN)
 	$(GNU_TARGET)-objcopy -O ihex ./$(OUT_ELF) ./$(OUT_IHEX)
+
+sbom: check-var-BOARD check-var-SOC | $(ARTIFACTS)
+	# Use direct dependencies to avoid transitive features from other workspace members.
+	cargo cyclonedx --target $(TARGET) --features "$(BUILD_FEATURES)" \
+		--format json --spec-version 1.5 --top-level --no-build-deps \
+		--override-filename sbom-$(SOC).cdx
+	mv sbom-$(SOC).cdx.json $(ARTIFACTS)/
 
 check: check-banner check-var-BOARD check-var-SOC set-ra-config
 
