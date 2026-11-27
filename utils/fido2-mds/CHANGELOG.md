@@ -1,5 +1,9 @@
 # Changelog
 
+## v7
+
+- Set `cryptoStrength` to 128.
+
 ## v6
 
 - Update for Nitrokey 3 firmware release v2.0.0:

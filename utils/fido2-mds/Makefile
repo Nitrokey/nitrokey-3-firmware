@@ -1,6 +1,6 @@
 VIRTUAL_PYTHON3 ?= uv run python3
 
-METADATA_VERSION ?= v6
+METADATA_VERSION ?= v7
 OUT_DIR ?= metadata/$(METADATA_VERSION)
 
 INPUTS := generate-mds.py nitrokey.svg get-info.json

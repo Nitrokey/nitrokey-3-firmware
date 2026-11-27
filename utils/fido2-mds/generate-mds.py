@@ -81,7 +81,7 @@ class Authenticator:
             attestation_root_certificates=[attestation_root_certificate],
             upv=upv,
             authenticator_get_info=get_info,
-            crypto_strength=0,
+            crypto_strength=128,
             # TODO: Do we want to set caDesc?
             user_verification_details=[
                 [UVD_NONE],
