@@ -14,6 +14,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Install Rust toolchain
         run: rustup show active-toolchain || rustup toolchain install
+      - name: Check firmware SBOM generation
+        run: |
+          cargo fetch --locked
+          make install-sbom-tool
+          make -C runners/embedded sbom-nk3am.bl sbom-nk3xn
+          git diff --exit-code -- Cargo.lock
       - name: Check components
         run: make check-components
       - name: Check usbip runner
